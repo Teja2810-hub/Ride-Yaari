@@ -37,29 +37,24 @@ export default function AuthForm() {
     }
     return () => clearInterval(interval)
   }, [resendCountdown])
-  const sendOTP = async (email: string, type: 'signup' | 'signin') => {
+
+  const sendMagicLink = async (email: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/signup-otp-with-domain-check`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, type })
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       })
 
-      const data = await response.json()
+      if (error) throw error
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send OTP')
-      }
-
-      // Start countdown timer after successful OTP send
+      // Start countdown timer after successful magic link send
       setCanResendOtp(false)
       setResendCountdown(60) // 1 minute countdown
-      return data
+      return { success: true }
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to send OTP')
+      throw new Error(error.message || 'Failed to send magic link')
     }
   }
 
@@ -70,7 +65,7 @@ export default function AuthForm() {
     setError('')
     
     try {
-      await sendOTP(otpEmail, isSignUp ? 'signup' : 'signin')
+      await sendMagicLink(otpEmail)
       setError('')
     } catch (error: any) {
       setError(error.message)
@@ -78,6 +73,7 @@ export default function AuthForm() {
       setLoading(false)
     }
   }
+
   const verifyOTP = async () => {
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -105,7 +101,7 @@ export default function AuthForm() {
 
       return data
     } catch (error: any) {
-      throw new Error(error.message || 'Invalid OTP code')
+      throw new Error(error.message || 'Invalid verification code')
     }
   }
 
@@ -117,17 +113,17 @@ export default function AuthForm() {
     try {
       if (authStep === 'credentials') {
         if (isSignUp) {
-          // For signup, send OTP instead of creating account directly
-          await sendOTP(email, 'signup')
+          // For signup, send magic link
+          await sendMagicLink(email)
           setOtpEmail(email)
           setAuthStep('otp-verification')
         } else {
           // For signin, try traditional password login first
           const { error } = await signIn(email, password)
           if (error) {
-            // If password login fails, offer OTP option
+            // If password login fails, offer magic link option
             if (error.message.includes('Invalid login credentials')) {
-              setError('Invalid credentials. Would you like to sign in with OTP instead?')
+              setError('Invalid credentials. Would you like to sign in with a magic link instead?')
             } else {
               throw error
             }
@@ -144,12 +140,12 @@ export default function AuthForm() {
     }
   }
 
-  const handleOTPSignIn = async () => {
+  const handleMagicLinkSignIn = async () => {
     setLoading(true)
     setError('')
 
     try {
-      await sendOTP(email, 'signin')
+      await sendMagicLink(email)
       setOtpEmail(email)
       setAuthStep('otp-verification')
     } catch (error: any) {
@@ -170,42 +166,6 @@ export default function AuthForm() {
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
-  }
-
-  const getEmailDomainInfo = (email: string) => {
-    if (!email) return ''
-    
-    // Only validate if email contains @ and appears complete
-    if (!email.includes('@') || !email.includes('.')) return ''
-    
-    // Check if email looks complete (has @ and at least one . after @)
-    const emailParts = email.split('@')
-    if (emailParts.length !== 2) return ''
-    
-    const domainPart = emailParts[1]
-    if (!domainPart || !domainPart.includes('.')) return ''
-    
-    const domain = email.toLowerCase().split('@')[1]
-    if (!domain) return ''
-    
-    // Expanded list of allowed domains
-    const allowedDomains = [
-      'gmail.com', 'googlemail.com',
-      'yahoo.com', 'yahoo.co.uk', 'yahoo.ca', 'yahoo.in',
-      'outlook.com', 'hotmail.com', 'live.com',
-      'icloud.com', 'me.com', 'mac.com',
-      'aol.com', 'protonmail.com', 'proton.me'
-    ]
-    
-    if (allowedDomains.includes(domain)) {
-      return '✅ Gmail domain accepted'
-    } else if (domain.endsWith('.edu')) {
-      return '✅ Educational domain accepted'
-    } else if (domain.endsWith('.ac.uk')) {
-      return '✅ UK academic domain accepted'
-    } else {
-      return '❌ Domain not allowed. Only Gmail, Yahoo, Outlook, educational institutions, and approved domains are permitted.'
-    }
   }
 
   const handleHelpSubmit = (e: React.FormEvent) => {
@@ -235,10 +195,10 @@ export default function AuthForm() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">Common Issues & Solutions</h3>
                 <ul className="text-sm text-blue-800 space-y-2">
-                  <li>• <strong>Email domain not allowed:</strong> Only Gmail, Yahoo, Outlook, and educational domains (.edu, .ac.uk) are permitted</li>
-                  <li>• <strong>Didn't receive OTP:</strong> Check your spam folder and ensure your email is correct</li>
-                  <li>• <strong>Account already exists:</strong> Try signing in instead, or use "Sign in with Email OTP"</li>
-                  <li>• <strong>OTP expired:</strong> Request a new verification code</li>
+                  <li>• <strong>Didn't receive magic link:</strong> Check your spam folder and ensure your email is correct</li>
+                  <li>• <strong>Account already exists:</strong> Try signing in instead, or use "Sign in with Magic Link"</li>
+                  <li>• <strong>Magic link expired:</strong> Request a new verification link</li>
+                  <li>• <strong>Email not working:</strong> Make sure you're using a valid email address</li>
                 </ul>
               </div>
 
@@ -379,16 +339,6 @@ export default function AuthForm() {
                       required
                     />
                   </div>
-                  {email && isValidEmail(email) && (
-                    <p className={`text-xs sm:text-sm mt-1 ${getEmailDomainInfo(email).startsWith('✅') ? 'text-green-600' : 'text-red-600'}`}>
-                      {getEmailDomainInfo(email)}
-                    </p>
-                  )}
-                  {isSignUp && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Only Gmail, educational (.edu, .ac.uk), and approved domains are allowed
-                    </p>
-                  )}
                 </div>
 
                 {!isSignUp && (
@@ -416,18 +366,16 @@ export default function AuthForm() {
               <div>
                 <div className="text-center mb-4 sm:mb-6">
                   <p className="text-sm sm:text-base text-gray-600">
-                    We've sent a verification code to:
+                    We've sent a magic link to:
                   </p>
                   <p className="font-semibold text-gray-900 text-sm sm:text-base">{otpEmail}</p>
-                  {isSignUp && (
-                    <p className="text-xs sm:text-sm text-blue-600 mt-2">
-                      If you previously started signup with this email, this code will complete your registration.
-                    </p>
-                  )}
+                  <p className="text-xs sm:text-sm text-blue-600 mt-2">
+                    Click the link in your email to sign in, or enter the verification code below.
+                  </p>
                 </div>
                 
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 text-center">
-                  Enter 6-digit verification code
+                  Enter 6-digit verification code (optional)
                 </label>
                 <div className="relative">
                   <Shield className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -438,17 +386,16 @@ export default function AuthForm() {
                     className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-base sm:text-lg tracking-widest"
                     placeholder="000000"
                     maxLength={6}
-                    required
                   />
                 </div>
                 <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">
-                  Check your email for the verification code
+                  Check your email for the magic link or verification code
                 </p>
                 
                 <div className="text-center mt-4">
                   {!canResendOtp ? (
                     <p className="text-xs sm:text-sm text-gray-500">
-                      Resend code in {Math.floor(resendCountdown / 60)}:{(resendCountdown % 60).toString().padStart(2, '0')}
+                      Resend link in {Math.floor(resendCountdown / 60)}:{(resendCountdown % 60).toString().padStart(2, '0')}
                     </p>
                   ) : (
                     <button
@@ -457,7 +404,7 @@ export default function AuthForm() {
                       disabled={loading}
                       className="text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 text-sm"
                     >
-                      Resend verification code
+                      Resend magic link
                     </button>
                   )}
                 </div>
@@ -471,7 +418,7 @@ export default function AuthForm() {
             >
               {loading ? 'Please wait...' : 
                 authStep === 'otp-verification' ? 'Verify Code' :
-                isSignUp ? 'Send Verification Code' : 'Sign In'
+                isSignUp ? 'Send Magic Link' : 'Sign In'
               }
             </button>
           </form>
@@ -480,11 +427,11 @@ export default function AuthForm() {
             <div className="mt-4">
               <div className="text-center text-gray-500 text-xs sm:text-sm mb-3">or</div>
               <button
-                onClick={handleOTPSignIn}
+                onClick={handleMagicLinkSignIn}
                 disabled={loading || !email || !isValidEmail(email)}
                 className="w-full border border-gray-300 text-gray-700 py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
-                Sign in with Email OTP
+                Sign in with Magic Link
               </button>
             </div>
           )}
