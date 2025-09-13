@@ -17,18 +17,18 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
   const { userProfile, signOut } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+    <div className="min-h-screen bg-neutral-bg">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
           <div></div>
           
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:space-x-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
               onClick={onBack}
-              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm sm:text-base"
+              className="flex items-center space-x-2 px-4 py-2 text-accent-blue hover:text-accent-blue-hover font-medium transition-colors text-sm rounded-xl"
             >
-              <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Back</span>
+              <ArrowLeft size={18} />
+              <span>Back</span>
             </button>
             <button
               onClick={onHelp}

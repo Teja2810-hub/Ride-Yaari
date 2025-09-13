@@ -98,31 +98,31 @@ export default function ReviewDisplay({ title = "What Our Users Say", maxReviews
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8">
+    <div className="card p-8 sm:p-12">
       <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+        <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-4">{title}</h3>
         <div className="flex items-center justify-center space-x-2">
           {renderStars(Math.round(parseFloat(getAverageRating())))}
-          <span className="text-lg font-semibold text-gray-900">{getAverageRating()}</span>
-          <span className="text-gray-600">({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+          <span className="text-lg font-semibold text-text-primary">{getAverageRating()}</span>
+          <span className="text-text-secondary">({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
         </div>
       </div>
 
-      <div className="space-y-6 max-h-96 overflow-y-auto">
+      <div className="space-y-8 max-h-96 overflow-y-auto">
         {reviews.map((review) => (
-          <div key={review.id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                  <span className="font-semibold text-blue-600 text-sm">
+          <div key={review.id} className="border-b border-gray-100 pb-8 last:border-b-0 last:pb-0">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-2xl">
+                  <span className="font-semibold text-accent-blue text-base">
                     {review.reviewer_name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">{review.reviewer_name}</h4>
+                  <h4 className="font-semibold text-text-primary text-lg">{review.reviewer_name}</h4>
                   <div className="flex items-center space-x-2">
                     {renderStars(review.rating)}
-                    <span className="text-sm text-gray-500 flex items-center">
+                    <span className="text-sm text-text-secondary flex items-center">
                       <Calendar size={12} className="mr-1" />
                       {formatDate(review.created_at)}
                     </span>
@@ -130,7 +130,7 @@ export default function ReviewDisplay({ title = "What Our Users Say", maxReviews
                 </div>
               </div>
             </div>
-            <p className="text-gray-700 leading-relaxed">{review.review_content}</p>
+            <p className="text-text-secondary leading-relaxed text-base font-light">{review.review_content}</p>
           </div>
         ))}
       </div>
