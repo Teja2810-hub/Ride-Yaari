@@ -11,7 +11,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative animate-fade-in">
+      <div className="card bg-gradient-to-br from-neutral-bg to-white shadow-2xl max-w-md w-full p-6 relative animate-fade-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"

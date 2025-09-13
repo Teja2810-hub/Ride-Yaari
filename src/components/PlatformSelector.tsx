@@ -61,15 +61,14 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
         </div>
 
         {/* Hero Section */}
-        <div className="text-center mb-16 sm:mb-24">
-          <h1 className="hero-title text-5xl sm:text-6xl md:text-7xl gradient-text mb-6">
+        <div className="text-center mb-4 sm:mb-6">
+          <h1 className="hero-title text-2xl sm:text-3xl md:text-4xl gradient-text mb-2">
             RideYaari
           </h1>
-          <p className="subtitle text-xl sm:text-2xl mb-12 max-w-3xl mx-auto font-light">
+          <p className="subtitle text-sm sm:text-md mb-1 max-w-md mx-auto font-light">
             Your global platform for sharing rides and airport trips
           </p>
-          
-          {/* Product Image */}
+          {/* Product Image
           <div className="mb-16">
             <div className="relative max-w-2xl mx-auto">
               <img
@@ -79,50 +78,50 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-text-primary mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-1 sm:mb-2">
               Choose Your Service
             </h2>
-            <p className="text-lg sm:text-xl text-text-secondary font-light max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-text-secondary font-light max-w-xl mx-auto mb-0">
               Select the type of sharing service you need
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-10">
             {/* Airport Trips Card */}
             <div
               onClick={() => onSelectPlatform('airport')}
-              className="group cursor-pointer card p-8 sm:p-12"
+              className="group cursor-pointer card p-4 sm:p-6 min-h-[320px] sm:min-h-[360px] flex items-center justify-center"
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-r from-accent-blue to-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-lg">
-                  <Plane size={32} className="sm:w-12 sm:h-12 text-white" />
+              <div className="flex flex-col items-center text-center w-full">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-accent-blue to-blue-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-300 shadow-md">
+                  <Plane size={20} className="sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-4">Airport Trips</h3>
-                <p className="text-base sm:text-lg text-text-secondary mb-8 leading-relaxed font-light max-w-md">
-                  Share your flight itinerary with other travelers for convenient airport deliveries, pickups, or assistance services
+                <h3 className="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Airport Trips</h3>
+                <p className="text-sm sm:text-base text-text-secondary mb-3 font-light max-w-xs">
+                  Share your flight itinerary for airport deliveries, pickups, or assistance
                 </p>
-                <div className="space-y-3 text-sm text-text-secondary mb-8">
+                <div className="space-y-2 text-sm text-text-secondary mb-3">
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-2"></span>
                     Package delivery & pickup
                   </p>
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-2"></span>
                     Travel assistance
                   </p>
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-accent-blue rounded-full mr-2"></span>
                     Airport companionship
                   </p>
                 </div>
                 <div className="inline-flex items-center text-accent-blue font-medium group-hover:text-accent-blue-hover text-base transition-colors">
                   Explore Airport Trips
-                  <ArrowRight size={20} className="ml-3 transform group-hover:translate-x-2 transition-transform duration-300" />
+                  <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
                 </div>
               </div>
             </div>
@@ -130,33 +129,33 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             {/* Car Rides Card */}
             <div
               onClick={() => onSelectPlatform('car')}
-              className="group cursor-pointer card p-8 sm:p-12"
+              className="group cursor-pointer card p-4 sm:p-6 min-h-[320px] sm:min-h-[360px] flex items-center justify-center"
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-gradient-to-r from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-lg">
-                  <Car size={32} className="sm:w-12 sm:h-12 text-white" />
+              <div className="flex flex-col items-center text-center w-full">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-300 shadow-md">
+                  <Car size={20} className="sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-4">Car Rides</h3>
-                <p className="text-base sm:text-lg text-text-secondary mb-8 leading-relaxed font-light max-w-md">
-                  Find or offer car rides to share travel costs and reduce environmental impact through carpooling
+                <h3 className="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Car Rides</h3>
+                <p className="text-sm sm:text-base text-text-secondary mb-3 font-light max-w-xs">
+                  Find or offer car rides to share travel costs and reduce environmental impact
                 </p>
-                <div className="space-y-3 text-sm text-text-secondary mb-8">
+                <div className="space-y-2 text-sm text-text-secondary mb-3">
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                     Cost-effective travel
                   </p>
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                     Eco-friendly carpooling
                   </p>
                   <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                     Flexible scheduling
                   </p>
                 </div>
                 <div className="inline-flex items-center text-green-500 font-medium group-hover:text-green-600 text-base transition-colors">
                   Explore Car Rides
-                  <ArrowRight size={20} className="ml-3 transform group-hover:translate-x-2 transition-transform duration-300" />
+                  <ArrowRight size={16} className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
                 </div>
               </div>
             </div>

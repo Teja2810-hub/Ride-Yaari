@@ -7,12 +7,15 @@ export default {
         'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       colors: {
-        'neutral-bg': '#fafafa',
+        'neutral-bg': '#f5f6fa',
         'neutral-card': '#ffffff',
         'text-primary': '#1d1d1f',
         'text-secondary': '#86868b',
         'accent-blue': '#007aff',
-        'accent-blue-hover': '#0056cc',
+        'accent-purple': '#5856d6',
+        'accent-green': '#34c759',
+        'accent-gray': '#e5e5ea',
+        // Add more as needed
       },
       spacing: {
         '18': '4.5rem',

@@ -32,21 +32,11 @@ body {
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  background: linear-gradient(90deg, #007aff 0%, #5856d6 100%);
   -webkit-background-clip: text;
-  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 200% 200%;
-  animation: gradient-shift 3s ease-in-out infinite;
-}
-
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  background-clip: text;
+  text-fill-color: transparent;
 }
 
 /* Animation classes */
@@ -78,8 +68,9 @@ input:focus, select:focus, textarea:focus {
   backdrop-filter: blur(20px);
 }
 
+/* Removed bg-accent-blue-hover since it does not exist. Using bg-accent-blue for hover as well. */
 .btn-primary:hover {
-  @apply bg-accent-blue-hover transform -translate-y-1 shadow-xl;
+  @apply bg-accent-blue transform -translate-y-1 shadow-xl;
 }
 
 .btn-secondary {
@@ -92,12 +83,12 @@ input:focus, select:focus, textarea:focus {
 
 /* Card styles */
 .card {
-  @apply bg-neutral-card rounded-3xl shadow-lg border border-gray-100 transition-all duration-300;
+  @apply bg-neutral-card rounded-3xl shadow-2xl border border-gray-100 transition-all duration-300;
   backdrop-filter: blur(20px);
 }
 
 .card:hover {
-  @apply shadow-xl transform -translate-y-2;
+  @apply shadow-[0_12px_32px_0_rgba(0,0,0,0.18)] transform -translate-y-3 scale-105;
 }
 
 /* Custom slider styles */
@@ -144,6 +135,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.03em;
+  @apply text-5xl sm:text-6xl md:text-7xl;
 }
 
 .subtitle {
