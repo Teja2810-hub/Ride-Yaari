@@ -62,7 +62,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
 
         {/* Hero Section */}
         <div className="text-center mb-4 sm:mb-6">
-          <h1 className="hero-title text-2xl sm:text-3xl md:text-4xl gradient-text mb-2">
+          <h1 className="hero-title text-3xl sm:text-4xl md:text-5xl gradient-text mb-2">
             RideYaari
           </h1>
           <p className="subtitle text-sm sm:text-md mb-1 max-w-md mx-auto font-light">
@@ -91,7 +91,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-14 mb-10">
             {/* Airport Trips Card */}
             <div
               onClick={() => onSelectPlatform('airport')}
@@ -162,7 +162,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           </div>
 
           {/* Why Choose Section */}
-          <div className="card p-8 sm:p-12 mb-20">
+          <div className="card p-8 sm:p-12 mb-20 mt-16 sm:mt-24">
             <h3 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-12 text-center">Why Choose RideYaari?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
               <div className="text-center">
