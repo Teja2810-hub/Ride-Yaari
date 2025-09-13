@@ -65,7 +65,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           <h1 className="hero-title text-3xl sm:text-4xl md:text-5xl gradient-text mb-2">
             RideYaari
           </h1>
-          <p className="subtitle text-sm sm:text-md mb-1 max-w-md mx-auto font-light">
+          <p className="subtitle text-lg sm:text-xl mb-1 max-w-3xl mx-auto font-light whitespace-nowrap">
             Your global platform for sharing rides and airport trips
           </p>
           {/* Product Image
