@@ -657,7 +657,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
              </>  
             )}
 
-            {(locationSearchType === 'nearby' && userLocation) || (!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude)) && (
+            {!!((locationSearchType === 'nearby' && userLocation) || (!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude))) && (
               <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <label className="block text-sm font-medium text-gray-700">
