@@ -14,9 +14,12 @@ import HelpPage from './components/HelpPage'
 import Chat from './components/Chat'
 import EditTrip from './components/EditTrip'
 import EditRide from './components/EditRide'
+import Footer from './components/Footer'
+import HowItWorksPage from './components/HowItWorksPage'
+import ReviewsPage from './components/ReviewsPage'
 import { Trip, CarRide } from './types'
 
-type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride'
+type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -81,6 +84,14 @@ function AppContent() {
   const handleHelp = () => {
     setCurrentView('help')
   }
+
+  const handleHowItWorks = () => {
+    setCurrentView('how-it-works')
+  }
+
+  const handleReviews = () => {
+    setCurrentView('reviews')
+  }
   
   if (loading) {
     return (
@@ -103,7 +114,9 @@ function AppContent() {
         isOpen={showWelcomePopup} 
         onClose={handleCloseWelcomePopup} 
       />
-      {(() => {
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1">
+          {(() => {
         switch (currentView) {
           case 'platform-selector':
             return (
@@ -159,6 +172,10 @@ function AppContent() {
             return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} />
           case 'help':
             return <HelpPage onBack={handleBackToDashboard} />
+          case 'how-it-works':
+            return <HowItWorksPage onBack={handleBackToDashboard} />
+          case 'reviews':
+            return <ReviewsPage onBack={handleBackToDashboard} />
           case 'chat':
             return (
               <Chat
@@ -182,9 +199,20 @@ function AppContent() {
           default:
             return <PlatformSelector onSelectPlatform={(platform) => 
               setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-            } />
+            } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} />
         }
-      })()}
+          })()}
+        </div>
+        
+        {/* Footer - only show on main pages, not on auth or specific flows */}
+        {user && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
+          <Footer 
+            onHelp={handleHelp}
+            onReviews={handleReviews}
+            onHowItWorks={handleHowItWorks}
+          />
+        )}
+      </div>
     </>
   )
 }
