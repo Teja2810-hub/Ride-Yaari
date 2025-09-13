@@ -604,6 +604,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
             )}
 
             {locationSearchType === 'manual' && (
+             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Search Mode
@@ -653,6 +654,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                   label="To Location"
                 />
               </div>
+             </>  
             )}
 
             {(locationSearchType === 'nearby' && userLocation) || (!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude)) && (
