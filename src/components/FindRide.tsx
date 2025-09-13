@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Search, MessageCircle, User, Car, DollarSign, Clock, AlertTriangle, HelpCircle, Calendar, MapPin } from 'lucide-react'
+import { ArrowLeft, Search, MessageCircle, User, Car, DollarSign, Clock, AlertTriangle, HelpCircle, Calendar, MapPin, Navigation } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide } from '../types'
@@ -21,11 +21,16 @@ interface FindRideProps {
 }
 
 type SearchType = 'from-to' | 'from-only' | 'to-only'
+type LocationSearchType = 'manual' | 'nearby'
 
 export default function FindRide({ onBack, onStartChat }: FindRideProps) {
   const { user } = useAuth()
+  const [locationSearchType, setLocationSearchType] = useState<LocationSearchType>('manual')
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
+  const [userLocation, setUserLocation] = useState<LocationData | null>(null)
+  const [gettingLocation, setGettingLocation] = useState(false)
+  const [locationError, setLocationError] = useState('')
   const [searchRadius, setSearchRadius] = useState('10')
   const [departureDate, setDepartureDate] = useState('')
   const [departureMonth, setDepartureMonth] = useState('')
@@ -40,6 +45,88 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
   const [radiusUnit, setRadiusUnit] = useState('miles')
   const [useCustomRadius, setUseCustomRadius] = useState(false)
   const [customRadius, setCustomRadius] = useState('')
+
+  const getCurrentLocation = async () => {
+    setGettingLocation(true)
+    setLocationError('')
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by this browser')
+      setGettingLocation(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        
+        try {
+          // Use reverse geocoding to get address
+          const response = await fetch(
+            `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${import.meta.env.VITE_OPENCAGE_API_KEY}`
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.results && data.results.length > 0) {
+              const result = data.results[0]
+              setUserLocation({
+                address: result.formatted,
+                latitude: latitude,
+                longitude: longitude
+              })
+            } else {
+              setUserLocation({
+                address: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+                latitude: latitude,
+                longitude: longitude
+              })
+            }
+          } else {
+            // Fallback if reverse geocoding fails
+            setUserLocation({
+              address: `Your Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+              latitude: latitude,
+              longitude: longitude
+            })
+          }
+        } catch (error) {
+          console.error('Reverse geocoding error:', error)
+          // Still set location with coordinates
+          setUserLocation({
+            address: `Your Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+            latitude: latitude,
+            longitude: longitude
+          })
+        }
+        
+        setGettingLocation(false)
+      },
+      (error) => {
+        console.error('Geolocation error:', error)
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location access denied. Please enable location permissions.')
+            break
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information is unavailable.')
+            break
+          case error.TIMEOUT:
+            setLocationError('Location request timed out.')
+            break
+          default:
+            setLocationError('An unknown error occurred while getting location.')
+            break
+        }
+        setGettingLocation(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    )
+  }
 
   const getEffectiveRadiusMiles = (radius: number, unit: string) => {
     if (unit === 'kilometers') {
@@ -58,6 +145,8 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
       console.log('Search criteria:', {
         fromLocation: fromLocation?.address,
         toLocation: toLocation?.address,
+        userLocation: userLocation?.address,
+        locationSearchType,
         strictSearch,
         searchRadius,
         departureDate,
@@ -114,157 +203,227 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
       let filteredRides = data || []
 
       // Apply location filtering only if we have search criteria
-      if (fromLocation || toLocation) {
+      if (fromLocation || toLocation || (locationSearchType === 'nearby' && userLocation)) {
         console.log('=== APPLYING LOCATION FILTERS ===')
         console.log('FROM search:', fromLocation?.address)
         console.log('TO search:', toLocation?.address)
+        console.log('USER location:', userLocation?.address)
+        console.log('Search type:', locationSearchType)
         console.log('Search mode:', strictSearch ? 'STRICT' : 'FLEXIBLE')
         
         filteredRides = filteredRides.filter(ride => {
           console.log(`\n--- Checking ride: ${ride.from_location} → ${ride.to_location} ---`)
           
-          let matchesFrom = !fromLocation // If no FROM criteria, it matches
-          let matchesTo = !toLocation     // If no TO criteria, it matches
+          // For nearby search, we use user location as the search center
+          let matchesFrom = true
+          let matchesTo = true
           
-          // Check FROM location if specified
-          if (fromLocation) {
-            const searchTerm = fromLocation.address.toLowerCase()
-            console.log('Checking FROM:', searchTerm)
+          if (locationSearchType === 'nearby' && userLocation) {
+            console.log('NEARBY search mode')
             matchesFrom = false
+            matchesTo = false
             
-            if (strictSearch) {
-              console.log('STRICT search for FROM location')
-              if (ride.from_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
-                console.log('✅ FROM: Exact match with departure location')
-                matchesFrom = true
-              }
-            } else {
-              console.log('FLEXIBLE search for FROM location')
-              if (locationsMatch(ride.from_location, searchTerm)) {
-                console.log('✅ FROM: Text match found in departure location')
-                matchesFrom = true
+            // Check if ride starts or ends near user location
+            if (userLocation.latitude && userLocation.longitude && searchRadius) {
+              const radiusMiles = useCustomRadius && customRadius ? parseInt(customRadius) : parseInt(searchRadius)
+              const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
+              
+              // Check distance to departure location
+              if (ride.from_latitude && ride.from_longitude) {
+                const distanceToFrom = haversineDistance(
+                  userLocation.latitude,
+                  userLocation.longitude,
+                  ride.from_latitude,
+                  ride.from_longitude
+                )
+                console.log(`Distance to departure: ${distanceToFrom.toFixed(1)} miles`)
+                if (distanceToFrom <= effectiveRadiusMiles) {
+                  console.log('✅ NEARBY: Within radius of departure location')
+                  matchesFrom = true
+                }
               }
               
-              // Check intermediate stops
-              if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
+              // Check distance to destination location
+              if (ride.to_latitude && ride.to_longitude) {
+                const distanceToTo = haversineDistance(
+                  userLocation.latitude,
+                  userLocation.longitude,
+                  ride.to_latitude,
+                  ride.to_longitude
+                )
+                console.log(`Distance to destination: ${distanceToTo.toFixed(1)} miles`)
+                if (distanceToTo <= effectiveRadiusMiles) {
+                  console.log('✅ NEARBY: Within radius of destination location')
+                  matchesTo = true
+                }
+              }
+              
+              // Check distance to intermediate stops
+              if (!matchesFrom && !matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
                 for (const stop of ride.intermediate_stops) {
-                  if (stop.address && locationsMatch(stop.address, searchTerm)) {
-                    console.log('✅ FROM: Match found in intermediate stop:', stop.address)
-                    matchesFrom = true
-                    break
-                  }
-                }
-              }
-              
-              // Check distance if coordinates available
-              if (!matchesFrom && fromLocation.latitude && fromLocation.longitude && searchRadius) {
-                console.log('Checking distance for FROM location')
-                const radiusMiles = parseInt(searchRadius)
-                const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
-                
-                if (ride.from_latitude && ride.from_longitude) {
-                  const distance = haversineDistance(
-                    fromLocation.latitude,
-                    fromLocation.longitude,
-                    ride.from_latitude,
-                    ride.from_longitude
-                  )
-                  console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                  if (distance <= effectiveRadiusMiles) {
-                    console.log('✅ FROM: Within radius of departure location')
-                    matchesFrom = true
-                  }
-                }
-                
-                // Check distance to intermediate stops
-                if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                  for (const stop of ride.intermediate_stops) {
-                    if (stop.latitude && stop.longitude) {
-                      const distance = haversineDistance(
-                        fromLocation.latitude,
-                        fromLocation.longitude,
-                        stop.latitude,
-                        stop.longitude
-                      )
-                      console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
-                      if (distance <= effectiveRadiusMiles) {
-                        console.log('✅ FROM: Within radius of intermediate stop')
-                        matchesFrom = true
-                        break
-                      }
+                  if (stop.latitude && stop.longitude) {
+                    const distance = haversineDistance(
+                      userLocation.latitude,
+                      userLocation.longitude,
+                      stop.latitude,
+                      stop.longitude
+                    )
+                    console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
+                    if (distance <= effectiveRadiusMiles) {
+                      console.log('✅ NEARBY: Within radius of intermediate stop')
+                      matchesFrom = true
+                      matchesTo = true
+                      break
                     }
                   }
                 }
               }
             }
-            console.log('FROM location result:', matchesFrom ? '✅ MATCH' : '❌ NO MATCH')
-          }
+          } else {
+            // Manual search mode (existing logic)
+            matchesFrom = !fromLocation // If no FROM criteria, it matches
+            matchesTo = !toLocation     // If no TO criteria, it matches
           
-          // Check TO location if specified
-          if (toLocation) {
-            const searchTerm = toLocation.address.toLowerCase()
-            console.log('Checking TO:', searchTerm)
-            matchesTo = false
-            
-            if (strictSearch) {
-              console.log('STRICT search for TO location')
-              if (ride.to_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
-                console.log('✅ TO: Exact match with destination location')
-                matchesTo = true
-              }
-            } else {
-              console.log('FLEXIBLE search for TO location')
-              if (locationsMatch(ride.to_location, searchTerm)) {
-                console.log('✅ TO: Text match found in destination location')
-                matchesTo = true
-              }
+            // Check FROM location if specified
+            if (fromLocation) {
+              const searchTerm = fromLocation.address.toLowerCase()
+              console.log('Checking FROM:', searchTerm)
+              matchesFrom = false
               
-              // Check intermediate stops
-              if (!matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                for (const stop of ride.intermediate_stops) {
-                  if (stop.address && locationsMatch(stop.address, searchTerm)) {
-                    console.log('✅ TO: Match found in intermediate stop:', stop.address)
-                    matchesTo = true
-                    break
-                  }
+              if (strictSearch) {
+                console.log('STRICT search for FROM location')
+                if (ride.from_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
+                  console.log('✅ FROM: Exact match with departure location')
+                  matchesFrom = true
                 }
-              }
-              
-              // Check distance if coordinates available
-              if (!matchesTo && toLocation.latitude && toLocation.longitude && searchRadius) {
-                console.log('Checking distance for TO location')
-                const radiusMiles = parseInt(searchRadius)
+              } else {
+                console.log('FLEXIBLE search for FROM location')
+                if (locationsMatch(ride.from_location, searchTerm)) {
+                  console.log('✅ FROM: Text match found in departure location')
+                  matchesFrom = true
+                }
                 
-                if (ride.to_latitude && ride.to_longitude) {
-                  const distance = haversineDistance(
-                    toLocation.latitude,
-                    toLocation.longitude,
-                    ride.to_latitude,
-                    ride.to_longitude
-                  )
-                  console.log(`Distance to destination: ${distance.toFixed(1)} miles`)
-                  if (distance <= radiusMiles) {
-                    console.log('✅ TO: Within radius of destination location')
-                    matchesTo = true
+                // Check intermediate stops
+                if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
+                  for (const stop of ride.intermediate_stops) {
+                    if (stop.address && locationsMatch(stop.address, searchTerm)) {
+                      console.log('✅ FROM: Match found in intermediate stop:', stop.address)
+                      matchesFrom = true
+                      break
+                    }
                   }
                 }
                 
-                if (!matchesTo && ride.from_latitude && ride.from_longitude) {
-                  const distance = haversineDistance(
-                    toLocation.latitude,
-                    toLocation.longitude,
-                    ride.from_latitude,
-                    ride.from_longitude
-                  )
-                  console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                  if (distance <= radiusMiles) {
-                    console.log('✅ TO: Within radius of departure location')
-                    matchesTo = true
+                // Check distance if coordinates available
+                if (!matchesFrom && fromLocation.latitude && fromLocation.longitude && searchRadius) {
+                  console.log('Checking distance for FROM location')
+                  const radiusMiles = parseInt(searchRadius)
+                  const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
+                  
+                  if (ride.from_latitude && ride.from_longitude) {
+                    const distance = haversineDistance(
+                      fromLocation.latitude,
+                      fromLocation.longitude,
+                      ride.from_latitude,
+                      ride.from_longitude
+                    )
+                    console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
+                    if (distance <= effectiveRadiusMiles) {
+                      console.log('✅ FROM: Within radius of departure location')
+                      matchesFrom = true
+                    }
+                  }
+                  
+                  // Check distance to intermediate stops
+                  if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
+                    for (const stop of ride.intermediate_stops) {
+                      if (stop.latitude && stop.longitude) {
+                        const distance = haversineDistance(
+                          fromLocation.latitude,
+                          fromLocation.longitude,
+                          stop.latitude,
+                          stop.longitude
+                        )
+                        console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
+                        if (distance <= effectiveRadiusMiles) {
+                          console.log('✅ FROM: Within radius of intermediate stop')
+                          matchesFrom = true
+                          break
+                        }
+                      }
+                    }
                   }
                 }
               }
+              console.log('FROM location result:', matchesFrom ? '✅ MATCH' : '❌ NO MATCH')
             }
-            console.log('TO location result:', matchesTo ? '✅ MATCH' : '❌ NO MATCH')
+          
+            // Check TO location if specified
+            if (toLocation) {
+              const searchTerm = toLocation.address.toLowerCase()
+              console.log('Checking TO:', searchTerm)
+              matchesTo = false
+              
+              if (strictSearch) {
+                console.log('STRICT search for TO location')
+                if (ride.to_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
+                  console.log('✅ TO: Exact match with destination location')
+                  matchesTo = true
+                }
+              } else {
+                console.log('FLEXIBLE search for TO location')
+                if (locationsMatch(ride.to_location, searchTerm)) {
+                  console.log('✅ TO: Text match found in destination location')
+                  matchesTo = true
+                }
+                
+                // Check intermediate stops
+                if (!matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
+                  for (const stop of ride.intermediate_stops) {
+                    if (stop.address && locationsMatch(stop.address, searchTerm)) {
+                      console.log('✅ TO: Match found in intermediate stop:', stop.address)
+                      matchesTo = true
+                      break
+                    }
+                  }
+                }
+                
+                // Check distance if coordinates available
+                if (!matchesTo && toLocation.latitude && toLocation.longitude && searchRadius) {
+                  console.log('Checking distance for TO location')
+                  const radiusMiles = parseInt(searchRadius)
+                  
+                  if (ride.to_latitude && ride.to_longitude) {
+                    const distance = haversineDistance(
+                      toLocation.latitude,
+                      toLocation.longitude,
+                      ride.to_latitude,
+                      ride.to_longitude
+                    )
+                    console.log(`Distance to destination: ${distance.toFixed(1)} miles`)
+                    if (distance <= radiusMiles) {
+                      console.log('✅ TO: Within radius of destination location')
+                      matchesTo = true
+                    }
+                  }
+                  
+                  if (!matchesTo && ride.from_latitude && ride.from_longitude) {
+                    const distance = haversineDistance(
+                      toLocation.latitude,
+                      toLocation.longitude,
+                      ride.from_latitude,
+                      ride.from_longitude
+                    )
+                    console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
+                    if (distance <= radiusMiles) {
+                      console.log('✅ TO: Within radius of departure location')
+                      matchesTo = true
+                    }
+                  }
+                }
+              }
+              console.log('TO location result:', matchesTo ? '✅ MATCH' : '❌ NO MATCH')
+            }
           }
           
           const matches = matchesFrom && matchesTo
@@ -340,6 +499,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
               <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
               <ul className="text-left space-y-1">
+                <li>• Use <strong>Nearby Search</strong> to find rides near your current location</li>
                 <li>• Search by <strong>departure location</strong> to find rides leaving from your area</li>
                 <li>• Search by <strong>destination</strong> to find rides going to where you need</li>
                 <li>• Use <strong>both locations</strong> for specific route matches</li>
@@ -351,58 +511,151 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
           </div>
 
           <form onSubmit={handleSearch} className="space-y-6">
-            {/* Search Mode Selection */}
+            {/* Location Search Type Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Search Mode
+                Search Type
               </label>
               <div className="flex space-x-6">
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    name="searchMode"
-                    checked={!strictSearch}
-                    onChange={() => setStrictSearch(false)}
+                    name="locationSearchType"
+                    checked={locationSearchType === 'manual'}
+                    onChange={() => {
+                      setLocationSearchType('manual')
+                      setUserLocation(null)
+                      setLocationError('')
+                    }}
                     className="mr-2 text-green-600"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Flexible Search</span>
-                    <p className="text-xs text-gray-500">Find rides within radius of your locations</p>
+                    <span className="text-sm font-medium text-gray-700">Manual Search</span>
+                    <p className="text-xs text-gray-500">Enter specific locations</p>
                   </div>
                 </label>
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    name="searchMode"
-                    checked={strictSearch}
-                    onChange={() => setStrictSearch(true)}
+                    name="locationSearchType"
+                    checked={locationSearchType === 'nearby'}
+                    onChange={() => {
+                      setLocationSearchType('nearby')
+                      setFromLocation(null)
+                      setToLocation(null)
+                    }}
                     className="mr-2 text-green-600"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Strict Search</span>
-                    <p className="text-xs text-gray-500">Only exact location matches</p>
+                    <span className="text-sm font-medium text-gray-700">Nearby Search</span>
+                    <p className="text-xs text-gray-500">Find rides near your location</p>
                   </div>
                 </label>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <LocationAutocomplete
-                value={fromLocation}
-                onChange={setFromLocation}
-                placeholder="Any departure location"
-                label="From Location"
-              />
+            {locationSearchType === 'nearby' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Location
+                </label>
+                {!userLocation ? (
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      disabled={gettingLocation}
+                      className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Navigation size={20} />
+                      <span>{gettingLocation ? 'Getting Location...' : 'Get My Location'}</span>
+                    </button>
+                    {locationError && (
+                      <p className="text-sm text-red-600">{locationError}</p>
+                    )}
+                    <p className="text-sm text-gray-500">
+                      Click to allow location access and find rides near you
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Navigation size={16} className="text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-green-900">Location Found</p>
+                        <p className="text-sm text-green-700">{userLocation.address}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserLocation(null)
+                          setLocationError('')
+                        }}
+                        className="text-green-600 hover:text-green-700 text-sm font-medium"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
-              <LocationAutocomplete
-                value={toLocation}
-                onChange={setToLocation}
-                placeholder="Any destination location"
-                label="To Location"
-              />
-            </div>
+            {locationSearchType === 'manual' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Search Mode
+                </label>
+                <div className="flex space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="searchMode"
+                      checked={!strictSearch}
+                      onChange={() => setStrictSearch(false)}
+                      className="mr-2 text-green-600"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Flexible Search</span>
+                      <p className="text-xs text-gray-500">Find rides within radius of your locations</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="searchMode"
+                      checked={strictSearch}
+                      onChange={() => setStrictSearch(true)}
+                      className="mr-2 text-green-600"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Strict Search</span>
+                      <p className="text-xs text-gray-500">Only exact location matches</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
 
-            {!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude) && (
+              <div className="grid md:grid-cols-2 gap-6">
+                <LocationAutocomplete
+                  value={fromLocation}
+                  onChange={setFromLocation}
+                  placeholder="Any departure location"
+                  label="From Location"
+                />
+
+                <LocationAutocomplete
+                  value={toLocation}
+                  onChange={setToLocation}
+                  placeholder="Any destination location"
+                  label="To Location"
+                />
+              </div>
+            )}
+
+            {(locationSearchType === 'nearby' && userLocation) || (!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude)) && (
               <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -418,7 +671,10 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                 </div>
                 {showRadiusHelp && (
                   <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-                    This will search for rides within {useCustomRadius && customRadius ? customRadius : searchRadius} {radiusUnit} of your selected location(s). For departure location, it finds rides starting OR ending nearby. For destination, it finds rides ending OR starting nearby.
+                    {locationSearchType === 'nearby' 
+                      ? `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your current location. It finds rides starting, ending, or passing through your area.`
+                      : `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your selected location(s). For departure location, it finds rides starting OR ending nearby. For destination, it finds rides ending OR starting nearby.`
+                    }
                   </div>
                 )}
 
@@ -575,7 +831,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (locationSearchType === 'nearby' && !userLocation)}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Searching...' : 'Search Rides'}
@@ -608,9 +864,11 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                   onClick={() => {
                     setFromLocation(null)
                     setToLocation(null)
+                    setUserLocation(null)
                     setSearchRadius('10')
                     setDepartureDate('')
                     setDepartureMonth('')
+                    setLocationSearchType('manual')
                     setSearched(false)
                   }}
                   className="text-green-600 hover:text-green-700 font-medium transition-colors"
