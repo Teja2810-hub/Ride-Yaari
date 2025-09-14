@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { ChatMessage } from '../types'
+import RideConfirmationModal from './RideConfirmationModal'
 
 interface ChatProps {
   onBack: () => void
@@ -16,11 +17,15 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+  const [userRides, setUserRides] = useState<any[]>([])
+  const [userTrips, setUserTrips] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user) {
       fetchMessages()
+      fetchUserRidesAndTrips()
       
       // Subscribe to new messages
       const subscription = supabase
@@ -46,6 +51,33 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
       }
     }
   }, [user, otherUserId])
+
+  const fetchUserRidesAndTrips = async () => {
+    if (!user) return
+
+    try {
+      // Fetch user's car rides
+      const { data: rides } = await supabase
+        .from('car_rides')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('departure_date_time', new Date().toISOString())
+        .order('departure_date_time')
+
+      // Fetch user's trips
+      const { data: trips } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('travel_date', new Date().toISOString().split('T')[0])
+        .order('travel_date')
+
+      setUserRides(rides || [])
+      setUserTrips(trips || [])
+    } catch (error) {
+      console.error('Error fetching user rides and trips:', error)
+    }
+  }
 
   useEffect(() => {
     scrollToBottom()
@@ -109,6 +141,44 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
       console.error('Send message error:', error)
     } finally {
       setSending(false)
+    }
+  }
+
+  const handleConfirmationSubmit = async (rideId: string | null, tripId: string | null) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          ride_id: rideId,
+          trip_id: tripId,
+          ride_owner_id: user.id,
+          passenger_id: otherUserId,
+          status: 'pending'
+        })
+
+      if (error) throw error
+
+      // Send system message to notify about confirmation request
+      const rideType = rideId ? 'car ride' : 'airport trip'
+      const systemMessage = `🚗 Ride confirmation request sent for your ${rideType}. Please wait for a response.`
+      
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: otherUserId,
+          message_content: systemMessage,
+          message_type: 'system',
+          is_read: false
+        })
+
+      setShowConfirmationModal(false)
+      fetchMessages()
+    } catch (error: any) {
+      console.error('Error creating confirmation:', error)
+      alert('Failed to send confirmation request. Please try again.')
     }
   }
 
@@ -211,11 +281,20 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
                       <div className={`max-w-xs sm:max-w-sm lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${
                         isOwn
                           ? 'bg-blue-600 text-white rounded-br-md'
-                          : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                          : message.message_type === 'system' 
+                            ? 'bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-bl-md'
+                            : 'bg-gray-100 text-gray-900 rounded-bl-md'
                       }`}>
+                        {message.message_type === 'system' && (
+                          <div className="flex items-center space-x-1 mb-1">
+                            <Clock size={12} className="text-yellow-600" />
+                            <span className="text-xs font-medium text-yellow-600">System</span>
+                          </div>
+                        )}
                         <p className="text-xs sm:text-sm leading-relaxed">{message.message_content}</p>
                         <p className={`text-xs mt-1 ${
-                          isOwn ? 'text-blue-100' : 'text-gray-500'
+                          isOwn ? 'text-blue-100' : 
+                          message.message_type === 'system' ? 'text-yellow-600' : 'text-gray-500'
                         }`}>
                           {formatTime(message.created_at)}
                         </p>
@@ -233,6 +312,19 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
+          {/* Confirmation Button */}
+          {(userRides.length > 0 || userTrips.length > 0) && (
+            <div className="mb-3 flex justify-center">
+              <button
+                onClick={() => setShowConfirmationModal(true)}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+              >
+                <Check size={16} />
+                <span>Send Ride Confirmation</span>
+              </button>
+            </div>
+          )}
+          
           <form onSubmit={sendMessage} className="flex items-center space-x-2 sm:space-x-4">
             <div className="flex-1">
               <input
@@ -254,6 +346,15 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
           </form>
         </div>
       </div>
+
+      <RideConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirmationSubmit}
+        rides={userRides}
+        trips={userTrips}
+        passengerName={otherUserName}
+      />
     </div>
   )
 }
