@@ -34,6 +34,7 @@ function AppContent() {
   const [selectedTripForChat, setSelectedTripForChat] = useState<Trip | null>(null)
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
+  const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
 
   // Check if user is visiting for the first time
   React.useEffect(() => {
@@ -66,6 +67,7 @@ function AppContent() {
     setSelectedTripForChat(null)
     setEditingTrip(null)
     setEditingRide(null)
+    setInitialProfileTab(undefined)
   }
 
   const handleEditTrip = (trip: Trip) => {
@@ -94,6 +96,10 @@ function AppContent() {
     setCurrentView('help')
   }
 
+  const handleViewConfirmations = () => {
+    setCurrentView('profile')
+    setInitialProfileTab('confirmations')
+  }
   const handleHowItWorks = () => {
     setCurrentView('how-it-works')
   }
@@ -149,6 +155,7 @@ function AppContent() {
                     onProfile={handleProfile}
                     onHelp={handleHelp}
                     onStartChat={handleStartChat}
+                    onViewConfirmations={handleViewConfirmations}
                   />
                 )
               case 'airport-dashboard':
@@ -160,6 +167,7 @@ function AppContent() {
                     onBack={() => setCurrentView('platform-selector')}
                     onHelp={() => setCurrentView('help')}
                     onStartChat={handleStartChat}
+                    onViewConfirmations={handleViewConfirmations}
                   />
                 )
               case 'car-dashboard':
@@ -170,6 +178,7 @@ function AppContent() {
                     onProfile={() => setCurrentView('profile')}
                     onBack={() => setCurrentView('platform-selector')}
                     onStartChat={handleStartChat}
+                    onViewConfirmations={handleViewConfirmations}
                   />
                 )
               case 'post-trip':
@@ -191,7 +200,7 @@ function AppContent() {
                   />
                 )
               case 'profile':
-                return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} />
+                return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} initialTab={initialProfileTab} />
               case 'help':
                 return <HelpPage onBack={handleBackToDashboard} />
               case 'how-it-works':
@@ -227,7 +236,7 @@ function AppContent() {
               default:
                 return <PlatformSelector onSelectPlatform={(platform) => 
                   setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-                } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} />
+                } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} onViewConfirmations={handleViewConfirmations} />
             }
           })()}
         </div>

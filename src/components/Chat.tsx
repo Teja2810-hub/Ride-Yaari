@@ -22,14 +22,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [sending, setSending] = useState(false)
   const [showConfirmationModal, setShowConfirmationModal] = useState(false)
   const [showSendConfirmationDisclaimer, setShowSendConfirmationDisclaimer] = useState(false)
-  const [userRides, setUserRides] = useState<any[]>([])
-  const [userTrips, setUserTrips] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user) {
       fetchMessages()
-      fetchUserRidesAndTrips()
       
       // Subscribe to new messages
       const subscription = supabase
@@ -56,32 +53,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }, [user, otherUserId])
 
-  const fetchUserRidesAndTrips = async () => {
-    if (!user) return
-
-    try {
-      // Fetch user's car rides
-      const { data: rides } = await supabase
-        .from('car_rides')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('departure_date_time', new Date().toISOString())
-        .order('departure_date_time')
-
-      // Fetch user's trips
-      const { data: trips } = await supabase
-        .from('trips')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('travel_date', new Date().toISOString().split('T')[0])
-        .order('travel_date')
-
-      setUserRides(rides || [])
-      setUserTrips(trips || [])
-    } catch (error) {
-      console.error('Error fetching user rides and trips:', error)
-    }
-  }
 
   useEffect(() => {
     scrollToBottom()
@@ -149,7 +120,17 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const handleShowConfirmationModal = () => {
-    setShowSendConfirmationDisclaimer(true)
+    // Check if user is requesting confirmation for a pre-selected ride/trip
+    const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
+                              (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
+    
+    if (isPassengerRequest) {
+      // Passenger requesting confirmation - show disclaimer first
+      setShowSendConfirmationDisclaimer(true)
+    } else {
+      // Owner sending confirmation - show modal directly
+      setShowConfirmationModal(true)
+    }
   }
 
   const handleConfirmSendConfirmation = () => {
@@ -157,17 +138,40 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setShowConfirmationModal(true)
   }
 
-  const handleConfirmationSubmit = async (rideId: string | null, tripId: string | null) => {
+  const handleConfirmationSubmit = async () => {
     if (!user) return
 
     try {
+      // Determine if this is a passenger request or owner confirmation
+      const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
+                                (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
+      
+      let rideId = null
+      let tripId = null
+      let rideOwnerId = user.id
+      let passengerId = otherUserId
+      
+      if (preSelectedRide) {
+        rideId = preSelectedRide.id
+        if (isPassengerRequest) {
+          rideOwnerId = preSelectedRide.user_id
+          passengerId = user.id
+        }
+      } else if (preSelectedTrip) {
+        tripId = preSelectedTrip.id
+        if (isPassengerRequest) {
+          rideOwnerId = preSelectedTrip.user_id
+          passengerId = user.id
+        }
+      }
+
       const { error } = await supabase
         .from('ride_confirmations')
         .insert({
           ride_id: rideId,
           trip_id: tripId,
-          ride_owner_id: user.id,
-          passenger_id: otherUserId,
+          ride_owner_id: rideOwnerId,
+          passenger_id: passengerId,
           status: 'pending'
         })
 
@@ -175,13 +179,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       // Send system message to notify about confirmation request
       const rideType = rideId ? 'car ride' : 'airport trip'
-      const systemMessage = `🚗 Ride confirmation request sent for your ${rideType}. Please wait for a response.`
+      const systemMessage = isPassengerRequest 
+        ? `🚗 Ride confirmation request sent for the ${rideType}. Please wait for a response.`
+        : `🚗 Ride confirmation request sent for your ${rideType}. Please wait for a response.`
       
       await supabase
         .from('chat_messages')
         .insert({
-          sender_id: user.id,
-          receiver_id: otherUserId,
+          sender_id: isPassengerRequest ? user.id : user.id,
+          receiver_id: isPassengerRequest ? rideOwnerId : passengerId,
           message_content: systemMessage,
           message_type: 'system',
           is_read: false
@@ -326,14 +332,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       <div className="bg-white border-t border-gray-200 p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
           {/* Confirmation Button */}
-          {(userRides.length > 0 || userTrips.length > 0) && (
+          {(preSelectedRide || preSelectedTrip) && (
             <div className="mb-3 flex justify-center">
               <button
                 onClick={handleShowConfirmationModal}
                 className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
               >
                 <Check size={16} />
-                <span>Send Ride Confirmation</span>
+                <span>
+                  {((preSelectedRide && preSelectedRide.user_id !== user?.id) || 
+                    (preSelectedTrip && preSelectedTrip.user_id !== user?.id))
+                    ? 'Request Ride Confirmation'
+                    : 'Send Ride Confirmation'
+                  }
+                </span>
               </button>
             </div>
           )}
@@ -364,8 +376,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         isOpen={showConfirmationModal}
         onClose={() => setShowConfirmationModal(false)}
         onConfirm={handleConfirmationSubmit}
-        rides={userRides}
-        trips={userTrips}
         passengerName={otherUserName}
         preSelectedRide={preSelectedRide}
         preSelectedTrip={preSelectedTrip}
@@ -378,16 +388,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         loading={false}
         type="ride-confirmation"
         content={{
-          title: 'Send Ride Confirmation Request',
+          title: 'Request Ride Confirmation',
           points: [
-            'This will send a formal request to join the selected ride or trip',
-            'The ride owner will be notified and can accept or reject your request',
+            'This will send a formal request to join this ride or trip',
+            'The ride/trip owner will be notified and can accept or reject your request',
             'You can only send one confirmation request per ride or trip',
             'Make sure you have discussed the details in chat before sending',
             'Once accepted, you are committed to the agreed arrangements',
             'Canceling after acceptance may affect your reputation on the platform'
           ],
-          explanation: 'A ride confirmation request is a formal way to request a spot in someone\'s ride or trip. Only send this when you are serious about joining and have agreed on the details.'
+          explanation: 'A ride confirmation request is a formal way to request a spot in this ride or trip. Only send this when you are serious about joining and have agreed on the details.'
         }}
       />
     </div>

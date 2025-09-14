@@ -12,11 +12,12 @@ interface UserProfileProps {
   onStartChat: (userId: string, userName: string) => void
   onEditTrip: (trip: Trip) => void
   onEditRide: (ride: CarRide) => void
+  initialTab?: string
 }
 
-export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide }: UserProfileProps) {
+export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab }: UserProfileProps) {
   const { user, userProfile, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'review'>(initialTab as any || 'profile')
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
@@ -40,6 +41,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
+  // Update active tab when initialTab changes
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab as any)
+    }
+  }, [initialTab])
   useEffect(() => {
     if (userProfile) {
       setFullName(userProfile.full_name)

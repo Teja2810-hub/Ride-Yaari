@@ -31,6 +31,9 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
     setLoading(true)
 
     try {
+      // Get current date to filter out past trips
+      const now = new Date().toISOString().split('T')[0]
+      
       let query = supabase
         .from('trips')
         .select(`
@@ -58,6 +61,9 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
       } else if (!searchByMonth && travelDate) {
         query = query.eq('travel_date', travelDate)
       }
+
+      // Always filter for future trips
+      query = query.gte('travel_date', now)
 
       const { data, error } = await query.order('travel_date')
 

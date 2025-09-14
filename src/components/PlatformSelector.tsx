@@ -3,15 +3,17 @@ import { Plane, Car, ArrowRight, User, HelpCircle, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
+import ConfirmationsNotification from './ConfirmationsNotification'
 
 interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
   onProfile: () => void
   onHelp: () => void
   onStartChat: (userId: string, userName: string) => void
+  onViewConfirmations: () => void
 }
 
-export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat }: PlatformSelectorProps) {
+export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations }: PlatformSelectorProps) {
   const { userProfile, signOut } = useAuth()
 
   return (
@@ -30,6 +32,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
               <span>Help</span>
             </button>
             <MessagesNotification onStartChat={onStartChat} />
+            <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
             <button
               onClick={onProfile}
               className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"

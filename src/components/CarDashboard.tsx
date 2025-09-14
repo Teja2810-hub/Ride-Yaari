@@ -3,6 +3,7 @@ import { Car, PlusCircle, Search, LogOut, User, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
+import ConfirmationsNotification from './ConfirmationsNotification'
 
 interface CarDashboardProps {
   onPostRide: () => void
@@ -10,9 +11,10 @@ interface CarDashboardProps {
   onProfile: () => void
   onBack: () => void
   onStartChat?: (userId: string, userName: string) => void
+  onViewConfirmations: () => void
 }
 
-export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack, onStartChat }: CarDashboardProps) {
+export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack, onStartChat, onViewConfirmations }: CarDashboardProps) {
   const { userProfile, signOut } = useAuth()
 
   return (
@@ -32,6 +34,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
             {onStartChat && (
               <MessagesNotification onStartChat={onStartChat} />
             )}
+            <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
             <button
               onClick={onProfile}
               className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"

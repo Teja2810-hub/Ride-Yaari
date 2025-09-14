@@ -3,6 +3,7 @@ import { Plane, PlusCircle, Search, LogOut, User, ArrowLeft, HelpCircle, Message
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
+import ConfirmationsNotification from './ConfirmationsNotification'
 
 interface DashboardProps {
   onPostTrip: () => void
@@ -11,9 +12,10 @@ interface DashboardProps {
   onBack: () => void
   onHelp: () => void
   onStartChat?: (userId: string, userName: string) => void
+  onViewConfirmations: () => void
 }
 
-export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, onHelp, onStartChat }: DashboardProps) {
+export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations }: DashboardProps) {
   const { userProfile, signOut } = useAuth()
 
   return (
@@ -40,6 +42,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
             {onStartChat && (
               <MessagesNotification onStartChat={onStartChat} />
             )}
+            <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
             <button
               onClick={onProfile}
               className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
