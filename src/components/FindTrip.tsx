@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, AlertTriangle, DollarSign } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Trip } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
+import { getCurrencySymbol } from '../utils/currencies'
 
 interface FindTripProps {
   onBack: () => void
@@ -303,6 +304,27 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                             </div>
                           </div>
                         </div>
+
+                        {trip.price && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center space-x-4">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Service Price</p>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-semibold text-green-600 flex items-center">
+                                    <DollarSign size={16} className="mr-1" />
+                                    {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                  </span>
+                                  {trip.negotiable && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                      Negotiable
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="ml-6">

@@ -940,8 +940,15 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
 
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Price</p>
-                            <div className="font-semibold text-green-600 flex items-center">
-                              {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                            <div className="flex items-center space-x-2">
+                              <span className="font-semibold text-green-600 flex items-center">
+                                {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                              </span>
+                              {ride.negotiable && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                  Negotiable
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

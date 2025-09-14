@@ -24,6 +24,7 @@ export default function PostRide({ onBack }: PostRideProps) {
   const [departureDateTime, setDepartureDateTime] = useState('')
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState('USD')
+  const [negotiable, setNegotiable] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -57,6 +58,7 @@ export default function PostRide({ onBack }: PostRideProps) {
           departure_date_time: new Date(departureDateTime).toISOString(),
           price: parseFloat(price),
           currency: currency,
+          negotiable: negotiable,
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,
@@ -74,6 +76,7 @@ export default function PostRide({ onBack }: PostRideProps) {
       setDepartureDateTime('')
       setPrice('')
       setCurrency('USD')
+      setNegotiable(false)
     } catch (error: any) {
       console.error('Error posting ride:', error)
       setError(error.message)
@@ -279,6 +282,19 @@ export default function PostRide({ onBack }: PostRideProps) {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 mb-6">
+              <input
+                type="checkbox"
+                id="negotiable"
+                checked={negotiable}
+                onChange={(e) => setNegotiable(e.target.checked)}
+                className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+              />
+              <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
+                Price is negotiable
+              </label>
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">

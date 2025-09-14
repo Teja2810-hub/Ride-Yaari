@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Send, Clock, AlertTriangle, Globe } from 'lucide-react'
+import { ArrowLeft, Calendar, Send, Clock, AlertTriangle, Globe, DollarSign } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { timezones, getDefaultTimezone } from '../utils/timezones'
+import { currencies, getCurrencySymbol } from '../utils/currencies'
 
 interface PostTripProps {
   onBack: () => void
@@ -21,6 +22,9 @@ export default function PostTrip({ onBack }: PostTripProps) {
   const [timezone, setTimezone] = useState(getDefaultTimezone())
   const [departureTimezone, setDepartureTimezone] = useState(getDefaultTimezone())
   const [landingTimezone, setLandingTimezone] = useState(getDefaultTimezone())
+  const [price, setPrice] = useState('')
+  const [currency, setCurrency] = useState('USD')
+  const [negotiable, setNegotiable] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -49,6 +53,9 @@ export default function PostTrip({ onBack }: PostTripProps) {
           departure_time: departureTime || null,
           landing_date: landingDate || null,
           landing_time: landingTime || null,
+          price: price ? parseFloat(price) : null,
+          currency: price ? currency : null,
+          negotiable: price ? negotiable : false,
         })
 
       if (error) throw error
@@ -62,6 +69,9 @@ export default function PostTrip({ onBack }: PostTripProps) {
       setLandingDate('')
       setLandingTime('')
       setTimezone(getDefaultTimezone())
+      setPrice('')
+      setCurrency('USD')
+      setNegotiable(false)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -247,6 +257,68 @@ export default function PostTrip({ onBack }: PostTripProps) {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Optional - specify if you want to share exact timing</p>
               </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-3">💰 Service Pricing (Optional)</h3>
+              <p className="text-sm text-blue-800 mb-4">
+                Set a price for your airport assistance service. This could be for package delivery, 
+                travel assistance, or companionship services.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Service Price
+                  </label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Leave empty if offering free assistance</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Currency
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    disabled={!price}
+                  >
+                    {currencies.map((curr) => (
+                      <option key={curr.code} value={curr.code}>
+                        {curr.symbol} {curr.code} - {curr.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {price && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="negotiable"
+                    checked={negotiable}
+                    onChange={(e) => setNegotiable(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
+                    Price is negotiable
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -25,6 +25,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
   const [departureDateTime, setDepartureDateTime] = useState('')
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState('USD')
+  const [negotiable, setNegotiable] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -46,6 +47,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
     setDepartureDateTime(ride.departure_date_time.slice(0, 16)) // Format for datetime-local
     setPrice(ride.price.toString())
     setCurrency(ride.currency || 'USD')
+    setNegotiable(ride.negotiable || false)
     
     // Initialize intermediate stops if they exist
     if (ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
@@ -79,6 +81,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
           departure_date_time: new Date(departureDateTime).toISOString(),
           price: parseFloat(price),
           currency: currency,
+          negotiable: negotiable,
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,
@@ -276,6 +279,19 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 mb-6">
+              <input
+                type="checkbox"
+                id="negotiable"
+                checked={negotiable}
+                onChange={(e) => setNegotiable(e.target.checked)}
+                className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+              />
+              <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
+                Price is negotiable
+              </label>
             </div>
 
             <div className="flex space-x-4">

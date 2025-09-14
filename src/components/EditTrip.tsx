@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, Send, Clock, Globe, Save } from 'lucide-react'
+import { ArrowLeft, Calendar, Send, Clock, Globe, Save, DollarSign } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import AirportAutocomplete from './AirportAutocomplete'
 import { timezones, getDefaultTimezone } from '../utils/timezones'
+import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { Trip } from '../types'
 
 interface EditTripProps {
@@ -21,9 +22,25 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
   const [landingTime, setLandingTime] = useState(trip.landing_time || '')
   const [departureTimezone, setDepartureTimezone] = useState(getDefaultTimezone())
   const [landingTimezone, setLandingTimezone] = useState(getDefaultTimezone())
+  const [price, setPrice] = useState('')
+  const [currency, setCurrency] = useState('USD')
+  const [negotiable, setNegotiable] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    // Initialize form with existing trip data
+    setLeavingAirport(trip.leaving_airport)
+    setDestinationAirport(trip.destination_airport)
+    setTravelDate(trip.travel_date)
+    setDepartureTime(trip.departure_time || '')
+    setLandingDate(trip.landing_date || '')
+    setLandingTime(trip.landing_time || '')
+    setPrice(trip.price ? trip.price.toString() : '')
+    setCurrency(trip.currency || 'USD')
+    setNegotiable(trip.negotiable || false)
+  }, [trip])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +59,9 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
           departure_time: departureTime || null,
           landing_date: landingDate || null,
           landing_time: landingTime || null,
+          price: price ? parseFloat(price) : null,
+          currency: price ? currency : null,
+          negotiable: price ? negotiable : false,
         })
         .eq('id', trip.id)
 
@@ -222,6 +242,66 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Optional - specify if you want to share exact timing</p>
               </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-3">💰 Service Pricing (Optional)</h3>
+              <p className="text-sm text-blue-800 mb-4">
+                Set a price for your airport assistance service. Leave empty if offering free assistance.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Service Price
+                  </label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Currency
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    disabled={!price}
+                  >
+                    {currencies.map((curr) => (
+                      <option key={curr.code} value={curr.code}>
+                        {curr.symbol} {curr.code} - {curr.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {price && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="negotiable"
+                    checked={negotiable}
+                    onChange={(e) => setNegotiable(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
+                    Price is negotiable
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="flex space-x-4">

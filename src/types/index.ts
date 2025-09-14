@@ -23,6 +23,9 @@ export interface Trip {
   departure_time?: string
   landing_date?: string
   landing_time?: string
+  price?: number
+  currency?: string
+  negotiable?: boolean
   created_at: string
   user_profiles?: UserProfile
   leaving_airport_info?: Airport
@@ -51,6 +54,7 @@ export interface CarRide {
   departure_date_time: string
   price: number
   currency?: string
+  negotiable?: boolean
   created_at: string
   user_profiles?: UserProfile
   intermediate_stops?: { address: string; latitude: number | null; longitude: number | null; }[]

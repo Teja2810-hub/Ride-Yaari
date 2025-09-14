@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { Trip, CarRide, ChatMessage } from '../types'
 import ReviewForm from './ReviewForm'
+import { getCurrencySymbol } from '../utils/currencies'
 
 interface UserProfileProps {
   onBack: () => void
@@ -647,6 +648,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                                 Departure: {trip.departure_time}
                               </div>
                             )}
+                            {trip.price && (
+                              <div className="text-xs sm:text-sm text-green-600 font-medium">
+                                Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                {trip.negotiable && ' (Negotiable)'}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -695,7 +702,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                           </div>
                           <div>
                             <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
-                            <div className="font-semibold text-green-600 text-sm sm:text-base">${ride.price}</div>
+                            <div className="font-semibold text-green-600 text-sm sm:text-base">
+                              {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                              {ride.negotiable && ' (Negotiable)'}
+                            </div>
                           </div>
                         </div>
                       </div>
