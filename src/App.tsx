@@ -18,6 +18,7 @@ import Footer from './components/Footer'
 import HowItWorksPage from './components/HowItWorksPage'
 import ReviewsPage from './components/ReviewsPage'
 import { Trip, CarRide } from './types'
+import WhatsAppChatButton from './components/WhatsAppChatButton'
 
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews'
 
@@ -117,94 +118,93 @@ function AppContent() {
       <div className="min-h-screen flex flex-col">
         <div className="flex-1">
           {(() => {
-        switch (currentView) {
-          case 'platform-selector':
-            return (
-              <PlatformSelector 
-                onSelectPlatform={(platform) => 
+            switch (currentView) {
+              case 'platform-selector':
+                return (
+                  <PlatformSelector 
+                    onSelectPlatform={(platform) => 
+                      setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
+                    }
+                    onProfile={handleProfile}
+                    onHelp={handleHelp}
+                    onStartChat={handleStartChat}
+                  />
+                )
+              case 'airport-dashboard':
+                return (
+                  <Dashboard
+                    onPostTrip={() => setCurrentView('post-trip')}
+                    onFindTrip={() => setCurrentView('find-trip')}
+                    onProfile={() => setCurrentView('profile')}
+                    onBack={() => setCurrentView('platform-selector')}
+                    onHelp={() => setCurrentView('help')}
+                    onStartChat={handleStartChat}
+                  />
+                )
+              case 'car-dashboard':
+                return (
+                  <CarDashboard
+                    onPostRide={() => setCurrentView('post-ride')}
+                    onFindRide={() => setCurrentView('find-ride')}
+                    onProfile={() => setCurrentView('profile')}
+                    onBack={() => setCurrentView('platform-selector')}
+                    onStartChat={handleStartChat}
+                  />
+                )
+              case 'post-trip':
+                return <PostTrip onBack={handleBackToAirportDashboard} />
+              case 'find-trip':
+                return (
+                  <FindTrip 
+                    onBack={handleBackToAirportDashboard} 
+                    onStartChat={handleStartChat}
+                  />
+                )
+              case 'post-ride':
+                return <PostRide onBack={handleBackToCarDashboard} />
+              case 'find-ride':
+                return (
+                  <FindRide 
+                    onBack={handleBackToCarDashboard} 
+                    onStartChat={handleStartChat}
+                  />
+                )
+              case 'profile':
+                return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} />
+              case 'help':
+                return <HelpPage onBack={handleBackToDashboard} />
+              case 'how-it-works':
+                return <HowItWorksPage onBack={handleBackToDashboard} />
+              case 'reviews':
+                return <ReviewsPage onBack={handleBackToDashboard} />
+              case 'chat':
+                return (
+                  <Chat
+                    onBack={handleBackToDashboard}
+                    otherUserId={chatUserId}
+                    otherUserName={chatUserName}
+                  />
+                )
+              case 'edit-trip':
+                return editingTrip ? (
+                  <EditTrip onBack={handleBackToDashboard} trip={editingTrip} />
+                ) : (
+                  <div>Error: No trip to edit</div>
+                )
+              case 'edit-ride':
+                return editingRide ? (
+                  <EditRide onBack={handleBackToDashboard} ride={editingRide} />
+                ) : (
+                  <div>Error: No ride to edit</div>
+                )
+              default:
+                return <PlatformSelector onSelectPlatform={(platform) => 
                   setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-                }
-                onProfile={handleProfile}
-                onHelp={handleHelp}
-                onStartChat={handleStartChat}
-              />
-            )
-          case 'airport-dashboard':
-            return (
-              <Dashboard
-                onPostTrip={() => setCurrentView('post-trip')}
-                onFindTrip={() => setCurrentView('find-trip')}
-                onProfile={() => setCurrentView('profile')}
-                onBack={() => setCurrentView('platform-selector')}
-                onHelp={() => setCurrentView('help')}
-                onStartChat={handleStartChat}
-              />
-            )
-          case 'car-dashboard':
-            return (
-              <CarDashboard
-                onPostRide={() => setCurrentView('post-ride')}
-                onFindRide={() => setCurrentView('find-ride')}
-                onProfile={() => setCurrentView('profile')}
-                onBack={() => setCurrentView('platform-selector')}
-                onStartChat={handleStartChat}
-              />
-            )
-          case 'post-trip':
-            return <PostTrip onBack={handleBackToAirportDashboard} />
-          case 'find-trip':
-            return (
-              <FindTrip 
-                onBack={handleBackToAirportDashboard} 
-                onStartChat={handleStartChat}
-              />
-            )
-          case 'post-ride':
-            return <PostRide onBack={handleBackToCarDashboard} />
-          case 'find-ride':
-            return (
-              <FindRide 
-                onBack={handleBackToCarDashboard} 
-                onStartChat={handleStartChat}
-              />
-            )
-          case 'profile':
-            return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} />
-          case 'help':
-            return <HelpPage onBack={handleBackToDashboard} />
-          case 'how-it-works':
-            return <HowItWorksPage onBack={handleBackToDashboard} />
-          case 'reviews':
-            return <ReviewsPage onBack={handleBackToDashboard} />
-          case 'chat':
-            return (
-              <Chat
-                onBack={handleBackToDashboard}
-                otherUserId={chatUserId}
-                otherUserName={chatUserName}
-              />
-            )
-          case 'edit-trip':
-            return editingTrip ? (
-              <EditTrip onBack={handleBackToDashboard} trip={editingTrip} />
-            ) : (
-              <div>Error: No trip to edit</div>
-            )
-          case 'edit-ride':
-            return editingRide ? (
-              <EditRide onBack={handleBackToDashboard} ride={editingRide} />
-            ) : (
-              <div>Error: No ride to edit</div>
-            )
-          default:
-            return <PlatformSelector onSelectPlatform={(platform) => 
-              setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-            } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} />
-        }
+                } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} />
+            }
           })()}
         </div>
-        
-        {/* Footer - only show on main pages, not on auth or specific flows */}
+        {/* Footer */}
         {user && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
           <Footer 
             onHelp={handleHelp}
@@ -213,6 +213,7 @@ function AppContent() {
           />
         )}
       </div>
+      <WhatsAppChatButton />
     </>
   )
 }

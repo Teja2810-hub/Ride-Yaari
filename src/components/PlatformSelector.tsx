@@ -202,7 +202,12 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           
           {/* Call to Action */}
           <div className="text-center">
-            <button className="btn-primary text-lg px-12 py-4">
+            <button
+              className="btn-primary text-lg px-12 py-4"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
               Get Started Today
             </button>
           </div>

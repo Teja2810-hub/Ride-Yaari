@@ -217,17 +217,8 @@ export default function AuthForm() {
                       <span className="text-gray-600">📞</span>
                     </div>
                     <div>
-                      <p className="font-medium">Phone Support</p>
-                      <p className="text-gray-600">CALL</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <span className="text-gray-600">💬</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">Live Chat</p>
-                      <p className="text-gray-600">Available 24/7 on our website</p>
+                      <p className="font-medium">Whatsapp Support</p>
+                      <p className="text-gray-600">+917093203981</p>
                     </div>
                   </div>
                 </div>

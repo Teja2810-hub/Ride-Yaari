@@ -153,28 +153,33 @@ export default function HelpPage({ onBack }: HelpPageProps) {
           {/* Contact Information */}
           <div className="border-t border-gray-200 pt-6 sm:pt-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">Other Ways to Reach Us</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              <div className="text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 justify-center items-center mx-auto max-w-xl">
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=support@rideyaari.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center hover:bg-blue-50 rounded-xl transition-colors cursor-pointer p-2"
+                aria-label="Email Support"
+              >
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
                   <Mail size={20} className="sm:w-6 sm:h-6 text-blue-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Email Support</h3>
                 <p className="text-gray-600 text-xs sm:text-sm">support@rideyaari.com</p>
-              </div>
-              <div className="text-center">
+              </a>
+              <a
+                href="https://wa.me/917093203981?text=Hi%2C%20I%20need%20help"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center hover:bg-green-50 rounded-xl transition-colors cursor-pointer p-2"
+                aria-label="WhatsApp Support"
+              >
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
                   <Phone size={20} className="sm:w-6 sm:h-6 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Phone Support</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">CALL</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                  <MessageSquare size={20} className="sm:w-6 sm:h-6 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Live Chat</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">Available 24/7</p>
-              </div>
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Whatsapp Support</h3>
+                <p className="text-gray-600 text-xs sm:text-sm">+917093203981</p>
+              </a>
             </div>
           </div>
         </div>

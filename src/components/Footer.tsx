@@ -29,21 +29,30 @@ export default function Footer({ onHelp, onReviews, onHowItWorks }: FooterProps)
             <h4 className="font-semibold text-gray-900 mb-4">Quick Links</h4>
             <div className="space-y-3">
               <button
-                onClick={onHowItWorks}
+                onClick={() => {
+                  onHowItWorks();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors text-sm"
               >
                 <Info size={16} />
                 <span>How It Works</span>
               </button>
               <button
-                onClick={onReviews}
+                onClick={() => {
+                  onReviews();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors text-sm"
               >
                 <Star size={16} />
                 <span>Reviews</span>
               </button>
               <button
-                onClick={onHelp}
+                onClick={() => {
+                  onHelp();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors text-sm"
               >
                 <HelpCircle size={16} />

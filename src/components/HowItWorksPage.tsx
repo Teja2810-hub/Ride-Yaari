@@ -216,7 +216,10 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
                 Join thousands of travelers who trust RideYaari for safe, affordable, and convenient connections
               </p>
               <button
-                onClick={onBack}
+                onClick={() => {
+                  window.location.href = '/';
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
               >
                 Get Started Now
