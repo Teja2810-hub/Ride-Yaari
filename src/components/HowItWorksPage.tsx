@@ -198,7 +198,7 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="w-2 h-2 bg-purple-500 rounded-full mt-2"></span>
-                  <span>Free to use forever</span>
+                  <span>Free to use</span>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="w-2 h-2 bg-purple-500 rounded-full mt-2"></span>

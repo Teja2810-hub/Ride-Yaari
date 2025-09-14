@@ -83,7 +83,7 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
             </p>
             <div className="flex items-center space-x-2 text-sm text-red-500">
               <Heart size={16} />
-              <span>Free to use forever</span>
+              <span>Free to use</span>
             </div>
           </div>
         </div>
