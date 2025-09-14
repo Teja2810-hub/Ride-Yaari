@@ -961,13 +961,18 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                             <span>Your Ride</span>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown')}
-                            className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                          >
-                            <MessageCircle size={20} />
-                            <span>Contact Driver</span>
-                          </button>
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown')}
+                              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Driver</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Chat first, then request confirmation
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>

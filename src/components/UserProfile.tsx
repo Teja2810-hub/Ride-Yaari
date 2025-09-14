@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X } from 'lucide-react'
+import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X, Car, Plane, Check, Clock, MapPin } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { Trip, CarRide, ChatMessage } from '../types'
+import { Trip, CarRide, ChatMessage, RideConfirmation } from '../types'
 import ReviewForm from './ReviewForm'
 import { getCurrencySymbol } from '../utils/currencies'
+import RideConfirmationActions from './RideConfirmationActions'
 
 interface UserProfileProps {
   onBack: () => void
@@ -15,11 +16,14 @@ interface UserProfileProps {
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide }: UserProfileProps) {
   const { user, userProfile, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'trips' | 'rides' | 'chats'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations'>('profile')
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
   const [chats, setChats] = useState<ChatMessage[]>([])
+  const [ridesPosted, setRidesPosted] = useState<{ carRides: CarRide[], airportTrips: Trip[] }>({ carRides: [], airportTrips: [] })
+  const [ridesTaken, setRidesTaken] = useState<{ carRides: any[], airportTrips: any[] }>({ carRides: [], airportTrips: [] })
+  const [pendingConfirmations, setPendingConfirmations] = useState<RideConfirmation[]>([])
   
   // Profile form state
   const [fullName, setFullName] = useState(userProfile?.full_name || '')
@@ -48,55 +52,147 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }, [userProfile])
 
   useEffect(() => {
-    if (activeTab === 'trips') {
-      fetchUserTrips()
-    } else if (activeTab === 'rides') {
-      fetchUserRides()
+    if (activeTab === 'rides-posted') {
+      fetchRidesPosted()
+    } else if (activeTab === 'rides-taken') {
+      fetchRidesTaken()
     } else if (activeTab === 'chats') {
       fetchUserChats()
+    } else if (activeTab === 'confirmations') {
+      fetchPendingConfirmations()
     }
   }, [activeTab])
 
-  const fetchUserTrips = async () => {
+  const fetchRidesPosted = async () => {
     if (!user) return
     
-    const { data, error } = await supabase
+    // Fetch car rides posted by user
+    const { data: carRides } = await supabase
+      .from('car_rides')
+      .select(`
+        *,
+        ride_confirmations!ride_confirmations_ride_id_fkey (
+          id,
+          passenger_id,
+          status,
+          confirmed_at,
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('departure_date_time', { ascending: false })
+
+    // Fetch airport trips posted by user
+    const { data: airportTrips } = await supabase
       .from('trips')
       .select(`
         *,
-        leaving_airport_info:airports!trips_leaving_airport_fkey (
-          code,
-          name,
-          city,
-          country
-        ),
-        destination_airport_info:airports!trips_destination_airport_fkey (
-          code,
-          name,
-          city,
-          country
+        ride_confirmations!ride_confirmations_trip_id_fkey (
+          id,
+          passenger_id,
+          status,
+          confirmed_at,
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
         )
       `)
       .eq('user_id', user.id)
       .order('travel_date', { ascending: false })
 
-    if (!error && data) {
-      setTrips(data)
-    }
+    setRidesPosted({
+      carRides: carRides || [],
+      airportTrips: airportTrips || []
+    })
   }
 
-  const fetchUserRides = async () => {
+  const fetchRidesTaken = async () => {
     if (!user) return
     
-    const { data, error } = await supabase
-      .from('car_rides')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('departure_date_time', { ascending: false })
+    // Fetch car rides user has been accepted to
+    const { data: carRides } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        car_rides!ride_confirmations_ride_id_fkey (
+          *,
+          user_profiles!car_rides_user_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        )
+      `)
+      .eq('passenger_id', user.id)
+      .eq('status', 'accepted')
+      .not('ride_id', 'is', null)
+      .order('confirmed_at', { ascending: false })
 
-    if (!error && data) {
-      setRides(data)
-    }
+    // Fetch airport trips user has been accepted to
+    const { data: airportTrips } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        trips!ride_confirmations_trip_id_fkey (
+          *,
+          user_profiles!trips_user_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        )
+      `)
+      .eq('passenger_id', user.id)
+      .eq('status', 'accepted')
+      .not('trip_id', 'is', null)
+      .order('confirmed_at', { ascending: false })
+
+    setRidesTaken({
+      carRides: carRides || [],
+      airportTrips: airportTrips || []
+    })
+  }
+
+  const fetchPendingConfirmations = async () => {
+    if (!user) return
+    
+    const { data } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          id,
+          full_name,
+          profile_image_url
+        ),
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          from_location,
+          to_location,
+          departure_date_time,
+          price,
+          currency
+        ),
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          leaving_airport,
+          destination_airport,
+          travel_date,
+          price,
+          currency
+        )
+      `)
+      .eq('ride_owner_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    setPendingConfirmations(data || [])
   }
 
   const fetchUserChats = async () => {
@@ -355,9 +451,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             <nav className="flex overflow-x-auto whitespace-nowrap px-4 sm:px-8 scrollbar-hide">
               {[
                 { id: 'profile', label: 'Profile Settings', icon: User },
-                { id: 'trips', label: 'My Trips', icon: Calendar },
-                { id: 'rides', label: 'My Rides', icon: Calendar },
+                { id: 'rides-posted', label: 'Rides Posted', icon: Calendar },
+                { id: 'rides-taken', label: 'Rides Taken', icon: Users },
                 { id: 'chats', label: 'Conversations', icon: Users },
+                { id: 'confirmations', label: 'Confirmations', icon: Check },
                 { id: 'review', label: 'Submit Review', icon: Users }
               ].map(({ id, label, icon: Icon }) => (
                 <button
@@ -597,118 +694,280 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
-            {activeTab === 'trips' && (
+            {activeTab === 'rides-posted' && (
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">My Airport Trips</h2>
-                {trips.length === 0 ? (
-                  <div className="text-center py-8 sm:py-12">
-                    <Calendar size={32} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No trips posted yet</h3>
-                    <p className="text-sm sm:text-base text-gray-600">Start sharing your flight itinerary to help other travelers</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {trips.map((trip) => (
-                      <div key={trip.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Trip Details</h3>
-                          <button
-                            onClick={() => onEditTrip(trip)}
-                            className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
-                          >
-                            Edit Trip
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {trip.leaving_airport_info?.code}
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-600">
-                              {trip.leaving_airport_info?.city}, {trip.leaving_airport_info?.country}
-                            </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Rides Posted</h2>
+                
+                {/* Car Rides Posted */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Car size={20} className="mr-2 text-green-600" />
+                    Car Rides ({ridesPosted.carRides.length})
+                  </h3>
+                  {ridesPosted.carRides.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No car rides posted yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesPosted.carRides.map((ride) => (
+                        <div key={ride.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Car Ride</h4>
+                            <button
+                              onClick={() => onEditRide(ride)}
+                              className="text-green-600 hover:text-green-700 font-medium text-xs sm:text-sm"
+                            >
+                              Edit Ride
+                            </button>
                           </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {trip.destination_airport_info?.code}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.from_location}</div>
                             </div>
-                            <div className="text-xs sm:text-sm text-gray-600">
-                              {trip.destination_airport_info?.city}, {trip.destination_airport_info?.country}
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.to_location}</div>
                             </div>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {formatDate(trip.travel_date)}
-                            </div>
-                            {trip.departure_time && (
-                              <div className="text-xs sm:text-sm text-gray-600">
-                                Departure: {trip.departure_time}
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {formatDateTime(ride.departure_date_time)}
                               </div>
-                            )}
-                            {trip.price && (
-                              <div className="text-xs sm:text-sm text-green-600 font-medium">
-                                Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                                {trip.negotiable && ' (Negotiable)'}
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                              <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
                               </div>
-                            )}
+                            </div>
                           </div>
+                          
+                          {/* Accepted Passengers */}
+                          {ride.ride_confirmations && ride.ride_confirmations.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">
+                                Accepted Passengers ({ride.ride_confirmations.filter((c: any) => c.status === 'accepted').length})
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {ride.ride_confirmations
+                                  .filter((confirmation: any) => confirmation.status === 'accepted')
+                                  .map((confirmation: any) => (
+                                    <div key={confirmation.id} className="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
+                                      <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-medium">
+                                          {confirmation.user_profiles.full_name.charAt(0)}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm text-green-800">{confirmation.user_profiles.full_name}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Airport Trips Posted */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Plane size={20} className="mr-2 text-blue-600" />
+                    Airport Trips ({ridesPosted.airportTrips.length})
+                  </h3>
+                  {ridesPosted.airportTrips.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No airport trips posted yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesPosted.airportTrips.map((trip) => (
+                        <div key={trip.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Airport Trip</h4>
+                            <button
+                              onClick={() => onEditTrip(trip)}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
+                            >
+                              Edit Trip
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.leaving_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.destination_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {formatDate(trip.travel_date)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Accepted Passengers */}
+                          {trip.ride_confirmations && trip.ride_confirmations.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">
+                                Accepted Passengers ({trip.ride_confirmations.filter((c: any) => c.status === 'accepted').length})
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {trip.ride_confirmations
+                                  .filter((confirmation: any) => confirmation.status === 'accepted')
+                                  .map((confirmation: any) => (
+                                    <div key={confirmation.id} className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+                                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-medium">
+                                          {confirmation.user_profiles.full_name.charAt(0)}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm text-blue-800">{confirmation.user_profiles.full_name}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {activeTab === 'rides' && (
+            {activeTab === 'rides-taken' && (
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">My Car Rides</h2>
-                {rides.length === 0 ? (
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Rides Taken</h2>
+                
+                {/* Car Rides Taken */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Car size={20} className="mr-2 text-green-600" />
+                    Car Rides ({ridesTaken.carRides.length})
+                  </h3>
+                  {ridesTaken.carRides.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No car rides taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.carRides.map((confirmation) => {
+                        const ride = confirmation.car_rides
+                        return (
+                          <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Car Ride with {ride.user_profiles.full_name}</h4>
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                Confirmed
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.from_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.to_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDateTime(ride.departure_date_time)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Confirmed</p>
+                                <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                  {formatDate(confirmation.confirmed_at)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Airport Trips Taken */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Plane size={20} className="mr-2 text-blue-600" />
+                    Airport Trips ({ridesTaken.airportTrips.length})
+                  </h3>
+                  {ridesTaken.airportTrips.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No airport trips taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.airportTrips.map((confirmation) => {
+                        const trip = confirmation.trips
+                        return (
+                          <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Airport Trip with {trip.user_profiles.full_name}</h4>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                Confirmed
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.leaving_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.destination_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDate(trip.travel_date)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Confirmed</p>
+                                <div className="font-semibold text-blue-600 text-sm sm:text-base">
+                                  {formatDate(confirmation.confirmed_at)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'confirmations' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Pending Confirmations</h2>
+                {pendingConfirmations.length === 0 ? (
                   <div className="text-center py-8 sm:py-12">
-                    <Calendar size={32} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No rides posted yet</h3>
-                    <p className="text-sm sm:text-base text-gray-600">Start offering rides to help other travelers save money</p>
+                    <Clock size={32} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No pending confirmations</h3>
+                    <p className="text-sm sm:text-base text-gray-600">Passenger confirmation requests will appear here</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {rides.map((ride) => (
-                      <div key={ride.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Ride Details</h3>
-                          <button
-                            onClick={() => onEditRide(ride)}
-                            className="text-green-600 hover:text-green-700 font-medium text-xs sm:text-sm"
-                          >
-                            Edit Ride
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.from_location}</div>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.to_location}</div>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
-                            <div className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {formatDateTime(ride.departure_date_time)}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
-                            <div className="font-semibold text-green-600 text-sm sm:text-base">
-                              {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
-                              {ride.negotiable && ' (Negotiable)'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    {pendingConfirmations.map((confirmation) => (
+                      <RideConfirmationActions
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchPendingConfirmations}
+                        onStartChat={onStartChat}
+                      />
                     ))}
                   </div>
                 )}

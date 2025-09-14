@@ -94,3 +94,18 @@ export interface Review {
   review_content: string
   created_at: string
 }
+
+export interface RideConfirmation {
+  id: string
+  ride_id?: string
+  trip_id?: string
+  ride_owner_id: string
+  passenger_id: string
+  status: 'pending' | 'accepted' | 'rejected'
+  confirmed_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles: UserProfile
+  car_rides?: CarRide
+  trips?: Trip
+}
