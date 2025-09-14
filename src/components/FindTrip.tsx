@@ -37,18 +37,6 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
           user_profiles:user_id (
             id,
             full_name
-          ),
-          leaving_airport_info:airports!trips_leaving_airport_fkey (
-            code,
-            name,
-            city,
-            country
-          ),
-          destination_airport_info:airports!trips_destination_airport_fkey (
-            code,
-            name,
-            city,
-            country
           )
         `)
 
@@ -280,20 +268,14 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Departure</p>
                             <div className="font-semibold text-gray-900">
-                              {trip.leaving_airport_info?.code}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {trip.leaving_airport_info?.city}, {trip.leaving_airport_info?.country}
+                              {trip.leaving_airport}
                             </div>
                           </div>
 
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Destination</p>
                             <div className="font-semibold text-gray-900">
-                              {trip.destination_airport_info?.code}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {trip.destination_airport_info?.city}, {trip.destination_airport_info?.country}
+                              {trip.destination_airport}
                             </div>
                           </div>
 
