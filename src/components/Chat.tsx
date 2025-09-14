@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { ChatMessage } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
+import DisclaimerModal from './DisclaimerModal'
 
 interface ChatProps {
   onBack: () => void
