@@ -8,6 +8,8 @@ interface RideConfirmationModalProps {
   rides: any[]
   trips: any[]
   passengerName: string
+  preSelectedRide?: CarRide
+  preSelectedTrip?: Trip
 }
 
 export default function RideConfirmationModal({
@@ -16,10 +18,23 @@ export default function RideConfirmationModal({
   onConfirm,
   rides,
   trips,
-  passengerName
+  passengerName,
+  preSelectedRide,
+  preSelectedTrip
 }: RideConfirmationModalProps) {
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null)
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
+
+  // Auto-select pre-selected ride or trip
+  React.useEffect(() => {
+    if (preSelectedRide) {
+      setSelectedRideId(preSelectedRide.id)
+      setSelectedTripId(null)
+    } else if (preSelectedTrip) {
+      setSelectedTripId(preSelectedTrip.id)
+      setSelectedRideId(null)
+    }
+  }, [preSelectedRide, preSelectedTrip])
 
   if (!isOpen) return null
 

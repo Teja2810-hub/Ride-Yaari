@@ -63,6 +63,18 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     }
   }, [activeTab])
 
+  // Helper function to check if a ride/trip is in the past
+  const isRidePast = (departureDateTime: string) => {
+    return new Date(departureDateTime) <= new Date()
+  }
+
+  const isTripPast = (travelDate: string) => {
+    const tripDate = new Date(travelDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return tripDate < today
+  }
+
   const fetchRidesPosted = async () => {
     if (!user) return
     
@@ -714,12 +726,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                         <div key={ride.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
                           <div className="flex justify-between items-start mb-4">
                             <h4 className="text-base sm:text-lg font-semibold text-gray-900">Car Ride</h4>
-                            <button
-                              onClick={() => onEditRide(ride)}
-                              className="text-green-600 hover:text-green-700 font-medium text-xs sm:text-sm"
-                            >
-                              Edit Ride
-                            </button>
+                            {!isRidePast(ride.departure_date_time) && (
+                              <button
+                                onClick={() => onEditRide(ride)}
+                                className="text-green-600 hover:text-green-700 font-medium text-xs sm:text-sm"
+                              >
+                                Edit Ride
+                              </button>
+                            )}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
                             <div>
@@ -788,12 +802,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                         <div key={trip.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
                           <div className="flex justify-between items-start mb-4">
                             <h4 className="text-base sm:text-lg font-semibold text-gray-900">Airport Trip</h4>
-                            <button
-                              onClick={() => onEditTrip(trip)}
-                              className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
-                            >
-                              Edit Trip
-                            </button>
+                            {!isTripPast(trip.travel_date) && (
+                              <button
+                                onClick={() => onEditTrip(trip)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
+                              >
+                                Edit Trip
+                              </button>
+                            )}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
                             <div>

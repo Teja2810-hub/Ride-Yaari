@@ -30,6 +30,8 @@ function AppContent() {
   const [showWelcomePopup, setShowWelcomePopup] = useState<boolean>(false)
   const [chatUserId, setChatUserId] = useState<string>('')
   const [chatUserName, setChatUserName] = useState<string>('')
+  const [selectedRideForChat, setSelectedRideForChat] = useState<CarRide | null>(null)
+  const [selectedTripForChat, setSelectedTripForChat] = useState<Trip | null>(null)
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
 
@@ -48,9 +50,11 @@ function AppContent() {
     setShowWelcomePopup(false)
   }
 
-  const handleStartChat = (userId: string, userName: string) => {
+  const handleStartChat = (userId: string, userName: string, ride?: CarRide, trip?: Trip) => {
     setChatUserId(userId)
     setChatUserName(userName)
+    setSelectedRideForChat(ride || null)
+    setSelectedTripForChat(trip || null)
     setCurrentView('chat')
   }
 
@@ -58,6 +62,8 @@ function AppContent() {
     setCurrentView('platform-selector')
     setChatUserId('')
     setChatUserName('')
+    setSelectedRideForChat(null)
+    setSelectedTripForChat(null)
     setEditingTrip(null)
     setEditingRide(null)
   }
@@ -202,6 +208,8 @@ function AppContent() {
                     onBack={handleBackToDashboard}
                     otherUserId={chatUserId}
                     otherUserName={chatUserName}
+                    preSelectedRide={selectedRideForChat}
+                    preSelectedTrip={selectedTripForChat}
                   />
                 )
               case 'edit-trip':

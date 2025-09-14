@@ -9,15 +9,18 @@ interface ChatProps {
   onBack: () => void
   otherUserId: string
   otherUserName: string
+  preSelectedRide?: CarRide
+  preSelectedTrip?: Trip
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip }: ChatProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+  const [showSendConfirmationDisclaimer, setShowSendConfirmationDisclaimer] = useState(false)
   const [userRides, setUserRides] = useState<any[]>([])
   const [userTrips, setUserTrips] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -142,6 +145,15 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
     } finally {
       setSending(false)
     }
+  }
+
+  const handleShowConfirmationModal = () => {
+    setShowSendConfirmationDisclaimer(true)
+  }
+
+  const handleConfirmSendConfirmation = () => {
+    setShowSendConfirmationDisclaimer(false)
+    setShowConfirmationModal(true)
   }
 
   const handleConfirmationSubmit = async (rideId: string | null, tripId: string | null) => {
@@ -316,7 +328,7 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
           {(userRides.length > 0 || userTrips.length > 0) && (
             <div className="mb-3 flex justify-center">
               <button
-                onClick={() => setShowConfirmationModal(true)}
+                onClick={handleShowConfirmationModal}
                 className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
               >
                 <Check size={16} />
@@ -354,6 +366,28 @@ export default function Chat({ onBack, otherUserId, otherUserName }: ChatProps) 
         rides={userRides}
         trips={userTrips}
         passengerName={otherUserName}
+        preSelectedRide={preSelectedRide}
+        preSelectedTrip={preSelectedTrip}
+      />
+
+      <DisclaimerModal
+        isOpen={showSendConfirmationDisclaimer}
+        onClose={() => setShowSendConfirmationDisclaimer(false)}
+        onConfirm={handleConfirmSendConfirmation}
+        loading={false}
+        type="ride-confirmation"
+        content={{
+          title: 'Send Ride Confirmation Request',
+          points: [
+            'This will send a formal request to join the selected ride or trip',
+            'The ride owner will be notified and can accept or reject your request',
+            'You can only send one confirmation request per ride or trip',
+            'Make sure you have discussed the details in chat before sending',
+            'Once accepted, you are committed to the agreed arrangements',
+            'Canceling after acceptance may affect your reputation on the platform'
+          ],
+          explanation: 'A ride confirmation request is a formal way to request a spot in someone\'s ride or trip. Only send this when you are serious about joining and have agreed on the details.'
+        }}
       />
     </div>
   )

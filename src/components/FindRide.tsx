@@ -17,7 +17,7 @@ interface LocationData {
 
 interface FindRideProps {
   onBack: () => void
-  onStartChat: (userId: string, userName: string) => void
+  onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
 }
 
 type SearchType = 'from-to' | 'from-only' | 'to-only'
@@ -40,6 +40,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
   const [searched, setSearched] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
+  const [selectedChatRide, setSelectedChatRide] = useState<CarRide | null>(null)
   const [showRadiusHelp, setShowRadiusHelp] = useState(false)
   const [strictSearch, setStrictSearch] = useState(false)
   const [radiusUnit, setRadiusUnit] = useState('miles')
@@ -449,14 +450,15 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
     }
   }
 
-  const handleChatClick = (userId: string, userName: string) => {
+  const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
     setSelectedChatUser({ userId, userName })
+    setSelectedChatRide(ride)
     setShowDisclaimer(true)
   }
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
-    onStartChat(selectedChatUser.userId, selectedChatUser.userName)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined)
   }
 
   const formatDateTime = (dateTimeString: string) => {
@@ -963,7 +965,7 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                         ) : (
                           <div className="flex flex-col space-y-2">
                             <button
-                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown')}
+                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
                               className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                             >
                               <MessageCircle size={20} />

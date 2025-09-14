@@ -18,6 +18,19 @@ interface DisclaimerModalProps {
 
 const getDisclaimerContent = (type: string): DisclaimerContent => {
   switch (type) {
+    case 'ride-confirmation':
+      return {
+        title: 'Send Ride Confirmation Request',
+        points: [
+          'This will send a formal request to join the selected ride or trip',
+          'The ride owner will be notified and can accept or reject your request',
+          'You can only send one confirmation request per ride or trip',
+          'Make sure you have discussed the details in chat before sending',
+          'Once accepted, you are committed to the agreed arrangements',
+          'Canceling after acceptance may affect your reputation on the platform'
+        ],
+        explanation: 'A ride confirmation request is a formal way to request a spot in someone\'s ride or trip. Only send this when you are serious about joining and have agreed on the details.'
+      }
     case 'trip':
       return {
         title: 'Airport Trip Safety Guidelines',

@@ -9,7 +9,7 @@ import { getCurrencySymbol } from '../utils/currencies'
 
 interface FindTripProps {
   onBack: () => void
-  onStartChat: (userId: string, userName: string) => void
+  onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
 }
 
 export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
@@ -24,6 +24,7 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
   const [searched, setSearched] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
+  const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,14 +72,15 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
     }
   }
 
-  const handleChatClick = (userId: string, userName: string) => {
+  const handleChatClick = (userId: string, userName: string, trip: Trip) => {
     setSelectedChatUser({ userId, userName })
+    setSelectedChatTrip(trip)
     setShowDisclaimer(true)
   }
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
-    onStartChat(selectedChatUser.userId, selectedChatUser.userName)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
   }
 
   const formatDate = (dateString: string) => {
@@ -318,7 +320,7 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                         ) : (
                           <div className="flex flex-col space-y-2">
                             <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown')}
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
                               className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                             >
                               <MessageCircle size={20} />
