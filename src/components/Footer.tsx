@@ -5,9 +5,11 @@ interface FooterProps {
   onHelp: () => void
   onReviews: () => void
   onHowItWorks: () => void
+  onPrivacyPolicy?: () => void
+  onTermsOfService?: () => void
 }
 
-export default function Footer({ onHelp, onReviews, onHowItWorks }: FooterProps) {
+export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolicy, onTermsOfService }: FooterProps) {
   return (
     <footer className="bg-white border-t border-gray-200 mt-16">
       <div className="container mx-auto px-4 py-8">
@@ -93,9 +95,39 @@ export default function Footer({ onHelp, onReviews, onHowItWorks }: FooterProps)
               © 2025 RideYaari. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-sm text-gray-500">
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
-              <span>Contact Us</span>
+              <button
+                onClick={() => {
+                  if (onPrivacyPolicy) onPrivacyPolicy()
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                }}
+                className="hover:text-blue-600 transition-colors focus:outline-none"
+              >
+                Privacy Policy
+              </button>
+              <button
+                onClick={() => {
+                  if (onTermsOfService) onTermsOfService()
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                }}
+                className="hover:text-blue-600 transition-colors focus:outline-none"
+              >
+                Terms of Service
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                  onHelp()
+                }}
+                className="hover:text-blue-600 transition-colors focus:outline-none"
+              >
+                Contact Us
+              </button>
             </div>
           </div>
         </div>
