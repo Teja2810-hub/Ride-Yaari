@@ -5,8 +5,8 @@ interface FooterProps {
   onHelp: () => void
   onReviews: () => void
   onHowItWorks: () => void
-  onPrivacyPolicy?: () => void
-  onTermsOfService?: () => void
+  onPrivacyPolicy: () => void
+  onTermsOfService: () => void
 }
 
 export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolicy, onTermsOfService }: FooterProps) {
@@ -97,10 +97,8 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
             <div className="flex items-center space-x-6 text-sm text-gray-500">
               <button
                 onClick={() => {
-                  if (onPrivacyPolicy) onPrivacyPolicy()
-                  if (typeof window !== 'undefined') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }
+                  onPrivacyPolicy()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
                 }}
                 className="hover:text-blue-600 transition-colors focus:outline-none"
               >
@@ -108,10 +106,8 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
               </button>
               <button
                 onClick={() => {
-                  if (onTermsOfService) onTermsOfService()
-                  if (typeof window !== 'undefined') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }
+                  onTermsOfService()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
                 }}
                 className="hover:text-blue-600 transition-colors focus:outline-none"
               >
@@ -119,9 +115,7 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
               </button>
               <button
                 onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
                   onHelp()
                 }}
                 className="hover:text-blue-600 transition-colors focus:outline-none"

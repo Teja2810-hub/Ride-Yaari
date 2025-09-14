@@ -17,10 +17,12 @@ import EditRide from './components/EditRide'
 import Footer from './components/Footer'
 import HowItWorksPage from './components/HowItWorksPage'
 import ReviewsPage from './components/ReviewsPage'
+import PrivacyPolicy from './components/PrivacyPolicy'
+import TermsOfService from './components/TermsOfService'
 import { Trip, CarRide } from './types'
 import WhatsAppChatButton from './components/WhatsAppChatButton'
 
-type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews'
+type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -92,6 +94,14 @@ function AppContent() {
 
   const handleReviews = () => {
     setCurrentView('reviews')
+  }
+
+  const handlePrivacyPolicy = () => {
+    setCurrentView('privacy-policy')
+  }
+
+  const handleTermsOfService = () => {
+    setCurrentView('terms-of-service')
   }
   
   if (loading) {
@@ -182,6 +192,10 @@ function AppContent() {
                 return <HowItWorksPage onBack={handleBackToDashboard} />
               case 'reviews':
                 return <ReviewsPage onBack={handleBackToDashboard} />
+              case 'privacy-policy':
+                return <PrivacyPolicy onBack={handleBackToDashboard} />
+              case 'terms-of-service':
+                return <TermsOfService onBack={handleBackToDashboard} />
               case 'chat':
                 return (
                   <Chat
@@ -215,6 +229,8 @@ function AppContent() {
             onHelp={handleHelp}
             onReviews={handleReviews}
             onHowItWorks={handleHowItWorks}
+            onPrivacyPolicy={handlePrivacyPolicy}
+            onTermsOfService={handleTermsOfService}
           />
         )}
       </div>
