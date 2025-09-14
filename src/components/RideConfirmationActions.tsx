@@ -13,6 +13,47 @@ interface RideConfirmationActionsProps {
 export default function RideConfirmationActions({ confirmation, onUpdate, onStartChat }: RideConfirmationActionsProps) {
   const [loading, setLoading] = useState(false)
 
+  const handleCancel = async () => {
+    if (!confirm('Are you sure you want to cancel this confirmed ride? This will notify the passenger.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Update confirmation status to rejected
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({ 
+          status: 'rejected',
+          confirmed_at: new Date().toISOString()
+        })
+        .eq('id', confirmation.id)
+
+      if (error) throw error
+
+      // Send system message to passenger
+      const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
+      const systemMessage = `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can search for other available rides.`
+      
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: confirmation.ride_owner_id,
+          receiver_id: confirmation.passenger_id,
+          message_content: systemMessage,
+          message_type: 'system',
+          is_read: false
+        })
+
+      onUpdate()
+    } catch (error: any) {
+      console.error('Error cancelling ride:', error)
+      alert('Failed to cancel ride. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleAccept = async () => {
     setLoading(true)
     try {
@@ -29,7 +70,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `🎉 Great news! Your request for the ${rideType} has been ACCEPTED! You can now coordinate pickup details and payment.`
+      const systemMessage = `🎉 Great news! Your request for the ${rideType} has been ACCEPTED! You can now coordinate pickup details and payment. You can cancel anytime if needed.`
       
       await supabase
         .from('chat_messages')
@@ -66,7 +107,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been declined. Don't worry, there are many other rides available!`
+      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been ${confirmation.status === 'accepted' ? 'cancelled' : 'declined'}. Don't worry, there are many other rides available!`
       
       await supabase
         .from('chat_messages')
@@ -123,10 +164,21 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{passenger.full_name}</h3>
-            <p className="text-sm text-gray-600">wants to join your {ride ? 'car ride' : 'airport trip'}</p>
+            <p className="text-sm text-gray-600">
+              {confirmation.status === 'pending' ? 'wants to join your' : 
+               confirmation.status === 'accepted' ? 'confirmed for your' : 
+               'was rejected from your'} {ride ? 'car ride' : 'airport trip'}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            confirmation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+            confirmation.status === 'accepted' ? 'bg-green-100 text-green-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {confirmation.status.charAt(0).toUpperCase() + confirmation.status.slice(1)}
+          </span>
           {ride ? (
             <Car size={20} className="text-green-600" />
           ) : (
@@ -202,24 +254,37 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
           <span>Chat with {passenger.full_name}</span>
         </button>
 
-        <div className="flex items-center space-x-3">
+        {confirmation.status === 'pending' && (
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleReject}
+              disabled={loading}
+              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              <X size={16} />
+              <span>Reject</span>
+            </button>
+            <button
+              onClick={handleAccept}
+              disabled={loading}
+              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              <Check size={16} />
+              <span>Accept</span>
+            </button>
+          </div>
+        )}
+
+        {confirmation.status === 'accepted' && (
           <button
-            onClick={handleReject}
+            onClick={handleCancel}
             disabled={loading}
             className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
           >
             <X size={16} />
-            <span>Reject</span>
+            <span>Cancel Ride</span>
           </button>
-          <button
-            onClick={handleAccept}
-            disabled={loading}
-            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-          >
-            <Check size={16} />
-            <span>Accept</span>
-          </button>
-        </div>
+        )}
       </div>
     </div>
   )

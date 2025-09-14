@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X, Car, Plane, Check, Clock, MapPin } from 'lucide-react'
+import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X, Car, Plane, Check, Clock, MapPin, MessageCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { Trip, CarRide, ChatMessage, RideConfirmation } from '../types'
@@ -24,7 +24,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [chats, setChats] = useState<ChatMessage[]>([])
   const [ridesPosted, setRidesPosted] = useState<{ carRides: CarRide[], airportTrips: Trip[] }>({ carRides: [], airportTrips: [] })
   const [ridesTaken, setRidesTaken] = useState<{ carRides: any[], airportTrips: any[] }>({ carRides: [], airportTrips: [] })
-  const [pendingConfirmations, setPendingConfirmations] = useState<RideConfirmation[]>([])
+  const [receivedConfirmations, setReceivedConfirmations] = useState<RideConfirmation[]>([])
+  const [sentRequests, setSentRequests] = useState<RideConfirmation[]>([])
   
   // Profile form state
   const [fullName, setFullName] = useState(userProfile?.full_name || '')
@@ -66,7 +67,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     } else if (activeTab === 'chats') {
       fetchUserChats()
     } else if (activeTab === 'confirmations') {
-      fetchPendingConfirmations()
+      fetchReceivedConfirmations()
+      fetchSentRequests()
     }
   }, [activeTab])
 
@@ -208,6 +210,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         )
       `)
       .eq('ride_owner_id', user.id)
+      .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
     setReceivedConfirmations(data || [])
@@ -231,11 +234,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           to_location,
           departure_date_time,
           price,
-          currency,
-          user_profiles!car_rides_user_id_fkey (
-            id,
-            full_name
-          )
+          currency
         ),
         trips!ride_confirmations_trip_id_fkey (
           id,
@@ -243,11 +242,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           destination_airport,
           travel_date,
           price,
-          currency,
-          user_profiles!trips_user_id_fkey (
-            id,
-            full_name
-          )
+          currency
         )
       `)
       .eq('passenger_id', user.id)
@@ -1017,25 +1012,196 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
             {activeTab === 'confirmations' && (
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Pending Confirmations</h2>
-                {pendingConfirmations.length === 0 ? (
-                  <div className="text-center py-8 sm:py-12">
-                    <Clock size={32} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No pending confirmations</h3>
-                    <p className="text-sm sm:text-base text-gray-600">Passenger confirmation requests will appear here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingConfirmations.map((confirmation) => (
-                      <RideConfirmationActions
-                        key={confirmation.id}
-                        confirmation={confirmation}
-                        onUpdate={fetchPendingConfirmations}
-                        onStartChat={onStartChat}
-                      />
-                    ))}
-                  </div>
-                )}
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Ride Confirmations</h2>
+                
+                {/* Requests Received (where user is the ride owner) */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Check size={20} className="mr-2 text-blue-600" />
+                    Requests Received ({receivedConfirmations.length})
+                  </h3>
+                  {receivedConfirmations.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No ride requests received yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {receivedConfirmations.map((confirmation) => (
+                        <RideConfirmationActions
+                          key={confirmation.id}
+                          confirmation={confirmation}
+                          onUpdate={() => {
+                            fetchReceivedConfirmations()
+                            fetchSentRequests()
+                          }}
+                          onStartChat={onStartChat}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Requests Sent (where user is the passenger) */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Clock size={20} className="mr-2 text-green-600" />
+                    My Requests Sent ({sentRequests.length})
+                  </h3>
+                  {sentRequests.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No ride requests sent yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {sentRequests.map((request) => {
+                        const ride = request.car_rides
+                        const trip = request.trips
+                        const owner = request.user_profiles
+
+                        return (
+                          <div key={request.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white font-semibold text-sm">
+                                    {owner.full_name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="text-base font-semibold text-gray-900">
+                                    Request to {owner.full_name}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {ride ? 'Car Ride' : 'Airport Trip'}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  request.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                </span>
+                                {ride ? (
+                                  <Car size={16} className="text-green-600" />
+                                ) : (
+                                  <Plane size={16} className="text-blue-600" />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Ride/Trip Details */}
+                            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                              {ride && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">From</p>
+                                    <div className="font-medium text-gray-900 text-sm flex items-center">
+                                      <MapPin size={12} className="mr-1 text-gray-400" />
+                                      {ride.from_location}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">To</p>
+                                    <div className="font-medium text-gray-900 text-sm flex items-center">
+                                      <MapPin size={12} className="mr-1 text-gray-400" />
+                                      {ride.to_location}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">Departure</p>
+                                    <div className="font-medium text-gray-900 text-sm flex items-center">
+                                      <Clock size={12} className="mr-1 text-gray-400" />
+                                      {formatDateTime(ride.departure_date_time)}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {trip && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">From</p>
+                                    <div className="font-medium text-gray-900 text-sm">{trip.leaving_airport}</div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">To</p>
+                                    <div className="font-medium text-gray-900 text-sm">{trip.destination_airport}</div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-600 mb-1">Travel Date</p>
+                                    <div className="font-medium text-gray-900 text-sm flex items-center">
+                                      <Calendar size={12} className="mr-1 text-gray-400" />
+                                      {formatDate(trip.travel_date)}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => onStartChat(owner.id, owner.full_name)}
+                                className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
+                              >
+                                <MessageCircle size={14} />
+                                <span>Chat with {owner.full_name}</span>
+                              </button>
+
+                              {request.status === 'accepted' && (
+                                <button
+                                  onClick={async () => {
+                                    if (confirm('Are you sure you want to cancel this ride? This will notify the ride owner.')) {
+                                      try {
+                                        // Update confirmation status to rejected
+                                        const { error } = await supabase
+                                          .from('ride_confirmations')
+                                          .update({ 
+                                            status: 'rejected',
+                                            confirmed_at: new Date().toISOString()
+                                          })
+                                          .eq('id', request.id)
+
+                                        if (error) throw error
+
+                                        // Send system message to ride owner
+                                        const rideType = request.ride_id ? 'car ride' : 'airport trip'
+                                        const systemMessage = `😔 ${userProfile?.full_name} has cancelled their participation in your ${rideType}. The spot is now available for other passengers.`
+                                        
+                                        await supabase
+                                          .from('chat_messages')
+                                          .insert({
+                                            sender_id: user.id,
+                                            receiver_id: request.ride_owner_id,
+                                            message_content: systemMessage,
+                                            message_type: 'system',
+                                            is_read: false
+                                          })
+
+                                        fetchSentRequests()
+                                        fetchReceivedConfirmations()
+                                      } catch (error: any) {
+                                        console.error('Error cancelling ride:', error)
+                                        alert('Failed to cancel ride. Please try again.')
+                                      }
+                                    }
+                                  }}
+                                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium transition-colors text-sm"
+                                >
+                                  <X size={14} />
+                                  <span>Cancel</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

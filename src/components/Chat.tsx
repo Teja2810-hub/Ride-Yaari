@@ -180,8 +180,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       // Send system message to notify about confirmation request
       const rideType = rideId ? 'car ride' : 'airport trip'
       const systemMessage = isPassengerRequest 
-        ? `🚗 Ride confirmation request sent for the ${rideType}. Please wait for a response.`
-        : `🚗 Ride confirmation request sent for your ${rideType}. Please wait for a response.`
+        ? `🚗 Ride confirmation request sent for the ${rideType}. The ride owner can accept/reject this request in their confirmations tab or here in chat.`
+        : `🚗 New ride confirmation request received for your ${rideType}. You can accept/reject this request in your confirmations tab or use the buttons below.`
       
       await supabase
         .from('chat_messages')
@@ -195,6 +195,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       setShowConfirmationModal(false)
       fetchMessages()
+      fetchPendingConfirmations()
     } catch (error: any) {
       console.error('Error creating confirmation:', error)
       alert('Failed to send confirmation request. Please try again.')
@@ -311,6 +312,76 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                           </div>
                         )}
                         <p className="text-xs sm:text-sm leading-relaxed">{message.message_content}</p>
+                        
+                        {/* Inline action buttons for system messages */}
+                        {message.message_type === 'system' && message.message_content.includes('ride confirmation request') && (
+                          <div className="mt-2">
+                            {/* Show accept/reject buttons if user is ride owner and there are pending confirmations */}
+                            {message.message_content.includes('New ride confirmation request received') && 
+                             message.sender_id === user?.id && 
+                             pendingConfirmations.some(conf => conf.ride_owner_id === user?.id && conf.passenger_id === otherUserId) && (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => {
+                                    const confirmation = pendingConfirmations.find(conf => 
+                                      conf.ride_owner_id === user?.id && conf.passenger_id === otherUserId
+                                    )
+                                    if (confirmation) {
+                                      handleInlineAccept(confirmation.id)
+                                    }
+                                  }}
+                                  className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  <Check size={12} />
+                                  <span>Accept</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const confirmation = pendingConfirmations.find(conf => 
+                                      conf.ride_owner_id === user?.id && conf.passenger_id === otherUserId
+                                    )
+                                    if (confirmation) {
+                                      handleInlineReject(confirmation.id)
+                                    }
+                                  }}
+                                  className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  <X size={12} />
+                                  <span>Reject</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Show cancel button for accepted rides */}
+                        {message.message_type === 'system' && 
+                         message.message_content.includes('has been ACCEPTED') && 
+                         message.sender_id !== user?.id && (
+                          <div className="mt-2">
+                            <button
+                              onClick={() => {
+                                // Find the accepted confirmation for this conversation
+                                supabase
+                                  .from('ride_confirmations')
+                                  .select('*')
+                                  .or(`and(ride_owner_id.eq.${user?.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user?.id})`)
+                                  .eq('status', 'accepted')
+                                  .single()
+                                  .then(({ data }) => {
+                                    if (data) {
+                                      handleInlineCancel(data.id)
+                                    }
+                                  })
+                              }}
+                              className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                            >
+                              <X size={12} />
+                              <span>Cancel Ride</span>
+                            </button>
+                          </div>
+                        )}
+                        
                         <p className={`text-xs mt-1 ${
                           isOwn ? 'text-blue-100' : 
                           message.message_type === 'system' ? 'text-yellow-600' : 'text-gray-500'
