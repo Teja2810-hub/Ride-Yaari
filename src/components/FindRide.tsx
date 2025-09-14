@@ -650,9 +650,12 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                 <LocationAutocomplete
                   value={toLocation}
                   onChange={setToLocation}
-                  placeholder="Any destination location"
+                  placeholder="Enter city, neighborhood, or landmark (not exact address)"
                   label="To Location"
                 />
+                <p className="text-xs text-gray-500 mt-1 mb-4">
+                  For best results, enter a city, neighborhood, or landmark as your destination. If you are searching for a specific location, you can enter that as well. Broader locations help you find more rides!
+                </p>
               </div>
              </>  
             )}

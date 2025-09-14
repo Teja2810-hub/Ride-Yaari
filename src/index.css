@@ -83,7 +83,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Card styles */
 .card {
-  @apply bg-neutral-card rounded-3xl shadow-2xl border border-gray-100 transition-all duration-300;
+  @apply bg-neutral-card rounded-3xl shadow-2xl border border-gray-100 transition-all duration-300 z-0;
   backdrop-filter: blur(20px);
 }
 

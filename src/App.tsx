@@ -106,7 +106,12 @@ function AppContent() {
   }
 
   if (!user) {
-    return <AuthForm />
+    return (
+      <>
+        <AuthForm />
+        <WhatsAppChatButton />
+      </>
+    )
   }
 
   return (

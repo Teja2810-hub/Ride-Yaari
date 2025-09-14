@@ -171,13 +171,17 @@ export default function PostRide({ onBack }: PostRideProps) {
               required
             />
 
+
             <LocationAutocomplete
               value={toLocation}
               onChange={setToLocation}
-              placeholder="Enter destination location..."
+              placeholder="Enter city, neighborhood, or landmark (not exact address)"
               label="To Location"
               required
             />
+            <p className="text-xs text-gray-500 mt-1 mb-4">
+              For better discoverability, use a city, neighborhood, or landmark as your destination. If your ride is within a city, you can provide an exact location. Broader locations help more people find your ride!
+            </p>
 
             {/* Intermediate Stops */}
             <div>

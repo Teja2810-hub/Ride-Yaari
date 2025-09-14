@@ -152,8 +152,10 @@ export default function LocationAutocomplete({
     try {
       const request = {
         input: searchTerm,
-        types: ['(cities)'], // Focus on cities, but you can adjust this
-        componentRestrictions: { country: [] } // Remove country restriction for global search
+        // Remove or adjust the types filter:
+        // types: ['(cities)'], // <-- Remove this line or use a broader type
+        // You can also try types: ['geocode'] or omit types for broader results
+        componentRestrictions: { country: [] }
       }
 
       autocompleteService.current.getPlacePredictions(request, (predictions: any[], status: any) => {
