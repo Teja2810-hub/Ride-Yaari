@@ -178,7 +178,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     })
   }
 
-  const fetchPendingConfirmations = async () => {
+  const fetchReceivedConfirmations = async () => {
     if (!user) return
     
     const { data } = await supabase
@@ -208,10 +208,52 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         )
       `)
       .eq('ride_owner_id', user.id)
-      .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
-    setPendingConfirmations(data || [])
+    setReceivedConfirmations(data || [])
+  }
+
+  const fetchSentRequests = async () => {
+    if (!user) return
+    
+    const { data } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        user_profiles!ride_confirmations_ride_owner_id_fkey (
+          id,
+          full_name,
+          profile_image_url
+        ),
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          from_location,
+          to_location,
+          departure_date_time,
+          price,
+          currency,
+          user_profiles!car_rides_user_id_fkey (
+            id,
+            full_name
+          )
+        ),
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          leaving_airport,
+          destination_airport,
+          travel_date,
+          price,
+          currency,
+          user_profiles!trips_user_id_fkey (
+            id,
+            full_name
+          )
+        )
+      `)
+      .eq('passenger_id', user.id)
+      .order('created_at', { ascending: false })
+
+    setSentRequests(data || [])
   }
 
   const fetchUserChats = async () => {

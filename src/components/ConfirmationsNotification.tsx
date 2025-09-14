@@ -136,7 +136,8 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
         className="relative flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
       >
         <Check size={16} className="sm:w-5 sm:h-5" />
-        <span className="hidden sm:inline">Requests</span>
+        <span className="hidden sm:inline">Ride Requests</span>
+        <span className="sm:hidden">Requests</span>
         {pendingCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
             {pendingCount > 99 ? '99+' : pendingCount}
@@ -147,7 +148,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
       {showDropdown && (
         <div className="fixed inset-x-2 top-16 sm:absolute sm:right-0 sm:top-full sm:inset-x-auto mt-2 w-auto sm:w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-[80vh] sm:max-h-96">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Ride Requests</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Pending Ride Requests</h3>
             <button
               onClick={() => setShowDropdown(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -163,7 +164,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
               </div>
             ) : confirmations.length === 0 ? (
               <div className="p-4 text-center text-gray-500 text-sm">
-                No pending requests
+                No pending ride requests
               </div>
             ) : (
               <>
@@ -244,9 +245,9 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
                               setShowDropdown(false)
                               onViewConfirmations()
                             }}
-                            className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm"
+                            className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm bg-blue-50 px-2 py-1 rounded"
                           >
-                            View & Respond
+                            Accept/Reject
                           </button>
                         </div>
                       </div>
@@ -260,9 +261,9 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
                       setShowDropdown(false)
                       onViewConfirmations()
                     }}
-                    className="w-full text-center text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    className="w-full text-center text-blue-600 hover:text-blue-700 font-medium text-sm bg-blue-50 py-2 rounded"
                   >
-                    View All Requests
+                    View All Ride Requests
                   </button>
                 </div>
               </>
