@@ -314,6 +314,32 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                               </div>
                             </div>
                           </div>
+
+                          {/* Additional Trip Details */}
+                          {(trip.departure_time || trip.landing_time) && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <div className="grid md:grid-cols-2 gap-4">
+                                {trip.departure_time && (
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-1">Departure Time</p>
+                                    <div className="font-medium text-gray-900 flex items-center">
+                                      <Clock size={14} className="mr-1 text-gray-400" />
+                                      {trip.departure_time}
+                                    </div>
+                                  </div>
+                                )}
+                                {trip.landing_time && trip.landing_date && (
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-1">Landing</p>
+                                    <div className="font-medium text-gray-900 flex items-center">
+                                      <Clock size={14} className="mr-1 text-gray-400" />
+                                      {trip.landing_time} on {formatDate(trip.landing_date)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         )}
                       </div>
 

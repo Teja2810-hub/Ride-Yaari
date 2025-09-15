@@ -157,11 +157,13 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {confirmation.status === 'accepted' ? 'Cancel Confirmed Ride' : 'Cancel Ride Request'}
+                  </h3>
               {passenger.full_name.charAt(0).toUpperCase()}
             </span>
-          </div>
-          <div>
+                      ? 'Are you sure you want to cancel this confirmed ride? This will remove the passenger from your ride and they will be notified. They can request to join again if needed.'
+                      : 'Are you sure you want to cancel this ride request? The passenger will be notified and can request again if needed.'
             <h3 className="text-lg font-semibold text-gray-900">{passenger.full_name}</h3>
             <p className="text-sm text-gray-600">
               {confirmation.status === 'pending' ? 'wants to join your' : 
@@ -170,7 +172,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
+                    {confirmation.status === 'accepted' ? 'Keep Ride' : 'Keep Request'}
           <span className={`text-xs px-2 py-1 rounded-full ${
             confirmation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
             confirmation.status === 'accepted' ? 'bg-green-100 text-green-800' :

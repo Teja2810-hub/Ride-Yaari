@@ -241,11 +241,34 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       if (error) throw error
 
-      // Send system message to notify about confirmation request
+      // Send detailed system message with ride/trip information
+      let rideDetails = ''
+      if (preSelectedRide) {
+        const departureDate = new Date(preSelectedRide.departure_date_time).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        })
+        rideDetails = `${preSelectedRide.from_location} → ${preSelectedRide.to_location} on ${departureDate}`
+      } else if (preSelectedTrip) {
+        const travelDate = new Date(preSelectedTrip.travel_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric'
+        })
+        rideDetails = `${preSelectedTrip.leaving_airport} → ${preSelectedTrip.destination_airport} on ${travelDate}`
+        if (preSelectedTrip.departure_time) {
+          rideDetails += ` at ${preSelectedTrip.departure_time}`
+        }
+      }
+      
       const rideType = rideId ? 'car ride' : 'airport trip'
       const systemMessage = isPassengerRequest 
-        ? `🚗 Ride confirmation request sent for the ${rideType}. The ride owner can accept/reject this request in their confirmations tab or here in chat.`
-        : `🚗 New ride confirmation request received for your ${rideType}. You can accept/reject this request in your confirmations tab or use the buttons below.`
+        ? `🚗 Ride confirmation request sent for the ${rideType}: ${rideDetails}. The ride owner can accept/reject this request in their confirmations tab.`
+        : `🚗 New ride confirmation request received for your ${rideType}: ${rideDetails}. You can accept/reject this request in your confirmations tab.`
       
       await supabase
         .from('chat_messages')
