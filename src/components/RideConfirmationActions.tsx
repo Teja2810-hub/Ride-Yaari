@@ -160,15 +160,11 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
                     {confirmation.status === 'accepted' ? 'Cancel Confirmed Ride' : 'Cancel Ride Request'}
                   </h3>
-                  <span>
-                    {passenger.full_name.charAt(0).toUpperCase()}
-                  </span>
-                  <p className="text-sm text-gray-700 mt-2">
-                    {confirmation.status === 'accepted'
+              {passenger.full_name.charAt(0).toUpperCase()}
+            </span>
                       ? 'Are you sure you want to cancel this confirmed ride? This will remove the passenger from your ride and they will be notified. They can request to join again if needed.'
-                      : 'Are you sure you want to cancel this ride request? The passenger will be notified and can request again if needed.'}
-                  </p>
-                  <h3 className="text-lg font-semibold text-gray-900">{passenger.full_name}</h3>
+                      : 'Are you sure you want to cancel this ride request? The passenger will be notified and can request again if needed.'
+            <h3 className="text-lg font-semibold text-gray-900">{passenger.full_name}</h3>
             <p className="text-sm text-gray-600">
               {confirmation.status === 'pending' ? 'wants to join your' : 
                confirmation.status === 'accepted' ? 'confirmed for your' : 
@@ -218,8 +214,10 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
               </div>
             </div>
           </div>
-          {/* Ride/Trip Details */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        )}
+
+        {trip && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-gray-600 mb-1">From</p>
               <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
