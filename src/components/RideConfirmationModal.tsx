@@ -22,16 +22,6 @@ export default function RideConfirmationModal({
   if (!isOpen) return null
 
   const handleConfirm = () => {
-    // Show confirmation dialog
-    const rideType = selectedRide ? 'car ride' : 'airport trip'
-    const confirmMessage = selectedRide || selectedTrip 
-      ? `Are you sure you want to send a confirmation request for this ${rideType}? The owner will be notified and can accept or reject your request.`
-      : 'Are you sure you want to send this confirmation?'
-    
-    if (!window.confirm(confirmMessage)) {
-      return
-    }
-
     onConfirm()
   }
 
