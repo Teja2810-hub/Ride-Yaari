@@ -4,7 +4,96 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 if (!supabaseUrl || !supabaseKey || supabaseUrl === '' || supabaseKey === '') {
-  console.error('Supabase environment variables:', {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-client-info': 'rideshare-app'
+    }
+  }
+})
+
+// Helper function to retry Supabase operations with exponential backoff
+export async function retrySupabaseOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation()
+    } catch (error: any) {
+      lastError = error
+      
+      // Don't retry on client errors (4xx) or auth errors
+      if (error.status && error.status >= 400 && error.status < 500) {
+        throw error
+      }
+      
+      // Don't retry on the last attempt
+      if (attempt === maxRetries) {
+        break
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = baseDelay * Math.pow(2, attempt)
+      console.warn(`Supabase operation failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`, error)
+      
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  
+  throw lastError
+}
+
+// Enhanced auth methods with retry logic
+export const authWithRetry = {
+  signUp: async (email: string, password: string) => {
+    return retrySupabaseOperation(async () => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      
+      if (error) {
+        throw new Error(`Signup failed: ${error.message}`)
+      }
+      
+      return data
+    })
+  },
+  
+  signIn: async (email: string, password: string) => {
+    return retrySupabaseOperation(async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      
+      if (error) {
+        throw new Error(`Login failed: ${error.message}`)
+      }
+      
+      return data
+    })
+  },
+  
+  signOut: async () => {
+    return retrySupabaseOperation(async () => {
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        throw new Error(`Logout failed: ${error.message}`)
+      }
+    })
+  }
+}
     VITE_SUPABASE_URL: supabaseUrl ? 'Set' : 'Missing',
     VITE_SUPABASE_ANON_KEY: supabaseKey ? 'Set' : 'Missing'
   })
