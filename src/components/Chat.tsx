@@ -317,7 +317,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       case 'accepted':
         return 'Request Accepted ✓'
       case 'rejected':
-        return 'Request Ride Confirmation'
+        return 'Request Ride Again'
       default:
         return 'Request Ride Confirmation'
     }
@@ -331,7 +331,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       return false
     }
     
-    return currentConfirmationStatus === 'pending'
+    return currentConfirmationStatus === 'pending' || currentConfirmationStatus === 'accepted'
   }
 
   if (loading) {
