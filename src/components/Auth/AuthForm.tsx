@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { User, Mail, Lock, Eye, EyeOff, Send } from 'lucide-react'
-import { authWithRetry } from '../../utils/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface AuthFormProps {
@@ -34,7 +33,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       if (onClose) onClose()
     } catch (error: any) {
       console.error('Sign in error:', error)
-      setError(error.message || 'Failed to sign in. Please check your credentials.')
+      setError(error?.message || 'Failed to sign in. Please check your credentials.')
     } finally {
       setLoading(false)
     }
@@ -56,7 +55,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       setSuccess('Magic link sent to your email! Please check your inbox.')
     } catch (error: any) {
       console.error('Magic link error:', error)
-      setError(error.message || 'Failed to send magic link. Please try again.')
+      setError(error?.message || 'Failed to send magic link. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -79,7 +78,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       setSuccess('Account created! Please check your email for the verification code.')
     } catch (error: any) {
       console.error('Sign up error:', error)
-      setError(error.message || 'Failed to create account. Please try again.')
+      setError(error?.message || 'Failed to create account. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -103,7 +102,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       }
     } catch (error: any) {
       console.error('OTP verification error:', error)
-      setError(error.message || 'Invalid verification code. Please try again.')
+      setError(error?.message || 'Invalid verification code. Please try again.')
     } finally {
       setLoading(false)
     }

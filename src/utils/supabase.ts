@@ -91,6 +91,40 @@ export const authWithRetry = {
     })
   },
   
+  sendEmailVerificationOtp: async (email: string) => {
+    return retrySupabaseOperation(async () => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      
+      if (error) {
+        throw new Error(`Failed to send verification email: ${error.message}`)
+      }
+      
+      return { error: null }
+    })
+  },
+  
+  verifyOTP: async (email: string, token: string, type: 'email' | 'magiclink') => {
+    return retrySupabaseOperation(async () => {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: type
+      })
+      
+      if (error) {
+        throw new Error(`Failed to verify code: ${error.message}`)
+      }
+      
+      return { data, error: null }
+    })
+  },
+  
   signOut: async () => {
     return retrySupabaseOperation(async () => {
       const { error } = await supabase.auth.signOut()
@@ -192,6 +226,29 @@ export type Database = {
           to_location?: string
           departure_date_time?: string
           price?: number
+          created_at?: string
+        }
+      }
+      ride_confirmations: {
+        Row: {
+          id: string
+          ride_id: string
+          user_id: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ride_id: string
+          user_id: string
+          status: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ride_id?: string
+          user_id?: string
+          status?: string
           created_at?: string
         }
       }

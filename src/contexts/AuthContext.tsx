@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase } from '../utils/supabase'
+import { supabase, authWithRetry } from '../utils/supabase'
 import { UserProfile } from '../types'
 
 interface AuthContextType {
@@ -61,64 +61,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      await authWithRetry.signIn(email, password)
+      return { error: null }
+    } catch (error: any) {
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: {
-          full_name: fullName
-        }
-      }
-    })
-
-    // Create user profile after successful signup
-    if (!error && data.user) {
-      try {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            full_name: fullName
-          })
-        
-        if (profileError) {
+    try {
+      const data = await authWithRetry.signUp(email, password)
+      
+      // Create user profile after successful signup
+      if (data.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: data.user.id,
+              full_name: fullName
+            })
+          
+          if (profileError) {
+            console.error('Error creating user profile:', profileError)
+          }
+        } catch (profileError) {
           console.error('Error creating user profile:', profileError)
         }
-      } catch (profileError) {
-        console.error('Error creating user profile:', profileError)
       }
+      
+      return { error: null }
+    } catch (error: any) {
+      return { error }
     }
-
-    return { error }
   }
 
   const sendEmailVerificationOtp = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
-    return { error }
+    try {
+      await authWithRetry.sendEmailVerificationOtp(email)
+      return { error: null }
+    } catch (error: any) {
+      return { error }
+    }
   }
 
   const verifyOTP = async (email: string, token: string, type: 'email' | 'magiclink') => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email,
-      token: token,
-      type: type
-    })
-    return { data, error }
+    try {
+      const { data } = await authWithRetry.verifyOTP(email, token, type)
+      return { data, error: null }
+    } catch (error: any) {
+      return { data: null, error }
+    }
   }
 
   const signOut = async () => {
