@@ -875,4 +875,359 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                           
                           {/* Accepted Passengers */}
                           {trip.ride_confirmations && trip.ride_confirmations.length > 0 && (
-                            <div className
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">
+                                Accepted Passengers ({trip.ride_confirmations.filter((c: any) => c.status === 'accepted').length})
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {trip.ride_confirmations
+                                  .filter((confirmation: any) => confirmation.status === 'accepted')
+                                  .map((confirmation: any) => (
+                                    <div key={confirmation.id} className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+                                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-medium">
+                                          {confirmation.user_profiles.full_name.charAt(0)}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm text-blue-800">{confirmation.user_profiles.full_name}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'rides-taken' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Rides Taken</h2>
+                
+                {/* Car Rides Taken */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Car size={20} className="mr-2 text-green-600" />
+                    Car Rides ({ridesTaken.carRides.length})
+                  </h3>
+                  {ridesTaken.carRides.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No car rides taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.carRides.map((confirmation: any) => (
+                        <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Car Ride</h4>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                Confirmed
+                              </span>
+                              <button
+                                onClick={() => onStartChat(confirmation.car_rides.user_profiles.id, confirmation.car_rides.user_profiles.full_name)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                              >
+                                <MessageCircle size={14} />
+                                <span>Chat</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{confirmation.car_rides.from_location}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{confirmation.car_rides.to_location}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {formatDateTime(confirmation.car_rides.departure_date_time)}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                              <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                {getCurrencySymbol(confirmation.car_rides.currency || 'USD')}{confirmation.car_rides.price}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Driver Info */}
+                          <div className="border-t border-gray-200 pt-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-2">Driver</h5>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  {confirmation.car_rides.user_profiles.full_name.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-900">{confirmation.car_rides.user_profiles.full_name}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Airport Trips Taken */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Plane size={20} className="mr-2 text-blue-600" />
+                    Airport Trips ({ridesTaken.airportTrips.length})
+                  </h3>
+                  {ridesTaken.airportTrips.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No airport trips taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.airportTrips.map((confirmation: any) => (
+                        <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Airport Trip</h4>
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                Confirmed
+                              </span>
+                              <button
+                                onClick={() => onStartChat(confirmation.trips.user_profiles.id, confirmation.trips.user_profiles.full_name)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                              >
+                                <MessageCircle size={14} />
+                                <span>Chat</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{confirmation.trips.leaving_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{confirmation.trips.destination_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {formatDate(confirmation.trips.travel_date)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Trip Organizer Info */}
+                          <div className="border-t border-gray-200 pt-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-2">Trip Organizer</h5>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  {confirmation.trips.user_profiles.full_name.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-900">{confirmation.trips.user_profiles.full_name}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'chats' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Conversations</h2>
+                {chats.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">No conversations yet</p>
+                    <p className="text-sm text-gray-500 mt-2">Start chatting with other users to see your conversations here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {chats.map((chat) => (
+                      <div key={chat.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer"
+                           onClick={() => onStartChat(chat.other_user.id, chat.other_user.full_name)}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-medium">
+                                {chat.other_user.full_name.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{chat.other_user.full_name}</h3>
+                              <p className="text-sm text-gray-600 truncate max-w-xs">{chat.last_message}</p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {formatDateTime(chat.last_message_time)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'confirmations' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Ride Confirmations</h2>
+                
+                {/* Received Confirmations */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Clock size={20} className="mr-2 text-orange-600" />
+                    Pending Requests ({receivedConfirmations.length})
+                  </h3>
+                  {receivedConfirmations.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No pending ride requests</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {receivedConfirmations.map((confirmation) => (
+                        <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <RideConfirmationActions
+                            confirmation={confirmation}
+                            onUpdate={() => {
+                              fetchReceivedConfirmations()
+                              fetchSentRequests()
+                            }}
+                            onStartChat={onStartChat}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sent Requests */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <MapPin size={20} className="mr-2 text-blue-600" />
+                    My Requests ({sentRequests.length})
+                  </h3>
+                  {sentRequests.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No ride requests sent</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {sentRequests.map((request) => (
+                        <div key={request.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-900">
+                                {request.car_rides ? 'Car Ride Request' : 'Airport Trip Request'}
+                              </h4>
+                              <div className="flex items-center space-x-2 mt-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  request.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                  request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                </span>
+                              </div>
+                            </div>
+                            {request.status === 'accepted' && (
+                              <button
+                                onClick={() => onStartChat(request.user_profiles.id, request.user_profiles.full_name)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                              >
+                                <MessageCircle size={14} />
+                                <span>Chat</span>
+                              </button>
+                            )}
+                          </div>
+                          
+                          {/* Ride/Trip Details */}
+                          {request.car_rides && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{request.car_rides.from_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{request.car_rides.to_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDateTime(request.car_rides.departure_date_time)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                                <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                  {getCurrencySymbol(request.car_rides.currency || 'USD')}{request.car_rides.price}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {request.trips && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{request.trips.leaving_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Destination</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{request.trips.destination_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDate(request.trips.travel_date)}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Ride Owner Info */}
+                          <div className="border-t border-gray-200 pt-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-2">
+                              {request.car_rides ? 'Driver' : 'Trip Organizer'}
+                            </h5>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  {request.user_profiles.full_name.charAt(0)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-900">{request.user_profiles.full_name}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'review' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Submit Review</h2>
+                <ReviewForm />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
