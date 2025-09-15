@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { authWithRetry } from '../../utils/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -14,17 +15,33 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-        const data = await authWithRetry.signUp(email, password)
+  
+  const { signIn } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
     setError(null)
-    setError('')
-          if (data.user.email_confirmed_at) {
-            signIn(data.user)
-          } else {
-            setError('Please check your email for a confirmation link before signing in.')
-          }
+
     try {
       if (isLogin) {
         const data = await authWithRetry.signIn(email, password)
+        if (data.user) {
+          signIn(data.user)
+          onClose()
+        }
+      } else {
+        const data = await authWithRetry.signUp(email, password)
+        if (data.user) {
+          if (data.user.email_confirmed_at) {
+            signIn(data.user)
+            onClose()
+          } else {
+            setError('Please check your email for a confirmation link before signing in.')
+          }
+        }
+      }
+    } catch (error: any) {
       console.error('Auth error:', error)
       
       // Provide user-friendly error messages
@@ -56,12 +73,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
