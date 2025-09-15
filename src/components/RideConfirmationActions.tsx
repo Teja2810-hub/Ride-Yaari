@@ -32,9 +32,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = confirmation.status === 'accepted'
-        ? `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again if needed.`
-        : `😔 Your request for the ${rideType} has been declined. You can request to join this ride again if needed.`
+      const systemMessage = `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again using the button below.`
       
       await supabase
         .from('chat_messages')
@@ -108,7 +106,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been ${confirmation.status === 'accepted' ? 'cancelled' : 'declined'}. Don't worry, there are many other rides available!`
+      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been declined. You can request to join this ride again using the button below if needed.`
       
       await supabase
         .from('chat_messages')

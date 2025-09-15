@@ -130,7 +130,7 @@ function AppContent() {
   if (!user) {
     return (
       <>
-        <AuthForm />
+        <AuthForm onClose={() => {}} />
         <WhatsAppChatButton />
       </>
     )
