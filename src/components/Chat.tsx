@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Send, MessageCircle, Check, X, Clock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { ChatMessage, RideConfirmation } from '../types'
+import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
+import { getCurrencySymbol } from '../utils/currencies'
 
 interface ChatProps {
   onBack: () => void
@@ -241,11 +242,28 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       if (error) throw error
 
-      // Send system message to notify about confirmation request
+      // Send detailed system message with ride/trip information
       const rideType = rideId ? 'car ride' : 'airport trip'
+      let rideDetails = ''
+      
+      if (preSelectedRide) {
+        rideDetails = `\n📍 From: ${preSelectedRide.from_location}\n📍 To: ${preSelectedRide.to_location}\n🕐 Departure: ${new Date(preSelectedRide.departure_date_time).toLocaleString()}\n💰 Price: ${getCurrencySymbol(preSelectedRide.currency || 'USD')}${preSelectedRide.price} per person`
+      } else if (preSelectedTrip) {
+        rideDetails = `\n✈️ From: ${preSelectedTrip.leaving_airport}\n✈️ To: ${preSelectedTrip.destination_airport}\n📅 Date: ${new Date(preSelectedTrip.travel_date).toLocaleDateString()}`
+        if (preSelectedTrip.departure_time) {
+          rideDetails += `\n🕐 Departure: ${preSelectedTrip.departure_time}`
+        }
+        if (preSelectedTrip.landing_time) {
+          rideDetails += `\n🛬 Arrival: ${preSelectedTrip.landing_time}`
+        }
+        if (preSelectedTrip.price) {
+          rideDetails += `\n💰 Service Price: ${getCurrencySymbol(preSelectedTrip.currency || 'USD')}${preSelectedTrip.price}`
+        }
+      }
+      
       const systemMessage = isPassengerRequest 
-        ? `🚗 Ride confirmation request sent for the ${rideType}. The ride owner can accept/reject this request in their confirmations tab or here in chat.`
-        : `🚗 New ride confirmation request received for your ${rideType}. You can accept/reject this request in your confirmations tab or use the buttons below.`
+        ? `🚗 Ride confirmation request sent for the ${rideType}:${rideDetails}\n\nThe ride owner can accept/reject this request in their confirmations tab or here in chat.`
+        : `🚗 New ride confirmation request received for your ${rideType}:${rideDetails}\n\nYou can accept/reject this request in your confirmations tab or use the buttons below.`
       
       await supabase
         .from('chat_messages')

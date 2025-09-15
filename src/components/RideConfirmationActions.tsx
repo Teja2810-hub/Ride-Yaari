@@ -30,9 +30,26 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       if (error) throw error
 
-      // Send system message to passenger
+      // Send detailed system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again using the button below.`
+      let rideDetails = ''
+      
+      if (ride) {
+        rideDetails = `\n📍 From: ${ride.from_location}\n📍 To: ${ride.to_location}\n🕐 Departure: ${formatDateTime(ride.departure_date_time)}\n💰 Price: ${getCurrencySymbol(ride.currency || 'USD')}${ride.price} per person`
+      } else if (trip) {
+        rideDetails = `\n✈️ From: ${trip.leaving_airport}\n✈️ To: ${trip.destination_airport}\n📅 Date: ${formatDate(trip.travel_date)}`
+        if (trip.departure_time) {
+          rideDetails += `\n🕐 Departure: ${trip.departure_time}`
+        }
+        if (trip.landing_time) {
+          rideDetails += `\n🛬 Arrival: ${trip.landing_time}`
+        }
+        if (trip.price) {
+          rideDetails += `\n💰 Service Price: ${getCurrencySymbol(trip.currency || 'USD')}${trip.price}`
+        }
+      }
+      
+      const systemMessage = `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner:${rideDetails}\n\nYou can request to join this ride again using the button below.`
       
       await supabase
         .from('chat_messages')
@@ -67,9 +84,26 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       if (error) throw error
 
-      // Send system message to passenger
+      // Send detailed system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `🎉 Great news! Your request for the ${rideType} has been ACCEPTED! You can now coordinate pickup details and payment. You can cancel anytime if needed.`
+      let rideDetails = ''
+      
+      if (ride) {
+        rideDetails = `\n📍 From: ${ride.from_location}\n📍 To: ${ride.to_location}\n🕐 Departure: ${formatDateTime(ride.departure_date_time)}\n💰 Price: ${getCurrencySymbol(ride.currency || 'USD')}${ride.price} per person`
+      } else if (trip) {
+        rideDetails = `\n✈️ From: ${trip.leaving_airport}\n✈️ To: ${trip.destination_airport}\n📅 Date: ${formatDate(trip.travel_date)}`
+        if (trip.departure_time) {
+          rideDetails += `\n🕐 Departure: ${trip.departure_time}`
+        }
+        if (trip.landing_time) {
+          rideDetails += `\n🛬 Arrival: ${trip.landing_time}`
+        }
+        if (trip.price) {
+          rideDetails += `\n💰 Service Price: ${getCurrencySymbol(trip.currency || 'USD')}${trip.price}`
+        }
+      }
+      
+      const systemMessage = `🎉 Great news! Your request for the ${rideType} has been ACCEPTED:${rideDetails}\n\nYou can now coordinate pickup details and payment. You can cancel anytime if needed.`
       
       await supabase
         .from('chat_messages')
@@ -104,9 +138,26 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       if (error) throw error
 
-      // Send system message to passenger
+      // Send detailed system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been declined. You can request to join this ride again using the button below if needed.`
+      let rideDetails = ''
+      
+      if (ride) {
+        rideDetails = `\n📍 From: ${ride.from_location}\n📍 To: ${ride.to_location}\n🕐 Departure: ${formatDateTime(ride.departure_date_time)}\n💰 Price: ${getCurrencySymbol(ride.currency || 'USD')}${ride.price} per person`
+      } else if (trip) {
+        rideDetails = `\n✈️ From: ${trip.leaving_airport}\n✈️ To: ${trip.destination_airport}\n📅 Date: ${formatDate(trip.travel_date)}`
+        if (trip.departure_time) {
+          rideDetails += `\n🕐 Departure: ${trip.departure_time}`
+        }
+        if (trip.landing_time) {
+          rideDetails += `\n🛬 Arrival: ${trip.landing_time}`
+        }
+        if (trip.price) {
+          rideDetails += `\n💰 Service Price: ${getCurrencySymbol(trip.currency || 'USD')}${trip.price}`
+        }
+      }
+      
+      const systemMessage = `😔 Unfortunately, your request for the ${rideType} has been declined:${rideDetails}\n\nYou can request to join this ride again using the button below if needed.`
       
       await supabase
         .from('chat_messages')
