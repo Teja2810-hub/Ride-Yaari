@@ -430,20 +430,16 @@ export default function AuthForm() {
               type="submit"
               disabled={loading}
              className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-            >
-              {loading ? 'Please wait...' : 
-                authStep === 'signup-otp-verification' ? 'Verify Email' :
-                authStep === 'signin-otp-verification' ? 'Verify Code' :
-                isSignUp ? 'Create Account' : 'Sign In'
-              }
-            </button>
-          </form>
-
-          {authStep === 'credentials' && !isSignUp && (
-            <div className="mt-4">
-              <div className="text-center text-gray-500 text-xs sm:text-sm mb-3">or</div>
-              <button
-                onClick={handleMagicLinkSignIn}
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                  placeholder={isSignUp ? "Create a password" : "Enter your password"}
+                  required
+                />
                 disabled={loading || !email || !isValidEmail(email)}
                 className="w-full border border-gray-300 text-gray-700 py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >

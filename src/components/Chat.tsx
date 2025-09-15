@@ -214,7 +214,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       let error
       
-      if (existingConfirmationId && currentConfirmationStatus === 'rejected') {
+      if (existingConfirmationId && (currentConfirmationStatus === 'rejected' || currentConfirmationStatus === 'cancelled')) {
         // Update existing rejected confirmation to pending
         const result = await supabase
           .from('ride_confirmations')
@@ -317,6 +317,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       case 'accepted':
         return 'Request Accepted ✓'
       case 'rejected':
+      case 'cancelled':
         return 'Request Ride Confirmation'
       default:
         return 'Request Ride Confirmation'

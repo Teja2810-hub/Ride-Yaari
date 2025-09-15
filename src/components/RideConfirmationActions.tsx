@@ -12,15 +12,10 @@ interface RideConfirmationActionsProps {
 
 export default function RideConfirmationActions({ confirmation, onUpdate, onStartChat }: RideConfirmationActionsProps) {
   const [loading, setLoading] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   const handleCancel = async () => {
-    const confirmMessage = confirmation.status === 'accepted' 
-      ? 'Are you sure you want to cancel this accepted ride? Once you cancel, you can no longer accept this passenger for this ride. The passenger will be notified and can request again if needed.'
-      : 'Are you sure you want to reject this ride request? The passenger will be notified and can request again if needed.'
-    
-    if (!confirm(confirmMessage)) {
-      return
-    }
+    setShowCancelDialog(false)
 
     setLoading(true)
     try {
@@ -38,8 +33,8 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
       const systemMessage = confirmation.status === 'accepted'
-        ? `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again if you'd like.`
-        : `😔 Your request for the ${rideType} has been declined. You can request to join this ride again if you'd like.`
+        ? `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again if needed.`
+        : `😔 Your request for the ${rideType} has been declined. You can request to join this ride again if needed.`
       
       await supabase
         .from('chat_messages')
@@ -283,7 +278,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
         {confirmation.status === 'accepted' && (
           <button
-            onClick={handleCancel}
+            onClick={() => setShowCancelDialog(true)}
             disabled={loading}
             className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
           >
@@ -292,6 +287,41 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
           </button>
         )}
       </div>
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <X size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Ride Confirmation</h3>
+              <p className="text-gray-600">
+                {confirmation.status === 'accepted' 
+                  ? 'Are you sure you want to cancel this accepted ride? This will remove the passenger from your ride and they will be notified. They can request to join again if needed.'
+                  : 'Are you sure you want to reject this ride request? The passenger will be notified and can request again if needed.'
+                }
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Keep Ride
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={loading}
+                className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Cancelling...' : 'Yes, Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
