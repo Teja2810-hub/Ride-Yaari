@@ -356,7 +356,6 @@ export default function AuthForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                        placeholder="Enter your password"
                       placeholder={isSignUp ? "Create a password" : "Enter your password"}
                       />
                     </div>
