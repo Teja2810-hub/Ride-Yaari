@@ -3,7 +3,7 @@ import { Plane, Mail, Lock, User, Shield, ArrowLeft, HelpCircle } from 'lucide-r
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../utils/supabase'
 
-type AuthStep = 'credentials' | 'otp-verification'
+type AuthStep = 'credentials' | 'signup-otp-verification' | 'signin-otp-verification'
 
 export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -19,7 +19,7 @@ export default function AuthForm() {
   const [resendCountdown, setResendCountdown] = useState(0)
   const [showHelp, setShowHelp] = useState(false)
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, sendEmailVerificationOtp, verifyOTP } = useAuth()
 
   // Countdown timer for OTP resend
   React.useEffect(() => {
@@ -65,7 +65,11 @@ export default function AuthForm() {
     setError('')
     
     try {
-      await sendMagicLink(otpEmail)
+      if (authStep === 'signup-otp-verification') {
+        await sendEmailVerificationOtp(otpEmail)
+      } else {
+        await sendMagicLink(otpEmail)
+      }
       setError('')
     } catch (error: any) {
       setError(error.message)
@@ -74,18 +78,15 @@ export default function AuthForm() {
     }
   }
 
-  const verifyOTP = async () => {
+  const handleVerifyOTP = async () => {
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: otpEmail,
-        token: otpCode,
-        type: 'magiclink'
-      })
+      const otpType = authStep === 'signup-otp-verification' ? 'email' : 'magiclink'
+      const { data, error } = await verifyOTP(otpEmail, otpCode, otpType)
 
       if (error) throw error
 
-      // If this is a signup and we have a user, create the profile
-      if (isSignUp && data.user && fullName) {
+      // If this is a signup email verification and we have a user, create the profile
+      if (authStep === 'signup-otp-verification' && data.user && fullName) {
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
@@ -113,10 +114,16 @@ export default function AuthForm() {
     try {
       if (authStep === 'credentials') {
         if (isSignUp) {
-          // For signup, send magic link
-          await sendMagicLink(email)
+          // For signup, create account with password and send email verification
+          const { error: signUpError } = await signUp(email, password, fullName)
+          if (signUpError) throw signUpError
+          
+          // Send email verification OTP
+          const { error: otpError } = await sendEmailVerificationOtp(email)
+          if (otpError) throw otpError
+          
           setOtpEmail(email)
-          setAuthStep('otp-verification')
+          setAuthStep('signup-otp-verification')
         } else {
           // For signin, try traditional password login first
           const { error } = await signIn(email, password)
@@ -129,8 +136,8 @@ export default function AuthForm() {
             }
           }
         }
-      } else if (authStep === 'otp-verification') {
-        await verifyOTP()
+      } else if (authStep === 'signup-otp-verification' || authStep === 'signin-otp-verification') {
+        await handleVerifyOTP()
         // Success - user will be automatically signed in
       }
     } catch (error: any) {
@@ -147,7 +154,7 @@ export default function AuthForm() {
     try {
       await sendMagicLink(email)
       setOtpEmail(email)
-      setAuthStep('otp-verification')
+      setAuthStep('signin-otp-verification')
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -276,12 +283,14 @@ export default function AuthForm() {
 
           <div className="text-center mb-6 sm:mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 text-white rounded-full mb-3 sm:mb-4">
-              {authStep === 'otp-verification' ? <Shield size={20} className="sm:w-7 sm:h-7" /> : <Plane size={20} className="sm:w-7 sm:h-7" />}
+              {authStep.includes('otp-verification') ? <Shield size={20} className="sm:w-7 sm:h-7" /> : <Plane size={20} className="sm:w-7 sm:h-7" />}
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RideYaari</h1>
             <p className="text-sm sm:text-base text-gray-600 mt-2">
-              {authStep === 'otp-verification' 
-                ? 'Enter verification code' 
+              {authStep === 'signup-otp-verification'
+                ? 'Verify your email address'
+                : authStep === 'signin-otp-verification'
+                ? 'Enter verification code'
                 : isSignUp ? 'Create your account' : 'Welcome'
               }
             </p>
@@ -332,7 +341,10 @@ export default function AuthForm() {
                   </div>
                 </div>
 
-                {!isSignUp && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Password
@@ -345,28 +357,37 @@ export default function AuthForm() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
                         placeholder="Enter your password"
-                        required
+                      placeholder={isSignUp ? "Create a password" : "Enter your password"}
                       />
                     </div>
                   </div>
-                )}
+                </div>
               </>
             )}
 
-            {authStep === 'otp-verification' && (
+            {authStep.includes('otp-verification') && (
               <div>
                 <div className="text-center mb-4 sm:mb-6">
                   <p className="text-sm sm:text-base text-gray-600">
-                    We've sent a magic link to:
+                    {authStep === 'signup-otp-verification' 
+                      ? 'We\'ve sent a verification code to:'
+                      : 'We\'ve sent a magic link to:'
+                    }
                   </p>
                   <p className="font-semibold text-gray-900 text-sm sm:text-base">{otpEmail}</p>
                   <p className="text-xs sm:text-sm text-blue-600 mt-2">
-                    Click the link in your email to sign in, or enter the verification code below.
+                    {authStep === 'signup-otp-verification'
+                      ? 'Enter the 6-digit verification code from your email to complete registration.'
+                      : 'Click the link in your email to sign in, or enter the verification code below.'
+                    }
                   </p>
                 </div>
                 
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 text-center">
-                  Enter 6-digit verification code (optional)
+                  {authStep === 'signup-otp-verification' 
+                    ? 'Enter 6-digit verification code'
+                    : 'Enter 6-digit verification code (optional)'
+                  }
                 </label>
                 <div className="relative">
                   <Shield className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -377,16 +398,20 @@ export default function AuthForm() {
                     className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-base sm:text-lg tracking-widest"
                     placeholder="000000"
                     maxLength={6}
+                    required={authStep === 'signup-otp-verification'}
                   />
                 </div>
                 <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">
-                  Check your email for the magic link or verification code
+                  {authStep === 'signup-otp-verification'
+                    ? 'Check your email for the verification code'
+                    : 'Check your email for the magic link or verification code'
+                  }
                 </p>
                 
                 <div className="text-center mt-4">
                   {!canResendOtp ? (
                     <p className="text-xs sm:text-sm text-gray-500">
-                      Resend link in {Math.floor(resendCountdown / 60)}:{(resendCountdown % 60).toString().padStart(2, '0')}
+                      Resend {authStep === 'signup-otp-verification' ? 'code' : 'link'} in {Math.floor(resendCountdown / 60)}:{(resendCountdown % 60).toString().padStart(2, '0')}
                     </p>
                   ) : (
                     <button
@@ -395,7 +420,7 @@ export default function AuthForm() {
                       disabled={loading}
                       className="text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 text-sm"
                     >
-                      Resend magic link
+                      Resend {authStep === 'signup-otp-verification' ? 'verification code' : 'magic link'}
                     </button>
                   )}
                 </div>
@@ -408,8 +433,9 @@ export default function AuthForm() {
              className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {loading ? 'Please wait...' : 
-                authStep === 'otp-verification' ? 'Verify Code' :
-                isSignUp ? 'Send Magic Link' : 'Sign In'
+                authStep === 'signup-otp-verification' ? 'Verify Email' :
+                authStep === 'signin-otp-verification' ? 'Verify Code' :
+                isSignUp ? 'Create Account' : 'Sign In'
               }
             </button>
           </form>
@@ -427,7 +453,7 @@ export default function AuthForm() {
             </div>
           )}
 
-          {authStep === 'otp-verification' && (
+          {authStep.includes('otp-verification') && (
             <div className="mt-4">
               <button
                 onClick={handleBackToCredentials}

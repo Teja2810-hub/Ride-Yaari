@@ -14,7 +14,11 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
   const [loading, setLoading] = useState(false)
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel this confirmed ride? This will notify the passenger.')) {
+    const confirmMessage = confirmation.status === 'accepted' 
+      ? 'Are you sure you want to cancel this accepted ride? Once you cancel, you can no longer accept this passenger for this ride. The passenger will be notified and can request again if needed.'
+      : 'Are you sure you want to reject this ride request? The passenger will be notified and can request again if needed.'
+    
+    if (!confirm(confirmMessage)) {
       return
     }
 
@@ -33,7 +37,9 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
 
       // Send system message to passenger
       const rideType = confirmation.ride_id ? 'car ride' : 'airport trip'
-      const systemMessage = `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can search for other available rides.`
+      const systemMessage = confirmation.status === 'accepted'
+        ? `😔 Unfortunately, the ${rideType} you were confirmed for has been cancelled by the ride owner. You can request to join this ride again if you'd like.`
+        : `😔 Your request for the ${rideType} has been declined. You can request to join this ride again if you'd like.`
       
       await supabase
         .from('chat_messages')
@@ -48,7 +54,7 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
       onUpdate()
     } catch (error: any) {
       console.error('Error cancelling ride:', error)
-      alert('Failed to cancel ride. Please try again.')
+      alert('Failed to process request. Please try again.')
     } finally {
       setLoading(false)
     }

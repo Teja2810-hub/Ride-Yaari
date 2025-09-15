@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Send, MessageCircle, Check, X, Clock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { ChatMessage } from '../types'
+import { ChatMessage, RideConfirmation } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
 
@@ -22,11 +22,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [sending, setSending] = useState(false)
   const [showConfirmationModal, setShowConfirmationModal] = useState(false)
   const [showSendConfirmationDisclaimer, setShowSendConfirmationDisclaimer] = useState(false)
+  const [currentConfirmationStatus, setCurrentConfirmationStatus] = useState<string | null>(null)
+  const [existingConfirmationId, setExistingConfirmationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user) {
       fetchMessages()
+      fetchConfirmationStatus()
       
       // Subscribe to new messages
       const subscription = supabase
@@ -45,6 +48,17 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             }
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'ride_confirmations',
+          },
+          () => {
+            fetchConfirmationStatus()
+          }
+        )
         .subscribe()
 
       return () => {
@@ -53,6 +67,39 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }, [user, otherUserId])
 
+  const fetchConfirmationStatus = async () => {
+    if (!user || (!preSelectedRide && !preSelectedTrip)) return
+
+    try {
+      let query = supabase
+        .from('ride_confirmations')
+        .select('id, status')
+
+      if (preSelectedRide) {
+        query = query
+          .eq('ride_id', preSelectedRide.id)
+          .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
+      } else if (preSelectedTrip) {
+        query = query
+          .eq('trip_id', preSelectedTrip.id)
+          .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
+      }
+
+      const { data, error } = await query.single()
+
+      if (!error && data) {
+        setCurrentConfirmationStatus(data.status)
+        setExistingConfirmationId(data.id)
+      } else {
+        setCurrentConfirmationStatus(null)
+        setExistingConfirmationId(null)
+      }
+    } catch (error) {
+      console.error('Error fetching confirmation status:', error)
+      setCurrentConfirmationStatus(null)
+      setExistingConfirmationId(null)
+    }
+  }
 
   useEffect(() => {
     scrollToBottom()
@@ -165,15 +212,32 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         }
       }
 
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .insert({
-          ride_id: rideId,
-          trip_id: tripId,
-          ride_owner_id: rideOwnerId,
-          passenger_id: passengerId,
-          status: 'pending'
-        })
+      let error
+      
+      if (existingConfirmationId && currentConfirmationStatus === 'rejected') {
+        // Update existing rejected confirmation to pending
+        const result = await supabase
+          .from('ride_confirmations')
+          .update({
+            status: 'pending',
+            confirmed_at: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingConfirmationId)
+        error = result.error
+      } else {
+        // Insert new confirmation
+        const result = await supabase
+          .from('ride_confirmations')
+          .insert({
+            ride_id: rideId,
+            trip_id: tripId,
+            ride_owner_id: rideOwnerId,
+            passenger_id: passengerId,
+            status: 'pending'
+          })
+        error = result.error
+      }
 
       if (error) throw error
 
@@ -195,6 +259,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       setShowConfirmationModal(false)
       fetchMessages()
+      fetchConfirmationStatus()
     } catch (error: any) {
       console.error('Error creating confirmation:', error)
       alert('Failed to send confirmation request. Please try again.')
@@ -236,6 +301,37 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         hour12: true
       })
     }
+  }
+
+  const getConfirmationButtonText = () => {
+    const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
+                              (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
+    
+    if (!isPassengerRequest) {
+      return 'Send Ride Confirmation'
+    }
+    
+    switch (currentConfirmationStatus) {
+      case 'pending':
+        return 'Request Pending...'
+      case 'accepted':
+        return 'Request Accepted ✓'
+      case 'rejected':
+        return 'Request Ride Confirmation'
+      default:
+        return 'Request Ride Confirmation'
+    }
+  }
+
+  const isConfirmationButtonDisabled = () => {
+    const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
+                              (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
+    
+    if (!isPassengerRequest) {
+      return false
+    }
+    
+    return currentConfirmationStatus === 'pending' || currentConfirmationStatus === 'accepted'
   }
 
   if (loading) {
@@ -337,16 +433,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             <div className="mb-3 flex justify-center">
               <button
                 onClick={handleShowConfirmationModal}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                disabled={isConfirmationButtonDisabled()}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                  isConfirmationButtonDisabled()
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
               >
                 <Check size={16} />
-                <span>
-                  {((preSelectedRide && preSelectedRide.user_id !== user?.id) || 
-                    (preSelectedTrip && preSelectedTrip.user_id !== user?.id))
-                    ? 'Request Ride Confirmation'
-                    : 'Send Ride Confirmation'
-                  }
-                </span>
+                <span>{getConfirmationButtonText()}</span>
               </button>
             </div>
           )}

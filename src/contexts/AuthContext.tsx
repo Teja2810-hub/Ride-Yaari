@@ -9,6 +9,8 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
+  sendEmailVerificationOtp: (email: string) => Promise<{ error: any }>
+  verifyOTP: (email: string, token: string, type: 'email' | 'magiclink') => Promise<{ data: any, error: any }>
   signOut: () => Promise<void>
 }
 
@@ -67,24 +69,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
     })
 
-    if (!error && data.user) {
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-        })
-
-      return { error: profileError }
-    }
-
     return { error }
+  }
+
+  const sendEmailVerificationOtp = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    return { error }
+  }
+
+  const verifyOTP = async (email: string, token: string, type: 'email' | 'magiclink') => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: token,
+      type: type
+    })
+    return { data, error }
   }
 
   const signOut = async () => {
@@ -97,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signIn,
     signUp,
+    sendEmailVerificationOtp,
+    verifyOTP,
     signOut,
   }
 
