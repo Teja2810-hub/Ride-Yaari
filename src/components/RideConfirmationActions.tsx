@@ -218,24 +218,6 @@ export default function RideConfirmationActions({ confirmation, onUpdate, onStar
               </div>
             </div>
           </div>
-          {/* Ride/Trip Details */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">From</p>
-              <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">To</p>
-              <div className="font-medium text-gray-900">{trip.destination_airport}</div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-              <div className="font-medium text-gray-900 flex items-center">
-                <Calendar size={14} className="mr-1 text-gray-400" />
-                {formatDate(trip.travel_date)}
-              </div>
-            </div>
-          </div>
         )}
 
         {(ride?.price || trip?.price) && (
