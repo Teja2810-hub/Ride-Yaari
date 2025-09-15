@@ -301,20 +301,10 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">Service Price</p>
                                 <div className="flex items-center space-x-2">
-                              {trip.departure_time && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Departure: {trip.departure_time}
-                                </div>
-                              )}
                                   <span className="font-semibold text-green-600 flex items-center">
                                     <DollarSign size={16} className="mr-1" />
                                     {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
                                   </span>
-                              {trip.landing_time && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Arrival: {trip.landing_time}
-                                </div>
-                              )}
                                   {trip.negotiable && (
                                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                       Negotiable
