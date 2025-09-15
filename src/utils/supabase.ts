@@ -69,7 +69,7 @@ export const authWithRetry = {
       })
       
       if (error) {
-        throw new Error(`Signup failed: ${error.message}`)
+        throw error
       }
       
       return data
@@ -84,7 +84,7 @@ export const authWithRetry = {
       })
       
       if (error) {
-        throw new Error(`Login failed: ${error.message}`)
+        throw error
       }
       
       return data
@@ -102,7 +102,7 @@ export const authWithRetry = {
       })
       
       if (error) {
-        throw new Error(`Failed to send verification email: ${error.message}`)
+        throw error
       }
       
       return { error: null }
@@ -118,7 +118,7 @@ export const authWithRetry = {
       })
       
       if (error) {
-        throw new Error(`Failed to verify code: ${error.message}`)
+        throw error
       }
       
       return { data, error: null }
@@ -130,7 +130,7 @@ export const authWithRetry = {
       const { error } = await supabase.auth.signOut()
       
       if (error) {
-        throw new Error(`Logout failed: ${error.message}`)
+        throw error
       }
     })
   }

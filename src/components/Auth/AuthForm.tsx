@@ -33,7 +33,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       if (onClose) onClose()
     } catch (error: any) {
       console.error('Sign in error:', error)
-      setError(error?.message || 'Failed to sign in. Please check your credentials.')
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Failed to sign in. Please check your credentials.')
+      }
     } finally {
       setLoading(false)
     }
@@ -55,7 +59,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       setSuccess('Magic link sent to your email! Please check your inbox.')
     } catch (error: any) {
       console.error('Magic link error:', error)
-      setError(error?.message || 'Failed to send magic link. Please try again.')
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Failed to send magic link. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -78,7 +86,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       setSuccess('Account created! Please check your email for the verification code.')
     } catch (error: any) {
       console.error('Sign up error:', error)
-      setError(error?.message || 'Failed to create account. Please try again.')
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Failed to create account. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -102,7 +114,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       }
     } catch (error: any) {
       console.error('OTP verification error:', error)
-      setError(error?.message || 'Invalid verification code. Please try again.')
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Invalid verification code. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
