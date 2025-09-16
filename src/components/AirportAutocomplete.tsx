@@ -88,6 +88,7 @@ export default function AirportAutocomplete({
             const searchLower = searchTerm.toLowerCase()
             if (
               airport.code.toLowerCase().includes(searchLower) ||
+              airport.code.toLowerCase().startsWith(searchLower) ||
               airport.name.toLowerCase().includes(searchLower) ||
               airport.city.toLowerCase().includes(searchLower) ||
               airport.country.toLowerCase().includes(searchLower)
@@ -100,6 +101,21 @@ export default function AirportAutocomplete({
         // Limit results to prevent performance issues
         if (airports.length >= 20) break
       }
+      
+      // Sort results to prioritize exact code matches
+      airports.sort((a, b) => {
+        const aCodeMatch = a.code.toLowerCase() === searchLower
+        const bCodeMatch = b.code.toLowerCase() === searchLower
+        const aCodeStart = a.code.toLowerCase().startsWith(searchLower)
+        const bCodeStart = b.code.toLowerCase().startsWith(searchLower)
+        
+        if (aCodeMatch && !bCodeMatch) return -1
+        if (!aCodeMatch && bCodeMatch) return 1
+        if (aCodeStart && !bCodeStart) return -1
+        if (!aCodeStart && bCodeStart) return 1
+        
+        return a.name.localeCompare(b.name)
+      })
       
       setFilteredAirports(airports)
       setShowDropdown(airports.length > 0)
