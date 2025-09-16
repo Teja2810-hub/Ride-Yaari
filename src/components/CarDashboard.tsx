@@ -12,9 +12,10 @@ interface CarDashboardProps {
   onBack: () => void
   onStartChat?: (userId: string, userName: string) => void
   onViewConfirmations: () => void
+  isGuest?: boolean
 }
 
-export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack, onStartChat, onViewConfirmations }: CarDashboardProps) {
+export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
   const { userProfile, signOut } = useAuth()
 
   return (
@@ -31,37 +32,47 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
               <ArrowLeft size={18} />
               <span>Back</span>
             </button>
-            {onStartChat && (
+            {onStartChat && !isGuest && (
               <MessagesNotification onStartChat={onStartChat} />
             )}
-            <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
-            <button
-              onClick={onProfile}
-              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-            >
-              <User size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Profile</span>
-            </button>
-            <div className="text-center sm:text-right">
-              <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
-              <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
-            </div>
-            {userProfile?.profile_image_url && (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
-                <img
-                  src={userProfile.profile_image_url}
-                  alt={userProfile.full_name}
-                  className="w-full h-full object-cover"
-                />
+            {!isGuest && (
+              <>
+                <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
+                <button
+                  onClick={onProfile}
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
+                >
+                  <User size={16} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Profile</span>
+                </button>
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
+                </div>
+                {userProfile?.profile_image_url && (
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
+                    <img
+                      src={userProfile.profile_image_url}
+                      alt={userProfile.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
+                >
+                  <LogOut size={16} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </>
+            )}
+            {isGuest && (
+              <div className="text-center sm:text-right">
+                <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
+                <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
               </div>
             )}
-            <button
-              onClick={signOut}
-              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-            >
-              <LogOut size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
           </div>
         </div>
 

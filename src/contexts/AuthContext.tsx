@@ -7,6 +7,8 @@ interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
+  isGuest: boolean
+  setGuestMode: (isGuest: boolean) => void
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
   sendEmailVerificationOtp: (email: string) => Promise<{ error: any }>
@@ -20,6 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isGuest, setIsGuest] = useState(false)
+
+  const setGuestMode = (guestMode: boolean) => {
+    setIsGuest(guestMode)
+    if (guestMode) {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     // Get initial session
@@ -116,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    setIsGuest(false)
     await supabase.auth.signOut()
   }
 
@@ -123,6 +134,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     userProfile,
     loading,
+    isGuest,
+    setGuestMode,
     signIn,
     signUp,
     sendEmailVerificationOtp,

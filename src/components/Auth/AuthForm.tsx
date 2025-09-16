@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { User, Mail, Lock, Eye, EyeOff, Send } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface AuthFormProps {
@@ -19,7 +19,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   
-  const { signIn, signUp, sendEmailVerificationOtp, verifyOTP } = useAuth()
+  const { signIn, signUp, sendEmailVerificationOtp, verifyOTP, setGuestMode } = useAuth()
+
+  const handleContinueAsGuest = () => {
+    setGuestMode(true)
+    if (onClose) onClose()
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -148,6 +153,18 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </p>
           </div>
 
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <button
+              onClick={handleContinueAsGuest}
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              <UserCheck size={20} />
+              <span>Continue as Guest</span>
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Browse and search rides without creating an account
+            </p>
+          </div>
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}

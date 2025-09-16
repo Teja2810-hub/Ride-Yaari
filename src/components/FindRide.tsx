@@ -18,13 +18,15 @@ interface LocationData {
 interface FindRideProps {
   onBack: () => void
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
+  isGuest?: boolean
 }
 
 type SearchType = 'from-to' | 'from-only' | 'to-only'
 type LocationSearchType = 'manual' | 'nearby'
 
-export default function FindRide({ onBack, onStartChat }: FindRideProps) {
-  const { user } = useAuth()
+export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
+  const { user, isGuest: contextIsGuest } = useAuth()
+  const effectiveIsGuest = isGuest || contextIsGuest
   const [locationSearchType, setLocationSearchType] = useState<LocationSearchType>('manual')
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
@@ -957,10 +959,23 @@ export default function FindRide({ onBack, onStartChat }: FindRideProps) {
                       </div>
 
                       <div className="ml-6">
-                        {ride.user_id === user?.id ? (
+                        {!effectiveIsGuest && ride.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Ride</span>
+                          </div>
+                        ) : effectiveIsGuest ? (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
+                              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Driver</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Sign up required to chat
+                            </p>
                           </div>
                         ) : (
                           <div className="flex flex-col space-y-2">

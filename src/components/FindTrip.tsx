@@ -10,10 +10,12 @@ import { getCurrencySymbol } from '../utils/currencies'
 interface FindTripProps {
   onBack: () => void
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
+  isGuest?: boolean
 }
 
-export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
-  const { user } = useAuth()
+export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
+  const { user, isGuest: contextIsGuest } = useAuth()
+  const effectiveIsGuest = isGuest || contextIsGuest
   const [departureAirport, setDepartureAirport] = useState('')
   const [destinationAirport, setDestinationAirport] = useState('')
   const [travelDate, setTravelDate] = useState('')
@@ -344,10 +346,23 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                       </div>
 
                       <div className="ml-6">
-                        {trip.user_id === user?.id ? (
+                        {!effectiveIsGuest && trip.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Trip</span>
+                          </div>
+                        ) : effectiveIsGuest ? (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Sign up required to chat
+                            </p>
                           </div>
                         ) : (
                           <div className="flex flex-col space-y-2">

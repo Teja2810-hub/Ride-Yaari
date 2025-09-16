@@ -25,7 +25,7 @@ import WhatsAppChatButton from './components/WhatsAppChatButton'
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
 function AppContent() {
-  const { user, loading } = useAuth()
+  const { user, loading, isGuest } = useAuth()
   const [currentView, setCurrentView] = useState<AppView>('platform-selector')
   const [showWelcomePopup, setShowWelcomePopup] = useState<boolean>(false)
   const [chatUserId, setChatUserId] = useState<string>('')
@@ -35,23 +35,28 @@ function AppContent() {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
   // Check if user is visiting for the first time
   React.useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && !isGuest) {
       const hasVisited = localStorage.getItem('rideyaari-visited')
       if (!hasVisited) {
         setShowWelcomePopup(true)
         localStorage.setItem('rideyaari-visited', 'true')
       }
     }
-  }, [user, loading])
+  }, [user, loading, isGuest])
 
   const handleCloseWelcomePopup = () => {
     setShowWelcomePopup(false)
   }
 
   const handleStartChat = (userId: string, userName: string, ride?: CarRide, trip?: Trip) => {
+    if (isGuest) {
+      setShowAuthPrompt(true)
+      return
+    }
     setChatUserId(userId)
     setChatUserName(userName)
     setSelectedRideForChat(ride || null)
@@ -89,6 +94,10 @@ function AppContent() {
   }
 
   const handleProfile = () => {
+    if (isGuest) {
+      setShowAuthPrompt(true)
+      return
+    }
     setCurrentView('profile')
   }
 
@@ -97,6 +106,10 @@ function AppContent() {
   }
 
   const handleViewConfirmations = () => {
+    if (isGuest) {
+      setShowAuthPrompt(true)
+      return
+    }
     setCurrentView('profile')
     setInitialProfileTab('confirmations')
   }
@@ -127,7 +140,7 @@ function AppContent() {
     )
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return (
       <>
         <AuthForm onClose={() => {}} />
@@ -156,29 +169,44 @@ function AppContent() {
                     onHelp={handleHelp}
                     onStartChat={handleStartChat}
                     onViewConfirmations={handleViewConfirmations}
+                    isGuest={isGuest}
                   />
                 )
               case 'airport-dashboard':
                 return (
                   <Dashboard
-                    onPostTrip={() => setCurrentView('post-trip')}
+                    onPostTrip={() => {
+                      if (isGuest) {
+                        setShowAuthPrompt(true)
+                      } else {
+                        setCurrentView('post-trip')
+                      }
+                    }}
                     onFindTrip={() => setCurrentView('find-trip')}
                     onProfile={() => setCurrentView('profile')}
                     onBack={() => setCurrentView('platform-selector')}
                     onHelp={() => setCurrentView('help')}
                     onStartChat={handleStartChat}
                     onViewConfirmations={handleViewConfirmations}
+                    isGuest={isGuest}
                   />
                 )
               case 'car-dashboard':
                 return (
                   <CarDashboard
-                    onPostRide={() => setCurrentView('post-ride')}
+                    onPostRide={() => {
+                      if (isGuest) {
+                        setShowAuthPrompt(true)
+                      } else {
+                        setCurrentView('post-ride')
+                      }
+                    }}
                     onFindRide={() => setCurrentView('find-ride')}
                     onProfile={() => setCurrentView('profile')}
                     onBack={() => setCurrentView('platform-selector')}
                     onStartChat={handleStartChat}
                     onViewConfirmations={handleViewConfirmations}
+                    isGuest={isGuest}
                   />
                 )
               case 'post-trip':
@@ -188,6 +216,7 @@ function AppContent() {
                   <FindTrip 
                     onBack={handleBackToAirportDashboard} 
                     onStartChat={handleStartChat}
+                    isGuest={isGuest}
                   />
                 )
               case 'post-ride':
@@ -197,6 +226,7 @@ function AppContent() {
                   <FindRide 
                     onBack={handleBackToCarDashboard} 
                     onStartChat={handleStartChat}
+                    isGuest={isGuest}
                   />
                 )
               case 'profile':
@@ -252,6 +282,42 @@ function AppContent() {
         )}
       </div>
       <WhatsAppChatButton />
+      
+      {/* Auth Prompt Modal */}
+      {showAuthPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User size={32} className="text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up Required</h2>
+              <p className="text-gray-600">
+                To access this feature, you need to create an account or sign in. It's quick and free!
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowAuthPrompt(false)
+                  // This will show the auth form since isGuest will be set to false
+                  const { setGuestMode } = useAuth()
+                  setGuestMode(false)
+                }}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Sign Up / Sign In
+              </button>
+              <button
+                onClick={() => setShowAuthPrompt(false)}
+                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Continue Browsing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

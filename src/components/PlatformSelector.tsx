@@ -11,10 +11,11 @@ interface PlatformSelectorProps {
   onHelp: () => void
   onStartChat: (userId: string, userName: string) => void
   onViewConfirmations: () => void
+  isGuest?: boolean
 }
 
-export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations }: PlatformSelectorProps) {
-  const { userProfile, signOut } = useAuth()
+export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations, isGuest = false }: PlatformSelectorProps) {
+  const { userProfile, signOut, setGuestMode } = useAuth()
 
   return (
     <div className="min-h-screen bg-neutral-bg">
@@ -24,6 +25,15 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           <div></div>
           
           <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
+            {isGuest && (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
+              >
+                <User size={18} />
+                <span>Sign Up</span>
+              </button>
+            )}
             <button
               onClick={onHelp}
               className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
@@ -31,35 +41,45 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
               <HelpCircle size={18} />
               <span>Help</span>
             </button>
-            <MessagesNotification onStartChat={onStartChat} />
-            <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
-            <button
-              onClick={onProfile}
-              className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-            >
-              <User size={18} />
-              <span>Profile</span>
-            </button>
-            <div className="text-right">
-              <p className="text-sm text-text-secondary font-light">Welcome,</p>
-              <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
-            </div>
-            {userProfile?.profile_image_url && (
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-md">
-                <img
-                  src={userProfile.profile_image_url}
-                  alt={userProfile.full_name}
-                  className="w-full h-full object-cover"
-                />
+            {!isGuest && (
+              <>
+                <MessagesNotification onStartChat={onStartChat} />
+                <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
+                <button
+                  onClick={onProfile}
+                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
+                >
+                  <User size={18} />
+                  <span>Profile</span>
+                </button>
+                <div className="text-right">
+                  <p className="text-sm text-text-secondary font-light">Welcome,</p>
+                  <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
+                </div>
+                {userProfile?.profile_image_url && (
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-md">
+                    <img
+                      src={userProfile.profile_image_url}
+                      alt={userProfile.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
+                >
+                  <LogOut size={18} />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            )}
+            {isGuest && (
+              <div className="text-right">
+                <p className="text-sm text-text-secondary font-light">Browsing as</p>
+                <p className="font-semibold text-text-primary text-base">Guest</p>
               </div>
             )}
-            <button
-              onClick={signOut}
-              className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-            >
-              <LogOut size={18} />
-              <span>Sign Out</span>
-            </button>
           </div>
         </div>
 
