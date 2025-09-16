@@ -166,7 +166,7 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Departure Time
+                  Departure Time <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-3">
                   <div className="relative">
@@ -176,7 +176,7 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
                       value={departureTime}
                       onChange={(e) => setDepartureTime(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      required={departureTime !== ''}
+                      required
                     />
                   </div>
                   <div className="relative">
@@ -185,7 +185,7 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
                       value={departureTimezone}
                       onChange={(e) => setDepartureTimezone(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      required={departureTime !== ''}
+                      required
                     >
                       {timezones.map((tz) => (
                         <option key={tz.value} value={tz.value}>
@@ -196,7 +196,7 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  {departureTime ? 'Timezone is required when departure time is specified' : 'Optional - specify if you want to share exact timing'}
+                  Required - specify your departure time and timezone for better coordination
                 </p>
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
               </button>
               <button
                 type="submit"
-                disabled={loading || !leavingAirport || !destinationAirport || !travelDate}
+                disabled={loading || !leavingAirport || !destinationAirport || !travelDate || !departureTime}
                 className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Updating Trip...' : 'Update Trip'}
