@@ -51,8 +51,10 @@ export default function PostTrip({ onBack }: PostTripProps) {
           destination_airport: destinationAirport,
           travel_date: travelDate,
           departure_time: departureTime || null,
+          departure_timezone: departureTime ? departureTimezone : null,
           landing_date: landingDate || null,
           landing_time: landingTime || null,
+          landing_timezone: landingTime ? landingTimezone : null,
           price: price ? parseFloat(price) : null,
           currency: price ? currency : null,
           negotiable: price ? negotiable : false,
@@ -187,6 +189,7 @@ export default function PostTrip({ onBack }: PostTripProps) {
                       value={departureTime}
                       onChange={(e) => setDepartureTime(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      required={departureTime !== ''}
                     />
                   </div>
                   <div className="relative">
@@ -195,6 +198,7 @@ export default function PostTrip({ onBack }: PostTripProps) {
                       value={departureTimezone}
                       onChange={(e) => setDepartureTimezone(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      required={departureTime !== ''}
                     >
                       {timezones.map((tz) => (
                         <option key={tz.value} value={tz.value}>
@@ -204,7 +208,9 @@ export default function PostTrip({ onBack }: PostTripProps) {
                     </select>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Optional - specify if you want to share exact timing</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {departureTime ? 'Timezone is required when departure time is specified' : 'Optional - specify if you want to share exact timing'}
+                </p>
               </div>
             </div>
 
@@ -238,6 +244,7 @@ export default function PostTrip({ onBack }: PostTripProps) {
                       value={landingTime}
                       onChange={(e) => setLandingTime(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      required={landingTime !== ''}
                     />
                   </div>
                   <div className="relative">
@@ -246,6 +253,7 @@ export default function PostTrip({ onBack }: PostTripProps) {
                       value={landingTimezone}
                       onChange={(e) => setLandingTimezone(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      required={landingTime !== ''}
                     >
                       {timezones.map((tz) => (
                         <option key={tz.value} value={tz.value}>
@@ -255,7 +263,9 @@ export default function PostTrip({ onBack }: PostTripProps) {
                     </select>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">Optional - specify if you want to share exact timing</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {landingTime ? 'Timezone is required when landing time is specified' : 'Optional - specify if you want to share exact timing'}
+                </p>
               </div>
             </div>
 

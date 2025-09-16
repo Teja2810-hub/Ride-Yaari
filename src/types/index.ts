@@ -21,8 +21,10 @@ export interface Trip {
   destination_airport: string
   travel_date: string
   departure_time?: string
+  departure_timezone?: string
   landing_date?: string
   landing_time?: string
+  landing_timezone?: string
   price?: number
   currency?: string
   negotiable?: boolean

@@ -282,6 +282,11 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                               <div className="text-sm text-gray-600 flex items-center mt-1">
                                 <Clock size={12} className="mr-1" />
                                 {trip.departure_time}
+                                {trip.departure_timezone && (
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({trip.departure_timezone})
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
@@ -295,6 +300,11 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                               <div className="text-sm text-gray-600 flex items-center mt-1">
                                 <Clock size={12} className="mr-1" />
                                 {trip.landing_time}
+                                {trip.landing_timezone && (
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({trip.landing_timezone})
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
