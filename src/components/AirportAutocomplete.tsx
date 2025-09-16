@@ -63,45 +63,126 @@ export default function AirportAutocomplete({
     const searchLower = searchTerm.toLowerCase()
 
     try {
-      // Using OpenFlights API (free, no API key required)
-      const response = await fetch(`https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat`)
-      const text = await response.text()
-      
-      // Parse CSV data
-      const lines = text.split('\n')
-      const airports: Airport[] = []
-      
-      for (const line of lines) {
-        if (!line.trim()) continue
+      // Comprehensive airport database with major airports
+      const airportDatabase: Airport[] = [
+        // US Major Airports
+        { code: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport', city: 'Atlanta', country: 'United States' },
+        { code: 'LAX', name: 'Los Angeles International Airport', city: 'Los Angeles', country: 'United States' },
+        { code: 'ORD', name: 'O\'Hare International Airport', city: 'Chicago', country: 'United States' },
+        { code: 'DFW', name: 'Dallas/Fort Worth International Airport', city: 'Dallas', country: 'United States' },
+        { code: 'DEN', name: 'Denver International Airport', city: 'Denver', country: 'United States' },
+        { code: 'JFK', name: 'John F. Kennedy International Airport', city: 'New York', country: 'United States' },
+        { code: 'SFO', name: 'San Francisco International Airport', city: 'San Francisco', country: 'United States' },
+        { code: 'LAS', name: 'McCarran International Airport', city: 'Las Vegas', country: 'United States' },
+        { code: 'SEA', name: 'Seattle-Tacoma International Airport', city: 'Seattle', country: 'United States' },
+        { code: 'CLT', name: 'Charlotte Douglas International Airport', city: 'Charlotte', country: 'United States' },
+        { code: 'EWR', name: 'Newark Liberty International Airport', city: 'Newark', country: 'United States' },
+        { code: 'PHX', name: 'Phoenix Sky Harbor International Airport', city: 'Phoenix', country: 'United States' },
+        { code: 'IAH', name: 'George Bush Intercontinental Airport', city: 'Houston', country: 'United States' },
+        { code: 'MIA', name: 'Miami International Airport', city: 'Miami', country: 'United States' },
+        { code: 'BOS', name: 'Logan International Airport', city: 'Boston', country: 'United States' },
+        { code: 'MSP', name: 'Minneapolis-Saint Paul International Airport', city: 'Minneapolis', country: 'United States' },
+        { code: 'DTW', name: 'Detroit Metropolitan Wayne County Airport', city: 'Detroit', country: 'United States' },
+        { code: 'PHL', name: 'Philadelphia International Airport', city: 'Philadelphia', country: 'United States' },
+        { code: 'LGA', name: 'LaGuardia Airport', city: 'New York', country: 'United States' },
+        { code: 'BWI', name: 'Baltimore/Washington International Thurgood Marshall Airport', city: 'Baltimore', country: 'United States' },
+        { code: 'DCA', name: 'Ronald Reagan Washington National Airport', city: 'Washington', country: 'United States' },
+        { code: 'IAD', name: 'Washington Dulles International Airport', city: 'Washington', country: 'United States' },
+        { code: 'SLC', name: 'Salt Lake City International Airport', city: 'Salt Lake City', country: 'United States' },
+        { code: 'HNL', name: 'Daniel K. Inouye International Airport', city: 'Honolulu', country: 'United States' },
+        { code: 'PDX', name: 'Portland International Airport', city: 'Portland', country: 'United States' },
+        { code: 'TPA', name: 'Tampa International Airport', city: 'Tampa', country: 'United States' },
+        { code: 'STL', name: 'Lambert-St. Louis International Airport', city: 'St. Louis', country: 'United States' },
+        { code: 'BNA', name: 'Nashville International Airport', city: 'Nashville', country: 'United States' },
+        { code: 'AUS', name: 'Austin-Bergstrom International Airport', city: 'Austin', country: 'United States' },
+        { code: 'MSY', name: 'Louis Armstrong New Orleans International Airport', city: 'New Orleans', country: 'United States' },
+        { code: 'RDU', name: 'Raleigh-Durham International Airport', city: 'Raleigh', country: 'United States' },
+        { code: 'MCI', name: 'Kansas City International Airport', city: 'Kansas City', country: 'United States' },
+        { code: 'IND', name: 'Indianapolis International Airport', city: 'Indianapolis', country: 'United States' },
+        { code: 'CMH', name: 'John Glenn Columbus International Airport', city: 'Columbus', country: 'United States' },
+        { code: 'PIT', name: 'Pittsburgh International Airport', city: 'Pittsburgh', country: 'United States' },
+        { code: 'CLE', name: 'Cleveland Hopkins International Airport', city: 'Cleveland', country: 'United States' },
+        { code: 'MKE', name: 'Milwaukee Mitchell International Airport', city: 'Milwaukee', country: 'United States' },
+        { code: 'RIC', name: 'Richmond International Airport', city: 'Richmond', country: 'United States' },
+        { code: 'ORF', name: 'Norfolk International Airport', city: 'Norfolk', country: 'United States' },
+        { code: 'ROA', name: 'Roanoke-Blacksburg Regional Airport', city: 'Roanoke', country: 'United States' },
+        { code: 'CHO', name: 'Charlottesville Albemarle Airport', city: 'Charlottesville', country: 'United States' },
         
-        const fields = line.split(',').map(field => field.replace(/"/g, ''))
-        if (fields.length >= 6) {
-          const [id, name, city, country, code] = fields
-          
-          if (code && code.length === 3 && name && city && country) {
-            const airport: Airport = {
-              code: code.toUpperCase(),
-              name: name,
-              city: city,
-              country: country
-            }
-            
-            // Filter based on search term
-            if (
-              airport.code.toLowerCase().includes(searchLower) ||
-              airport.code.toLowerCase().startsWith(searchLower) ||
-              airport.name.toLowerCase().includes(searchLower) ||
-              airport.city.toLowerCase().includes(searchLower) ||
-              airport.country.toLowerCase().includes(searchLower)
-            ) {
-              airports.push(airport)
-            }
-          }
-        }
-        
-        // Limit results to prevent performance issues
-        if (airports.length >= 20) break
-      }
+        // International Major Airports
+        { code: 'LHR', name: 'Heathrow Airport', city: 'London', country: 'United Kingdom' },
+        { code: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
+        { code: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany' },
+        { code: 'AMS', name: 'Amsterdam Airport Schiphol', city: 'Amsterdam', country: 'Netherlands' },
+        { code: 'MAD', name: 'Madrid-Barajas Airport', city: 'Madrid', country: 'Spain' },
+        { code: 'FCO', name: 'Leonardo da Vinci International Airport', city: 'Rome', country: 'Italy' },
+        { code: 'ZUR', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland' },
+        { code: 'VIE', name: 'Vienna International Airport', city: 'Vienna', country: 'Austria' },
+        { code: 'CPH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark' },
+        { code: 'ARN', name: 'Stockholm Arlanda Airport', city: 'Stockholm', country: 'Sweden' },
+        { code: 'OSL', name: 'Oslo Airport', city: 'Oslo', country: 'Norway' },
+        { code: 'HEL', name: 'Helsinki Airport', city: 'Helsinki', country: 'Finland' },
+        { code: 'IST', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey' },
+        { code: 'SVO', name: 'Sheremetyevo International Airport', city: 'Moscow', country: 'Russia' },
+        { code: 'NRT', name: 'Narita International Airport', city: 'Tokyo', country: 'Japan' },
+        { code: 'HND', name: 'Haneda Airport', city: 'Tokyo', country: 'Japan' },
+        { code: 'ICN', name: 'Incheon International Airport', city: 'Seoul', country: 'South Korea' },
+        { code: 'PEK', name: 'Beijing Capital International Airport', city: 'Beijing', country: 'China' },
+        { code: 'PVG', name: 'Shanghai Pudong International Airport', city: 'Shanghai', country: 'China' },
+        { code: 'HKG', name: 'Hong Kong International Airport', city: 'Hong Kong', country: 'Hong Kong' },
+        { code: 'SIN', name: 'Singapore Changi Airport', city: 'Singapore', country: 'Singapore' },
+        { code: 'BKK', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand' },
+        { code: 'KUL', name: 'Kuala Lumpur International Airport', city: 'Kuala Lumpur', country: 'Malaysia' },
+        { code: 'CGK', name: 'Soekarno-Hatta International Airport', city: 'Jakarta', country: 'Indonesia' },
+        { code: 'MNL', name: 'Ninoy Aquino International Airport', city: 'Manila', country: 'Philippines' },
+        { code: 'SYD', name: 'Sydney Kingsford Smith Airport', city: 'Sydney', country: 'Australia' },
+        { code: 'MEL', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia' },
+        { code: 'AKL', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand' },
+        { code: 'YYZ', name: 'Toronto Pearson International Airport', city: 'Toronto', country: 'Canada' },
+        { code: 'YVR', name: 'Vancouver International Airport', city: 'Vancouver', country: 'Canada' },
+        { code: 'YUL', name: 'Montreal-Pierre Elliott Trudeau International Airport', city: 'Montreal', country: 'Canada' },
+        { code: 'GRU', name: 'São Paulo/Guarulhos International Airport', city: 'São Paulo', country: 'Brazil' },
+        { code: 'GIG', name: 'Rio de Janeiro/Galeão International Airport', city: 'Rio de Janeiro', country: 'Brazil' },
+        { code: 'MEX', name: 'Mexico City International Airport', city: 'Mexico City', country: 'Mexico' },
+        { code: 'BOG', name: 'El Dorado International Airport', city: 'Bogotá', country: 'Colombia' },
+        { code: 'LIM', name: 'Jorge Chávez International Airport', city: 'Lima', country: 'Peru' },
+        { code: 'SCL', name: 'Arturo Merino Benítez International Airport', city: 'Santiago', country: 'Chile' },
+        { code: 'EZE', name: 'Ezeiza International Airport', city: 'Buenos Aires', country: 'Argentina' },
+        { code: 'JNB', name: 'O.R. Tambo International Airport', city: 'Johannesburg', country: 'South Africa' },
+        { code: 'CPT', name: 'Cape Town International Airport', city: 'Cape Town', country: 'South Africa' },
+        { code: 'CAI', name: 'Cairo International Airport', city: 'Cairo', country: 'Egypt' },
+        { code: 'DXB', name: 'Dubai International Airport', city: 'Dubai', country: 'United Arab Emirates' },
+        { code: 'DOH', name: 'Hamad International Airport', city: 'Doha', country: 'Qatar' },
+        { code: 'KWI', name: 'Kuwait International Airport', city: 'Kuwait City', country: 'Kuwait' },
+        { code: 'RUH', name: 'King Khalid International Airport', city: 'Riyadh', country: 'Saudi Arabia' },
+        { code: 'JED', name: 'King Abdulaziz International Airport', city: 'Jeddah', country: 'Saudi Arabia' },
+        { code: 'TLV', name: 'Ben Gurion Airport', city: 'Tel Aviv', country: 'Israel' },
+        { code: 'DEL', name: 'Indira Gandhi International Airport', city: 'New Delhi', country: 'India' },
+        { code: 'BOM', name: 'Chhatrapati Shivaji Maharaj International Airport', city: 'Mumbai', country: 'India' },
+        { code: 'BLR', name: 'Kempegowda International Airport', city: 'Bangalore', country: 'India' },
+        { code: 'MAA', name: 'Chennai International Airport', city: 'Chennai', country: 'India' },
+        { code: 'HYD', name: 'Rajiv Gandhi International Airport', city: 'Hyderabad', country: 'India' },
+        { code: 'CCU', name: 'Netaji Subhas Chandra Bose International Airport', city: 'Kolkata', country: 'India' },
+        { code: 'AMD', name: 'Sardar Vallabhbhai Patel International Airport', city: 'Ahmedabad', country: 'India' },
+        { code: 'COK', name: 'Cochin International Airport', city: 'Kochi', country: 'India' },
+        { code: 'GOI', name: 'Goa International Airport', city: 'Goa', country: 'India' },
+        { code: 'JAI', name: 'Jaipur International Airport', city: 'Jaipur', country: 'India' },
+        { code: 'LKO', name: 'Chaudhary Charan Singh International Airport', city: 'Lucknow', country: 'India' },
+        { code: 'IXC', name: 'Chandigarh Airport', city: 'Chandigarh', country: 'India' },
+        { code: 'ATQ', name: 'Sri Guru Ram Dass Jee International Airport', city: 'Amritsar', country: 'India' },
+        { code: 'SXR', name: 'Sheikh ul-Alam International Airport', city: 'Srinagar', country: 'India' },
+        { code: 'IXL', name: 'Kushok Bakula Rimpochee Airport', city: 'Leh', country: 'India' }
+      ]
+      
+      // Filter airports based on search term
+      const airports = airportDatabase.filter(airport => {
+        return (
+          airport.code.toLowerCase().includes(searchLower) ||
+          airport.code.toLowerCase().startsWith(searchLower) ||
+          airport.name.toLowerCase().includes(searchLower) ||
+          airport.city.toLowerCase().includes(searchLower) ||
+          airport.country.toLowerCase().includes(searchLower)
+        )
+      })
       
       // Sort results to prioritize exact code matches
       airports.sort((a, b) => {
@@ -118,7 +199,8 @@ export default function AirportAutocomplete({
         return a.name.localeCompare(b.name)
       })
       
-      setFilteredAirports(airports)
+      // Limit results to top 15 for better UX
+      setFilteredAirports(airports.slice(0, 15))
       setShowDropdown(airports.length > 0)
     } catch (error) {
       console.error('Error fetching airports:', error)
