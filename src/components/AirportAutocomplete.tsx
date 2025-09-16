@@ -59,6 +59,8 @@ export default function AirportAutocomplete({
 
     setLoading(true)
     setError('')
+    
+    const searchLower = searchTerm.toLowerCase()
 
     try {
       // Using OpenFlights API (free, no API key required)
@@ -85,7 +87,6 @@ export default function AirportAutocomplete({
             }
             
             // Filter based on search term
-            const searchLower = searchTerm.toLowerCase()
             if (
               airport.code.toLowerCase().includes(searchLower) ||
               airport.code.toLowerCase().startsWith(searchLower) ||
