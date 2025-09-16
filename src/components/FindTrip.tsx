@@ -278,6 +278,12 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                             <div className="font-semibold text-gray-900">
                               {trip.leaving_airport}
                             </div>
+                            {trip.departure_time && (
+                              <div className="text-sm text-gray-600 flex items-center mt-1">
+                                <Clock size={12} className="mr-1" />
+                                {trip.departure_time}
+                              </div>
+                            )}
                           </div>
 
                           <div>
@@ -285,6 +291,12 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                             <div className="font-semibold text-gray-900">
                               {trip.destination_airport}
                             </div>
+                            {trip.landing_time && (
+                              <div className="text-sm text-gray-600 flex items-center mt-1">
+                                <Clock size={12} className="mr-1" />
+                                {trip.landing_time}
+                              </div>
+                            )}
                           </div>
 
                           <div>
@@ -292,6 +304,11 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                             <div className="font-semibold text-gray-900">
                               {formatDate(trip.travel_date)}
                             </div>
+                            {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                              <div className="text-sm text-gray-600 mt-1">
+                                Landing: {formatDate(trip.landing_date)}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -302,7 +319,6 @@ export default function FindTrip({ onBack, onStartChat }: FindTripProps) {
                                 <p className="text-sm text-gray-600 mb-1">Service Price</p>
                                 <div className="flex items-center space-x-2">
                                   <span className="font-semibold text-green-600 flex items-center">
-                                    <DollarSign size={16} className="mr-1" />
                                     {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
                                   </span>
                                   {trip.negotiable && (
