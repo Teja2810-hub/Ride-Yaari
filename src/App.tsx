@@ -293,15 +293,13 @@ function AppContent() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up Required</h2>
               <p className="text-gray-600">
-                To access this feature, you need to create an account or sign in. It's quick and free!
+                To post rides or send messages, you need to create an account or sign in. It's quick and free!
               </p>
             </div>
             <div className="space-y-3">
               <button
                 onClick={() => {
                   setShowAuthPrompt(false)
-                  // This will show the auth form since isGuest will be set to false
-                  const { setGuestMode } = useAuth()
                   setGuestMode(false)
                 }}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"

@@ -68,10 +68,22 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
               </>
             )}
             {isGuest && (
-              <div className="text-center sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
-                <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
-              </div>
+              <>
+                <button
+                  onClick={() => {
+                    const { setGuestMode } = useAuth()
+                    setGuestMode(false)
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
+                >
+                  <User size={18} />
+                  <span>Sign Up</span>
+                </button>
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
+                </div>
+              </>
             )}
           </div>
         </div>
