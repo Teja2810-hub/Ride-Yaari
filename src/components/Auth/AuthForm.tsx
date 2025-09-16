@@ -326,6 +326,32 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </button>
           </div>
 
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <button
+              onClick={handleContinueAsGuest}
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              <UserCheck size={20} />
+              <span>Continue as Guest</span>
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Browse and search rides without creating an account
+            </p>
+          </div>
+
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <button
+              onClick={handleContinueAsGuest}
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              <UserCheck size={20} />
+              <span>Continue as Guest</span>
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Browse and search rides without creating an account
+            </p>
+          </div>
+
           {onClose && (
             <button
               onClick={onClose}
