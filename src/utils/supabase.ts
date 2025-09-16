@@ -173,8 +173,13 @@ export type Database = {
           destination_airport: string
           travel_date: string
           departure_time: string | null
+          departure_timezone: string | null
           landing_date: string | null
           landing_time: string | null
+          landing_timezone: string | null
+          price: number | null
+          currency: string | null
+          negotiable: boolean | null
           created_at: string
         }
         Insert: {
@@ -184,8 +189,13 @@ export type Database = {
           destination_airport: string
           travel_date: string
           departure_time?: string | null
+          departure_timezone?: string | null
           landing_date?: string | null
           landing_time?: string | null
+          landing_timezone?: string | null
+          price?: number | null
+          currency?: string | null
+          negotiable?: boolean | null
           created_at?: string
         }
         Update: {
@@ -195,8 +205,13 @@ export type Database = {
           destination_airport?: string
           travel_date?: string
           departure_time?: string | null
+          departure_timezone?: string | null
           landing_date?: string | null
           landing_time?: string | null
+          landing_timezone?: string | null
+          price?: number | null
+          currency?: string | null
+          negotiable?: boolean | null
           created_at?: string
         }
       }
@@ -205,27 +220,48 @@ export type Database = {
           id: string
           user_id: string
           from_location: string
+          from_latitude: number | null
+          from_longitude: number | null
           to_location: string
+          to_latitude: number | null
+          to_longitude: number | null
           departure_date_time: string
           price: number
+          currency: string | null
+          negotiable: boolean | null
+          intermediate_stops: string | null
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
           from_location: string
+          from_latitude?: number | null
+          from_longitude?: number | null
           to_location: string
+          to_latitude?: number | null
+          to_longitude?: number | null
           departure_date_time: string
           price: number
+          currency?: string | null
+          negotiable?: boolean | null
+          intermediate_stops?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           user_id?: string
           from_location?: string
+          from_latitude?: number | null
+          from_longitude?: number | null
           to_location?: string
+          to_latitude?: number | null
+          to_longitude?: number | null
           departure_date_time?: string
           price?: number
+          currency?: string | null
+          negotiable?: boolean | null
+          intermediate_stops?: string | null
           created_at?: string
         }
       }
@@ -233,23 +269,35 @@ export type Database = {
         Row: {
           id: string
           ride_id: string
-          user_id: string
+          trip_id: string | null
+          ride_owner_id: string
+          passenger_id: string
           status: string
+          confirmed_at: string | null
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           ride_id: string
-          user_id: string
+          trip_id?: string | null
+          ride_owner_id: string
+          passenger_id: string
           status: string
+          confirmed_at?: string | null
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           ride_id?: string
-          user_id?: string
+          trip_id?: string | null
+          ride_owner_id?: string
+          passenger_id?: string
           status?: string
+          confirmed_at?: string | null
           created_at?: string
+          updated_at?: string
         }
       }
       chat_messages: {
@@ -258,6 +306,8 @@ export type Database = {
           sender_id: string
           receiver_id: string
           message_content: string
+          is_read: boolean | null
+          message_type: string | null
           created_at: string
         }
         Insert: {
@@ -265,6 +315,8 @@ export type Database = {
           sender_id: string
           receiver_id: string
           message_content: string
+          is_read?: boolean | null
+          message_type?: string | null
           created_at?: string
         }
         Update: {
@@ -272,6 +324,8 @@ export type Database = {
           sender_id?: string
           receiver_id?: string
           message_content?: string
+          is_read?: boolean | null
+          message_type?: string | null
           created_at?: string
         }
       }
