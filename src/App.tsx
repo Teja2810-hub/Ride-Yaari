@@ -21,6 +21,7 @@ import PrivacyPolicy from './components/PrivacyPolicy'
 import TermsOfService from './components/TermsOfService'
 import { Trip, CarRide } from './types'
 import WhatsAppChatButton from './components/WhatsAppChatButton'
+import { User } from 'lucide-react'
 
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
@@ -39,7 +40,7 @@ function AppContent() {
 
   // Check if user is visiting for the first time
   React.useEffect(() => {
-    if (user && !loading && !isGuest) {
+    if ((user && !loading && !isGuest) || (!user && !loading && isGuest)) {
       const hasVisited = localStorage.getItem('rideyaari-visited')
       if (!hasVisited) {
         setShowWelcomePopup(true)
@@ -271,7 +272,7 @@ function AppContent() {
           })()}
         </div>
         {/* Footer */}
-        {user && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
+        {(user || isGuest) && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
           <Footer 
             onHelp={handleHelp}
             onReviews={handleReviews}
