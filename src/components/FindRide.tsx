@@ -49,6 +49,44 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [useCustomRadius, setUseCustomRadius] = useState(false)
   const [customRadius, setCustomRadius] = useState('')
 
+  // Auto-search on component mount for guests to show available rides
+  React.useEffect(() => {
+    if (effectiveIsGuest && !searched) {
+      handleAutoSearch()
+    }
+  }, [effectiveIsGuest])
+
+  const handleAutoSearch = async () => {
+    setLoading(true)
+
+    try {
+      console.log('=== AUTO SEARCH FOR GUEST ===')
+      
+      const { data, error } = await supabase
+        .from('car_rides')
+        .select(`
+          *,
+          user_profiles:user_id (
+            id,
+            full_name
+          )
+        `)
+        .gte('departure_date_time', new Date().toISOString())
+        .order('departure_date_time')
+        .limit(20) // Limit results for better performance
+
+      if (error) throw error
+
+      console.log('Auto search results:', data?.length || 0, 'rides')
+      setRides(data || [])
+      setSearched(true)
+    } catch (error) {
+      console.error('Auto search error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getCurrentLocation = async () => {
     setGettingLocation(true)
     setLocationError('')
@@ -500,6 +538,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Ride</h1>
             <p className="text-gray-600 mb-4">Search for available car rides in your area</p>
+            {effectiveIsGuest && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>Browsing as Guest:</strong> You can view all available rides. Sign up to contact drivers.
+                </p>
+              </div>
+            )}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
               <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
               <ul className="text-left space-y-1">
@@ -849,11 +894,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         </div>
 
         {/* Search Results */}
-        {searched && (
+        {(searched || effectiveIsGuest) && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                Available Rides
+                {effectiveIsGuest && !searched ? 'Available Rides' : 'Search Results'}
               </h2>
               <span className="text-gray-600">
                 {rides.length} ride{rides.length !== 1 ? 's' : ''} found

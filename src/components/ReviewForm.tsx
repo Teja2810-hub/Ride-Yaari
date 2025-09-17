@@ -8,7 +8,7 @@ interface ReviewFormProps {
 }
 
 export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
-  const { user, userProfile } = useAuth()
+  const { user, userProfile, isGuest, setGuestMode } = useAuth()
   const [reviewerName, setReviewerName] = useState(userProfile?.full_name || '')
   const [reviewerEmail, setReviewerEmail] = useState(user?.email || '')
   const [rating, setRating] = useState(0)
@@ -16,9 +16,16 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check if user is a guest
+    if (isGuest) {
+      setShowSignUpPrompt(true)
+      return
+    }
     
     if (!reviewerName.trim() || !reviewContent.trim() || rating === 0) {
       setError('Please fill in all required fields and select a rating')
@@ -78,7 +85,8 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <>
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold text-gray-900 mb-2">Share Your Experience</h3>
         <p className="text-gray-600">Help other travelers by sharing your RideYaari experience</p>
@@ -176,5 +184,40 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
         </button>
       </form>
     </div>
+
+      {/* Sign Up Prompt Modal */}
+      {showSignUpPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star size={32} className="text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up to Leave a Review</h2>
+              <p className="text-gray-600">
+                To submit a review and help other travelers, please create an account or sign in.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowSignUpPrompt(false)
+                  setGuestMode(false)
+                }}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Sign Up / Sign In
+              </button>
+              <button
+                onClick={() => setShowSignUpPrompt(false)}
+                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

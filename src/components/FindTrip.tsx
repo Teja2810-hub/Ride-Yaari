@@ -28,6 +28,44 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
 
+  // Auto-search on component mount for guests to show available trips
+  React.useEffect(() => {
+    if (effectiveIsGuest && !searched) {
+      handleAutoSearch()
+    }
+  }, [effectiveIsGuest])
+
+  const handleAutoSearch = async () => {
+    setLoading(true)
+
+    try {
+      // Get current date to filter out past trips
+      const now = new Date().toISOString().split('T')[0]
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select(`
+          *,
+          user_profiles:user_id (
+            id,
+            full_name
+          )
+        `)
+        .gte('travel_date', now)
+        .order('travel_date')
+        .limit(20) // Limit results for better performance
+
+      if (error) throw error
+
+      setTrips(data || [])
+      setSearched(true)
+    } catch (error) {
+      console.error('Auto search error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -125,6 +163,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Trip</h1>
             <p className="text-gray-600">Search for travelers on your needed route</p>
+            {effectiveIsGuest && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Browsing as Guest:</strong> You can view all available trips. Sign up to contact travelers.
+                </p>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSearch} className="space-y-6">
@@ -220,11 +265,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         </div>
 
         {/* Search Results */}
-        {searched && (
+        {(searched || effectiveIsGuest) && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                Search Results
+                {effectiveIsGuest && !searched ? 'Available Trips' : 'Search Results'}
               </h2>
               <span className="text-gray-600">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''} found

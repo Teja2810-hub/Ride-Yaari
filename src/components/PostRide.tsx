@@ -14,10 +14,11 @@ interface LocationData {
 
 interface PostRideProps {
   onBack: () => void
+  isGuest?: boolean
 }
 
-export default function PostRide({ onBack }: PostRideProps) {
-  const { user } = useAuth()
+export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
+  const { user, setGuestMode } = useAuth()
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
   const [intermediateStops, setIntermediateStops] = useState<LocationData[]>([])
@@ -29,9 +30,17 @@ export default function PostRide({ onBack }: PostRideProps) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check if user is a guest
+    if (isGuest) {
+      setShowAuthPrompt(true)
+      return
+    }
+    
     setShowDisclaimer(true)
   }
 
@@ -141,7 +150,8 @@ export default function PostRide({ onBack }: PostRideProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <div className="container mx-auto max-w-2xl">
         <div className="mb-6">
           <button
@@ -157,6 +167,13 @@ export default function PostRide({ onBack }: PostRideProps) {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Ride</h1>
             <p className="text-gray-600">Share your car ride to help others save money and reduce emissions</p>
+            {isGuest && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Browsing as Guest:</strong> You can fill out the form, but you'll need to sign up to post your ride.
+                </p>
+              </div>
+            )}
           </div>
 
           {error && (
@@ -321,9 +338,13 @@ export default function PostRide({ onBack }: PostRideProps) {
             <button
               type="submit"
               disabled={loading || !fromLocation || !toLocation || !departureDateTime || !price}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isGuest 
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
             >
-              {loading ? 'Posting Ride...' : 'Post My Ride'}
+              {loading ? 'Posting Ride...' : isGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
             </button>
           </form>
         </div>
@@ -337,5 +358,40 @@ export default function PostRide({ onBack }: PostRideProps) {
         />
       </div>
     </div>
+
+      {/* Auth Prompt Modal */}
+      {showAuthPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User size={32} className="text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up to Post Ride</h2>
+              <p className="text-gray-600">
+                To post your ride and connect with passengers, please create an account or sign in.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowAuthPrompt(false)
+                  setGuestMode(false)
+                }}
+                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Sign Up / Sign In
+              </button>
+              <button
+                onClick={() => setShowAuthPrompt(false)}
+                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

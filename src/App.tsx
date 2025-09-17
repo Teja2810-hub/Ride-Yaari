@@ -176,13 +176,7 @@ function AppContent() {
               case 'airport-dashboard':
                 return (
                   <Dashboard
-                    onPostTrip={() => {
-                      if (isGuest) {
-                        setShowAuthPrompt(true)
-                      } else {
-                        setCurrentView('post-trip')
-                      }
-                    }}
+                    onPostTrip={() => setCurrentView('post-trip')}
                     onFindTrip={() => setCurrentView('find-trip')}
                     onProfile={() => setCurrentView('profile')}
                     onBack={() => setCurrentView('platform-selector')}
@@ -195,13 +189,7 @@ function AppContent() {
               case 'car-dashboard':
                 return (
                   <CarDashboard
-                    onPostRide={() => {
-                      if (isGuest) {
-                        setShowAuthPrompt(true)
-                      } else {
-                        setCurrentView('post-ride')
-                      }
-                    }}
+                    onPostRide={() => setCurrentView('post-ride')}
                     onFindRide={() => setCurrentView('find-ride')}
                     onProfile={() => setCurrentView('profile')}
                     onBack={() => setCurrentView('platform-selector')}
@@ -211,7 +199,7 @@ function AppContent() {
                   />
                 )
               case 'post-trip':
-                return <PostTrip onBack={handleBackToAirportDashboard} />
+                return <PostTrip onBack={handleBackToAirportDashboard} isGuest={effectiveIsGuest} />
               case 'find-trip':
                 return (
                   <FindTrip 
@@ -221,7 +209,7 @@ function AppContent() {
                   />
                 )
               case 'post-ride':
-                return <PostRide onBack={handleBackToCarDashboard} />
+                return <PostRide onBack={handleBackToCarDashboard} isGuest={effectiveIsGuest} />
               case 'find-ride':
                 return (
                   <FindRide 
