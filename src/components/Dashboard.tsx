@@ -17,7 +17,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
-  const { userProfile, signOut } = useAuth()
+  const { userProfile, signOut, setGuestMode } = useAuth()
 
   return (
     <div className="min-h-screen bg-neutral-bg">
@@ -79,7 +79,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
               <>
                 <button
                   onClick={() => {
-                    const { setGuestMode } = useAuth()
                     setGuestMode(false)
                   }}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
