@@ -199,7 +199,7 @@ function AppContent() {
                   />
                 )
               case 'post-trip':
-                return <PostTrip onBack={handleBackToAirportDashboard} isGuest={effectiveIsGuest} />
+                return <PostTrip onBack={handleBackToAirportDashboard} isGuest={isGuest} />
               case 'find-trip':
                 return (
                   <FindTrip 
@@ -209,7 +209,7 @@ function AppContent() {
                   />
                 )
               case 'post-ride':
-                return <PostRide onBack={handleBackToCarDashboard} isGuest={effectiveIsGuest} />
+                return <PostRide onBack={handleBackToCarDashboard} isGuest={isGuest} />
               case 'find-ride':
                 return (
                   <FindRide 
