@@ -51,10 +51,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
-    if (effectiveIsGuest && !searched) {
+    if (isGuest && !searched) {
       handleAutoSearch()
     }
-  }, [effectiveIsGuest])
+  }, [isGuest])
 
   const handleAutoSearch = async () => {
     setLoading(true)
@@ -894,11 +894,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         </div>
 
         {/* Search Results */}
-        {(searched || effectiveIsGuest) && (
+        {(searched || isGuest) && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {effectiveIsGuest && !searched ? 'Available Rides' : 'Search Results'}
+                {isGuest && !searched ? 'Available Rides' : 'Search Results'}
               </h2>
               <span className="text-gray-600">
                 {rides.length} ride{rides.length !== 1 ? 's' : ''} found
@@ -1004,12 +1004,12 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                       </div>
 
                       <div className="ml-6">
-                        {!effectiveIsGuest && ride.user_id === user?.id ? (
+                        {!isGuest && ride.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Ride</span>
                           </div>
-                        ) : effectiveIsGuest ? (
+                        ) : isGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}

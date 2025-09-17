@@ -30,10 +30,10 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
-    if (effectiveIsGuest && !searched) {
+    if (isGuest && !searched) {
       handleAutoSearch()
     }
-  }, [effectiveIsGuest])
+  }, [isGuest])
 
   const handleAutoSearch = async () => {
     setLoading(true)
@@ -265,11 +265,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         </div>
 
         {/* Search Results */}
-        {(searched || effectiveIsGuest) && (
+        {(searched || isGuest) && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {effectiveIsGuest && !searched ? 'Available Trips' : 'Search Results'}
+                {isGuest && !searched ? 'Available Trips' : 'Search Results'}
               </h2>
               <span className="text-gray-600">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''} found
@@ -391,12 +391,12 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                       </div>
 
                       <div className="ml-6">
-                        {!effectiveIsGuest && trip.user_id === user?.id ? (
+                        {!isGuest && trip.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Trip</span>
                           </div>
-                        ) : effectiveIsGuest ? (
+                        ) : isGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
