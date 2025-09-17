@@ -119,7 +119,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
             {/* Post a Trip Card */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
-              onClick={() => setCurrentView('post-trip')}
+              onClick={onPostTrip}
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">

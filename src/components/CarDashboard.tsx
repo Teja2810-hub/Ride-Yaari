@@ -111,7 +111,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
             {/* Post a Ride Card */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
-              onClick={() => setCurrentView('post-ride')}
+              onClick={onPostRide}
             >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
