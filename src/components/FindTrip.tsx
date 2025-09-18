@@ -30,10 +30,10 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
-    if (effectiveIsGuest && !searched) {
+    if (effectiveIsGuest && !searched && !loading) {
       handleAutoSearch()
     }
-  }, [effectiveIsGuest, searched])
+  }, [effectiveIsGuest, searched, loading])
 
   const handleAutoSearch = async () => {
     setLoading(true)
@@ -45,20 +45,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       const now = new Date().toISOString().split('T')[0]
       console.log('Filtering trips after date:', now)
       
-      // Conditional select based on guest status
-      const selectQuery = effectiveIsGuest 
-        ? '*' 
-        : `
+      const { data, error } = await supabase
+        .from('trips')
+        .select(`
           *,
           user_profiles:user_id (
             id,
             full_name
           )
-        `
-      
-      const { data, error } = await supabase
-        .from('trips')
-        .select(selectQuery)
+        `)
         .gte('travel_date', now)
         .order('travel_date')
         .limit(20) // Limit results for better performance
@@ -70,6 +65,8 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       setSearched(true)
     } catch (error) {
       console.error('Auto search error:', error)
+      // If there's an error, still set searched to true to prevent infinite retries
+      setSearched(true)
     } finally {
       setLoading(false)
     }
@@ -83,20 +80,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       // Get current date to filter out past trips
       const now = new Date().toISOString().split('T')[0]
       
-      // Conditional select based on guest status
-      const selectQuery = effectiveIsGuest 
-        ? '*' 
-        : `
+      let query = supabase
+        .from('trips')
+        .select(`
           *,
           user_profiles:user_id (
             id,
             full_name
           )
-        `
-      
-      let query = supabase
-        .from('trips')
-        .select(selectQuery)
+        `)
 
       if (departureAirport) {
         query = query.eq('leaving_airport', departureAirport)
@@ -127,6 +119,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)
+      setTrips([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
