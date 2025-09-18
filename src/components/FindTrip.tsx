@@ -30,17 +30,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
-    if (isGuest && !searched) {
+    if (effectiveIsGuest && !searched) {
       handleAutoSearch()
     }
-  }, [isGuest])
+  }, [effectiveIsGuest, searched])
 
   const handleAutoSearch = async () => {
     setLoading(true)
 
     try {
+      console.log('=== AUTO SEARCH FOR GUEST TRIPS ===')
+      
       // Get current date to filter out past trips
       const now = new Date().toISOString().split('T')[0]
+      console.log('Filtering trips after date:', now)
       
       const { data, error } = await supabase
         .from('trips')
@@ -57,6 +60,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
       if (error) throw error
 
+      console.log('Auto search results:', data?.length || 0, 'trips')
       setTrips(data || [])
       setSearched(true)
     } catch (error) {
@@ -265,11 +269,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         </div>
 
         {/* Search Results */}
-        {(searched || isGuest) && (
+        {(searched || effectiveIsGuest) && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {isGuest && !searched ? 'Available Trips' : 'Search Results'}
+                {effectiveIsGuest && !searched ? 'Available Trips' : 'Search Results'}
               </h2>
               <span className="text-gray-600">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''} found
@@ -397,6 +401,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             <span>Your Trip</span>
                           </div>
                         ) : isGuest ? (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Sign up required to chat
+                            </p>
+                          </div>
+                        ) : effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
