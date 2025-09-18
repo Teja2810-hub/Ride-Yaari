@@ -45,15 +45,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       const now = new Date().toISOString().split('T')[0]
       console.log('Filtering trips after date:', now)
       
-      const { data, error } = await supabase
-        .from('trips')
-        .select(`
+      // Conditional select based on guest status
+      const selectQuery = effectiveIsGuest 
+        ? '*' 
+        : `
           *,
           user_profiles:user_id (
             id,
             full_name
           )
-        `)
+        `
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select(selectQuery)
         .gte('travel_date', now)
         .order('travel_date')
         .limit(20) // Limit results for better performance
@@ -78,15 +83,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       // Get current date to filter out past trips
       const now = new Date().toISOString().split('T')[0]
       
-      let query = supabase
-        .from('trips')
-        .select(`
+      // Conditional select based on guest status
+      const selectQuery = effectiveIsGuest 
+        ? '*' 
+        : `
           *,
           user_profiles:user_id (
             id,
             full_name
           )
-        `)
+        `
+      
+      let query = supabase
+        .from('trips')
+        .select(selectQuery)
 
       if (departureAirport) {
         query = query.eq('leaving_airport', departureAirport)
@@ -317,7 +327,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
                           <div>
                             <h3 className="text-xl font-semibold text-gray-900">
-                              {trip.user_profiles?.full_name}
+                              {trip.user_profiles?.full_name || 'Traveler'}
                             </h3>
                             <p className="text-gray-600">Traveler</p>
                           </div>
@@ -429,7 +439,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                         ) : (
                           <div className="flex flex-col space-y-2">
                             <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
                               className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                             >
                               <MessageCircle size={20} />
