@@ -319,6 +319,76 @@ export const getReversalEligibility = async (
 }
 
 /**
+ * Check if a specific confirmation has expired
+ */
+export const checkConfirmationExpiry = async (
+  confirmationId: string
+): Promise<{
+  isExpired: boolean
+  timeUntilExpiry?: number
+  expiryDate?: Date
+  reason?: string
+}> => {
+  try {
+    const { data: confirmation, error } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        car_rides!ride_confirmations_ride_id_fkey (
+          departure_date_time
+        ),
+        trips!ride_confirmations_trip_id_fkey (
+          travel_date
+        )
+      `)
+      .eq('id', confirmationId)
+      .single()
+
+    if (error || !confirmation) {
+      return { isExpired: false, reason: 'Confirmation not found' }
+    }
+
+    // Only check pending confirmations
+    if (confirmation.status !== 'pending') {
+      return { isExpired: false, reason: 'Confirmation is not pending' }
+    }
+
+    const ride = confirmation.car_rides
+    const trip = confirmation.trips
+    const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
+    
+    // Check if the ride/trip is in the past
+    const now = new Date()
+    if (departureTime <= now) {
+      return { 
+        isExpired: true, 
+        expiryDate: departureTime,
+        reason: 'Ride/trip departure time has passed' 
+      }
+    }
+
+    // Calculate expiry time based on ride type
+    // Car rides: expire 2 hours before departure
+    // Airport trips: expire 4 hours before departure
+    const expiryHours = ride ? 2 : 4
+    const expiryDate = new Date(departureTime.getTime() - (expiryHours * 60 * 60 * 1000))
+    
+    const isExpired = now >= expiryDate
+    const timeUntilExpiry = isExpired ? 0 : (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+
+    return {
+      isExpired,
+      timeUntilExpiry: isExpired ? 0 : timeUntilExpiry,
+      expiryDate,
+      reason: isExpired ? `Confirmation expired ${expiryHours} hours before departure` : undefined
+    }
+  } catch (error: any) {
+    console.error('Error checking confirmation expiry:', error)
+    return { isExpired: false, reason: 'Error checking expiry status' }
+  }
+}
+
+/**
  * Auto-expire old pending confirmations
  */
 export const expirePendingConfirmations = async (): Promise<{ expiredCount: number }> => {

@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import ConfirmationItem from './ConfirmationItem'
 import AccidentalActionAlert from './AccidentalActionAlert'
+import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import { reverseAction } from '../utils/confirmationHelpers'
 
 interface UserConfirmationsContentProps {
@@ -266,6 +267,9 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   return (
     <div className="space-y-8">
+      {/* Expiry Management Banner */}
+      <ConfirmationExpiryBanner onRefresh={fetchConfirmations} />
+
       {/* Recent Action Alerts */}
       {recentActions.length > 0 && (
         <div className="space-y-4">
