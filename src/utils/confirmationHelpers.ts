@@ -2,17 +2,73 @@ import { supabase } from './supabase'
 import { notificationService } from './notificationService'
 import { CarRide, Trip, RideConfirmation } from '../types'
 
-export interface ConfirmationAction {
-  type: 'request_again' | 'cancel_confirmed' | 'reverse_rejection'
-  confirmationId: string
-  reason?: string
-}
+/**
+ * Check if a user can request again for a specific ride/trip
+ */
+export const canRequestAgain = async (
+  userId: string,
+  rideId?: string,
+  tripId?: string
+): Promise<{ canRequest: boolean; reason?: string; lastRejection?: Date; cooldownMinutes?: number }> => {
+  try {
+    let query = supabase
+      .from('ride_confirmations')
+      .select('*')
+      .eq('passenger_id', userId)
 
-export interface ConfirmationExpiry {
-  confirmationId: string
-  expiryDate: Date
-  isExpired: boolean
-  daysUntilExpiry: number
+    if (rideId) {
+      query = query.eq('ride_id', rideId)
+    } else if (tripId) {
+      query = query.eq('trip_id', tripId)
+    } else {
+      return { canRequest: false, reason: 'No ride or trip specified' }
+    }
+
+    const { data: confirmations, error } = await query.order('updated_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    if (!confirmations || confirmations.length === 0) {
+      return { canRequest: true }
+    }
+
+    const latestConfirmation = confirmations[0]
+    
+    // If there's a pending or accepted confirmation, can't request again
+    if (latestConfirmation.status === 'pending') {
+      return { canRequest: false, reason: 'You already have a pending request for this ride' }
+    }
+    
+    if (latestConfirmation.status === 'accepted') {
+      return { canRequest: false, reason: 'You are already confirmed for this ride' }
+    }
+
+    // If rejected, check cooldown period (30 minutes minimum between requests)
+    if (latestConfirmation.status === 'rejected') {
+      const lastRejection = new Date(latestConfirmation.updated_at)
+      const minutesSinceRejection = (new Date().getTime() - lastRejection.getTime()) / (1000 * 60)
+      const cooldownMinutes = 30
+      
+      if (minutesSinceRejection < cooldownMinutes) {
+        const remainingMinutes = Math.ceil(cooldownMinutes - minutesSinceRejection)
+        return { 
+          canRequest: false, 
+          reason: `Please wait ${remainingMinutes} more minutes before requesting again`,
+          lastRejection,
+          cooldownMinutes: remainingMinutes
+        }
+      }
+      
+      return { canRequest: true, lastRejection }
+    }
+
+    return { canRequest: true }
+  } catch (error: any) {
+    console.error('Error checking if user can request again:', error)
+    return { canRequest: false, reason: 'Error checking request eligibility' }
+  }
 }
 
 /**
@@ -62,14 +118,24 @@ export const requestAgain = async (
       return { success: false, error: 'Cannot request again for past rides/trips' }
     }
 
+    // Check cooldown period
+    const eligibility = await canRequestAgain(
+      userId,
+      confirmation.ride_id || undefined,
+      confirmation.trip_id || undefined
+    )
+    
+    if (!eligibility.canRequest) {
+      return { success: false, error: eligibility.reason || 'Cannot request again at this time' }
+    }
+
     // Update the confirmation status back to pending
     const { error: updateError } = await supabase
       .from('ride_confirmations')
       .update({
         status: 'pending',
         confirmed_at: null,
-        updated_at: new Date().toISOString(),
-        // Store the reason in a metadata field if we add one later
+        updated_at: new Date().toISOString()
       })
       .eq('id', confirmationId)
 
@@ -97,16 +163,22 @@ export const requestAgain = async (
 }
 
 /**
- * Handle reversal of accidental cancellations
+ * Handle reversal of accidental cancellations/rejections
  */
-export const reverseCancellation = async (
+export const reverseAction = async (
   confirmationId: string,
   userId: string,
-  userRole: 'owner' | 'passenger',
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Verify the confirmation exists and was recently cancelled
+    // Check eligibility first
+    const eligibility = await getReversalEligibility(confirmationId, userId)
+    
+    if (!eligibility.canReverse) {
+      return { success: false, error: eligibility.reason || 'Cannot reverse this action' }
+    }
+
+    // Get confirmation details
     const { data: confirmation, error: fetchError } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -127,37 +199,10 @@ export const reverseCancellation = async (
         )
       `)
       .eq('id', confirmationId)
-      .eq('status', 'rejected')
       .single()
 
     if (fetchError || !confirmation) {
-      return { success: false, error: 'Confirmation not found or not eligible for reversal' }
-    }
-
-    // Check if user has permission to reverse
-    const canReverse = (userRole === 'owner' && confirmation.ride_owner_id === userId) ||
-                      (userRole === 'passenger' && confirmation.passenger_id === userId)
-
-    if (!canReverse) {
-      return { success: false, error: 'You do not have permission to reverse this cancellation' }
-    }
-
-    // Check if the cancellation was recent (within 24 hours)
-    const cancelledAt = new Date(confirmation.updated_at)
-    const now = new Date()
-    const hoursSinceCancellation = (now.getTime() - cancelledAt.getTime()) / (1000 * 60 * 60)
-
-    if (hoursSinceCancellation > 24) {
-      return { success: false, error: 'Cancellation reversal is only allowed within 24 hours' }
-    }
-
-    // Check if the ride/trip is still in the future
-    const ride = confirmation.car_rides
-    const trip = confirmation.trips
-    const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
-    
-    if (departureTime <= new Date()) {
-      return { success: false, error: 'Cannot reverse cancellation for past rides/trips' }
+      return { success: false, error: 'Confirmation not found' }
     }
 
     // Restore the confirmation to accepted status
@@ -171,36 +216,44 @@ export const reverseCancellation = async (
       .eq('id', confirmationId)
 
     if (updateError) {
-      return { success: false, error: 'Failed to reverse cancellation' }
+      return { success: false, error: 'Failed to reverse action' }
     }
 
-    // Send system message to the other party
-    const receiverId = userRole === 'owner' ? confirmation.passenger_id : confirmation.ride_owner_id
-    const oppositeRole = userRole === 'owner' ? 'passenger' : 'owner'
+    // Determine user roles and send appropriate message
+    const isOwner = confirmation.ride_owner_id === userId
+    const receiverId = isOwner ? confirmation.passenger_id : confirmation.ride_owner_id
+    const userRole = isOwner ? 'owner' : 'passenger'
+    const oppositeRole = isOwner ? 'passenger' : 'owner'
     
     await notificationService.sendEnhancedSystemMessage(
       'accept',
       oppositeRole,
       userId,
       receiverId,
-      ride,
-      trip,
-      `Cancellation reversed${reason ? `. Reason: ${reason}` : ''}`
+      confirmation.car_rides,
+      confirmation.trips,
+      `Action reversed${reason ? `. Reason: ${reason}` : ''}`
     )
 
     return { success: true }
   } catch (error: any) {
-    console.error('Error in reverseCancellation:', error)
-    return { success: false, error: error.message || 'Failed to reverse cancellation' }
+    console.error('Error in reverseAction:', error)
+    return { success: false, error: error.message || 'Failed to reverse action' }
   }
 }
 
 /**
- * Check for expired confirmations and handle them
+ * Get reversal eligibility for a confirmation
  */
-export const checkConfirmationExpiry = async (
-  confirmationId: string
-): Promise<ConfirmationExpiry> => {
+export const getReversalEligibility = async (
+  confirmationId: string,
+  userId: string
+): Promise<{
+  canReverse: boolean
+  reason?: string
+  timeRemaining?: number
+  reversalType?: 'cancellation' | 'rejection'
+}> => {
   try {
     const { data: confirmation, error } = await supabase
       .from('ride_confirmations')
@@ -217,31 +270,51 @@ export const checkConfirmationExpiry = async (
       .single()
 
     if (error || !confirmation) {
-      throw new Error('Confirmation not found')
+      return { canReverse: false, reason: 'Confirmation not found' }
     }
 
-    // Calculate expiry based on ride/trip departure time
+    // Check user permission
+    const isOwner = confirmation.ride_owner_id === userId
+    const isPassenger = confirmation.passenger_id === userId
+
+    if (!isOwner && !isPassenger) {
+      return { canReverse: false, reason: 'You do not have permission to reverse this action' }
+    }
+
+    // Check if confirmation is in a reversible state
+    if (confirmation.status !== 'rejected') {
+      return { canReverse: false, reason: 'Only rejected confirmations can be reversed' }
+    }
+
+    // Check time limits (24 hours for reversal)
+    const updatedAt = new Date(confirmation.updated_at)
+    const now = new Date()
+    const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
+
+    if (hoursSinceUpdate > 24) {
+      return { canReverse: false, reason: 'Reversal period has expired (24 hours)' }
+    }
+
+    // Check if the ride/trip is still in the future
     const ride = confirmation.car_rides
     const trip = confirmation.trips
     const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
     
-    // Confirmations expire 2 hours before departure for car rides, 4 hours for airport trips
-    const expiryHours = ride ? 2 : 4
-    const expiryDate = new Date(departureTime.getTime() - (expiryHours * 60 * 60 * 1000))
-    
-    const now = new Date()
-    const isExpired = now >= expiryDate && confirmation.status === 'pending'
-    const daysUntilExpiry = Math.max(0, Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    if (departureTime <= new Date()) {
+      return { canReverse: false, reason: 'Cannot reverse for past rides/trips' }
+    }
+
+    const timeRemaining = 24 - hoursSinceUpdate
+    const reversalType = isOwner ? 'rejection' : 'cancellation'
 
     return {
-      confirmationId,
-      expiryDate,
-      isExpired,
-      daysUntilExpiry
+      canReverse: true,
+      timeRemaining,
+      reversalType
     }
   } catch (error: any) {
-    console.error('Error checking confirmation expiry:', error)
-    throw error
+    console.error('Error checking reversal eligibility:', error)
+    return { canReverse: false, reason: 'Error checking reversal eligibility' }
   }
 }
 
