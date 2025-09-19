@@ -916,4 +916,323 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                               </button>
                             )}
                             <button
-                              onClick={() => handleViewR
+                              onClick={() => handleViewRideHistory(undefined, trip)}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <History size={14} />
+                              <span>View History</span>
+                            </button>
+                            <button
+                              onClick={() => handleManagePassengers(undefined, trip)}
+                              className="text-purple-600 hover:text-purple-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <Settings size={14} />
+                              <span>Manage Passengers</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.leaving_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.destination_airport}</div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {formatDate(trip.travel_date)}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                              <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Accepted Passengers */}
+                          {trip.ride_confirmations && trip.ride_confirmations.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">
+                                Accepted Passengers ({trip.ride_confirmations.filter((c: any) => c.status === 'accepted').length})
+                              </h5>
+                              <div className="flex flex-wrap gap-2">
+                                {trip.ride_confirmations
+                                  .filter((confirmation: any) => confirmation.status === 'accepted')
+                                  .map((confirmation: any) => (
+                                    <div key={confirmation.id} className="flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
+                                      <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs font-medium">
+                                          {confirmation.user_profiles.full_name.charAt(0)}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm text-green-800">{confirmation.user_profiles.full_name}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'rides-taken' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Rides Taken</h2>
+                
+                {/* Car Rides Taken */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Car size={20} className="mr-2 text-green-600" />
+                    Car Rides ({ridesTaken.carRides.length})
+                  </h3>
+                  {ridesTaken.carRides.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No car rides taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.carRides.map((confirmation) => {
+                        const ride = confirmation.car_rides
+                        return (
+                          <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Car Ride</h4>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => onStartChat(ride.user_profiles.id, ride.user_profiles.full_name)}
+                                  className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                                >
+                                  <MessageCircle size={14} />
+                                  <span>Chat with Driver</span>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.from_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{ride.to_location}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDateTime(ride.departure_date_time)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                                <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                  {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Driver Info */}
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">Driver</h5>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-sm font-medium">
+                                    {ride.user_profiles.full_name.charAt(0)}
+                                  </span>
+                                </div>
+                                <span className="text-sm text-gray-800">{ride.user_profiles.full_name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Airport Trips Taken */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Plane size={20} className="mr-2 text-blue-600" />
+                    Airport Trips ({ridesTaken.airportTrips.length})
+                  </h3>
+                  {ridesTaken.airportTrips.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No airport trips taken yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {ridesTaken.airportTrips.map((confirmation) => {
+                        const trip = confirmation.trips
+                        return (
+                          <div key={confirmation.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-900">Airport Trip</h4>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => onStartChat(trip.user_profiles.id, trip.user_profiles.full_name)}
+                                  className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                                >
+                                  <MessageCircle size={14} />
+                                  <span>Chat with Organizer</span>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.leaving_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">{trip.destination_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Travel Date</p>
+                                <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                                  {formatDate(trip.travel_date)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm text-gray-600 mb-1">Price</p>
+                                <div className="font-semibold text-green-600 text-sm sm:text-base">
+                                  {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Organizer Info */}
+                            <div className="border-t border-gray-200 pt-4">
+                              <h5 className="text-sm font-medium text-gray-900 mb-2">Trip Organizer</h5>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-sm font-medium">
+                                    {trip.user_profiles.full_name.charAt(0)}
+                                  </span>
+                                </div>
+                                <span className="text-sm text-gray-800">{trip.user_profiles.full_name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'chats' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Conversations</h2>
+                {chats.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">No conversations yet</p>
+                    <p className="text-sm text-gray-500 mt-2">Start chatting with other users to see your conversations here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {chats.map((chat) => (
+                      <div key={chat.id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer"
+                           onClick={() => onStartChat(chat.other_user.id, chat.other_user.full_name)}>
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              {chat.other_user.full_name.charAt(0)}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900">{chat.other_user.full_name}</h4>
+                            <p className="text-sm text-gray-600 truncate">{chat.last_message}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatDateTime(chat.last_message_time)}
+                            </p>
+                          </div>
+                          <MessageCircle size={20} className="text-gray-400" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'confirmations' && (
+              <UserConfirmationsContent
+                receivedConfirmations={receivedConfirmations}
+                sentRequests={sentRequests}
+                onUpdate={() => {
+                  fetchReceivedConfirmations()
+                  fetchSentRequests()
+                  if (onUpdate) onUpdate()
+                }}
+                formatDateTime={formatDateTime}
+                getCurrencySymbol={getCurrencySymbol}
+              />
+            )}
+
+            {activeTab === 'history' && (
+              <ConfirmationHistoryView />
+            )}
+
+            {activeTab === 'settings' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Notification Settings</h2>
+                <NotificationSettings />
+              </div>
+            )}
+
+            {activeTab === 'expiry' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Expiry Management</h2>
+                <ExpiryManagement />
+              </div>
+            )}
+
+            {activeTab === 'review' && (
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Submit Review</h2>
+                <ReviewForm />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {showRideHistory && (
+        <RideHistoryModal
+          ride={selectedRideForHistory}
+          trip={selectedTripForHistory}
+          onClose={() => setShowRideHistory(false)}
+        />
+      )}
+
+      {showPassengerManagement && (
+        <PassengerManagement
+          ride={selectedRideForManagement}
+          trip={selectedTripForManagement}
+          onClose={() => setShowPassengerManagement(false)}
+          onUpdate={() => {
+            fetchRidesPosted()
+            if (onUpdate) onUpdate()
+          }}
+        />
+      )}
+
+      {showNotificationPrompt && (
+        <NotificationPermissionPrompt
+          onClose={() => setShowNotificationPrompt(false)}
+        />
+      )}
+    </div>
+  )
+}
