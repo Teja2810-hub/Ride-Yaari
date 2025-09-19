@@ -1,6 +1,7 @@
 import React from 'react'
 import { Car, PlusCircle, Search, LogOut, User, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
