@@ -108,33 +108,41 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user || (!preSelectedRide && !preSelectedTrip)) return
 
     try {
+      // Dynamically construct the select statement based on ride or trip
+      let selectStatement = `
+        *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          id,
+          full_name
+        )`
+      
+      if (preSelectedRide) {
+        selectStatement += `,
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          from_location,
+          to_location,
+          departure_date_time,
+          price,
+          currency,
+          user_id
+        )`
+      } else if (preSelectedTrip) {
+        selectStatement += `,
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          leaving_airport,
+          destination_airport,
+          travel_date,
+          price,
+          currency,
+          user_id
+        )`
+      }
+
       let query = supabase
         .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_passenger_id_fkey (
-            id,
-            full_name
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time,
-            price,
-            currency,
-            user_id
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date,
-            price,
-            currency,
-            user_id
-          )
-        `)
+        .select(selectStatement)
 
       if (preSelectedRide) {
         query = query
