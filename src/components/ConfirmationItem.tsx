@@ -5,7 +5,7 @@ import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
-import { getSystemMessageTemplate } from '../utils/messageTemplates'
+import { notificationService } from '../utils/notificationService'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -22,6 +22,26 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
   const [showStatusHistory, setShowStatusHistory] = useState(false)
 
+  const sendEnhancedSystemMessage = async (
+    action: 'accept' | 'reject' | 'cancel' | 'request',
+    userRole: 'owner' | 'passenger',
+    senderId: string,
+    receiverId: string
+  ) => {
+    try {
+      await notificationService.sendEnhancedSystemMessage(
+        action,
+        userRole,
+        senderId,
+        receiverId,
+        ride,
+        trip,
+        `Confirmation ID: ${confirmation.id}`
+      )
+    } catch (error) {
+      console.error('Error sending enhanced system message:', error)
+    }
+  }
   const isCurrentUserOwner = confirmation.ride_owner_id === user?.id
   const isCurrentUserPassenger = confirmation.passenger_id === user?.id
   const ride = confirmation.car_rides
@@ -73,9 +93,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to passenger
-      const template = getSystemMessageTemplate('accept', 'passenger', ride, trip)
-      
-      await sendSystemMessage(template.message, user.id, confirmation.passenger_id)
+      await sendEnhancedSystemMessage('accept', 'passenger', user.id, confirmation.passenger_id)
 
       onUpdate()
     } catch (error: any) {
@@ -105,9 +123,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to passenger
-      const template = getSystemMessageTemplate('reject', 'passenger', ride, trip)
-      
-      await sendSystemMessage(template.message, user.id, confirmation.passenger_id)
+      await sendEnhancedSystemMessage('reject', 'passenger', user.id, confirmation.passenger_id)
 
       onUpdate()
     } catch (error: any) {
@@ -139,9 +155,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       // Send system message to the other party
       const receiverId = isCurrentUserOwner ? confirmation.passenger_id : confirmation.ride_owner_id
       const userRole = isCurrentUserOwner ? 'owner' : 'passenger'
-      const template = getSystemMessageTemplate('cancel', userRole, ride, trip)
       
-      await sendSystemMessage(template.message, user.id, receiverId)
+      await sendEnhancedSystemMessage('cancel', userRole, user.id, receiverId)
 
       onUpdate()
     } catch (error: any) {
@@ -171,9 +186,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to ride owner
-      const template = getSystemMessageTemplate('request', 'owner', ride, trip)
-      
-      await sendSystemMessage(template.message, user.id, confirmation.ride_owner_id)
+      await sendEnhancedSystemMessage('request', 'owner', user.id, confirmation.ride_owner_id)
 
       onUpdate()
     } catch (error: any) {

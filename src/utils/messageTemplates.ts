@@ -1,17 +1,36 @@
 import { CarRide, Trip } from '../types'
+import { getEnhancedSystemMessageTemplate } from './enhancedMessageTemplates'
 
 export interface MessageTemplate {
   title: string
   message: string
   icon: string
+  priority?: 'high' | 'medium' | 'low'
+  actionRequired?: boolean
 }
 
 export const getSystemMessageTemplate = (
   action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
   userRole: 'owner' | 'passenger',
   ride?: CarRide,
-  trip?: Trip
+  trip?: Trip,
+  enhanced: boolean = false,
+  passengerName?: string,
+  ownerName?: string
 ): MessageTemplate => {
+  // Use enhanced templates if requested
+  if (enhanced) {
+    const enhancedTemplate = getEnhancedSystemMessageTemplate(action, userRole, ride, trip, passengerName, ownerName)
+    return {
+      title: enhancedTemplate.title,
+      message: enhancedTemplate.message,
+      icon: enhancedTemplate.icon,
+      priority: enhancedTemplate.priority,
+      actionRequired: enhancedTemplate.actionRequired
+    }
+  }
+
+  // Keep existing simple templates for backward compatibility
   const rideDetails = getRideOrTripDetails(ride, trip)
   const rideType = ride ? 'car ride' : 'airport trip'
   const emoji = ride ? '🚗' : '✈️'
@@ -22,13 +41,17 @@ export const getSystemMessageTemplate = (
         return {
           title: 'Ride Request Sent',
           message: `${emoji} You have requested to join the ${rideDetails}. The ${ride ? 'driver' : 'traveler'} will be notified and can accept or decline your request.`,
-          icon: '📤'
+          icon: '📤',
+          priority: 'medium',
+          actionRequired: false
         }
       } else {
         return {
           title: 'New Ride Request',
           message: `${emoji} You have a new request for the ${rideDetails}. A passenger would like to join your ${rideType}.`,
-          icon: '📥'
+          icon: '📥',
+          priority: 'high',
+          actionRequired: true
         }
       }
 
@@ -37,13 +60,17 @@ export const getSystemMessageTemplate = (
         return {
           title: 'Ride Offer Sent',
           message: `${emoji} You have sent a ride offer for the ${rideDetails}. The passenger can accept or decline this offer.`,
-          icon: '🎁'
+          icon: '🎁',
+          priority: 'medium',
+          actionRequired: false
         }
       } else {
         return {
           title: 'Ride Offer Received',
           message: `${emoji} You have received a ride offer for the ${rideDetails}. The ${ride ? 'driver' : 'traveler'} is inviting you to join!`,
-          icon: '🎉'
+          icon: '🎉',
+          priority: 'high',
+          actionRequired: true
         }
       }
 
@@ -52,13 +79,17 @@ export const getSystemMessageTemplate = (
         return {
           title: 'Request Accepted',
           message: `✅ You have accepted a passenger for the ${rideDetails}. You can now coordinate pickup details and payment arrangements.`,
-          icon: '✅'
+          icon: '✅',
+          priority: 'high',
+          actionRequired: true
         }
       } else {
         return {
           title: 'Request Accepted!',
           message: `🎉 Fantastic! Your request for the ${rideDetails} has been ACCEPTED! You can now coordinate pickup details and payment with the ${ride ? 'driver' : 'traveler'}.`,
-          icon: '🎉'
+          icon: '🎉',
+          priority: 'high',
+          actionRequired: true
         }
       }
 
@@ -67,13 +98,17 @@ export const getSystemMessageTemplate = (
         return {
           title: 'Request Declined',
           message: `❌ You have declined a passenger request for the ${rideDetails}. The passenger has been notified and can request again if needed.`,
-          icon: '❌'
+          icon: '❌',
+          priority: 'low',
+          actionRequired: false
         }
       } else {
         return {
           title: 'Request Declined',
           message: `😔 Unfortunately, your request for the ${rideDetails} has been declined. Don't worry - you can request to join this ${rideType} again or find other options!`,
-          icon: '😔'
+          icon: '😔',
+          priority: 'medium',
+          actionRequired: false
         }
       }
 
@@ -82,13 +117,17 @@ export const getSystemMessageTemplate = (
         return {
           title: 'Ride Cancelled',
           message: `🚫 You have cancelled the confirmed ${rideDetails}. The passenger has been notified. The ${rideType} is now available for new requests.`,
-          icon: '🚫'
+          icon: '🚫',
+          priority: 'medium',
+          actionRequired: false
         }
       } else {
         return {
           title: 'Ride Cancelled',
           message: `😔 The ${ride ? 'driver' : 'traveler'} has cancelled the ${rideDetails}. You can request to join this ${rideType} again if it becomes available.`,
-          icon: '😔'
+          icon: '😔',
+          priority: 'high',
+          actionRequired: false
         }
       }
 
@@ -96,7 +135,9 @@ export const getSystemMessageTemplate = (
       return {
         title: 'Ride Update',
         message: `${emoji} There has been an update regarding the ${rideDetails}.`,
-        icon: '📢'
+        icon: '📢',
+        priority: 'medium',
+        actionRequired: false
       }
   }
 }
@@ -157,4 +198,45 @@ export const getNotificationIcon = (
 ): string => {
   const template = getSystemMessageTemplate(action, userRole)
   return template.icon
+}
+
+// Enhanced template functions for better UX
+export const getEnhancedNotificationTitle = (
+  action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
+  userRole: 'owner' | 'passenger',
+  ride?: CarRide,
+  trip?: Trip,
+  passengerName?: string,
+  ownerName?: string
+): string => {
+  const template = getSystemMessageTemplate(action, userRole, ride, trip, true, passengerName, ownerName)
+  return template.title
+}
+
+export const getEnhancedNotificationMessage = (
+  action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
+  userRole: 'owner' | 'passenger',
+  ride?: CarRide,
+  trip?: Trip,
+  passengerName?: string,
+  ownerName?: string
+): string => {
+  const template = getSystemMessageTemplate(action, userRole, ride, trip, true, passengerName, ownerName)
+  return template.message
+}
+
+export const getNotificationPriority = (
+  action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
+  userRole: 'owner' | 'passenger'
+): 'high' | 'medium' | 'low' => {
+  const template = getSystemMessageTemplate(action, userRole, undefined, undefined, true)
+  return template.priority || 'medium'
+}
+
+export const isNotificationActionRequired = (
+  action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
+  userRole: 'owner' | 'passenger'
+): boolean => {
+  const template = getSystemMessageTemplate(action, userRole, undefined, undefined, true)
+  return template.actionRequired || false
 }

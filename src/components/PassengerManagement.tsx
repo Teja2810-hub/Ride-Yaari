@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation, CarRide, Trip } from '../types'
 import DisclaimerModal from './DisclaimerModal'
-import { getSystemMessageTemplate } from '../utils/messageTemplates'
+import { notificationService } from '../utils/notificationService'
 
 interface PassengerManagementProps {
   ride?: CarRide
@@ -27,6 +27,27 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
   const [disclaimerAction, setDisclaimerAction] = useState<ActionType>('accept')
   const [selectedConfirmation, setSelectedConfirmation] = useState<RideConfirmation | null>(null)
 
+  const sendEnhancedSystemMessage = async (
+    action: 'accept' | 'reject' | 'cancel',
+    userRole: 'owner' | 'passenger',
+    senderId: string,
+    receiverId: string,
+    confirmation: RideConfirmation
+  ) => {
+    try {
+      await notificationService.sendEnhancedSystemMessage(
+        action,
+        userRole,
+        senderId,
+        receiverId,
+        ride,
+        trip,
+        `Passenger: ${confirmation.user_profiles.full_name}, Confirmation ID: ${confirmation.id}`
+      )
+    } catch (error) {
+      console.error('Error sending enhanced system message:', error)
+    }
+  }
   useEffect(() => {
     if (ride || trip) {
       fetchConfirmations()
@@ -139,15 +160,12 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       switch (disclaimerAction) {
         case 'accept':
           newStatus = 'accepted'
-          template = getSystemMessageTemplate('accept', 'passenger', ride, trip)
           break
         case 'reject':
           newStatus = 'rejected'
-          template = getSystemMessageTemplate('reject', 'passenger', ride, trip)
           break
         case 'cancel':
           newStatus = 'rejected'
-          template = getSystemMessageTemplate('cancel', 'owner', ride, trip)
           break
         default:
           throw new Error('Invalid action')
@@ -165,7 +183,16 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       if (error) throw error
 
       // Send system message to passenger
-      await sendSystemMessage(template.message, user.id, selectedConfirmation.passenger_id)
+      const userRole = disclaimerAction === 'cancel' ? 'owner' : 'owner'
+      const action = disclaimerAction === 'cancel' ? 'cancel' : disclaimerAction
+      
+      await sendEnhancedSystemMessage(
+        action as 'accept' | 'reject' | 'cancel',
+        userRole,
+        user.id,
+        selectedConfirmation.passenger_id,
+        selectedConfirmation
+      )
 
       fetchConfirmations()
       if (onUpdate) onUpdate()

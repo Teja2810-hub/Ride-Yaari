@@ -6,13 +6,17 @@ interface EnhancedSystemMessageProps {
   timestamp: string
   type?: 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system'
   rideType?: 'car' | 'airport'
+  priority?: 'high' | 'medium' | 'low'
+  actionRequired?: boolean
 }
 
 export default function EnhancedSystemMessage({ 
   message, 
   timestamp, 
   type = 'system',
-  rideType = 'car'
+  rideType = 'car',
+  priority = 'medium',
+  actionRequired = false
 }: EnhancedSystemMessageProps) {
   const getMessageStyle = () => {
     switch (type) {
@@ -22,7 +26,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-blue-200',
           textColor: 'text-blue-800',
           icon: <MessageCircle size={14} className="text-blue-600" />,
-          iconBg: 'bg-blue-100'
+          iconBg: 'bg-blue-100',
+          glowClass: priority === 'high' ? 'animate-notification-glow' : ''
         }
       case 'offer':
         return {
@@ -30,7 +35,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-purple-200',
           textColor: 'text-purple-800',
           icon: <Gift size={14} className="text-purple-600" />,
-          iconBg: 'bg-purple-100'
+          iconBg: 'bg-purple-100',
+          glowClass: priority === 'high' ? 'animate-notification-glow' : ''
         }
       case 'accept':
         return {
@@ -38,7 +44,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-green-200',
           textColor: 'text-green-800',
           icon: <Check size={14} className="text-green-600" />,
-          iconBg: 'bg-green-100'
+          iconBg: 'bg-green-100',
+          glowClass: 'animate-notification-bounce'
         }
       case 'reject':
         return {
@@ -46,7 +53,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-red-200',
           textColor: 'text-red-800',
           icon: <X size={14} className="text-red-600" />,
-          iconBg: 'bg-red-100'
+          iconBg: 'bg-red-100',
+          glowClass: ''
         }
       case 'cancel':
         return {
@@ -54,7 +62,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-orange-200',
           textColor: 'text-orange-800',
           icon: <AlertTriangle size={14} className="text-orange-600" />,
-          iconBg: 'bg-orange-100'
+          iconBg: 'bg-orange-100',
+          glowClass: priority === 'high' ? 'animate-notification-pulse' : ''
         }
       default:
         return {
@@ -62,7 +71,8 @@ export default function EnhancedSystemMessage({
           borderColor: 'border-yellow-200',
           textColor: 'text-yellow-800',
           icon: <Clock size={14} className="text-yellow-600" />,
-          iconBg: 'bg-yellow-100'
+          iconBg: 'bg-yellow-100',
+          glowClass: ''
         }
     }
   }
@@ -92,27 +102,66 @@ export default function EnhancedSystemMessage({
   const style = getMessageStyle()
   const rideIcon = rideType === 'car' ? <Car size={12} /> : <Plane size={12} />
 
+  const getPriorityIndicator = () => {
+    if (priority === 'high') {
+      return <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full animate-pulse">HIGH</span>
+    }
+    if (actionRequired) {
+      return <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">ACTION REQUIRED</span>
+    }
+    return null
+  }
   return (
-    <div className={`${style.bgColor} ${style.borderColor} border rounded-lg p-3 my-2`}>
+    <div className={`${style.bgColor} ${style.borderColor} border rounded-lg p-3 my-2 ${style.glowClass} ${
+      priority === 'high' ? 'border-l-4 border-l-red-500' : 
+      actionRequired ? 'border-l-4 border-l-yellow-500' : ''
+    }`}>
       <div className="flex items-start space-x-3">
-        <div className={`${style.iconBg} rounded-full p-2 flex items-center justify-center`}>
+        <div className={`${style.iconBg} rounded-full p-2 flex items-center justify-center ${
+          priority === 'high' ? 'animate-notification-pulse' : ''
+        }`}>
           {style.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-1">
               {rideIcon}
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                 {type === 'system' ? 'System Update' : `${type} ${rideType === 'car' ? 'Ride' : 'Trip'}`}
               </span>
             </div>
-            <span className={`text-xs ${style.textColor} opacity-75`}>
-              {formatTime(timestamp)}
-            </span>
+            <div className="flex items-center space-x-2">
+              {getPriorityIndicator()}
+              <span className={`text-xs ${style.textColor} opacity-75`}>
+                {formatTime(timestamp)}
+              </span>
+            </div>
           </div>
-          <p className={`text-sm ${style.textColor} leading-relaxed`}>
-            {message}
-          </p>
+          <div className={`text-sm ${style.textColor} leading-relaxed`}>
+            {/* Format enhanced messages with proper line breaks and styling */}
+            {message.split('\n').map((line, index) => {
+              if (line.includes('**') && line.includes('**')) {
+                // Handle bold text
+                const parts = line.split('**')
+                return (
+                  <p key={index} className={index === 0 ? 'font-semibold' : ''}>
+                    {parts.map((part, partIndex) => 
+                      partIndex % 2 === 1 ? <strong key={partIndex}>{part}</strong> : part
+                    )}
+                  </p>
+                )
+              } else if (line.startsWith('•') || line.startsWith('✅') || line.startsWith('📱')) {
+                // Handle bullet points and action items
+                return <p key={index} className="ml-2 text-xs opacity-90">{line}</p>
+              } else if (line.trim() === '') {
+                // Handle empty lines
+                return <br key={index} />
+              } else {
+                // Regular text
+                return <p key={index}>{line}</p>
+              }
+            })}
+          </div>
         </div>
       </div>
     </div>

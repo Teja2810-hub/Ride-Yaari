@@ -6,7 +6,8 @@ import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
 import EnhancedSystemMessage from './EnhancedSystemMessage'
-import { getSystemMessageTemplate } from '../utils/messageTemplates'
+import { getEnhancedNotificationMessage, getEnhancedNotificationTitle } from '../utils/messageTemplates'
+import { notificationService } from '../utils/notificationService'
 
 interface ChatProps {
   onBack: () => void
@@ -28,6 +29,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [showOwnerRejectDisclaimer, setShowOwnerRejectDisclaimer] = useState(false)
   const [showCancelConfirmedDisclaimer, setShowCancelConfirmedDisclaimer] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [passengerName, setPassengerName] = useState('')
+  const [ownerName, setOwnerName] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -100,6 +103,29 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
+  const sendEnhancedSystemMessage = async (
+    action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
+    userRole: 'owner' | 'passenger',
+    senderId: string,
+    receiverId: string
+  ) => {
+    try {
+      await notificationService.sendEnhancedSystemMessage(
+        action,
+        userRole,
+        senderId,
+        receiverId,
+        preSelectedRide,
+        preSelectedTrip,
+        `Chat conversation context: ${otherUserName}`
+      )
+    } catch (error) {
+      console.error('Error sending enhanced system message:', error)
+      // Fallback to regular system message
+      const message = getEnhancedNotificationMessage(action, userRole, preSelectedRide, preSelectedTrip, passengerName, ownerName)
+      await sendSystemMessage(message, senderId, receiverId)
+    }
+  }
   const getRideOrTripDetails = (ride?: CarRide, trip?: Trip): string => {
     if (ride) {
       return `car ride from ${ride.from_location} to ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString()}`
@@ -292,9 +318,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       // Send system message
       const action = isOwner ? 'offer' : 'request'
       const userRole = isOwner ? 'owner' : 'passenger'
-      const template = getSystemMessageTemplate(action, userRole, preSelectedRide, preSelectedTrip)
       
-      await sendSystemMessage(template.message, user.id, isOwner ? passengerId : rideOwnerId)
+      await sendEnhancedSystemMessage(action, userRole, user.id, isOwner ? passengerId : rideOwnerId)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -328,9 +353,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      const template = getSystemMessageTemplate('accept', 'passenger', currentConfirmation.car_rides, currentConfirmation.trips)
-      
-      await sendSystemMessage(template.message, user.id, currentConfirmation.passenger_id)
+      await sendEnhancedSystemMessage('accept', 'passenger', user.id, confirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -364,9 +387,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      const template = getSystemMessageTemplate('reject', 'passenger', currentConfirmation.car_rides, currentConfirmation.trips)
-      
-      await sendSystemMessage(template.message, user.id, currentConfirmation.passenger_id)
+      await sendEnhancedSystemMessage('reject', 'passenger', user.id, confirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -403,9 +424,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       const isOwner = isCurrentUserOwnerOfConfirmation()
       const receiverId = isOwner ? currentConfirmation.passenger_id : currentConfirmation.ride_owner_id
       const userRole = isOwner ? 'owner' : 'passenger'
-      const template = getSystemMessageTemplate('cancel', userRole, currentConfirmation.car_rides, currentConfirmation.trips)
       
-      await sendSystemMessage(template.message, user.id, receiverId)
+      await sendEnhancedSystemMessage('cancel', userRole, user.id, receiverId)
 
       fetchMessages()
       fetchConfirmationStatus()
