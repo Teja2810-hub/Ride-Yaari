@@ -585,6 +585,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     markMessagesAsRead()
   }, [user, otherUserId])
 
+  // Helper function to determine message type from content
+  const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
+    if (content.includes('requested to join') || content.includes('new request')) return 'request'
+    if (content.includes('sent a ride offer') || content.includes('ride offer')) return 'offer'
+    if (content.includes('ACCEPTED') || content.includes('accepted')) return 'accept'
+    if (content.includes('declined') || content.includes('rejected')) return 'reject'
+    if (content.includes('cancelled')) return 'cancel'
+    return 'system'
+  }
+
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -837,14 +847,4 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       />
     </div>
   )
-
-  // Helper function to determine message type from content
-  const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
-    if (content.includes('requested to join') || content.includes('new request')) return 'request'
-    if (content.includes('sent a ride offer') || content.includes('ride offer')) return 'offer'
-    if (content.includes('ACCEPTED') || content.includes('accepted')) return 'accept'
-    if (content.includes('declined') || content.includes('rejected')) return 'reject'
-    if (content.includes('cancelled')) return 'cancel'
-    return 'system'
-  }
 }
