@@ -1,16 +1,14 @@
 import React, { useState } from 'react'
-import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History, RotateCcw } from 'lucide-react'
+import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { notificationService } from '../utils/notificationService'
-import ConfirmationActions from './ConfirmationActions'
-import { getConfirmationExpiryInfo } from '../utils/confirmationHelpers'
 
 interface ConfirmationItemProps {
-  confirmation: RideConfirmation & { canRequestAgain?: boolean; canReverse?: boolean }
+  confirmation: RideConfirmation
   onUpdate: () => void
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
 }
@@ -23,9 +21,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [showCancelDisclaimer, setShowCancelDisclaimer] = useState(false)
   const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
   const [showStatusHistory, setShowStatusHistory] = useState(false)
-  const [showActions, setShowActions] = useState(false)
-
-  const expiryInfo = getConfirmationExpiryInfo(confirmation)
 
   const sendEnhancedSystemMessage = async (
     action: 'accept' | 'reject' | 'cancel' | 'request',
@@ -435,36 +430,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
           )}
         </div>
 
-        {/* Expiry Information */}
-        {expiryInfo.willExpire && !expiryInfo.isExpired && (
-          <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <Clock size={16} className="text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">
-                {expiryInfo.timeUntilExpiry ? `Expires in ${expiryInfo.timeUntilExpiry}` : 'Expiring soon'}
-              </span>
-            </div>
-            <p className="text-xs text-yellow-700 mt-1">
-              {confirmation.status === 'pending' 
-                ? 'This request will automatically expire if not responded to.'
-                : 'This confirmation will be archived after the expiry period.'
-              }
-            </p>
-          </div>
-        )}
-
-        {/* Expired Notice */}
-        {expiryInfo.isExpired && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle size={16} className="text-red-600" />
-              <span className="text-sm font-medium text-red-800">
-                This confirmation has expired
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* Status History Toggle */}
         {showStatusHistory && (
           <div className="mt-4 bg-gray-50 rounded-lg p-4">
@@ -534,16 +499,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
               <History size={14} />
               <span>{showStatusHistory ? 'Hide' : 'Show'} History</span>
             </button>
-            
-            {(confirmation.canRequestAgain || confirmation.canReverse) && (
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="flex items-center space-x-2 text-purple-600 hover:text-purple-700 font-medium transition-colors text-sm"
-              >
-                <RotateCcw size={14} />
-                <span>{showActions ? 'Hide' : 'Show'} Actions</span>
-              </button>
-            )}
           </div>
 
           <div className="flex items-center space-x-3">
@@ -602,18 +557,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             )}
           </div>
         </div>
-
-        {/* Enhanced Actions */}
-        {showActions && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <ConfirmationActions
-              confirmation={confirmation}
-              userId={user?.id || ''}
-              onUpdate={onUpdate}
-              onStartChat={onStartChat}
-            />
-          </div>
-        )}
       </div>
 
       {/* Disclaimer Modals */}
