@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle } from 'lucide-react'
+import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -19,6 +19,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [showRejectDisclaimer, setShowRejectDisclaimer] = useState(false)
   const [showCancelDisclaimer, setShowCancelDisclaimer] = useState(false)
   const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
+  const [showStatusHistory, setShowStatusHistory] = useState(false)
 
   const isCurrentUserOwner = confirmation.ride_owner_id === user?.id
   const isCurrentUserPassenger = confirmation.passenger_id === user?.id
@@ -416,8 +417,60 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
           )}
         </div>
 
+        {/* Status History Toggle */}
+        {showStatusHistory && (
+          <div className="mt-4 bg-gray-50 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <History size={16} className="mr-2" />
+              Status History
+            </h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-bold text-xs">1</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Request Submitted</p>
+                  <p className="text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                </div>
+              </div>
+              
+              {confirmation.confirmed_at && (
+                <div className="flex items-center space-x-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+                  }`}>
+                    <span className={`font-bold text-xs ${
+                      confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                    }`}>2</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Request {confirmation.status === 'accepted' ? 'Accepted' : 'Rejected'}
+                    </p>
+                    <p className="text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                  </div>
+                </div>
+              )}
+              
+              {confirmation.updated_at !== confirmation.created_at && confirmation.updated_at !== confirmation.confirmed_at && (
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-gray-600 font-bold text-xs">•</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Status Updated</p>
+                    <p className="text-gray-600">{formatDateTime(confirmation.updated_at)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
           <button
             onClick={() => onStartChat(getOtherUserId(), getOtherUserName(), ride, trip)}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -425,6 +478,15 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             <MessageCircle size={16} />
             <span>Chat with {isCurrentUserOwner ? passenger.full_name : 'Ride Owner'}</span>
           </button>
+            
+            <button
+              onClick={() => setShowStatusHistory(!showStatusHistory)}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 font-medium transition-colors text-sm"
+            >
+              <History size={14} />
+              <span>{showStatusHistory ? 'Hide' : 'Show'} History</span>
+            </button>
+          </div>
 
           <div className="flex items-center space-x-3">
             {/* Pending status actions */}

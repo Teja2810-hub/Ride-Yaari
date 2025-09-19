@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X, Car, Plane, Check, Clock, MapPin, MessageCircle } from 'lucide-react'
+import { ArrowLeft, User, Mail, Calendar, Users, Camera, Save, Eye, EyeOff, Upload, X, Car, Plane, Check, Clock, MapPin, MessageCircle, History, Settings } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { Trip, CarRide, ChatMessage, RideConfirmation } from '../types'
 import ReviewForm from './ReviewForm'
 import { getCurrencySymbol } from '../utils/currencies'
-import RideConfirmationActions from './RideConfirmationActions'
 import UserConfirmationsContent from './UserConfirmationsContent'
+import RideHistoryModal from './RideHistoryModal'
+import PassengerManagement from './PassengerManagement'
+import ConfirmationHistoryView from './ConfirmationHistoryView'
 
 interface UserProfileProps {
   onBack: () => void
@@ -14,11 +16,12 @@ interface UserProfileProps {
   onEditTrip: (trip: Trip) => void
   onEditRide: (ride: CarRide) => void
   initialTab?: string
+  onUpdate?: () => void
 }
 
-export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab }: UserProfileProps) {
+export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab, onUpdate }: UserProfileProps) {
   const { user, userProfile, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'review'>(initialTab as any || 'profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'history' | 'review'>(initialTab as any || 'profile')
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
@@ -42,6 +45,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  // Modal states
+  const [showRideHistory, setShowRideHistory] = useState(false)
+  const [showPassengerManagement, setShowPassengerManagement] = useState(false)
+  const [selectedRideForHistory, setSelectedRideForHistory] = useState<CarRide | null>(null)
+  const [selectedTripForHistory, setSelectedTripForHistory] = useState<Trip | null>(null)
+  const [selectedRideForManagement, setSelectedRideForManagement] = useState<CarRide | null>(null)
+  const [selectedTripForManagement, setSelectedTripForManagement] = useState<Trip | null>(null)
 
   // Update active tab when initialTab changes
   useEffect(() => {
@@ -179,6 +190,18 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       carRides: carRides || [],
       airportTrips: airportTrips || []
     })
+  }
+
+  const handleViewRideHistory = (ride?: CarRide, trip?: Trip) => {
+    setSelectedRideForHistory(ride || null)
+    setSelectedTripForHistory(trip || null)
+    setShowRideHistory(true)
+  }
+
+  const handleManagePassengers = (ride?: CarRide, trip?: Trip) => {
+    setSelectedRideForManagement(ride || null)
+    setSelectedTripForManagement(trip || null)
+    setShowPassengerManagement(true)
   }
 
   const fetchReceivedConfirmations = async () => {
@@ -513,6 +536,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 { id: 'rides-taken', label: 'Rides Taken', icon: Users },
                 { id: 'chats', label: 'Conversations', icon: Users },
                 { id: 'confirmations', label: 'Confirmations', icon: Check },
+                { id: 'history', label: 'History & Analytics', icon: History },
                 { id: 'review', label: 'Submit Review', icon: Users }
               ].map(({ id, label, icon: Icon }) => (
                 <button
@@ -780,6 +804,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                                 Edit Ride
                               </button>
                             )}
+                            <button
+                              onClick={() => handleViewRideHistory(ride)}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <History size={14} />
+                              <span>View History</span>
+                            </button>
+                            <button
+                              onClick={() => handleManagePassengers(ride)}
+                              className="text-purple-600 hover:text-purple-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <Settings size={14} />
+                              <span>Manage Passengers</span>
+                            </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
                             <div>
@@ -856,6 +894,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                                 Edit Trip
                               </button>
                             )}
+                            <button
+                              onClick={() => handleViewRideHistory(undefined, trip)}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <History size={14} />
+                              <span>View History</span>
+                            </button>
+                            <button
+                              onClick={() => handleManagePassengers(undefined, trip)}
+                              className="text-purple-600 hover:text-purple-700 font-medium text-xs sm:text-sm flex items-center space-x-1"
+                            >
+                              <Settings size={14} />
+                              <span>Manage Passengers</span>
+                            </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
                             <div>
@@ -1085,6 +1137,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               <UserConfirmationsContent onStartChat={onStartChat} />
             )}
 
+            {activeTab === 'history' && (
+              <ConfirmationHistoryView onStartChat={onStartChat} />
+            )}
+
             {activeTab === 'review' && (
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Submit Review</h2>
@@ -1094,6 +1150,57 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <RideHistoryModal
+        isOpen={showRideHistory}
+        onClose={() => setShowRideHistory(false)}
+        ride={selectedRideForHistory || undefined}
+        trip={selectedTripForHistory || undefined}
+        onStartChat={onStartChat}
+      />
+
+      {/* Passenger Management Modal */}
+      {showPassengerManagement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-3">
+                <Settings size={24} className="text-purple-600" />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Manage Passengers</h2>
+                  <p className="text-sm text-gray-600">
+                    {selectedRideForManagement 
+                      ? `${selectedRideForManagement.from_location} → ${selectedRideForManagement.to_location}`
+                      : selectedTripForManagement
+                      ? `${selectedTripForManagement.leaving_airport} → ${selectedTripForManagement.destination_airport}`
+                      : ''
+                    }
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPassengerManagement(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+              <PassengerManagement
+                ride={selectedRideForManagement || undefined}
+                trip={selectedTripForManagement || undefined}
+                onStartChat={onStartChat}
+                onUpdate={() => {
+                  fetchRidesPosted()
+                  if (onUpdate) onUpdate()
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

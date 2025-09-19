@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, AlertTriangle, Car, Plane } from 'lucide-react'
+import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -14,6 +14,11 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [confirmations, setConfirmations] = useState<RideConfirmation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'car' | 'airport'>('all')
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'status'>('date-desc')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -98,10 +103,52 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     }
   }
 
+  const filteredAndSortedConfirmations = () => {
+    let filtered = confirmations.filter(confirmation => {
+      // Search filter
+      const searchMatch = confirmation.user_profiles.full_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+      
+      // Status filter
+      const statusMatch = statusFilter === 'all' || confirmation.status === statusFilter
+      
+      // Type filter
+      let typeMatch = true
+      if (typeFilter === 'car') {
+        typeMatch = !!confirmation.ride_id
+      } else if (typeFilter === 'airport') {
+        typeMatch = !!confirmation.trip_id
+      }
+      
+      return searchMatch && statusMatch && typeMatch
+    })
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case 'date-desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case 'status':
+          const statusOrder = { 'pending': 0, 'accepted': 1, 'rejected': 2 }
+          const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
+          if (statusDiff !== 0) return statusDiff
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }
+
   const categorizeConfirmations = () => {
-    const pending = confirmations.filter(c => c.status === 'pending')
-    const accepted = confirmations.filter(c => c.status === 'accepted')
-    const rejected = confirmations.filter(c => c.status === 'rejected')
+    const filtered = filteredAndSortedConfirmations()
+    const pending = filtered.filter(c => c.status === 'pending')
+    const accepted = filtered.filter(c => c.status === 'accepted')
+    const rejected = filtered.filter(c => c.status === 'rejected')
 
     return {
       pending: {
@@ -117,6 +164,18 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
         airportTrips: rejected.filter(c => c.trip_id)
       }
     }
+  }
+
+  const getFilterStats = () => {
+    const filtered = filteredAndSortedConfirmations()
+    const total = filtered.length
+    const pending = filtered.filter(c => c.status === 'pending').length
+    const accepted = filtered.filter(c => c.status === 'accepted').length
+    const rejected = filtered.filter(c => c.status === 'rejected').length
+    const carRides = filtered.filter(c => c.ride_id).length
+    const airportTrips = filtered.filter(c => c.trip_id).length
+
+    return { total, pending, accepted, rejected, carRides, airportTrips }
   }
 
   if (loading) {
@@ -146,6 +205,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   }
 
   const categorized = categorizeConfirmations()
+  const stats = getFilterStats()
   const hasAnyConfirmations = confirmations.length > 0
 
   if (!hasAnyConfirmations) {
@@ -164,6 +224,109 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   return (
     <div className="space-y-8">
+      {/* Search and Filter Controls */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">All Ride Confirmations</h2>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <Filter size={16} />
+            <span>Filters & Search</span>
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by passenger name..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                >
+                  <option value="all">All Types</option>
+                  <option value="car">Car Rides</option>
+                  <option value="airport">Airport Trips</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="status">By Status</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Filter Stats */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
+                <div>
+                  <div className="text-lg font-bold text-blue-600">{stats.total}</div>
+                  <div className="text-xs text-blue-800">Total</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-yellow-600">{stats.pending}</div>
+                  <div className="text-xs text-yellow-800">Pending</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-green-600">{stats.accepted}</div>
+                  <div className="text-xs text-green-800">Accepted</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-red-600">{stats.rejected}</div>
+                  <div className="text-xs text-red-800">Rejected</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-green-600">{stats.carRides}</div>
+                  <div className="text-xs text-green-800">Car Rides</div>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-blue-600">{stats.airportTrips}</div>
+                  <div className="text-xs text-blue-800">Airport Trips</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Pending Requests */}
       {(categorized.pending.carRides.length > 0 || categorized.pending.airportTrips.length > 0) && (
         <div>
