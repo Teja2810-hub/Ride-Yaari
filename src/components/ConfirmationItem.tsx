@@ -670,6 +670,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         content={getDisclaimerContent('cancel-confirmed-ride')}
       />
 
+      <DisclaimerModal
         isOpen={showReversalDisclaimer}
         onClose={() => setShowReversalDisclaimer(false)}
         onConfirm={handleReverseAction}
