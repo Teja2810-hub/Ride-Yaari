@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import ConfirmationItem from './ConfirmationItem'
+import AccidentalActionAlert from './AccidentalActionAlert'
+import { reverseAction } from '../utils/confirmationHelpers'
 
 interface UserConfirmationsContentProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
@@ -19,6 +21,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [typeFilter, setTypeFilter] = useState<'all' | 'car' | 'airport'>('all')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'status'>('date-desc')
   const [showFilters, setShowFilters] = useState(false)
+  const [recentActions, setRecentActions] = useState<RideConfirmation[]>([])
 
   useEffect(() => {
     if (user) {
@@ -46,6 +49,21 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       }
     }
   }, [user])
+
+  const checkForRecentActions = () => {
+    const now = new Date()
+    const recentlyRejected = confirmations.filter(confirmation => {
+      if (confirmation.status !== 'rejected') return false
+      
+      const updatedAt = new Date(confirmation.updated_at)
+      const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
+      
+      // Show alert for actions within the last 24 hours
+      return hoursSinceUpdate <= 24
+    })
+    
+    setRecentActions(recentlyRejected)
+  }
 
   const fetchConfirmations = async () => {
     if (!user) return
@@ -95,12 +113,36 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       if (error) throw error
 
       setConfirmations(data || [])
+      checkForRecentActions()
     } catch (error: any) {
       console.error('Error fetching confirmations:', error)
       setError('Failed to load confirmations. Please try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleReverseAction = async (confirmationId: string, reason?: string) => {
+    if (!user) return
+
+    try {
+      const result = await reverseAction(confirmationId, user.id, reason)
+      
+      if (result.success) {
+        // Remove from recent actions and refresh confirmations
+        setRecentActions(prev => prev.filter(c => c.id !== confirmationId))
+        fetchConfirmations()
+      } else {
+        alert(result.error || 'Failed to reverse action')
+      }
+    } catch (error: any) {
+      console.error('Error reversing action:', error)
+      alert('Failed to reverse action. Please try again.')
+    }
+  }
+
+  const handleDismissAlert = (confirmationId: string) => {
+    setRecentActions(prev => prev.filter(c => c.id !== confirmationId))
   }
 
   const filteredAndSortedConfirmations = () => {
@@ -224,6 +266,21 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   return (
     <div className="space-y-8">
+      {/* Recent Action Alerts */}
+      {recentActions.length > 0 && (
+        <div className="space-y-4">
+          {recentActions.map((confirmation) => (
+            <AccidentalActionAlert
+              key={confirmation.id}
+              confirmation={confirmation}
+              userId={user?.id || ''}
+              onReverse={handleReverseAction}
+              onDismiss={() => handleDismissAlert(confirmation.id)}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Search and Filter Controls */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
