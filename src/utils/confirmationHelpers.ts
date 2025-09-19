@@ -74,8 +74,6 @@ export const requestAgain = async (
         updated_at: new Date().toISOString()
         request_count: (confirmation.request_count || 1) + 1,
         last_action_by: userId
-      }
-      )
       .eq('id', confirmationId)
 
     if (updateError) {
