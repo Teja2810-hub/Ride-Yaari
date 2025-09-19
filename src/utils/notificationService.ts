@@ -45,21 +45,13 @@ export class NotificationService {
     receiverId: string,
     ride?: CarRide,
     trip?: Trip,
-    additionalContext?: string,
-    customMessage?: string
+    additionalContext?: string
   ): Promise<void> {
     try {
-      let messageContent: string
-      
-      if (customMessage) {
-        messageContent = customMessage
-      } else {
-        const template = getSystemMessageTemplate(action, userRole, ride, trip)
-        messageContent = template.message
-      }
+      const template = getSystemMessageTemplate(action, userRole, ride, trip)
       
       // Enhanced message with ride details and context
-      let enhancedMessage = messageContent
+      let enhancedMessage = template.message
       if (additionalContext) {
         enhancedMessage += `\n\n📝 Additional Details: ${additionalContext}`
       }
@@ -80,10 +72,6 @@ export class NotificationService {
       }
 
       // Queue browser notification
-      const template = customMessage ? 
-        { title: 'RideYaari Update', message: customMessage } : 
-        getSystemMessageTemplate(action, userRole, ride, trip)
-        
       await this.queueBrowserNotification({
         userId: receiverId,
         title: template.title,

@@ -8,7 +8,6 @@ import { getCurrencySymbol } from '../utils/currencies'
 import { notificationService } from '../utils/notificationService'
 import ConfirmationActions from './ConfirmationActions'
 import { getConfirmationExpiryInfo } from '../utils/confirmationHelpers'
-import ConfirmationExpiryBadge from './ConfirmationExpiryBadge'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation & { canRequestAgain?: boolean; canReverse?: boolean }
@@ -339,7 +338,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             }`}>
               {confirmation.status.charAt(0).toUpperCase() + confirmation.status.slice(1)}
             </span>
-            <ConfirmationExpiryBadge confirmation={confirmation} />
             {ride ? (
               <Car size={20} className="text-green-600" />
             ) : (

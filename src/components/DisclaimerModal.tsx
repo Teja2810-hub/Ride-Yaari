@@ -12,9 +12,8 @@ interface DisclaimerModalProps {
   onClose: () => void
   onConfirm: () => void
   loading: boolean
-  type: 'trip' | 'ride' | 'chat-trip' | 'chat-ride' | 'request-ride-again' | 'reverse-cancellation' | string
+  type: 'trip' | 'ride' | 'chat-trip' | 'chat-ride'
   content?: DisclaimerContent
-  children?: React.ReactNode
 }
 
 const getDisclaimerContent = (type: string): DisclaimerContent => {
@@ -132,18 +131,6 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
         ],
         explanation: 'You are requesting to join this ride again after it was previously rejected.'
       }
-    case 'reverse-cancellation':
-      return {
-        title: 'Undo Cancellation',
-        points: [
-          'This will restore the cancelled ride confirmation',
-          'The other party will be notified that the ride is back on',
-          'You can only reverse cancellations within 24 hours',
-          'Both parties will be committed to the ride again',
-          'Make sure you can still provide/join the ride as planned'
-        ],
-        explanation: 'You are restoring a cancelled ride. This should only be done if you can fulfill your original commitment.'
-      }
     default:
       return {
         title: 'Safety Guidelines',
@@ -153,7 +140,7 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
   }
 }
 
-export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, type, content, children }: DisclaimerModalProps) {
+export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, type, content }: DisclaimerModalProps) {
   if (!isOpen) return null
 
   const disclaimerContent = content || getDisclaimerContent(type)
@@ -197,8 +184,6 @@ export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, t
             {disclaimerContent.explanation} By proceeding, you acknowledge that you understand 
             these guidelines and agree to use RideYaari responsibly.
           </p>
-          
-          {children}
         </div>
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
