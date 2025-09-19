@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History } from 'lucide-react'
+import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History, RotateCcw, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { notificationService } from '../utils/notificationService'
+import { requestAgain, getReversalEligibility, canRequestAgain } from '../utils/confirmationHelpers'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -20,8 +21,46 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [showRejectDisclaimer, setShowRejectDisclaimer] = useState(false)
   const [showCancelDisclaimer, setShowCancelDisclaimer] = useState(false)
   const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
+  const [showReversalDisclaimer, setShowReversalDisclaimer] = useState(false)
   const [showStatusHistory, setShowStatusHistory] = useState(false)
+  const [canReverse, setCanReverse] = useState(false)
+  const [reversalTimeRemaining, setReversalTimeRemaining] = useState<number | null>(null)
+  const [canRequestAgainState, setCanRequestAgainState] = useState(true)
+  const [requestCooldownTime, setRequestCooldownTime] = useState<Date | null>(null)
 
+  // Check reversal eligibility and request-again eligibility on mount
+  useEffect(() => {
+    checkReversalEligibility()
+    checkRequestAgainEligibility()
+  }, [confirmation])
+
+  const checkReversalEligibility = async () => {
+    if (confirmation.status === 'rejected') {
+      try {
+        const eligibility = await getReversalEligibility(confirmation.id, user?.id || '')
+        setCanReverse(eligibility.canReverse)
+        setReversalTimeRemaining(eligibility.timeRemaining || null)
+      } catch (error) {
+        console.error('Error checking reversal eligibility:', error)
+      }
+    }
+  }
+
+  const checkRequestAgainEligibility = async () => {
+    if (confirmation.status === 'rejected') {
+      try {
+        const eligibility = await canRequestAgain(
+          user?.id || '',
+          confirmation.ride_id || undefined,
+          confirmation.trip_id || undefined
+        )
+        setCanRequestAgainState(eligibility.canRequest)
+        setRequestCooldownTime(eligibility.lastRejection || null)
+      } catch (error) {
+        console.error('Error checking request again eligibility:', error)
+      }
+    }
+  }
   const sendEnhancedSystemMessage = async (
     action: 'accept' | 'reject' | 'cancel' | 'request',
     userRole: 'owner' | 'passenger',
@@ -265,6 +304,18 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             'Consider discussing any changes in chat first'
           ],
           explanation: `You are requesting to join the ${rideDetails} again after it was previously rejected.`
+        }
+      case 'reverse-action':
+        return {
+          title: 'Reverse Previous Action',
+          points: [
+            'This will reverse your previous rejection or cancellation',
+            'The confirmation will be restored to accepted status',
+            'The other party will be notified of this reversal',
+            'This action can only be done within 24 hours',
+            'Make sure you want to proceed with the original arrangement'
+          ],
+          explanation: `You are reversing your previous action for the ${rideDetails}. This will restore the confirmation.`
         }
       default:
         return {
@@ -546,13 +597,45 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
             {/* Rejected status actions */}
             {confirmation.status === 'rejected' && isCurrentUserPassenger && (
+              <div className="flex items-center space-x-2">
+                {canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
+                  <button
+                    onClick={() => setShowReversalDisclaimer(true)}
+                    disabled={loading}
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <RotateCcw size={16} />
+                    <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>
+                  </button>
+                )}
+                {canRequestAgainState && (
+                  <button
+                    onClick={() => setShowRequestAgainDisclaimer(true)}
+                    disabled={loading}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <RefreshCw size={16} />
+                    <span>Request Again</span>
+                  </button>
+                )}
+                {!canRequestAgainState && requestCooldownTime && (
+                  <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm">
+                    <Clock size={16} />
+                    <span>Cooldown active</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Rejected status actions for owners */}
+            {confirmation.status === 'rejected' && isCurrentUserOwner && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
               <button
-                onClick={() => setShowRequestAgainDisclaimer(true)}
+                onClick={() => setShowReversalDisclaimer(true)}
                 disabled={loading}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
               >
-                <Check size={16} />
-                <span>Request Again</span>
+                <RotateCcw size={16} />
+                <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>
               </button>
             )}
           </div>
@@ -594,6 +677,15 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         loading={loading}
         type="request-ride-again"
         content={getDisclaimerContent('request-ride-again')}
+      />
+
+      <DisclaimerModal
+        isOpen={showReversalDisclaimer}
+        onClose={() => setShowReversalDisclaimer(false)}
+        onConfirm={handleReverseAction}
+        loading={loading}
+        type="reverse-action"
+        content={getDisclaimerContent('reverse-action')}
       />
     </>
   )

@@ -10,6 +10,7 @@ import RideHistoryModal from './RideHistoryModal'
 import PassengerManagement from './PassengerManagement'
 import ConfirmationHistoryView from './ConfirmationHistoryView'
 import NotificationSettings from './NotificationSettings'
+import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import NotificationPermissionPrompt from './NotificationPermissionPrompt'
 
 interface UserProfileProps {
@@ -1153,6 +1154,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             )}
 
             {activeTab === 'confirmations' && (
+              <ConfirmationExpiryBanner onRefresh={() => window.location.reload()} />
               <UserConfirmationsContent onStartChat={onStartChat} />
             )}
 

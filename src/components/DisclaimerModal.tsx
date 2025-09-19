@@ -131,6 +131,18 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
         ],
         explanation: 'You are requesting to join this ride again after it was previously rejected.'
       }
+    case 'reverse-action':
+      return {
+        title: 'Reverse Previous Action',
+        points: [
+          'This will reverse your previous rejection or cancellation',
+          'The confirmation will be restored to accepted status',
+          'The other party will be notified of this reversal',
+          'This action can only be done within 24 hours',
+          'Make sure you want to proceed with the original arrangement'
+        ],
+        explanation: 'You are reversing your previous action. This will restore the confirmation and notify the other party.'
+      }
     default:
       return {
         title: 'Safety Guidelines',
