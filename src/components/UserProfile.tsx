@@ -9,6 +9,8 @@ import UserConfirmationsContent from './UserConfirmationsContent'
 import RideHistoryModal from './RideHistoryModal'
 import PassengerManagement from './PassengerManagement'
 import ConfirmationHistoryView from './ConfirmationHistoryView'
+import NotificationSettings from './NotificationSettings'
+import NotificationPermissionPrompt from './NotificationPermissionPrompt'
 
 interface UserProfileProps {
   onBack: () => void
@@ -21,7 +23,7 @@ interface UserProfileProps {
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab, onUpdate }: UserProfileProps) {
   const { user, userProfile, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'history' | 'review'>(initialTab as any || 'profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'history' | 'review' | 'settings'>(initialTab as any || 'profile')
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
@@ -53,6 +55,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [selectedTripForHistory, setSelectedTripForHistory] = useState<Trip | null>(null)
   const [selectedRideForManagement, setSelectedRideForManagement] = useState<CarRide | null>(null)
   const [selectedTripForManagement, setSelectedTripForManagement] = useState<Trip | null>(null)
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false)
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
 
   // Update active tab when initialTab changes
   useEffect(() => {
@@ -60,6 +64,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       setActiveTab(initialTab as any)
     }
   }, [initialTab])
+
+  // Check if user should see notification permission prompt
+  useEffect(() => {
+    if (user && 'Notification' in window && Notification.permission === 'default') {
+      // Show prompt after 5 seconds if user hasn't seen it
+      const hasSeenPrompt = localStorage.getItem('rideyaari-notification-prompt-seen')
+      if (!hasSeenPrompt) {
+        setTimeout(() => {
+          setShowNotificationPrompt(true)
+        }, 5000)
+      }
+    }
+  }, [user])
+
   useEffect(() => {
     if (userProfile) {
       setFullName(userProfile.full_name)
@@ -537,6 +555,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 { id: 'chats', label: 'Conversations', icon: Users },
                 { id: 'confirmations', label: 'Confirmations', icon: Check },
                 { id: 'history', label: 'History & Analytics', icon: History },
+                { id: 'settings', label: 'Notifications', icon: Settings },
                 { id: 'review', label: 'Submit Review', icon: Users }
               ].map(({ id, label, icon: Icon }) => (
                 <button
@@ -1141,6 +1160,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               <ConfirmationHistoryView onStartChat={onStartChat} />
             )}
 
+            {activeTab === 'settings' && (
+              <NotificationSettings />
+            )}
+
             {activeTab === 'review' && (
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Submit Review</h2>
@@ -1158,6 +1181,17 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         ride={selectedRideForHistory || undefined}
         trip={selectedTripForHistory || undefined}
         onStartChat={onStartChat}
+      />
+
+      <NotificationPermissionPrompt
+        isOpen={showNotificationPrompt}
+        onClose={() => {
+          setShowNotificationPrompt(false)
+          localStorage.setItem('rideyaari-notification-prompt-seen', 'true')
+        }}
+        onPermissionGranted={() => {
+          localStorage.setItem('rideyaari-notification-prompt-seen', 'true')
+        }}
       />
 
       {/* Passenger Management Modal */}
