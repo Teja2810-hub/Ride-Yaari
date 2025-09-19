@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, X, Check, AlertTriangle, Smartphone, Desktop } from 'lucide-react'
+import { Bell, X, Check, AlertTriangle, Smartphone, LampDesk as Desktop } from 'lucide-react'
 import { notificationService } from '../utils/notificationService'
 
 interface NotificationPermissionPromptProps {
