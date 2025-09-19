@@ -90,6 +90,9 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
         </div>
 
         <div className="max-w-full sm:max-w-xl md:max-w-4xl mx-auto">
+          {/* Expiry Banner */}
+          {!isGuest && <ConfirmationExpiryBanner />}
+
           <div className="text-center mb-8 sm:mb-12">
               <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
                 <Car size={20} className="sm:w-6 sm:h-6" />

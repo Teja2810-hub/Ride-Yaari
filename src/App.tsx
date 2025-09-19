@@ -271,6 +271,7 @@ function AppContent() {
         )}
       </div>
       <WhatsAppChatButton />
+      <AutoExpiryService onExpiryProcessed={(count) => console.log(`Auto-expired ${count} confirmations`)} />
       
       {/* Auth Prompt Modal */}
       {showAuthPrompt && (

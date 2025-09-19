@@ -98,6 +98,9 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
         </div>
 
         <div className="max-w-full sm:max-w-xl md:max-w-4xl mx-auto">
+          {/* Expiry Banner */}
+          {!isGuest && <ConfirmationExpiryBanner />}
+
           <div className="text-center mb-8 sm:mb-12">
               <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
                 <Plane size={20} className="sm:w-6 sm:h-6" />
