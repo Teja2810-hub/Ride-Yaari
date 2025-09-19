@@ -578,37 +578,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
-  const getConfirmationButtonText = () => {
-    const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
-                              (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
-    
-    if (!isPassengerRequest) {
-      return 'Send Ride Confirmation'
-    }
-    
-    switch (currentConfirmationStatus) {
-      case 'pending':
-        return 'Request Pending...'
-      case 'accepted':
-        return 'Request Accepted ✓'
-      case 'rejected':
-        return 'Request Ride Again'
-      default:
-        return 'Request Ride Confirmation'
-    }
-  }
-
-  const isConfirmationButtonDisabled = () => {
-    const isPassengerRequest = (preSelectedRide && preSelectedRide.user_id !== user?.id) || 
-                              (preSelectedTrip && preSelectedTrip.user_id !== user?.id)
-    
-    if (!isPassengerRequest) {
-      return false
-    }
-    
-    return currentConfirmationStatus === 'pending' || currentConfirmationStatus === 'accepted'
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
