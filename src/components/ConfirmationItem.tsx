@@ -670,22 +670,21 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         content={getDisclaimerContent('cancel-confirmed-ride')}
       />
 
-      <DisclaimerModal
-        isOpen={showRequestAgainDisclaimer}
-        onClose={() => setShowRequestAgainDisclaimer(false)}
-        onConfirm={handleRequestAgain}
-        loading={loading}
-        type="request-ride-again"
-        content={getDisclaimerContent('request-ride-again')}
-      />
-
-      <DisclaimerModal
         isOpen={showReversalDisclaimer}
         onClose={() => setShowReversalDisclaimer(false)}
         onConfirm={handleReverseAction}
         loading={loading}
         type="reverse-action"
         content={getDisclaimerContent('reverse-action')}
+      />
+
+      <RequestAgainModal
+        isOpen={showRequestAgainModal}
+        onClose={() => setShowRequestAgainModal(false)}
+        onConfirm={handleRequestAgain}
+        confirmation={confirmation}
+        userId={user?.id || ''}
+        loading={loading}
       />
     </>
   )
