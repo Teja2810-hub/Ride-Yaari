@@ -12,6 +12,8 @@ import ConfirmationHistoryView from './ConfirmationHistoryView'
 import NotificationSettings from './NotificationSettings'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import NotificationPermissionPrompt from './NotificationPermissionPrompt'
+import ReversalConfirmationBanner from './ReversalConfirmationBanner'
+import { reverseAction } from '../utils/confirmationHelpers'
 
 interface UserProfileProps {
   onBack: () => void
@@ -58,6 +60,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [selectedTripForManagement, setSelectedTripForManagement] = useState<Trip | null>(null)
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
+  const [reversalLoading, setReversalLoading] = useState(false)
 
   // Update active tab when initialTab changes
   useEffect(() => {
@@ -491,6 +494,29 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     }
   }
 
+  const handleReverseAction = async (confirmationId: string, reason?: string) => {
+    if (!user) return
+
+    setReversalLoading(true)
+    try {
+      const result = await reverseAction(confirmationId, user.id, reason)
+      
+      if (result.success) {
+        // Refresh all data
+        fetchTrips()
+        fetchRides()
+        fetchConfirmations()
+      } else {
+        alert(result.error || 'Failed to reverse action')
+      }
+    } catch (error: any) {
+      console.error('Error reversing action:', error)
+      alert('Failed to reverse action. Please try again.')
+    } finally {
+      setReversalLoading(false)
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -522,6 +548,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             <span>Back to Platform</span>
           </button>
         </div>
+
+        {/* Reversal Banner */}
+        <ReversalConfirmationBanner onReverse={handleReverseAction} />
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Profile Header */}
