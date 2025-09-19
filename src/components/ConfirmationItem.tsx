@@ -6,7 +6,9 @@ import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { notificationService } from '../utils/notificationService'
-import { requestAgain, getReversalEligibility, canRequestAgain } from '../utils/confirmationHelpers'
+import { requestAgain, getReversalEligibility, canRequestAgain, reverseAction } from '../utils/confirmationHelpers'
+import RequestAgainModal from './RequestAgainModal'
+import ReversalModal from './ReversalModal'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -22,6 +24,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [showCancelDisclaimer, setShowCancelDisclaimer] = useState(false)
   const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
   const [showReversalDisclaimer, setShowReversalDisclaimer] = useState(false)
+  const [showRequestAgainModal, setShowRequestAgainModal] = useState(false)
+  const [showReversalModal, setShowReversalModal] = useState(false)
   const [showStatusHistory, setShowStatusHistory] = useState(false)
   const [canReverse, setCanReverse] = useState(false)
   const [reversalTimeRemaining, setReversalTimeRemaining] = useState<number | null>(null)
@@ -29,7 +33,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [requestCooldownTime, setRequestCooldownTime] = useState<Date | null>(null)
 
   // Check reversal eligibility and request-again eligibility on mount
-  useEffect(() => {
+  React.useEffect(() => {
     checkReversalEligibility()
     checkRequestAgainEligibility()
   }, [confirmation])
@@ -61,6 +65,53 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       }
     }
   }
+
+  const handleReverseAction = async (reason?: string) => {
+    if (!user) return
+
+    setShowReversalModal(false)
+    setLoading(true)
+
+    try {
+      const result = await reverseAction(confirmation.id, user.id, reason)
+      
+      if (!result.success) {
+        alert(result.error || 'Failed to reverse action')
+        return
+      }
+
+      onUpdate()
+    } catch (error: any) {
+      console.error('Error reversing action:', error)
+      alert('Failed to reverse action. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRequestAgainAction = async (reason?: string) => {
+    if (!user) return
+
+    setShowRequestAgainModal(false)
+    setLoading(true)
+
+    try {
+      const result = await requestAgain(confirmation.id, user.id, reason)
+      
+      if (!result.success) {
+        alert(result.error || 'Failed to send request again')
+        return
+      }
+
+      onUpdate()
+    } catch (error: any) {
+      console.error('Error requesting again:', error)
+      alert('Failed to send request. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendEnhancedSystemMessage = async (
     action: 'accept' | 'reject' | 'cancel' | 'request',
     userRole: 'owner' | 'passenger',
@@ -600,7 +651,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
               <div className="flex items-center space-x-2">
                 {canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
                   <button
-                    onClick={() => setShowReversalDisclaimer(true)}
+                    onClick={() => setShowReversalModal(true)}
                     disabled={loading}
                     className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                   >
@@ -610,7 +661,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 )}
                 {canRequestAgainState && (
                   <button
-                    onClick={() => setShowRequestAgainDisclaimer(true)}
+                    onClick={() => setShowRequestAgainModal(true)}
                     disabled={loading}
                     className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                   >
@@ -630,7 +681,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Rejected status actions for owners */}
             {confirmation.status === 'rejected' && isCurrentUserOwner && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
               <button
-                onClick={() => setShowReversalDisclaimer(true)}
+                onClick={() => setShowReversalModal(true)}
                 disabled={loading}
                 className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
               >
@@ -670,19 +721,19 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         content={getDisclaimerContent('cancel-confirmed-ride')}
       />
 
-      <DisclaimerModal
-        isOpen={showReversalDisclaimer}
-        onClose={() => setShowReversalDisclaimer(false)}
+      <ReversalModal
+        isOpen={showReversalModal}
+        onClose={() => setShowReversalModal(false)}
         onConfirm={handleReverseAction}
+        confirmation={confirmation}
+        userId={user?.id || ''}
         loading={loading}
-        type="reverse-action"
-        content={getDisclaimerContent('reverse-action')}
       />
 
       <RequestAgainModal
         isOpen={showRequestAgainModal}
         onClose={() => setShowRequestAgainModal(false)}
-        onConfirm={handleRequestAgain}
+        onConfirm={handleRequestAgainAction}
         confirmation={confirmation}
         userId={user?.id || ''}
         loading={loading}
