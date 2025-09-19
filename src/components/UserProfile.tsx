@@ -28,7 +28,7 @@ interface UserProfileProps {
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab, onUpdate }: UserProfileProps) {
   const { user, userProfile, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'history' | 'review' | 'settings'>(initialTab as any || 'profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rides-posted' | 'rides-taken' | 'chats' | 'confirmations' | 'expiry' | 'history' | 'review' | 'settings'>(initialTab as any || 'profile')
   const [loading, setLoading] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
@@ -586,6 +586,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 { id: 'rides-taken', label: 'Rides Taken', icon: Users },
                 { id: 'chats', label: 'Conversations', icon: Users },
                 { id: 'confirmations', label: 'Confirmations', icon: Check },
+                { id: 'expiry', label: 'Expiry Management', icon: Clock },
                 { id: 'history', label: 'History & Analytics', icon: History },
                 { id: 'settings', label: 'Notifications', icon: Settings },
                 { id: 'review', label: 'Submit Review', icon: Users }
@@ -1189,6 +1190,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 <ConfirmationExpiryBanner onRefresh={() => window.location.reload()} />
                 <UserConfirmationsContent onStartChat={onStartChat} />
               </>
+            )}
+
+            {activeTab === 'expiry' && (
+              <ExpiryManagementPanel />
             )}
 
             {activeTab === 'history' && (
