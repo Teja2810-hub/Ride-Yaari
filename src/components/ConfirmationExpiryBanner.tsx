@@ -152,7 +152,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
           <X size={20} />
         </button>
       </div>
-    </>
     </div>
+    </>
   )
 }
