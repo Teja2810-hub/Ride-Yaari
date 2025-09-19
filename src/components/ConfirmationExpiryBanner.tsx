@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, AlertTriangle, X, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { checkConfirmationExpiry, batchExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { batchExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import ErrorMessage from './ErrorMessage'
+import LoadingSpinner from './LoadingSpinner'
 
 interface ConfirmationExpiryBannerProps {
   onRefresh?: () => void
@@ -9,12 +12,12 @@ interface ConfirmationExpiryBannerProps {
 
 export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpiryBannerProps) {
   const { user } = useAuth()
+  const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [stats, setStats] = useState({
     expiringSoon: 0,
     expired: 0,
     total: 0
   })
-  const [loading, setLoading] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
@@ -31,7 +34,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
   const checkExpiryStats = async () => {
     if (!user) return
 
-    try {
+    await handleAsync(async () => {
       const confirmationStats = await getConfirmationStats(user.id)
       setStats({
         expiringSoon: confirmationStats.expiringSoon,
@@ -41,16 +44,13 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
       
       setShowBanner(confirmationStats.expiringSoon > 0 || confirmationStats.expired > 0)
       setLastChecked(new Date())
-    } catch (error) {
-      console.error('Error checking expiry stats:', error)
-    }
+    })
   }
 
   const handleCleanupExpired = async () => {
     if (!user) return
 
-    setLoading(true)
-    try {
+    await handleAsync(async () => {
       const result = await batchExpireConfirmations()
       
       if (result.expired > 0) {
@@ -60,12 +60,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
       } else {
         alert('No expired confirmations found.')
       }
-    } catch (error: any) {
-      console.error('Error cleaning up expired confirmations:', error)
-      alert('Failed to cleanup expired confirmations.')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   if (!showBanner || (!stats.expiringSoon && !stats.expired)) {
@@ -73,7 +68,24 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
   }
 
   return (
-    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-6">
+    <>
+      {error && (
+        <ErrorMessage
+          message={error}
+          onRetry={clearError}
+          onDismiss={clearError}
+          type="warning"
+          className="mb-4"
+        />
+      )}
+      
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-6">
+        {isLoading && (
+          <div className="mb-4">
+            <LoadingSpinner size="sm" text="Checking expiry status..." />
+          </div>
+        )}
+        
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -106,18 +118,18 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
             <div className="flex items-center space-x-4 mt-3">
               <button
                 onClick={checkExpiryStats}
-                disabled={loading}
-                className="flex items-center space-x-2 text-yellow-700 hover:text-yellow-800 font-medium text-sm transition-colors"
+                disabled={isLoading}
+                className="flex items-center space-x-2 text-yellow-700 hover:text-yellow-800 font-medium text-sm transition-colors disabled:opacity-50"
               >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
                 <span>Refresh</span>
               </button>
               
               {stats.expired > 0 && (
                 <button
                   onClick={handleCleanupExpired}
-                  disabled={loading}
-                  className="flex items-center space-x-2 bg-yellow-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-yellow-700 transition-colors text-sm"
+                  disabled={isLoading}
+                  className="flex items-center space-x-2 bg-yellow-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-yellow-700 transition-colors text-sm disabled:opacity-50"
                 >
                   <AlertTriangle size={14} />
                   <span>Cleanup Expired</span>
@@ -140,6 +152,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
           <X size={20} />
         </button>
       </div>
+    </>
     </div>
   )
 }

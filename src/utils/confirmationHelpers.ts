@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { notificationService } from './notificationService'
 import { CarRide, Trip, RideConfirmation } from '../types'
+import { retryWithBackoff, validateConfirmationFlow } from './errorUtils'
 
 /**
  * Check if a user can request again for a specific ride/trip
@@ -10,7 +11,7 @@ export const canRequestAgain = async (
   rideId?: string,
   tripId?: string
 ): Promise<{ canRequest: boolean; reason?: string; lastRejection?: Date; cooldownMinutes?: number }> => {
-  try {
+  return retryWithBackoff(async () => {
     let query = supabase
       .from('ride_confirmations')
       .select('*')
@@ -65,10 +66,7 @@ export const canRequestAgain = async (
     }
 
     return { canRequest: true }
-  } catch (error: any) {
-    console.error('Error checking if user can request again:', error)
-    return { canRequest: false, reason: 'Error checking request eligibility' }
-  }
+  })
 }
 
 /**
@@ -79,7 +77,7 @@ export const requestAgain = async (
   userId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
-  try {
+  return retryWithBackoff(async () => {
     // First, verify the confirmation exists and is rejected
     const { data: confirmation, error: fetchError } = await supabase
       .from('ride_confirmations')
@@ -156,10 +154,7 @@ export const requestAgain = async (
     )
 
     return { success: true }
-  } catch (error: any) {
-    console.error('Error in requestAgain:', error)
-    return { success: false, error: error.message || 'Failed to send request again' }
-  }
+  })
 }
 
 /**
@@ -170,7 +165,7 @@ export const reverseAction = async (
   userId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
-  try {
+  return retryWithBackoff(async () => {
     // Check eligibility first
     const eligibility = await getReversalEligibility(confirmationId, userId)
     
@@ -236,10 +231,7 @@ export const reverseAction = async (
     )
 
     return { success: true }
-  } catch (error: any) {
-    console.error('Error in reverseAction:', error)
-    return { success: false, error: error.message || 'Failed to reverse action' }
-  }
+  })
 }
 
 /**
@@ -254,7 +246,7 @@ export const getReversalEligibility = async (
   timeRemaining?: number
   reversalType?: 'cancellation' | 'rejection'
 }> => {
-  try {
+  return retryWithBackoff(async () => {
     const { data: confirmation, error } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -312,10 +304,7 @@ export const getReversalEligibility = async (
       timeRemaining,
       reversalType
     }
-  } catch (error: any) {
-    console.error('Error checking reversal eligibility:', error)
-    return { canReverse: false, reason: 'Error checking reversal eligibility' }
-  }
+  })
 }
 
 /**
@@ -329,7 +318,7 @@ export const checkConfirmationExpiry = async (
   expiryDate?: Date
   reason?: string
 }> => {
-  try {
+  return retryWithBackoff(async () => {
     const { data: confirmation, error } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -382,17 +371,14 @@ export const checkConfirmationExpiry = async (
       expiryDate,
       reason: isExpired ? `Confirmation expired ${expiryHours} hours before departure` : undefined
     }
-  } catch (error: any) {
-    console.error('Error checking confirmation expiry:', error)
-    return { isExpired: false, reason: 'Error checking expiry status' }
-  }
+  })
 }
 
 /**
  * Auto-expire old pending confirmations
  */
 export const expirePendingConfirmations = async (): Promise<{ expiredCount: number }> => {
-  try {
+  return retryWithBackoff(async () => {
     // Get all pending confirmations
     const { data: pendingConfirmations, error: fetchError } = await supabase
       .from('ride_confirmations')
@@ -465,10 +451,7 @@ export const expirePendingConfirmations = async (): Promise<{ expiredCount: numb
     }
 
     return { expiredCount: expiredConfirmations.length }
-  } catch (error: any) {
-    console.error('Error expiring pending confirmations:', error)
-    throw error
-  }
+  })
 }
 
 /**
@@ -484,7 +467,7 @@ export const getConfirmationStats = async (
   expiringSoon: number
   expired: number
 }> => {
-  try {
+  return retryWithBackoff(async () => {
     const { data: confirmations, error } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -532,10 +515,7 @@ export const getConfirmationStats = async (
       expiringSoon,
       expired
     }
-  } catch (error: any) {
-    console.error('Error getting confirmation stats:', error)
-    throw error
-  }
+  })
 }
 
 /**
@@ -546,7 +526,7 @@ export const batchExpireConfirmations = async (): Promise<{
   expired: number
   errors: string[]
 }> => {
-  try {
+  return retryWithBackoff(async () => {
     const { data: pendingConfirmations, error: fetchError } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -600,12 +580,5 @@ export const batchExpireConfirmations = async (): Promise<{
       expired: expiredIds.length,
       errors
     }
-  } catch (error: any) {
-    console.error('Error in batch expire confirmations:', error)
-    return {
-      processed: 0,
-      expired: 0,
-      errors: [error.message]
-    }
-  }
+  })
 }

@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
 import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History, RotateCcw, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
-import { notificationService } from '../utils/notificationService'
 import { requestAgain, getReversalEligibility, canRequestAgain, reverseAction } from '../utils/confirmationHelpers'
 import RequestAgainModal from './RequestAgainModal'
 import ReversalModal from './ReversalModal'
+import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import ErrorMessage from './ErrorMessage'
+import LoadingSpinner from './LoadingSpinner'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -18,12 +20,18 @@ interface ConfirmationItemProps {
 
 export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }: ConfirmationItemProps) {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [showAcceptDisclaimer, setShowAcceptDisclaimer] = useState(false)
-  const [showRejectDisclaimer, setShowRejectDisclaimer] = useState(false)
-  const [showCancelDisclaimer, setShowCancelDisclaimer] = useState(false)
-  const [showRequestAgainDisclaimer, setShowRequestAgainDisclaimer] = useState(false)
-  const [showReversalDisclaimer, setShowReversalDisclaimer] = useState(false)
+  const { error, isLoading, clearError } = useErrorHandler()
+  const { 
+    confirmationState, 
+    showDisclaimer, 
+    hideDisclaimer, 
+    acceptRequest, 
+    rejectRequest, 
+    cancelConfirmation 
+  } = useConfirmationFlow({ 
+    onUpdate,
+    onSuccess: (message) => console.log(message)
+  })
   const [showRequestAgainModal, setShowRequestAgainModal] = useState(false)
   const [showReversalModal, setShowReversalModal] = useState(false)
   const [showStatusHistory, setShowStatusHistory] = useState(false)
@@ -70,7 +78,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     if (!user) return
 
     setShowReversalModal(false)
-    setLoading(true)
 
     try {
       const result = await reverseAction(confirmation.id, user.id, reason)
@@ -84,8 +91,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     } catch (error: any) {
       console.error('Error reversing action:', error)
       alert('Failed to reverse action. Please try again.')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -93,7 +98,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     if (!user) return
 
     setShowRequestAgainModal(false)
-    setLoading(true)
 
     try {
       const result = await requestAgain(confirmation.id, user.id, reason)
@@ -107,52 +111,14 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     } catch (error: any) {
       console.error('Error requesting again:', error)
       alert('Failed to send request. Please try again.')
-    } finally {
-      setLoading(false)
     }
   }
 
-  const sendEnhancedSystemMessage = async (
-    action: 'accept' | 'reject' | 'cancel' | 'request',
-    userRole: 'owner' | 'passenger',
-    senderId: string,
-    receiverId: string
-  ) => {
-    try {
-      await notificationService.sendEnhancedSystemMessage(
-        action,
-        userRole,
-        senderId,
-        receiverId,
-        ride,
-        trip,
-        `Confirmation ID: ${confirmation.id}`
-      )
-    } catch (error) {
-      console.error('Error sending enhanced system message:', error)
-    }
-  }
   const isCurrentUserOwner = confirmation.ride_owner_id === user?.id
   const isCurrentUserPassenger = confirmation.passenger_id === user?.id
   const ride = confirmation.car_rides
   const trip = confirmation.trips
   const passenger = confirmation.user_profiles
-
-  const sendSystemMessage = async (message: string, senderId: string, receiverId: string) => {
-    const { error } = await supabase
-      .from('chat_messages')
-      .insert({
-        sender_id: senderId,
-        receiver_id: receiverId,
-        message_content: message,
-        message_type: 'system',
-        is_read: false
-      })
-    
-    if (error) {
-      console.error('Error sending system message:', error)
-    }
-  }
 
   const getRideOrTripDetails = (): string => {
     if (ride) {
@@ -166,125 +132,26 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   const handleAccept = async () => {
     if (!user) return
-
-    setShowAcceptDisclaimer(false)
-    setLoading(true)
-
-    try {
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'accepted',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', confirmation.id)
-
-      if (error) throw error
-
-      // Send system message to passenger
-      await sendEnhancedSystemMessage('accept', 'passenger', user.id, confirmation.passenger_id)
-
-      onUpdate()
-    } catch (error: any) {
-      console.error('Error accepting request:', error)
-      alert('Failed to accept request. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    hideDisclaimer()
+    await acceptRequest(confirmation.id, user.id, confirmation.passenger_id)
   }
 
   const handleReject = async () => {
     if (!user) return
-
-    setShowRejectDisclaimer(false)
-    setLoading(true)
-
-    try {
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'rejected',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', confirmation.id)
-
-      if (error) throw error
-
-      // Send system message to passenger
-      await sendEnhancedSystemMessage('reject', 'passenger', user.id, confirmation.passenger_id)
-
-      onUpdate()
-    } catch (error: any) {
-      console.error('Error rejecting request:', error)
-      alert('Failed to reject request. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    hideDisclaimer()
+    await rejectRequest(confirmation.id, user.id, confirmation.passenger_id)
   }
 
   const handleCancel = async () => {
     if (!user) return
-
-    setShowCancelDisclaimer(false)
-    setLoading(true)
-
-    try {
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'rejected',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', confirmation.id)
-
-      if (error) throw error
-
-      // Send system message to the other party
-      const receiverId = isCurrentUserOwner ? confirmation.passenger_id : confirmation.ride_owner_id
-      const userRole = isCurrentUserOwner ? 'owner' : 'passenger'
-      
-      await sendEnhancedSystemMessage('cancel', userRole, user.id, receiverId)
-
-      onUpdate()
-    } catch (error: any) {
-      console.error('Error cancelling ride:', error)
-      alert('Failed to cancel ride. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRequestAgain = async () => {
-    if (!user) return
-
-    setShowRequestAgainDisclaimer(false)
-    setLoading(true)
-
-    try {
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'pending',
-          confirmed_at: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', confirmation.id)
-
-      if (error) throw error
-
-      // Send system message to ride owner
-      await sendEnhancedSystemMessage('request', 'owner', user.id, confirmation.ride_owner_id)
-
-      onUpdate()
-    } catch (error: any) {
-      console.error('Error requesting again:', error)
-      alert('Failed to send request. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    hideDisclaimer()
+    await cancelConfirmation(
+      confirmation.id, 
+      user.id, 
+      isCurrentUserOwner,
+      ride,
+      trip
+    )
   }
 
   const formatDateTime = (dateTimeString: string) => {
@@ -392,6 +259,21 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   return (
     <>
+      {error && (
+        <ErrorMessage
+          message={error}
+          onRetry={clearError}
+          onDismiss={clearError}
+          className="mb-4"
+        />
+      )}
+      
+      {isLoading && (
+        <div className="mb-4">
+          <LoadingSpinner text="Processing request..." />
+        </div>
+      )}
+      
       <div className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
@@ -608,16 +490,16 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {confirmation.status === 'pending' && isCurrentUserOwner && (
               <>
                 <button
-                  onClick={() => setShowRejectDisclaimer(true)}
-                  disabled={loading}
+                  onClick={() => showDisclaimer('owner-reject-request', confirmation)}
+                  disabled={isLoading}
                   className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                 >
                   <X size={16} />
                   <span>Reject</span>
                 </button>
                 <button
-                  onClick={() => setShowAcceptDisclaimer(true)}
-                  disabled={loading}
+                  onClick={() => showDisclaimer('owner-accept-request', confirmation)}
+                  disabled={isLoading}
                   className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                 >
                   <Check size={16} />
@@ -637,8 +519,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Accepted status actions */}
             {confirmation.status === 'accepted' && (
               <button
-                onClick={() => setShowCancelDisclaimer(true)}
-                disabled={loading}
+                onClick={() => showDisclaimer('cancel-confirmed-ride', confirmation)}
+                disabled={isLoading}
                 className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
               >
                 <AlertTriangle size={16} />
@@ -652,7 +534,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 {canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
                   <button
                     onClick={() => setShowReversalModal(true)}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                   >
                     <RotateCcw size={16} />
@@ -662,7 +544,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 {canRequestAgainState && (
                   <button
                     onClick={() => setShowRequestAgainModal(true)}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                   >
                     <RefreshCw size={16} />
@@ -682,7 +564,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {confirmation.status === 'rejected' && isCurrentUserOwner && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
               <button
                 onClick={() => setShowReversalModal(true)}
-                disabled={loading}
+                disabled={isLoading}
                 className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
               >
                 <RotateCcw size={16} />
@@ -695,28 +577,28 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
       {/* Disclaimer Modals */}
       <DisclaimerModal
-        isOpen={showAcceptDisclaimer}
-        onClose={() => setShowAcceptDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'owner-accept-request'}
+        onClose={hideDisclaimer}
         onConfirm={handleAccept}
-        loading={loading}
+        loading={isLoading}
         type="owner-accept-request"
         content={getDisclaimerContent('owner-accept-request')}
       />
 
       <DisclaimerModal
-        isOpen={showRejectDisclaimer}
-        onClose={() => setShowRejectDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'owner-reject-request'}
+        onClose={hideDisclaimer}
         onConfirm={handleReject}
-        loading={loading}
+        loading={isLoading}
         type="owner-reject-request"
         content={getDisclaimerContent('owner-reject-request')}
       />
 
       <DisclaimerModal
-        isOpen={showCancelDisclaimer}
-        onClose={() => setShowCancelDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'cancel-confirmed-ride'}
+        onClose={hideDisclaimer}
         onConfirm={handleCancel}
-        loading={loading}
+        loading={isLoading}
         type="cancel-confirmed-ride"
         content={getDisclaimerContent('cancel-confirmed-ride')}
       />
@@ -727,7 +609,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         onConfirm={handleReverseAction}
         confirmation={confirmation}
         userId={user?.id || ''}
-        loading={loading}
+        loading={isLoading}
       />
 
       <RequestAgainModal
@@ -736,7 +618,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         onConfirm={handleRequestAgainAction}
         confirmation={confirmation}
         userId={user?.id || ''}
-        loading={loading}
+        loading={isLoading}
       />
     </>
   )

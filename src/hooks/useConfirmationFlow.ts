@@ -1,0 +1,188 @@
+import { useState, useCallback } from 'react'
+import { supabase } from '../utils/supabase'
+import { notificationService } from '../utils/notificationService'
+import { useErrorHandler } from './useErrorHandler'
+import { RideConfirmation, CarRide, Trip } from '../types'
+
+interface UseConfirmationFlowProps {
+  onUpdate?: () => void
+  onSuccess?: (message: string) => void
+}
+
+export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlowProps = {}) {
+  const { error, isLoading, handleAsync, clearError } = useErrorHandler()
+  const [confirmationState, setConfirmationState] = useState<{
+    showDisclaimer: boolean
+    disclaimerType: string
+    selectedConfirmation: RideConfirmation | null
+  }>({
+    showDisclaimer: false,
+    disclaimerType: '',
+    selectedConfirmation: null
+  })
+
+  const showDisclaimer = useCallback((type: string, confirmation?: RideConfirmation) => {
+    setConfirmationState({
+      showDisclaimer: true,
+      disclaimerType: type,
+      selectedConfirmation: confirmation || null
+    })
+  }, [])
+
+  const hideDisclaimer = useCallback(() => {
+    setConfirmationState({
+      showDisclaimer: false,
+      disclaimerType: '',
+      selectedConfirmation: null
+    })
+  }, [])
+
+  const acceptRequest = useCallback(async (confirmationId: string, userId: string, passengerId: string) => {
+    return handleAsync(async () => {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'accepted',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+
+      if (error) throw error
+
+      // Send system message
+      await notificationService.sendEnhancedSystemMessage(
+        'accept',
+        'passenger',
+        userId,
+        passengerId
+      )
+
+      if (onUpdate) onUpdate()
+      if (onSuccess) onSuccess('Request accepted successfully!')
+      
+      return true
+    })
+  }, [handleAsync, onUpdate, onSuccess])
+
+  const rejectRequest = useCallback(async (confirmationId: string, userId: string, passengerId: string) => {
+    return handleAsync(async () => {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+
+      if (error) throw error
+
+      // Send system message
+      await notificationService.sendEnhancedSystemMessage(
+        'reject',
+        'passenger',
+        userId,
+        passengerId
+      )
+
+      if (onUpdate) onUpdate()
+      if (onSuccess) onSuccess('Request rejected successfully!')
+      
+      return true
+    })
+  }, [handleAsync, onUpdate, onSuccess])
+
+  const cancelConfirmation = useCallback(async (
+    confirmationId: string, 
+    userId: string, 
+    isOwner: boolean,
+    ride?: CarRide,
+    trip?: Trip
+  ) => {
+    return handleAsync(async () => {
+      // Get confirmation details first
+      const { data: confirmation, error: fetchError } = await supabase
+        .from('ride_confirmations')
+        .select('*')
+        .eq('id', confirmationId)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+
+      if (error) throw error
+
+      // Send system message to the other party
+      const receiverId = isOwner ? confirmation.passenger_id : confirmation.ride_owner_id
+      const userRole = isOwner ? 'owner' : 'passenger'
+      
+      await notificationService.sendEnhancedSystemMessage(
+        'cancel',
+        userRole,
+        userId,
+        receiverId,
+        ride,
+        trip
+      )
+
+      if (onUpdate) onUpdate()
+      if (onSuccess) onSuccess('Ride cancelled successfully!')
+      
+      return true
+    })
+  }, [handleAsync, onUpdate, onSuccess])
+
+  const createConfirmation = useCallback(async (
+    rideId: string | null,
+    tripId: string | null,
+    rideOwnerId: string,
+    passengerId: string
+  ) => {
+    return handleAsync(async () => {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          ride_id: rideId,
+          trip_id: tripId,
+          ride_owner_id: rideOwnerId,
+          passenger_id: passengerId,
+          status: 'pending'
+        })
+
+      if (error) {
+        // Handle duplicate request error
+        if (error.code === '23505') {
+          throw new Error('You have already requested to join this ride. Please wait for a response.')
+        }
+        throw error
+      }
+
+      if (onUpdate) onUpdate()
+      if (onSuccess) onSuccess('Confirmation request sent successfully!')
+      
+      return true
+    })
+  }, [handleAsync, onUpdate, onSuccess])
+
+  return {
+    error,
+    isLoading,
+    clearError,
+    confirmationState,
+    showDisclaimer,
+    hideDisclaimer,
+    acceptRequest,
+    rejectRequest,
+    cancelConfirmation,
+    createConfirmation
+  }
+}

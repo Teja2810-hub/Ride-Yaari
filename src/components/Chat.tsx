@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, Send, MessageCircle, Check, X, Clock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../utils/supabase'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
 import EnhancedSystemMessage from './EnhancedSystemMessage'
-import { getEnhancedNotificationMessage, getEnhancedNotificationTitle } from '../utils/messageTemplates'
-import { notificationService } from '../utils/notificationService'
+import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import ErrorMessage from './ErrorMessage'
+import LoadingSpinner from './LoadingSpinner'
+import { supabase } from '../utils/supabase'
 
 interface ChatProps {
   onBack: () => void
@@ -21,17 +23,37 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [messagesLoading, setMessagesLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [currentConfirmation, setCurrentConfirmation] = useState<RideConfirmation | null>(null)
-  const [showPassengerRequestDisclaimer, setShowPassengerRequestDisclaimer] = useState(false)
-  const [showOwnerAcceptDisclaimer, setShowOwnerAcceptDisclaimer] = useState(false)
-  const [showOwnerRejectDisclaimer, setShowOwnerRejectDisclaimer] = useState(false)
-  const [showCancelConfirmedDisclaimer, setShowCancelConfirmedDisclaimer] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [passengerName, setPassengerName] = useState('')
-  const [ownerName, setOwnerName] = useState('')
+  const { error: chatError, handleAsync, clearError } = useErrorHandler()
+  const { 
+    error: confirmationError,
+    isLoading: confirmationLoading,
+    confirmationState,
+    showDisclaimer,
+    hideDisclaimer,
+    createConfirmation,
+    acceptRequest,
+    rejectRequest,
+    cancelConfirmation
+  } = useConfirmationFlow({
+    onUpdate: () => {
+      fetchConfirmationStatus()
+      fetchMessages()
+    }
+  })
 
+  // Helper function to determine message type from content
+  const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
+    if (content.includes('requested to join') || content.includes('new request')) return 'request'
+    if (content.includes('sent a ride offer') || content.includes('ride offer')) return 'offer'
+    if (content.includes('ACCEPTED') || content.includes('accepted')) return 'accept'
+    if (content.includes('declined') || content.includes('rejected')) return 'reject'
+    if (content.includes('cancelled')) return 'cancel'
+    return 'system'
+  }
   useEffect(() => {
     if (user) {
       fetchMessages()
@@ -87,59 +109,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     return currentConfirmation?.ride_owner_id === user?.id
   }
 
-  const sendSystemMessage = async (message: string, senderId: string, receiverId: string) => {
-    const { error } = await supabase
-      .from('chat_messages')
-      .insert({
-        sender_id: senderId,
-        receiver_id: receiverId,
-        message_content: message,
-        message_type: 'system',
-        is_read: false
-      })
-    
-    if (error) {
-      console.error('Error sending system message:', error)
-    }
-  }
-
-  const sendEnhancedSystemMessage = async (
-    action: 'request' | 'offer' | 'accept' | 'reject' | 'cancel',
-    userRole: 'owner' | 'passenger',
-    senderId: string,
-    receiverId: string
-  ) => {
-    try {
-      await notificationService.sendEnhancedSystemMessage(
-        action,
-        userRole,
-        senderId,
-        receiverId,
-        preSelectedRide,
-        preSelectedTrip,
-        `Chat conversation context: ${otherUserName}`
-      )
-    } catch (error) {
-      console.error('Error sending enhanced system message:', error)
-      // Fallback to regular system message
-      const message = getEnhancedNotificationMessage(action, userRole, preSelectedRide, preSelectedTrip, passengerName, ownerName)
-      await sendSystemMessage(message, senderId, receiverId)
-    }
-  }
-  const getRideOrTripDetails = (ride?: CarRide, trip?: Trip): string => {
-    if (ride) {
-      return `car ride from ${ride.from_location} to ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString()}`
-    }
-    if (trip) {
-      return `airport trip from ${trip.leaving_airport} to ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString()}`
-    }
-    return 'ride'
-  }
-
   const fetchConfirmationStatus = async () => {
     if (!user || (!preSelectedRide && !preSelectedTrip)) return
-
-    try {
+    
+    await handleAsync(async () => {
       // Dynamically construct the select statement based on ride or trip
       let selectStatement = `
         *,
@@ -193,10 +166,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       } else {
         setCurrentConfirmation(null)
       }
-    } catch (error) {
-      console.error('Error fetching confirmation status:', error)
-      setCurrentConfirmation(null)
-    }
+    })
   }
 
   useEffect(() => {
@@ -210,7 +180,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const fetchMessages = async () => {
     if (!user) return
 
-    try {
+    await handleAsync(async () => {
       const { data, error } = await supabase
         .from('chat_messages')
         .select(`
@@ -230,11 +200,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (!error && data) {
         setMessages(data)
       }
-    } catch (error) {
-      console.error('Fetch messages error:', error)
-    } finally {
-      setLoading(false)
-    }
+      
+      setMessagesLoading(false)
+    })
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -243,7 +211,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     setSending(true)
 
-    try {
+    await handleAsync(async () => {
       const { error } = await supabase
         .from('chat_messages')
         .insert({
@@ -257,23 +225,21 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       setNewMessage('')
       fetchMessages()
-    } catch (error) {
-      console.error('Send message error:', error)
-    } finally {
+    }).finally(() => {
       setSending(false)
-    }
+    })
   }
 
   const handlePassengerRequestConfirmation = () => {
-    setShowPassengerRequestDisclaimer(true)
+    showDisclaimer('passenger-request')
   }
 
   const handleConfirmPassengerRequest = async () => {
     if (!user) return
 
-    setShowPassengerRequestDisclaimer(false)
+    hideDisclaimer()
 
-    try {
+    await handleAsync(async () => {
       const isOwner = isCurrentUserOwnerOfPreselected()
       let rideId = null
       let tripId = null
@@ -286,11 +252,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         tripId = preSelectedTrip.id
       }
 
-      let error
-      
       if (currentConfirmation && currentConfirmation.status === 'rejected') {
         // Update existing rejected confirmation to pending
-        const result = await supabase
+        const { error } = await supabase
           .from('ride_confirmations')
           .update({
             status: 'pending',
@@ -298,141 +262,71 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             updated_at: new Date().toISOString()
           })
           .eq('id', currentConfirmation.id)
-        error = result.error
+        
+        if (error) throw error
       } else {
         // Insert new confirmation
-        const result = await supabase
-          .from('ride_confirmations')
-          .insert({
-            ride_id: rideId,
-            trip_id: tripId,
-            ride_owner_id: rideOwnerId,
-            passenger_id: passengerId,
-            status: 'pending'
-          })
-        error = result.error
+        await createConfirmation(rideId, tripId, rideOwnerId, passengerId)
       }
-
-      if (error) throw error
-
-      // Send system message
-      const action = isOwner ? 'offer' : 'request'
-      const userRole = isOwner ? 'owner' : 'passenger'
-      
-      await sendEnhancedSystemMessage(action, userRole, user.id, isOwner ? passengerId : rideOwnerId)
 
       fetchMessages()
       fetchConfirmationStatus()
-    } catch (error: any) {
-      console.error('Error creating confirmation:', error)
-      alert('Failed to send confirmation request. Please try again.')
-    }
+    })
   }
 
   const handleOwnerAcceptRequest = () => {
-    setShowOwnerAcceptDisclaimer(true)
+    showDisclaimer('owner-accept')
   }
 
   const handleConfirmOwnerAcceptRequest = async () => {
     if (!user) return
 
-    setShowOwnerAcceptDisclaimer(false)
-
-    try {
-      if (!currentConfirmation) return
-
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'accepted',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentConfirmation.id)
-
-      if (error) throw error
-
-      // Send system message to passenger
-      await sendEnhancedSystemMessage('accept', 'passenger', user.id, confirmation.passenger_id)
-
-      fetchMessages()
-      fetchConfirmationStatus()
-    } catch (error: any) {
-      console.error('Error accepting request:', error)
-      alert('Failed to accept request. Please try again.')
+    if (!currentConfirmation) {
+      alert('No confirmation found to accept.')
+      return
     }
+    
+    hideDisclaimer()
+    await acceptRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleOwnerRejectRequest = () => {
-    setShowOwnerRejectDisclaimer(true)
+    showDisclaimer('owner-reject')
   }
 
   const handleConfirmOwnerRejectRequest = async () => {
     if (!user) return
 
-    setShowOwnerRejectDisclaimer(false)
-
-    try {
-      if (!currentConfirmation) return
-
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'rejected',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentConfirmation.id)
-
-      if (error) throw error
-
-      // Send system message to passenger
-      await sendEnhancedSystemMessage('reject', 'passenger', user.id, confirmation.passenger_id)
-
-      fetchMessages()
-      fetchConfirmationStatus()
-    } catch (error: any) {
-      console.error('Error rejecting request:', error)
-      alert('Failed to reject request. Please try again.')
+    if (!currentConfirmation) {
+      alert('No confirmation found to reject.')
+      return
     }
+    
+    hideDisclaimer()
+    await rejectRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleCancelConfirmedRide = () => {
-    setShowCancelConfirmedDisclaimer(true)
+    showDisclaimer('cancel-confirmed')
   }
 
   const handleConfirmCancelConfirmedRide = async () => {
     if (!user) return
 
-    setShowCancelConfirmedDisclaimer(false)
-
-    try {
-      if (!currentConfirmation) return
-
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'rejected',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentConfirmation.id)
-
-      if (error) throw error
-
-      // Send system message to the other party
-      const isOwner = isCurrentUserOwnerOfConfirmation()
-      const receiverId = isOwner ? currentConfirmation.passenger_id : currentConfirmation.ride_owner_id
-      const userRole = isOwner ? 'owner' : 'passenger'
-      
-      await sendEnhancedSystemMessage('cancel', userRole, user.id, receiverId)
-
-      fetchMessages()
-      fetchConfirmationStatus()
-    } catch (error: any) {
-      console.error('Error cancelling ride:', error)
-      alert('Failed to cancel ride. Please try again.')
+    if (!currentConfirmation) {
+      alert('No confirmation found to cancel.')
+      return
     }
+    
+    hideDisclaimer()
+    const isOwner = isCurrentUserOwnerOfConfirmation()
+    await cancelConfirmation(
+      currentConfirmation.id,
+      user.id,
+      isOwner,
+      preSelectedRide,
+      preSelectedTrip
+    )
   }
 
   const getConfirmationButtonText = () => {
@@ -585,16 +479,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     markMessagesAsRead()
   }, [user, otherUserId])
 
-  // Helper function to determine message type from content
-  const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
-    if (content.includes('requested to join') || content.includes('new request')) return 'request'
-    if (content.includes('sent a ride offer') || content.includes('ride offer')) return 'offer'
-    if (content.includes('ACCEPTED') || content.includes('accepted')) return 'accept'
-    if (content.includes('declined') || content.includes('rejected')) return 'reject'
-    if (content.includes('cancelled')) return 'cancel'
-    return 'system'
-  }
-
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -617,13 +501,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
-  if (loading) {
+  if (messagesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <MessageCircle size={48} className="text-blue-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">Loading conversation...</p>
-        </div>
+        <LoadingSpinner size="lg" text="Loading conversation..." />
       </div>
     )
   }
@@ -633,6 +514,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Header */}
       <div className="bg-white shadow-sm p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
+          {(chatError || confirmationError) && (
+            <ErrorMessage
+              message={chatError || confirmationError || ''}
+              onDismiss={() => {
+                clearError()
+                if (confirmationError) {
+                  // Clear confirmation error through the hook
+                }
+              }}
+              className="mb-4"
+            />
+          )}
+          
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
@@ -713,6 +607,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
+          {confirmationLoading && (
+            <div className="mb-4 flex justify-center">
+              <LoadingSpinner text="Processing confirmation..." />
+            </div>
+          )}
+          
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && (
             <div className="mb-3 flex justify-center">
@@ -738,14 +638,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   <div className="flex space-x-2">
                     <button
                       onClick={handleOwnerAcceptRequest}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      disabled={confirmationLoading}
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
                     >
                       <Check size={16} />
                       <span>Accept Offer</span>
                     </button>
                     <button
                       onClick={handleOwnerRejectRequest}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      disabled={confirmationLoading}
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
                     >
                       <X size={16} />
                       <span>Decline Offer</span>
@@ -758,14 +660,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   <div className="flex space-x-2">
                     <button
                       onClick={handleOwnerAcceptRequest}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      disabled={confirmationLoading}
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
                     >
                       <Check size={16} />
                       <span>Accept Request</span>
                     </button>
                     <button
                       onClick={handleOwnerRejectRequest}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      disabled={confirmationLoading}
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
                     >
                       <X size={16} />
                       <span>Reject Request</span>
@@ -777,7 +681,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 {shouldShowCancelButton() && (
                   <button
                     onClick={handleCancelConfirmedRide}
-                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
                   >
                     <AlertTriangle size={16} />
                     <span>Cancel Ride</span>
@@ -811,39 +716,35 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       {/* Disclaimer Modals */}
       <DisclaimerModal
-        isOpen={showPassengerRequestDisclaimer}
-        onClose={() => setShowPassengerRequestDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'passenger-request'}
+        onClose={hideDisclaimer}
         onConfirm={handleConfirmPassengerRequest}
-        loading={false}
+        loading={confirmationLoading}
         type="passenger-request"
-        content={getDisclaimerContent('passenger-request')}
       />
 
       <DisclaimerModal
-        isOpen={showOwnerAcceptDisclaimer}
-        onClose={() => setShowOwnerAcceptDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'owner-accept'}
+        onClose={hideDisclaimer}
         onConfirm={handleConfirmOwnerAcceptRequest}
-        loading={false}
+        loading={confirmationLoading}
         type="owner-accept"
-        content={getDisclaimerContent('owner-accept')}
       />
 
       <DisclaimerModal
-        isOpen={showOwnerRejectDisclaimer}
-        onClose={() => setShowOwnerRejectDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'owner-reject'}
+        onClose={hideDisclaimer}
         onConfirm={handleConfirmOwnerRejectRequest}
-        loading={false}
+        loading={confirmationLoading}
         type="owner-reject"
-        content={getDisclaimerContent('owner-reject')}
       />
 
       <DisclaimerModal
-        isOpen={showCancelConfirmedDisclaimer}
-        onClose={() => setShowCancelConfirmedDisclaimer(false)}
+        isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'cancel-confirmed'}
+        onClose={hideDisclaimer}
         onConfirm={handleConfirmCancelConfirmedRide}
-        loading={false}
+        loading={confirmationLoading}
         type="cancel-confirmed"
-        content={getDisclaimerContent('cancel-confirmed')}
       />
     </div>
   )

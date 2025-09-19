@@ -7,6 +7,9 @@ import ConfirmationItem from './ConfirmationItem'
 import AccidentalActionAlert from './AccidentalActionAlert'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import { reverseAction } from '../utils/confirmationHelpers'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import ErrorMessage from './ErrorMessage'
+import LoadingSpinner from './LoadingSpinner'
 
 interface UserConfirmationsContentProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
@@ -14,9 +17,8 @@ interface UserConfirmationsContentProps {
 
 export default function UserConfirmationsContent({ onStartChat }: UserConfirmationsContentProps) {
   const { user } = useAuth()
+  const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [confirmations, setConfirmations] = useState<RideConfirmation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'car' | 'airport'>('all')
@@ -69,10 +71,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const fetchConfirmations = async () => {
     if (!user) return
 
-    setLoading(true)
-    setError('')
-
-    try {
+    await handleAsync(async () => {
       const { data, error } = await supabase
         .from('ride_confirmations')
         .select(`
@@ -115,12 +114,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
       setConfirmations(data || [])
       checkForRecentActions()
-    } catch (error: any) {
-      console.error('Error fetching confirmations:', error)
-      setError('Failed to load confirmations. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleReverseAction = async (confirmationId: string, reason?: string) => {
@@ -221,29 +215,25 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     return { total, pending, accepted, rejected, carRides, airportTrips }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading confirmations...</p>
-        </div>
+        <LoadingSpinner size="lg" text="Loading confirmations..." />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
-        <p className="text-red-600 mb-4">{error}</p>
-        <button
-          onClick={fetchConfirmations}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
+      <ErrorMessage
+        title="Failed to Load Confirmations"
+        message={error}
+        onRetry={() => {
+          clearError()
+          fetchConfirmations()
+        }}
+        className="my-8"
+      />
     )
   }
 

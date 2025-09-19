@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AuthForm from './components/Auth/AuthForm'
+import ErrorBoundary from './components/ErrorBoundary'
 import WelcomePopup from './components/WelcomePopup'
 import PlatformSelector from './components/PlatformSelector'
 import Dashboard from './components/Dashboard'
@@ -22,6 +23,7 @@ import TermsOfService from './components/TermsOfService'
 import AutoExpiryService from './components/AutoExpiryService'
 import { Trip, CarRide } from './types'
 import WhatsAppChatButton from './components/WhatsAppChatButton'
+import { createErrorMessage } from './utils/errorUtils'
 import { User } from 'lucide-react'
 
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
@@ -38,6 +40,14 @@ function AppContent() {
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+
+  // Global error handler
+  const handleGlobalError = (error: Error, errorInfo: any) => {
+    const errorDetails = createErrorMessage(error, 'Global Error Boundary')
+    console.error('Global error caught:', errorDetails)
+    
+    // Could send to error tracking service here
+  }
 
   // Check if user is visiting for the first time
   React.useEffect(() => {
@@ -157,122 +167,212 @@ function AppContent() {
         isOpen={showWelcomePopup} 
         onClose={handleCloseWelcomePopup} 
       />
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1">
-          {(() => {
-            switch (currentView) {
-              case 'platform-selector':
-                return (
-                  <PlatformSelector 
-                    onSelectPlatform={(platform) => 
-                      setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-                    }
-                    onProfile={handleProfile}
-                    onHelp={handleHelp}
-                    onStartChat={handleStartChat}
-                    onViewConfirmations={handleViewConfirmations}
-                    isGuest={isGuest}
-                  />
-                )
-              case 'airport-dashboard':
-                return (
-                  <Dashboard
-                    onPostTrip={() => setCurrentView('post-trip')}
-                    onFindTrip={() => setCurrentView('find-trip')}
-                    onProfile={() => setCurrentView('profile')}
-                    onBack={() => setCurrentView('platform-selector')}
-                    onHelp={() => setCurrentView('help')}
-                    onStartChat={handleStartChat}
-                    onViewConfirmations={handleViewConfirmations}
-                    isGuest={isGuest}
-                  />
-                )
-              case 'car-dashboard':
-                return (
-                  <CarDashboard
-                    onPostRide={() => setCurrentView('post-ride')}
-                    onFindRide={() => setCurrentView('find-ride')}
-                    onProfile={() => setCurrentView('profile')}
-                    onBack={() => setCurrentView('platform-selector')}
-                    onStartChat={handleStartChat}
-                    onViewConfirmations={handleViewConfirmations}
-                    isGuest={isGuest}
-                  />
-                )
-              case 'post-trip':
-                return <PostTrip onBack={handleBackToAirportDashboard} isGuest={isGuest} />
-              case 'find-trip':
-                return (
-                  <FindTrip 
-                    onBack={handleBackToAirportDashboard} 
-                    onStartChat={handleStartChat}
-                    isGuest={isGuest}
-                  />
-                )
-              case 'post-ride':
-                return <PostRide onBack={handleBackToCarDashboard} isGuest={isGuest} />
-              case 'find-ride':
-                return (
-                  <FindRide 
-                    onBack={handleBackToCarDashboard} 
-                    onStartChat={handleStartChat}
-                    isGuest={isGuest}
-                  />
-                )
-              case 'profile':
-                return <UserProfile onBack={handleBackToDashboard} onStartChat={handleStartChat} onEditTrip={handleEditTrip} onEditRide={handleEditRide} initialTab={initialProfileTab} />
-              case 'help':
-                return <HelpPage onBack={handleBackToDashboard} />
-              case 'how-it-works':
-                return <HowItWorksPage onBack={handleBackToDashboard} />
-              case 'reviews':
-                return <ReviewsPage onBack={handleBackToDashboard} />
-              case 'privacy-policy':
-                return <PrivacyPolicy onBack={handleBackToDashboard} />
-              case 'terms-of-service':
-                return <TermsOfService onBack={handleBackToDashboard} />
-              case 'chat':
-                return (
-                  <Chat
-                    onBack={handleBackToDashboard}
-                    otherUserId={chatUserId}
-                    otherUserName={chatUserName}
-                    preSelectedRide={selectedRideForChat}
-                    preSelectedTrip={selectedTripForChat}
-                  />
-                )
-              case 'edit-trip':
-                return editingTrip ? (
-                  <EditTrip onBack={handleBackToDashboard} trip={editingTrip} />
-                ) : (
-                  <div>Error: No trip to edit</div>
-                )
-              case 'edit-ride':
-                return editingRide ? (
-                  <EditRide onBack={handleBackToDashboard} ride={editingRide} />
-                ) : (
-                  <div>Error: No ride to edit</div>
-                )
-              default:
-                return <PlatformSelector onSelectPlatform={(platform) => 
-                  setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
-                } onProfile={handleProfile} onHelp={handleHelp} onStartChat={handleStartChat} onViewConfirmations={handleViewConfirmations} />
-            }
-          })()}
+      <ErrorBoundary onError={handleGlobalError}>
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-1">
+            {(() => {
+              switch (currentView) {
+                case 'platform-selector':
+                  return (
+                    <ErrorBoundary>
+                      <PlatformSelector 
+                        onSelectPlatform={(platform) => 
+                          setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
+                        }
+                        onProfile={handleProfile}
+                        onHelp={handleHelp}
+                        onStartChat={handleStartChat}
+                        onViewConfirmations={handleViewConfirmations}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'airport-dashboard':
+                  return (
+                    <ErrorBoundary>
+                      <Dashboard
+                        onPostTrip={() => setCurrentView('post-trip')}
+                        onFindTrip={() => setCurrentView('find-trip')}
+                        onProfile={() => setCurrentView('profile')}
+                        onBack={() => setCurrentView('platform-selector')}
+                        onHelp={() => setCurrentView('help')}
+                        onStartChat={handleStartChat}
+                        onViewConfirmations={handleViewConfirmations}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'car-dashboard':
+                  return (
+                    <ErrorBoundary>
+                      <CarDashboard
+                        onPostRide={() => setCurrentView('post-ride')}
+                        onFindRide={() => setCurrentView('find-ride')}
+                        onProfile={() => setCurrentView('profile')}
+                        onBack={() => setCurrentView('platform-selector')}
+                        onStartChat={handleStartChat}
+                        onViewConfirmations={handleViewConfirmations}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'post-trip':
+                  return (
+                    <ErrorBoundary>
+                      <PostTrip onBack={handleBackToAirportDashboard} isGuest={isGuest} />
+                    </ErrorBoundary>
+                  )
+                case 'find-trip':
+                  return (
+                    <ErrorBoundary>
+                      <FindTrip 
+                        onBack={handleBackToAirportDashboard} 
+                        onStartChat={handleStartChat}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'post-ride':
+                  return (
+                    <ErrorBoundary>
+                      <PostRide onBack={handleBackToCarDashboard} isGuest={isGuest} />
+                    </ErrorBoundary>
+                  )
+                case 'find-ride':
+                  return (
+                    <ErrorBoundary>
+                      <FindRide 
+                        onBack={handleBackToCarDashboard} 
+                        onStartChat={handleStartChat}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'profile':
+                  return (
+                    <ErrorBoundary>
+                      <UserProfile 
+                        onBack={handleBackToDashboard} 
+                        onStartChat={handleStartChat} 
+                        onEditTrip={handleEditTrip} 
+                        onEditRide={handleEditRide} 
+                        initialTab={initialProfileTab} 
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'help':
+                  return (
+                    <ErrorBoundary>
+                      <HelpPage onBack={handleBackToDashboard} />
+                    </ErrorBoundary>
+                  )
+                case 'how-it-works':
+                  return (
+                    <ErrorBoundary>
+                      <HowItWorksPage onBack={handleBackToDashboard} />
+                    </ErrorBoundary>
+                  )
+                case 'reviews':
+                  return (
+                    <ErrorBoundary>
+                      <ReviewsPage onBack={handleBackToDashboard} />
+                    </ErrorBoundary>
+                  )
+                case 'privacy-policy':
+                  return (
+                    <ErrorBoundary>
+                      <PrivacyPolicy onBack={handleBackToDashboard} />
+                    </ErrorBoundary>
+                  )
+                case 'terms-of-service':
+                  return (
+                    <ErrorBoundary>
+                      <TermsOfService onBack={handleBackToDashboard} />
+                    </ErrorBoundary>
+                  )
+                case 'chat':
+                  return (
+                    <ErrorBoundary>
+                      <Chat
+                        onBack={handleBackToDashboard}
+                        otherUserId={chatUserId}
+                        otherUserName={chatUserName}
+                        preSelectedRide={selectedRideForChat}
+                        preSelectedTrip={selectedTripForChat}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'edit-trip':
+                  return editingTrip ? (
+                    <ErrorBoundary>
+                      <EditTrip onBack={handleBackToDashboard} trip={editingTrip} />
+                    </ErrorBoundary>
+                  ) : (
+                    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Error: No trip to edit</h2>
+                        <button
+                          onClick={handleBackToDashboard}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Back to Dashboard
+                        </button>
+                      </div>
+                    </div>
+                  )
+                case 'edit-ride':
+                  return editingRide ? (
+                    <ErrorBoundary>
+                      <EditRide onBack={handleBackToDashboard} ride={editingRide} />
+                    </ErrorBoundary>
+                  ) : (
+                    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Error: No ride to edit</h2>
+                        <button
+                          onClick={handleBackToDashboard}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Back to Dashboard
+                        </button>
+                      </div>
+                    </div>
+                  )
+                default:
+                  return (
+                    <ErrorBoundary>
+                      <PlatformSelector 
+                        onSelectPlatform={(platform) => 
+                          setCurrentView(platform === 'airport' ? 'airport-dashboard' : 'car-dashboard')
+                        } 
+                        onProfile={handleProfile} 
+                        onHelp={handleHelp} 
+                        onStartChat={handleStartChat} 
+                        onViewConfirmations={handleViewConfirmations} 
+                      />
+                    </ErrorBoundary>
+                  )
+              }
+            })()}
+          </div>
+          {/* Footer */}
+          {(user || isGuest) && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
+            <ErrorBoundary>
+              <Footer 
+                onHelp={handleHelp}
+                onReviews={handleReviews}
+                onHowItWorks={handleHowItWorks}
+                onPrivacyPolicy={handlePrivacyPolicy}
+                onTermsOfService={handleTermsOfService}
+              />
+            </ErrorBoundary>
+          )}
         </div>
-        {/* Footer */}
-        {(user || isGuest) && !['chat', 'edit-trip', 'edit-ride'].includes(currentView) && (
-          <Footer 
-            onHelp={handleHelp}
-            onReviews={handleReviews}
-            onHowItWorks={handleHowItWorks}
-            onPrivacyPolicy={handlePrivacyPolicy}
-            onTermsOfService={handleTermsOfService}
-          />
-        )}
-      </div>
+      </ErrorBoundary>
       <WhatsAppChatButton />
-      <AutoExpiryService onExpiryProcessed={(count) => console.log(`Auto-expired ${count} confirmations`)} />
+      <ErrorBoundary>
+        <AutoExpiryService onExpiryProcessed={(count) => console.log(`Auto-expired ${count} confirmations`)} />
+      </ErrorBoundary>
       
       {/* Auth Prompt Modal */}
       {showAuthPrompt && (
@@ -313,8 +413,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
