@@ -72,8 +72,7 @@ export const requestAgain = async (
         status: 'pending',
         confirmed_at: null,
         updated_at: new Date().toISOString()
-        request_count: (confirmation.request_count || 1) + 1,
-        last_action_by: userId
+      })
       .eq('id', confirmationId)
 
     if (updateError) {
@@ -172,10 +171,7 @@ export const reverseCancellation = async (
       .update({
         status: 'accepted',
         confirmed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        can_reverse: false,
-        reversal_deadline: null,
-        last_action_by: userId
+        updated_at: new Date().toISOString()
       })
       .eq('id', confirmationId)
 
@@ -232,19 +228,94 @@ export const expireOldConfirmations = async (
   let expiredCount = 0
 
   try {
-    // Use the database function for expiring confirmations
-    const { data, error } = await supabase.rpc('expire_old_pending_confirmations')
+    const now = new Date()
     
-    if (error) {
-      errors.push(`Error calling expire function: ${error.message}`)
-    } else if (data && data.length > 0) {
-      expiredCount = data[0].expired_count || 0
+    // Calculate expiry dates
+    const pendingExpiryDate = new Date(now.getTime() - settings.pendingExpiryHours * 60 * 60 * 1000)
+    const acceptedExpiryDate = new Date(now.getTime() - settings.acceptedExpiryDays * 24 * 60 * 60 * 1000)
+
+    // Find expired pending confirmations
+    const { data: expiredPending, error: pendingError } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          id,
+          full_name
+        ),
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          from_location,
+          to_location,
+          departure_date_time,
+          user_id
+        ),
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          leaving_airport,
+          destination_airport,
+          travel_date,
+          user_id
+        )
+      `)
+      .eq('status', 'pending')
+      .lt('created_at', pendingExpiryDate.toISOString())
+
+    if (pendingError) {
+      errors.push(`Error fetching expired pending confirmations: ${pendingError.message}`)
+    } else if (expiredPending && expiredPending.length > 0) {
+      // Update expired pending confirmations
+      const { error: expireError } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .in('id', expiredPending.map(c => c.id))
+
+      if (expireError) {
+        errors.push(`Error expiring pending confirmations: ${expireError.message}`)
+      } else {
+        expiredCount += expiredPending.length
+
+        // Send notifications to passengers about expired requests
+        for (const confirmation of expiredPending) {
+          try {
+            const ride = confirmation.car_rides
+            const trip = confirmation.trips
+            
+            const expiredMessage = `⏰ **Request Expired**\n\nYour request for the ${ride ? 'car ride' : 'airport trip'} has expired after ${settings.pendingExpiryHours} hours without a response.\n\n🔄 **You can request again** if you're still interested in joining this ${ride ? 'ride' : 'trip'}.\n\n💡 **Tip:** Try reaching out to the ${ride ? 'driver' : 'traveler'} directly through chat to discuss your request.`
+
+            await notificationService.sendEnhancedSystemMessage(
+              'reject',
+              'passenger',
+              confirmation.ride_owner_id,
+              confirmation.passenger_id,
+              ride,
+              trip,
+              expiredMessage
+            )
+          } catch (notificationError) {
+            console.error('Error sending expiry notification:', notificationError)
+          }
+        }
+      }
     }
-    
-    // Clean up expired reversal deadlines
-    const { error: cleanupError } = await supabase.rpc('cleanup_expired_reversals')
-    if (cleanupError) {
-      errors.push(`Error cleaning up reversals: ${cleanupError.message}`)
+
+    // Find expired accepted confirmations (for cleanup)
+    const { data: expiredAccepted, error: acceptedError } = await supabase
+      .from('ride_confirmations')
+      .select('id')
+      .eq('status', 'accepted')
+      .lt('confirmed_at', acceptedExpiryDate.toISOString())
+
+    if (acceptedError) {
+      errors.push(`Error fetching expired accepted confirmations: ${acceptedError.message}`)
+    } else if (expiredAccepted && expiredAccepted.length > 0) {
+      // For accepted confirmations, we might want to archive them instead of deleting
+      // This is optional and depends on business requirements
+      console.log(`Found ${expiredAccepted.length} old accepted confirmations that could be archived`)
     }
 
     return { expiredCount, errors }
@@ -323,8 +394,7 @@ export const getConfirmationHistory = async (
         confirmation.status === 'rejected' &&
         confirmation.confirmed_at &&
         isFutureRide &&
-        (now.getTime() - new Date(confirmation.confirmed_at).getTime()) < (24 * 60 * 60 * 1000) &&
-        (confirmation.ride_owner_id === userId || confirmation.passenger_id === userId)
+        (now.getTime() - new Date(confirmation.confirmed_at).getTime()) < (24 * 60 * 60 * 1000)
 
       return {
         ...confirmation,
@@ -403,14 +473,9 @@ export const getConfirmationExpiryInfo = (
   let expiryDate: Date
 
   if (confirmation.status === 'pending') {
-    // Use expiry_date from database if available, otherwise calculate
-    if (confirmation.expiry_date) {
-      expiryDate = new Date(confirmation.expiry_date)
-    } else {
-      expiryDate = new Date(
-        new Date(confirmation.created_at).getTime() + settings.pendingExpiryHours * 60 * 60 * 1000
-      )
-    }
+    expiryDate = new Date(
+      new Date(confirmation.created_at).getTime() + settings.pendingExpiryHours * 60 * 60 * 1000
+    )
   } else if (confirmation.status === 'accepted' && confirmation.confirmed_at) {
     expiryDate = new Date(
       new Date(confirmation.confirmed_at).getTime() + settings.acceptedExpiryDays * 24 * 60 * 60 * 1000
@@ -433,7 +498,7 @@ export const getConfirmationExpiryInfo = (
 /**
  * Format time until expiry in human-readable format
  */
-export const getTimeUntilExpiry = (now: Date, expiryDate: Date): string => {
+const getTimeUntilExpiry = (now: Date, expiryDate: Date): string => {
   const diffMs = expiryDate.getTime() - now.getTime()
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
