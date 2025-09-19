@@ -31,6 +31,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [passengerName, setPassengerName] = useState('')
   const [ownerName, setOwnerName] = useState('')
+  const [showRequestAgainOption, setShowRequestAgainOption] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -190,12 +191,25 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       if (!error && data) {
         setCurrentConfirmation(data)
+        
+        // Check if this is a rejected confirmation that can be requested again
+        if (data.status === 'rejected' && data.passenger_id === user?.id) {
+          const ride = data.car_rides
+          const trip = data.trips
+          const departureTime = ride ? ride.departure_date_time : trip?.travel_date
+          const isFutureRide = departureTime ? new Date(departureTime) > new Date() : false
+          setShowRequestAgainOption(isFutureRide)
+        } else {
+          setShowRequestAgainOption(false)
+        }
       } else {
         setCurrentConfirmation(null)
+        setShowRequestAgainOption(false)
       }
     } catch (error) {
       console.error('Error fetching confirmation status:', error)
       setCurrentConfirmation(null)
+      setShowRequestAgainOption(false)
     }
   }
 
@@ -454,8 +468,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }
     } else if (status === 'accepted') {
       return 'Ride Confirmed ✓'
-    } else if (status === 'rejected') {
+    } else if (status === 'rejected' && showRequestAgainOption) {
       return 'Request Ride Again'
+    } else if (status === 'rejected') {
+      return 'Request Was Declined'
     }
 
     return 'Request Ride Confirmation'
@@ -476,6 +492,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }
     } else if (status === 'accepted') {
       return true // Use separate cancel button
+    }
+    if (status === 'rejected' && !showRequestAgainOption) {
+      return true // Can't request again for past rides
     }
 
     return false
@@ -503,7 +522,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!currentConfirmation) return true // Show request button
     
     const status = currentConfirmation.status
-    if (status === 'rejected') return true // Show "Request Again" button
+    if (status === 'rejected' && showRequestAgainOption) return true // Show "Request Again" button
     if (status === 'pending') {
       // Only show for owner who initiated the request
       return isCurrentUserOwnerOfConfirmation()

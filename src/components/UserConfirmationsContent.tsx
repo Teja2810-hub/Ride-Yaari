@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc, RotateCcw, TrendingUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import ConfirmationItem from './ConfirmationItem'
+import { getConfirmationHistory } from '../utils/confirmationHelpers'
 
 interface UserConfirmationsContentProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
@@ -19,6 +20,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [typeFilter, setTypeFilter] = useState<'all' | 'car' | 'airport'>('all')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'status'>('date-desc')
   const [showFilters, setShowFilters] = useState(false)
+  const [actionableCount, setActionableCount] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -54,47 +56,15 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     setError('')
 
     try {
-      const { data, error } = await supabase
-        .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_passenger_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time,
-            price,
-            currency,
-            user_id,
-            negotiable
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date,
-            departure_time,
-            departure_timezone,
-            landing_date,
-            landing_time,
-            landing_timezone,
-            price,
-            currency,
-            user_id,
-            negotiable
-          )
-        `)
-        .or(`ride_owner_id.eq.${user.id},passenger_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
+      const { confirmations: data, error } = await getConfirmationHistory(user.id, true)
 
       if (error) throw error
 
-      setConfirmations(data || [])
+      setConfirmations(data)
+      
+      // Count actionable confirmations
+      const actionable = data.filter(c => c.canRequestAgain || c.canReverse).length
+      setActionableCount(actionable)
     } catch (error: any) {
       console.error('Error fetching confirmations:', error)
       setError('Failed to load confirmations. Please try again.')
@@ -325,6 +295,32 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             </div>
           </div>
         )}
+        <div className="bg-indigo-50 rounded-lg p-4 text-center">
+
+      {/* Quick Actions for Actionable Items */}
+      {actionableCount > 0 && (
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <RotateCcw size={20} className="text-purple-600" />
+              <div>
+                <h3 className="font-semibold text-purple-900">Available Actions</h3>
+                <p className="text-sm text-purple-700">
+                  You have {actionableCount} confirmation{actionableCount !== 1 ? 's' : ''} with available actions
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full animate-pulse">
+                {actionableCount} Available
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+          <div className="text-2xl font-bold text-indigo-600">{actionableCount}</div>
+          <div className="text-sm text-indigo-800">Actionable</div>
+        </div>
       </div>
 
       {/* Pending Requests */}
