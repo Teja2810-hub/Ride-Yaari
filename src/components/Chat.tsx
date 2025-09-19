@@ -367,7 +367,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      await sendEnhancedSystemMessage('accept', 'passenger', user.id, confirmation.passenger_id)
+      await sendEnhancedSystemMessage('accept', 'passenger', user.id, currentConfirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -401,7 +401,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      await sendEnhancedSystemMessage('reject', 'passenger', user.id, confirmation.passenger_id)
+      await sendEnhancedSystemMessage('reject', 'passenger', user.id, currentConfirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()

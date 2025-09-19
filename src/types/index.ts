@@ -107,6 +107,11 @@ export interface RideConfirmation {
   confirmed_at?: string
   created_at: string
   updated_at: string
+  expiry_date?: string
+  can_reverse?: boolean
+  reversal_deadline?: string
+  request_count?: number
+  last_action_by?: string
   user_profiles: UserProfile
   car_rides?: CarRide
   trips?: Trip
