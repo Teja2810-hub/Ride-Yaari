@@ -1154,8 +1154,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             )}
 
             {activeTab === 'confirmations' && (
-              <ConfirmationExpiryBanner onRefresh={() => window.location.reload()} />
-              <UserConfirmationsContent onStartChat={onStartChat} />
+              <>
+                <ConfirmationExpiryBanner onRefresh={() => window.location.reload()} />
+                <UserConfirmationsContent onStartChat={onStartChat} />
+              </>
             )}
 
             {activeTab === 'history' && (
