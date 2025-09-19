@@ -1,0 +1,351 @@
+import React, { useState, useEffect } from 'react'
+import { Check, Clock, X, AlertTriangle, Car, Plane } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../utils/supabase'
+import { RideConfirmation } from '../types'
+import ConfirmationItem from './ConfirmationItem'
+
+interface UserConfirmationsContentProps {
+  onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
+}
+
+export default function UserConfirmationsContent({ onStartChat }: UserConfirmationsContentProps) {
+  const { user } = useAuth()
+  const [confirmations, setConfirmations] = useState<RideConfirmation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      fetchConfirmations()
+      
+      // Subscribe to confirmation changes
+      const subscription = supabase
+        .channel('user_confirmations')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'ride_confirmations',
+            filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
+          },
+          () => {
+            fetchConfirmations()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        subscription.unsubscribe()
+      }
+    }
+  }, [user])
+
+  const fetchConfirmations = async () => {
+    if (!user) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data, error } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          ),
+          car_rides!ride_confirmations_ride_id_fkey (
+            id,
+            from_location,
+            to_location,
+            departure_date_time,
+            price,
+            currency,
+            user_id,
+            negotiable
+          ),
+          trips!ride_confirmations_trip_id_fkey (
+            id,
+            leaving_airport,
+            destination_airport,
+            travel_date,
+            departure_time,
+            departure_timezone,
+            landing_date,
+            landing_time,
+            landing_timezone,
+            price,
+            currency,
+            user_id,
+            negotiable
+          )
+        `)
+        .or(`ride_owner_id.eq.${user.id},passenger_id.eq.${user.id}`)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setConfirmations(data || [])
+    } catch (error: any) {
+      console.error('Error fetching confirmations:', error)
+      setError('Failed to load confirmations. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const categorizeConfirmations = () => {
+    const pending = confirmations.filter(c => c.status === 'pending')
+    const accepted = confirmations.filter(c => c.status === 'accepted')
+    const rejected = confirmations.filter(c => c.status === 'rejected')
+
+    return {
+      pending: {
+        carRides: pending.filter(c => c.ride_id),
+        airportTrips: pending.filter(c => c.trip_id)
+      },
+      accepted: {
+        carRides: accepted.filter(c => c.ride_id),
+        airportTrips: accepted.filter(c => c.trip_id)
+      },
+      rejected: {
+        carRides: rejected.filter(c => c.ride_id),
+        airportTrips: rejected.filter(c => c.trip_id)
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading confirmations...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          onClick={fetchConfirmations}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    )
+  }
+
+  const categorized = categorizeConfirmations()
+  const hasAnyConfirmations = confirmations.length > 0
+
+  if (!hasAnyConfirmations) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check size={32} className="text-gray-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Ride Confirmations</h3>
+        <p className="text-gray-600 mb-6">
+          You don't have any ride confirmations yet. Start by posting a ride or requesting to join one!
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Pending Requests */}
+      {(categorized.pending.carRides.length > 0 || categorized.pending.airportTrips.length > 0) && (
+        <div>
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Clock size={20} className="text-yellow-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Pending Requests</h2>
+            <span className="bg-yellow-100 text-yellow-800 text-sm px-2 py-1 rounded-full">
+              {categorized.pending.carRides.length + categorized.pending.airportTrips.length}
+            </span>
+          </div>
+
+          {/* Car Rides - Pending */}
+          {categorized.pending.carRides.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Car size={20} className="text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.pending.carRides.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.pending.carRides.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Airport Trips - Pending */}
+          {categorized.pending.airportTrips.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Plane size={20} className="text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.pending.airportTrips.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.pending.airportTrips.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Accepted Confirmations */}
+      {(categorized.accepted.carRides.length > 0 || categorized.accepted.airportTrips.length > 0) && (
+        <div>
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <Check size={20} className="text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Accepted Confirmations</h2>
+            <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
+              {categorized.accepted.carRides.length + categorized.accepted.airportTrips.length}
+            </span>
+          </div>
+
+          {/* Car Rides - Accepted */}
+          {categorized.accepted.carRides.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Car size={20} className="text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.accepted.carRides.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.accepted.carRides.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Airport Trips - Accepted */}
+          {categorized.accepted.airportTrips.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Plane size={20} className="text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.accepted.airportTrips.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.accepted.airportTrips.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rejected/Cancelled */}
+      {(categorized.rejected.carRides.length > 0 || categorized.rejected.airportTrips.length > 0) && (
+        <div>
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+              <X size={20} className="text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Rejected/Cancelled</h2>
+            <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded-full">
+              {categorized.rejected.carRides.length + categorized.rejected.airportTrips.length}
+            </span>
+          </div>
+
+          {/* Car Rides - Rejected */}
+          {categorized.rejected.carRides.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Car size={20} className="text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.rejected.carRides.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.rejected.carRides.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Airport Trips - Rejected */}
+          {categorized.rejected.airportTrips.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Plane size={20} className="text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                  {categorized.rejected.airportTrips.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {categorized.rejected.airportTrips.map((confirmation) => (
+                  <ConfirmationItem
+                    key={confirmation.id}
+                    confirmation={confirmation}
+                    onUpdate={fetchConfirmations}
+                    onStartChat={onStartChat}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

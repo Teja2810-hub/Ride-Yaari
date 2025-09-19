@@ -83,6 +83,54 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
         ],
         explanation: 'When arranging car rides, ensure all safety details are discussed and confirmed before meeting in person.'
       }
+    case 'owner-accept-request':
+      return {
+        title: 'Accept Ride Request',
+        points: [
+          'This will confirm the passenger for your ride',
+          'The passenger will be notified of your acceptance',
+          'You are committing to provide the ride as discussed',
+          'Make sure you have agreed on pickup details and payment',
+          'Once accepted, both parties are committed to the arrangement'
+        ],
+        explanation: 'You are accepting a passenger for this ride. This is a commitment to provide the ride as discussed.'
+      }
+    case 'owner-reject-request':
+      return {
+        title: 'Reject Ride Request',
+        points: [
+          'This will decline the passenger\'s request',
+          'The passenger will be notified of your decision',
+          'The passenger can request again if they wish',
+          'Consider explaining your reason in chat',
+          'This action can be reversed if you change your mind'
+        ],
+        explanation: 'You are rejecting a request for this ride. The passenger will be able to request again.'
+      }
+    case 'cancel-confirmed-ride':
+      return {
+        title: 'Cancel Confirmed Ride',
+        points: [
+          'This will cancel the confirmed ride arrangement',
+          'The other party will be notified immediately',
+          'This may affect your reputation on the platform',
+          'Consider discussing the reason in chat first',
+          'This should only be done if absolutely necessary'
+        ],
+        explanation: 'You are cancelling a confirmed ride. This should only be done if absolutely necessary.'
+      }
+    case 'request-ride-again':
+      return {
+        title: 'Request Ride Again',
+        points: [
+          'This will send a new request to join this ride',
+          'The ride owner will be notified of your request',
+          'Make sure you still want to join this ride',
+          'Consider discussing any changes in chat first',
+          'The owner can accept or reject this new request'
+        ],
+        explanation: 'You are requesting to join this ride again after it was previously rejected.'
+      }
     default:
       return {
         title: 'Safety Guidelines',
