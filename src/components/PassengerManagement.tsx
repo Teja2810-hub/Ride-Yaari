@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation, CarRide, Trip } from '../types'
 import DisclaimerModal from './DisclaimerModal'
+import { getSystemMessageTemplate } from '../utils/messageTemplates'
 
 interface PassengerManagementProps {
   ride?: CarRide
@@ -94,7 +95,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
   }
 
   const sendSystemMessage = async (message: string, senderId: string, receiverId: string) => {
-    await supabase
+    const { error } = await supabase
       .from('chat_messages')
       .insert({
         sender_id: senderId,
@@ -103,6 +104,10 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
         message_type: 'system',
         is_read: false
       })
+    
+    if (error) {
+      console.error('Error sending system message:', error)
+    }
   }
 
   const getRideOrTripDetails = (): string => {
@@ -129,21 +134,20 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
     try {
       let newStatus: string
-      let systemMessage: string
-      const rideDetails = getRideOrTripDetails()
+      let template: any
 
       switch (disclaimerAction) {
         case 'accept':
           newStatus = 'accepted'
-          systemMessage = `🎉 Great news! Your request for the ${rideDetails} has been ACCEPTED! You can now coordinate pickup details and payment.`
+          template = getSystemMessageTemplate('accept', 'passenger', ride, trip)
           break
         case 'reject':
           newStatus = 'rejected'
-          systemMessage = `😔 Unfortunately, your request for the ${rideDetails} has been declined. You can request to join this ride again if needed.`
+          template = getSystemMessageTemplate('reject', 'passenger', ride, trip)
           break
         case 'cancel':
           newStatus = 'rejected'
-          systemMessage = `😔 The ride owner has cancelled the ${rideDetails}. You can request to join this ride again if it becomes available.`
+          template = getSystemMessageTemplate('cancel', 'owner', ride, trip)
           break
         default:
           throw new Error('Invalid action')
@@ -161,7 +165,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       if (error) throw error
 
       // Send system message to passenger
-      await sendSystemMessage(systemMessage, user.id, selectedConfirmation.passenger_id)
+      await sendSystemMessage(template.message, user.id, selectedConfirmation.passenger_id)
 
       fetchConfirmations()
       if (onUpdate) onUpdate()

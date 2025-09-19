@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
+import NotificationBadge from './NotificationBadge'
 
 interface DashboardProps {
   onPostTrip: () => void
@@ -45,6 +46,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
             )}
             {!isGuest && (
               <>
+                <NotificationBadge onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <button
                   onClick={onProfile}

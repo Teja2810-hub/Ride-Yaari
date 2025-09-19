@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
+import NotificationBadge from './NotificationBadge'
 
 interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
@@ -43,6 +44,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             </button>
             {!isGuest && (
               <>
+                <NotificationBadge onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <MessagesNotification onStartChat={onStartChat} />
                 <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <button

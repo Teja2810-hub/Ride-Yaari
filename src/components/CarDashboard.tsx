@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
+import NotificationBadge from './NotificationBadge'
 
 interface CarDashboardProps {
   onPostRide: () => void
@@ -37,6 +38,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
             )}
             {!isGuest && (
               <>
+                <NotificationBadge onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
                 <button
                   onClick={onProfile}

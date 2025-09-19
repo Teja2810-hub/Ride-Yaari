@@ -204,12 +204,17 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
     <div className="relative">
       <button
         onClick={handleDropdownToggle}
-        className="relative flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
+        className="relative flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base group"
       >
-        <MessageCircle size={16} className="sm:w-5 sm:h-5" />
+        <div className="relative">
+          <MessageCircle size={16} className="sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          )}
+        </div>
         <span className="hidden sm:inline">Messages</span>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-bounce">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -219,6 +224,14 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         <div className="fixed inset-x-2 top-16 sm:absolute sm:right-0 sm:top-full sm:inset-x-auto mt-2 w-auto sm:w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-[80vh] sm:max-h-96">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900">Messages</h3>
+            {unreadCount > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {unreadCount} unread
+                </span>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              </div>
+            )}
             <button
               onClick={() => setShowDropdown(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -263,17 +276,24 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
                           {conversation.other_user_name}
                         </h4>
                         <div className="flex items-center space-x-2">
+                          {conversation.unread_count > 0 && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full animate-pulse">
+                              NEW
+                            </span>
+                          )}
                           <span className="text-xs text-gray-500 whitespace-nowrap">
                             {formatTime(conversation.last_message_time)}
                           </span>
                           {conversation.unread_count > 0 && (
-                            <span className="bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                            <span className="bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-bounce">
                               {conversation.unread_count}
                             </span>
                           )}
                         </div>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 truncate mt-1">
+                      <p className={`text-xs sm:text-sm text-gray-600 truncate mt-1 ${
+                        conversation.unread_count > 0 ? 'font-medium' : ''
+                      }`}>
                         {conversation.last_message}
                       </p>
                     </div>

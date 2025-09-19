@@ -5,6 +5,8 @@ import { supabase } from '../utils/supabase'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
+import EnhancedSystemMessage from './EnhancedSystemMessage'
+import { getSystemMessageTemplate } from '../utils/messageTemplates'
 
 interface ChatProps {
   onBack: () => void
@@ -83,7 +85,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const sendSystemMessage = async (message: string, senderId: string, receiverId: string) => {
-    await supabase
+    const { error } = await supabase
       .from('chat_messages')
       .insert({
         sender_id: senderId,
@@ -92,6 +94,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         message_type: 'system',
         is_read: false
       })
+    
+    if (error) {
+      console.error('Error sending system message:', error)
+    }
   }
 
   const getRideOrTripDetails = (ride?: CarRide, trip?: Trip): string => {
@@ -284,12 +290,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message
-      const rideDetails = getRideOrTripDetails(preSelectedRide, preSelectedTrip)
-      const systemMessage = isOwner 
-        ? `🚗 You have sent a ride offer for the ${rideDetails}. The passenger can accept or decline this offer.`
-        : `🚗 You have requested to join the ${rideDetails}. The ride owner can accept or reject your request.`
+      const action = isOwner ? 'offer' : 'request'
+      const userRole = isOwner ? 'owner' : 'passenger'
+      const template = getSystemMessageTemplate(action, userRole, preSelectedRide, preSelectedTrip)
       
-      await sendSystemMessage(systemMessage, user.id, isOwner ? passengerId : rideOwnerId)
+      await sendSystemMessage(template.message, user.id, isOwner ? passengerId : rideOwnerId)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -323,10 +328,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      const rideDetails = getRideOrTripDetails(currentConfirmation.car_rides, currentConfirmation.trips)
-      const systemMessage = `🎉 Great news! Your request for the ${rideDetails} has been ACCEPTED! You can now coordinate pickup details and payment.`
+      const template = getSystemMessageTemplate('accept', 'passenger', currentConfirmation.car_rides, currentConfirmation.trips)
       
-      await sendSystemMessage(systemMessage, user.id, currentConfirmation.passenger_id)
+      await sendSystemMessage(template.message, user.id, currentConfirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -360,10 +364,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to passenger
-      const rideDetails = getRideOrTripDetails(currentConfirmation.car_rides, currentConfirmation.trips)
-      const systemMessage = `😔 Unfortunately, your request for the ${rideDetails} has been declined. You can request to join this ride again if needed.`
+      const template = getSystemMessageTemplate('reject', 'passenger', currentConfirmation.car_rides, currentConfirmation.trips)
       
-      await sendSystemMessage(systemMessage, user.id, currentConfirmation.passenger_id)
+      await sendSystemMessage(template.message, user.id, currentConfirmation.passenger_id)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -397,14 +400,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       if (error) throw error
 
       // Send system message to the other party
-      const rideDetails = getRideOrTripDetails(currentConfirmation.car_rides, currentConfirmation.trips)
       const isOwner = isCurrentUserOwnerOfConfirmation()
       const receiverId = isOwner ? currentConfirmation.passenger_id : currentConfirmation.ride_owner_id
-      const systemMessage = isOwner
-        ? `😔 The ride owner has cancelled the ${rideDetails}. You can request to join this ride again if it becomes available.`
-        : `😔 The passenger has cancelled their spot on the ${rideDetails}. The ride is now available for other passengers.`
+      const userRole = isOwner ? 'owner' : 'passenger'
+      const template = getSystemMessageTemplate('cancel', userRole, currentConfirmation.car_rides, currentConfirmation.trips)
       
-      await sendSystemMessage(systemMessage, user.id, receiverId)
+      await sendSystemMessage(template.message, user.id, receiverId)
 
       fetchMessages()
       fetchConfirmationStatus()
@@ -645,28 +646,30 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                       key={message.id}
                       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-xs sm:max-w-sm lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${
-                        isOwn
-                          ? 'bg-blue-600 text-white rounded-br-md'
-                          : message.message_type === 'system' 
-                            ? 'bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-bl-md'
+                      {message.message_type === 'system' ? (
+                        <div className="w-full max-w-md mx-auto">
+                          <EnhancedSystemMessage
+                            message={message.message_content}
+                            timestamp={message.created_at}
+                            type={getMessageTypeFromContent(message.message_content)}
+                            rideType={preSelectedRide ? 'car' : 'airport'}
+                          />
+                        </div>
+                      ) : (
+                        <div className={`max-w-xs sm:max-w-sm lg:max-w-md px-3 sm:px-4 py-2 rounded-2xl ${
+                          isOwn
+                            ? 'bg-blue-600 text-white rounded-br-md'
                             : 'bg-gray-100 text-gray-900 rounded-bl-md'
-                      }`}>
-                        {message.message_type === 'system' && (
-                          <div className="flex items-center space-x-1 mb-1">
-                            <Clock size={12} className="text-yellow-600" />
-                            <span className="text-xs font-medium text-yellow-600">System</span>
-                          </div>
-                        )}
-                        <p className="text-xs sm:text-sm leading-relaxed">{message.message_content}</p>
-                        
-                        <p className={`text-xs mt-1 ${
-                          isOwn ? 'text-blue-100' : 
-                          message.message_type === 'system' ? 'text-yellow-600' : 'text-gray-500'
                         }`}>
-                          {formatTime(message.created_at)}
-                        </p>
-                      </div>
+                          <p className="text-xs sm:text-sm leading-relaxed">{message.message_content}</p>
+                          
+                          <p className={`text-xs mt-1 ${
+                            isOwn ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {formatTime(message.created_at)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -814,4 +817,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       />
     </div>
   )
+
+  // Helper function to determine message type from content
+  const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
+    if (content.includes('requested to join') || content.includes('new request')) return 'request'
+    if (content.includes('sent a ride offer') || content.includes('ride offer')) return 'offer'
+    if (content.includes('ACCEPTED') || content.includes('accepted')) return 'accept'
+    if (content.includes('declined') || content.includes('rejected')) return 'reject'
+    if (content.includes('cancelled')) return 'cancel'
+    return 'system'
+  }
 }

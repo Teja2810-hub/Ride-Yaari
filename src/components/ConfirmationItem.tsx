@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
+import { getSystemMessageTemplate } from '../utils/messageTemplates'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -28,7 +29,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const passenger = confirmation.user_profiles
 
   const sendSystemMessage = async (message: string, senderId: string, receiverId: string) => {
-    await supabase
+    const { error } = await supabase
       .from('chat_messages')
       .insert({
         sender_id: senderId,
@@ -37,6 +38,10 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         message_type: 'system',
         is_read: false
       })
+    
+    if (error) {
+      console.error('Error sending system message:', error)
+    }
   }
 
   const getRideOrTripDetails = (): string => {
@@ -68,10 +73,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to passenger
-      const rideDetails = getRideOrTripDetails()
-      const systemMessage = `🎉 Great news! Your request for the ${rideDetails} has been ACCEPTED! You can now coordinate pickup details and payment.`
+      const template = getSystemMessageTemplate('accept', 'passenger', ride, trip)
       
-      await sendSystemMessage(systemMessage, user.id, confirmation.passenger_id)
+      await sendSystemMessage(template.message, user.id, confirmation.passenger_id)
 
       onUpdate()
     } catch (error: any) {
@@ -101,10 +105,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to passenger
-      const rideDetails = getRideOrTripDetails()
-      const systemMessage = `😔 Unfortunately, your request for the ${rideDetails} has been declined. You can request to join this ride again if needed.`
+      const template = getSystemMessageTemplate('reject', 'passenger', ride, trip)
       
-      await sendSystemMessage(systemMessage, user.id, confirmation.passenger_id)
+      await sendSystemMessage(template.message, user.id, confirmation.passenger_id)
 
       onUpdate()
     } catch (error: any) {
@@ -134,13 +137,11 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to the other party
-      const rideDetails = getRideOrTripDetails()
       const receiverId = isCurrentUserOwner ? confirmation.passenger_id : confirmation.ride_owner_id
-      const systemMessage = isCurrentUserOwner
-        ? `😔 The ride owner has cancelled the ${rideDetails}. You can request to join this ride again if it becomes available.`
-        : `😔 The passenger has cancelled their spot on the ${rideDetails}. The ride is now available for other passengers.`
+      const userRole = isCurrentUserOwner ? 'owner' : 'passenger'
+      const template = getSystemMessageTemplate('cancel', userRole, ride, trip)
       
-      await sendSystemMessage(systemMessage, user.id, receiverId)
+      await sendSystemMessage(template.message, user.id, receiverId)
 
       onUpdate()
     } catch (error: any) {
@@ -170,10 +171,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       if (error) throw error
 
       // Send system message to ride owner
-      const rideDetails = getRideOrTripDetails()
-      const systemMessage = `🚗 You have a new request for the ${rideDetails}. The passenger would like to join your ride again.`
+      const template = getSystemMessageTemplate('request', 'owner', ride, trip)
       
-      await sendSystemMessage(systemMessage, user.id, confirmation.ride_owner_id)
+      await sendSystemMessage(template.message, user.id, confirmation.ride_owner_id)
 
       onUpdate()
     } catch (error: any) {
