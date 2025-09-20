@@ -645,44 +645,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </div>
           )}
 
-          {/* Passenger Accepted Message */}
-          {currentConfirmation && 
-           currentConfirmation.status === 'accepted' && 
-           isCurrentUserPassengerOfConfirmation() && (
-            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check size={16} className="text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-green-900">Request Approved!</h4>
-                  <p className="text-sm text-green-800">
-                    Your request was approved! You are confirmed for this ride.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Passenger Rejected Message */}
-          {currentConfirmation && 
-           currentConfirmation.status === 'rejected' && 
-           isCurrentUserPassengerOfConfirmation() && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <X size={16} className="text-red-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-red-900">Request Declined</h4>
-                  <p className="text-sm text-red-800">
-                    Your request was declined.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && (
             <div className="mb-3 flex justify-center">
