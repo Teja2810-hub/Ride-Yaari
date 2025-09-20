@@ -330,6 +330,55 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     )
   }
 
+  const handleRequestAgain = async () => {
+    if (!user || !currentConfirmation) return
+    
+    await handleAsync(async () => {
+      // Update the confirmation status back to pending
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'pending',
+          confirmed_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentConfirmation.id)
+      
+      if (error) throw error
+
+      // Send notification to ride owner about the re-request
+      await notificationService.sendComprehensiveNotification(
+        'request',
+        'owner',
+        user.id,
+        currentConfirmation.ride_owner_id,
+        preSelectedRide,
+        preSelectedTrip,
+        'Re-request after previous rejection'
+      )
+
+      // Send system chat message
+      const rideDetails = preSelectedRide 
+        ? `car ride from ${preSelectedRide.from_location} to ${preSelectedRide.to_location}`
+        : preSelectedTrip 
+          ? `airport trip from ${preSelectedTrip.leaving_airport} to ${preSelectedTrip.destination_airport}`
+          : 'ride'
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: currentConfirmation.ride_owner_id,
+          message_content: `${userProfile?.full_name || 'Passenger'} has re-requested to join your ${rideDetails}. Please review and respond.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      fetchMessages()
+      fetchConfirmationStatus()
+    })
+  }
+
   const getConfirmationButtonText = () => {
     if (!currentConfirmation) {
       // No confirmation exists - show request button
@@ -683,6 +732,25 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </div>
           )}
 
+          {/* Passenger Cancelled Message */}
+          {currentConfirmation && 
+           currentConfirmation.status === 'rejected' && 
+           isCurrentUserPassengerOfConfirmation() && (
+            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle size={16} className="text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-orange-900">Ride Cancelled</h4>
+                  <p className="text-sm text-orange-800">
+                    The ride was cancelled by the driver.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && (
             <div className="mb-3 flex justify-center">
@@ -712,6 +780,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   >
                     <AlertTriangle size={16} />
                     <span>Cancel Ride</span>
+                  </button>
+                )}
+
+                {/* Request Again button for rejected rides */}
+                {currentConfirmation && 
+                 currentConfirmation.status === 'rejected' && 
+                 isCurrentUserPassengerOfConfirmation() && (
+                  <button
+                    onClick={handleRequestAgain}
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
+                  >
+                    <Check size={16} />
+                    <span>Request Ride Again</span>
                   </button>
                 )}
               </div>

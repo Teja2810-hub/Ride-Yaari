@@ -309,11 +309,12 @@ export function useConfirmationFlow({
       if (confirmation) {
         const otherUserId = isOwner ? confirmation.passenger_id : confirmation.ride_owner_id
         const cancellingUserName = isOwner ? 'Driver' : confirmation.user_profiles?.full_name || 'Passenger'
+        const receiverRole = isOwner ? 'passenger' : 'owner'
 
         // Send comprehensive notification to the other party
         await notificationService.sendComprehensiveNotification(
           'cancel',
-          isOwner ? 'passenger' : 'owner',
+          receiverRole,
           userId,
           otherUserId,
           ride,
@@ -333,7 +334,7 @@ export function useConfirmationFlow({
           .insert({
             sender_id: userId,
             receiver_id: otherUserId,
-            message_content: `🚫 The ${rideDetails} has been cancelled by ${cancellingUserName}. The ride is now available for new requests.`,
+            message_content: `🚫 The ${rideDetails} has been cancelled by ${cancellingUserName}. ${isOwner ? 'Your ride is now available for new requests.' : 'You can request to join this ride again if it becomes available.'}`,
             message_type: 'system',
             is_read: false
           })
@@ -341,6 +342,68 @@ export function useConfirmationFlow({
 
       if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Ride cancelled successfully!')
+    })
+  }, [handleAsync, onUpdate, onSuccess])
+
+  const requestAgain = useCallback(async (
+    confirmationId: string,
+    userId: string,
+    rideOwnerId: string,
+    ride?: CarRide,
+    trip?: Trip
+  ) => {
+    return handleAsync(async () => {
+      // Update confirmation status back to pending
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'pending',
+          confirmed_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+
+      if (error) throw error
+
+      // Get passenger name for notifications
+      const { data: passengerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single()
+
+      const passengerName = passengerProfile?.full_name || 'Passenger'
+
+      // Send comprehensive notification to ride owner about re-request
+      await notificationService.sendComprehensiveNotification(
+        'request',
+        'owner',
+        userId,
+        rideOwnerId,
+        ride,
+        trip,
+        `Re-request from ${passengerName} after previous rejection`
+      )
+
+      // Send system chat message visible to both parties
+      const rideDetails = ride 
+        ? `car ride from ${ride.from_location} to ${ride.to_location}`
+        : trip 
+          ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
+          : 'ride'
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: userId,
+          receiver_id: rideOwnerId,
+          message_content: `🔄 ${passengerName} has re-requested to join your ${rideDetails}. Please review and respond.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      if (onUpdate) onUpdate()
+      if (onSuccess) onSuccess('Request sent again successfully!')
     })
   }, [handleAsync, onUpdate, onSuccess])
 
@@ -354,6 +417,7 @@ export function useConfirmationFlow({
     acceptRequest,
     rejectRequest,
     cancelConfirmation,
+    requestAgain,
     clearError
   }
 }
