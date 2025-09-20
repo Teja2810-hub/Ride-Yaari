@@ -28,8 +28,8 @@ export const getEnhancedSystemMessageTemplate = (
     case 'request':
       if (userRole === 'passenger') {
         return {
-          title: '📤 Ride Request Sent',
-          message: `${emoji} **Request Submitted Successfully!**\n\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **When:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n✅ Your request has been sent to the ${ride ? 'driver' : 'traveler'}. They will be notified and can accept or decline your request.\n\n💡 **What's Next:** Wait for the ${ride ? 'driver' : 'traveler'} to respond. You'll be notified immediately when they make a decision.`,
+          title: '📤 Request Sent',
+          message: `Your ride request has been sent successfully. The ${ride ? 'driver' : 'traveler'} will be notified.`,
           icon: '📤',
           priority: 'medium',
           category: 'confirmation',
@@ -37,8 +37,8 @@ export const getEnhancedSystemMessageTemplate = (
         }
       } else {
         return {
-          title: '🚨 New Ride Request - Action Required!',
-          message: `${emoji} **New Passenger Request!**\n\n👤 **From:** ${passengerName || 'A traveler'}\n${routeEmoji} **For Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Your Price:** ${rideDetails.pricing}\n\n🔔 **Action Required:** A passenger wants to join your ${rideType}. Please review their request and respond promptly.\n\n💡 **Tip:** Check their profile and chat with them before making a decision.`,
+          title: '🚨 New Ride Request',
+          message: `New request from ${passengerName || 'a passenger'} for your ${rideDetails.route}. Tap to review.`,
           icon: '🚨',
           priority: 'high',
           category: 'confirmation',

@@ -166,6 +166,34 @@ export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlow
         throw error
       }
 
+      // Send comprehensive notification to ride owner
+      await notificationService.sendComprehensiveNotification(
+        'request',
+        'owner',
+        passengerId,
+        rideOwnerId
+      )
+
+      // Send system chat message visible to both parties
+      const { data: passengerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', passengerId)
+        .single()
+
+      const passengerName = passengerProfile?.full_name || 'A passenger'
+      const systemMessage = `Passenger ${passengerName} has requested a ride. Please approve.`
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: passengerId,
+          receiver_id: rideOwnerId,
+          message_content: systemMessage,
+          message_type: 'system',
+          is_read: false
+        })
+
       if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Confirmation request sent successfully!')
       

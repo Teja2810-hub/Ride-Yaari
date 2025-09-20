@@ -231,6 +231,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const handlePassengerRequestConfirmation = () => {
+    if (!user) return
     showDisclaimer('passenger-request')
   }
 
@@ -332,20 +333,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const getConfirmationButtonText = () => {
     if (!currentConfirmation) {
       // No confirmation exists - show request button
-      const isOwner = isCurrentUserOwnerOfPreselected()
-      return isOwner ? 'Send Ride Offer' : 'Request Ride Confirmation'
+      return 'Request Ride Confirmation'
     }
 
     const status = currentConfirmation.status
-    const isOwner = isCurrentUserOwnerOfConfirmation()
     const isPassenger = isCurrentUserPassengerOfConfirmation()
 
     if (status === 'pending') {
-      if (isOwner) {
-        return 'Request Pending - Awaiting Response'
-      } else if (isPassenger) {
-        return 'Offer Pending - Respond Below'
-      }
+      return 'Request Pending - Awaiting Response'
     } else if (status === 'accepted') {
       return 'Ride Confirmed ✓'
     } else if (status === 'rejected') {
@@ -359,32 +354,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!currentConfirmation) return false
 
     const status = currentConfirmation.status
-    const isOwner = isCurrentUserOwnerOfConfirmation()
-    const isPassenger = isCurrentUserPassengerOfConfirmation()
 
     if (status === 'pending') {
-      if (isOwner) {
-        return true // Owner can't click main button when pending
-      } else if (isPassenger) {
-        return true // Passenger uses separate accept/reject buttons
-      }
+      return true // Button disabled when pending
     } else if (status === 'accepted') {
       return true // Use separate cancel button
     }
 
     return false
-  }
-
-  const shouldShowAcceptRejectButtons = () => {
-    return currentConfirmation && 
-           currentConfirmation.status === 'pending' && 
-           isCurrentUserPassengerOfConfirmation()
-  }
-
-  const shouldShowOwnerActionButtons = () => {
-    return currentConfirmation && 
-           currentConfirmation.status === 'pending' && 
-           isCurrentUserOwnerOfConfirmation()
   }
 
   const shouldShowCancelButton = () => {
@@ -398,10 +375,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     const status = currentConfirmation.status
     if (status === 'rejected') return true // Show "Request Again" button
-    if (status === 'pending') {
-      // Only show for owner who initiated the request
-      return isCurrentUserOwnerOfConfirmation()
-    }
+    if (status === 'pending') return false // Hide when pending (handled by dedicated UI)
     if (status === 'accepted') return false // Use cancel button instead
     
     return false
@@ -613,6 +587,64 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </div>
           )}
           
+          {/* Passenger Pending Request Message */}
+          {currentConfirmation && 
+           currentConfirmation.status === 'pending' && 
+           isCurrentUserPassengerOfConfirmation() && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <Clock size={16} className="text-yellow-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-yellow-900">Request Pending</h4>
+                  <p className="text-sm text-yellow-800">
+                    You requested a ride and it's waiting for approval.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Owner Pending Request Actions */}
+          {currentConfirmation && 
+           currentConfirmation.status === 'pending' && 
+           isCurrentUserOwnerOfConfirmation() && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle size={16} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-blue-900">Action Required</h4>
+                    <p className="text-sm text-blue-800">
+                      Passenger {currentConfirmation.user_profiles?.full_name || 'Unknown'} is requesting, you need to approve.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleOwnerRejectRequest}
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <X size={14} />
+                    <span>Reject</span>
+                  </button>
+                  <button
+                    onClick={handleOwnerAcceptRequest}
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <Check size={14} />
+                    <span>Accept</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && (
             <div className="mb-3 flex justify-center">
@@ -631,50 +663,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                     <Check size={16} />
                     <span>{getConfirmationButtonText()}</span>
                   </button>
-                )}
-
-                {/* Accept/Reject buttons for passengers */}
-                {shouldShowAcceptRejectButtons() && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleOwnerAcceptRequest}
-                      disabled={confirmationLoading}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                    >
-                      <Check size={16} />
-                      <span>Accept Offer</span>
-                    </button>
-                    <button
-                      onClick={handleOwnerRejectRequest}
-                      disabled={confirmationLoading}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                    >
-                      <X size={16} />
-                      <span>Decline Offer</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Owner action buttons */}
-                {shouldShowOwnerActionButtons() && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleOwnerAcceptRequest}
-                      disabled={confirmationLoading}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                    >
-                      <Check size={16} />
-                      <span>Accept Request</span>
-                    </button>
-                    <button
-                      onClick={handleOwnerRejectRequest}
-                      disabled={confirmationLoading}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                    >
-                      <X size={16} />
-                      <span>Reject Request</span>
-                    </button>
-                  </div>
                 )}
 
                 {/* Cancel button for confirmed rides */}
