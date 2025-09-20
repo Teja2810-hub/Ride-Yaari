@@ -324,13 +324,13 @@ export class NotificationService {
         .eq('receiver_id', userId)
         .eq('is_read', false)
 
-      // Count recent confirmation updates (last 24 hours)
+      // Count recent confirmation updates (last 48 hours)
       const { count: recentUpdates } = await supabase
         .from('ride_confirmations')
         .select('*', { count: 'exact', head: true })
         .eq('passenger_id', userId)
         .in('status', ['accepted', 'rejected'])
-        .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
 
       return {
         pendingConfirmations: pendingConfirmations || 0,

@@ -140,6 +140,20 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     setRecentActions(prev => prev.filter(c => c.id !== confirmationId))
   }
 
+  const checkForRecentActions = () => {
+    const now = new Date()
+    const recentlyRejected = confirmations.filter(confirmation => {
+      if (confirmation.status !== 'rejected') return false
+      
+      const updatedAt = new Date(confirmation.updated_at)
+      const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
+      
+      // Show alert for actions within the last 24 hours
+      return hoursSinceUpdate <= 24
+    })
+    
+    setRecentActions(recentlyRejected)
+  }
   const filteredAndSortedConfirmations = () => {
     let filtered = confirmations.filter(confirmation => {
       // Search filter

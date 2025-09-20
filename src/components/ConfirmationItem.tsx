@@ -535,7 +535,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                   <button
                     onClick={() => setShowReversalModal(true)}
                     disabled={isLoading}
-                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
                   >
                     <RotateCcw size={16} />
                     <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>
@@ -545,14 +545,14 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                   <button
                     onClick={() => setShowRequestAgainModal(true)}
                     disabled={isLoading}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
                   >
                     <RefreshCw size={16} />
                     <span>Request Again</span>
                   </button>
                 )}
                 {!canRequestAgainState && requestCooldownTime && (
-                  <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm">
+                  <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs">
                     <Clock size={16} />
                     <span>Cooldown active</span>
                   </div>
@@ -565,7 +565,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
               <button
                 onClick={() => setShowReversalModal(true)}
                 disabled={isLoading}
-                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
               >
                 <RotateCcw size={16} />
                 <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>

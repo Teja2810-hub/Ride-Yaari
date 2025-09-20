@@ -153,8 +153,8 @@ export default function EnhancedNotificationBadge({
           notifications.push({
             id: `confirmation-${confirmation.id}`,
             type: 'confirmation_request',
-            title: `🚨 New ${rideType} request`,
-            message: `${confirmation.user_profiles.full_name} wants to join your ${route}. Tap to review and respond.`,
+            title: `🚨 Action Required: New ${rideType} request`,
+            message: `${confirmation.user_profiles.full_name} is requesting to join your ${route}. Review and respond promptly.`,
             timestamp: confirmation.created_at,
             read: false,
             priority: 'high',
@@ -199,7 +199,7 @@ export default function EnhancedNotificationBadge({
         `)
         .eq('passenger_id', user.id)
         .in('status', ['accepted', 'rejected'])
-        .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Last 48 hours
         .order('updated_at', { ascending: false })
 
       if (statusUpdates) {
@@ -216,15 +216,17 @@ export default function EnhancedNotificationBadge({
           notifications.push({
             id: `status-${confirmation.id}`,
             type: 'confirmation_update',
-            title: isAccepted ? `🎉 Request Accepted!` : `😔 Request Declined`,
+            title: isAccepted ? `🎉 Ride Confirmed!` : `😔 Request Declined`,
             message: isAccepted 
-              ? `Great news! Your request for the ${route} has been accepted! You can now coordinate pickup details.`
-              : `Your request for the ${route} was declined. Don't worry - you can try requesting again or find other options.`,
+              ? `Your request for the ${route} has been accepted! Coordinate pickup details now.`
+              : `Your request for the ${route} was declined. You can request again or find other rides.`,
             timestamp: confirmation.updated_at,
             read: false,
             priority: isAccepted ? 'high' : 'medium',
             actionData: {
               confirmationId: confirmation.id,
+              userId: confirmation.ride_owner_id,
+              userName: confirmation.user_profiles?.full_name || 'Ride Owner',
               ride: ride,
               trip: trip
             },
