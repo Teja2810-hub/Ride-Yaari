@@ -126,10 +126,11 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
           'This will send a new request to join this ride',
           'The ride owner will be notified of your request',
           'Make sure you still want to join this ride',
-          'Consider discussing any changes in chat first',
-          'The owner can accept or reject this new request'
+            'The other party can request again if the ride becomes available',
+            'Consider discussing the reason in chat first',
+            'This action can be reversed within 24 hours if accidental'
         ],
-        explanation: 'You are requesting to join this ride again after it was previously rejected.'
+          explanation: `You are cancelling the confirmed ${rideDetails}. The other party will be notified and can request again.`
       }
     case 'reverse-action':
       return {
@@ -142,6 +143,18 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
           'Make sure you want to proceed with the original arrangement'
         ],
         explanation: 'You are reversing your previous action. This will restore the confirmation and notify the other party.'
+      case 'reverse-action':
+        return {
+          title: 'Reverse Previous Action',
+          points: [
+            'This will reverse your previous rejection or cancellation',
+            'The confirmation will be restored to accepted status',
+            'The other party will be notified of this reversal',
+            'This action can only be done within 24 hours',
+            'Make sure you want to proceed with the original arrangement'
+          ],
+          explanation: `You are reversing your previous action for the ${rideDetails}. This will restore the confirmation.`
+        }
       }
     default:
       return {

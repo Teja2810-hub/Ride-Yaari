@@ -113,7 +113,7 @@ export const getEnhancedSystemMessageTemplate = (
       if (userRole === 'owner') {
         return {
           title: '🚫 Ride Cancelled',
-          message: `${emoji} **Ride Cancellation Notice**\n\n👤 **Affected Passenger:** ${passengerName || 'Passenger'}\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Was Scheduled:** ${rideDetails.timing}\n\n🚫 **Status:** You have cancelled this confirmed ${rideType}.\n\n📢 **Passenger Notified:** The passenger has been informed of the cancellation. Your ${rideType} is now available for new requests.\n\n💡 **Tip:** Consider explaining the reason to maintain good relationships with the community.`,
+          message: `${emoji} **Ride Cancellation Notice**\n\n👤 **Affected Passenger:** ${passengerName || 'Passenger'}\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Was Scheduled:** ${rideDetails.timing}\n\n🚫 **Status:** You have cancelled this confirmed ${rideType}.\n\n📢 **Passenger Notified:** The passenger has been informed and can request again if the ride becomes available.\n\n💡 **Tip:** Consider explaining the reason to maintain good relationships with the community.`,
           icon: '🚫',
           priority: 'medium',
           category: 'update',
@@ -122,7 +122,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '😔 Ride Cancelled by Driver',
-          message: `${emoji} **Ride Cancellation Notice**\n\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Was Scheduled:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n😔 **Unfortunately,** the ${ride ? 'driver' : 'traveler'} has cancelled your confirmed ${rideType}.\n\n🔄 **Your Options:**\n• Request to join this ${rideType} again if it becomes available\n• Search for alternative ${ride ? 'rides' : 'trips'} on your route\n• Post your own ${rideType} to find other travelers\n• Contact support if you need assistance`,
+          message: `${emoji} **Ride Cancellation Notice**\n\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Was Scheduled:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n😔 **Unfortunately,** the ${ride ? 'driver' : 'traveler'} has cancelled your confirmed ${rideType}.\n\n🔄 **Your Options:**\n• Use the "Request Ride Again" button to re-request this ${rideType}\n• Search for alternative ${ride ? 'rides' : 'trips'} on your route\n• Post your own ${rideType} to find other travelers\n• Contact support if you need assistance`,
           icon: '😔',
           priority: 'high',
           category: 'update',

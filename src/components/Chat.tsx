@@ -334,48 +334,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user || !currentConfirmation) return
     
     await handleAsync(async () => {
-      // Update the confirmation status back to pending
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'pending',
-          confirmed_at: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentConfirmation.id)
-      
-      if (error) throw error
-
-      // Send notification to ride owner about the re-request
-      await notificationService.sendComprehensiveNotification(
-        'request',
-        'owner',
+      await requestAgain(
+        currentConfirmation.id,
         user.id,
         currentConfirmation.ride_owner_id,
         preSelectedRide,
-        preSelectedTrip,
-        'Re-request after previous rejection'
+        preSelectedTrip
       )
-
-      // Send system chat message
-      const rideDetails = preSelectedRide 
-        ? `car ride from ${preSelectedRide.from_location} to ${preSelectedRide.to_location}`
-        : preSelectedTrip 
-          ? `airport trip from ${preSelectedTrip.leaving_airport} to ${preSelectedTrip.destination_airport}`
-          : 'ride'
-
-      await supabase
-        .from('chat_messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: currentConfirmation.ride_owner_id,
-          message_content: `${userProfile?.full_name || 'Passenger'} has re-requested to join your ${rideDetails}. Please review and respond.`,
-          message_type: 'system',
-          is_read: false
-        })
-
-      fetchMessages()
-      fetchConfirmationStatus()
     })
   }
 
