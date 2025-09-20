@@ -37,7 +37,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     createConfirmation,
     acceptRequest,
     rejectRequest,
-    cancelConfirmation
+    cancelConfirmation,
+    requestAgain
   } = useConfirmationFlow({
     onUpdate: () => {
       fetchConfirmationStatus()
