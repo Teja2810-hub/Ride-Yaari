@@ -15,7 +15,8 @@ export const getEnhancedSystemMessageTemplate = (
   ride?: CarRide,
   trip?: Trip,
   passengerName?: string,
-  ownerName?: string
+  ownerName?: string,
+  context?: string
 ): EnhancedMessageTemplate => {
   const rideDetails = getDetailedRideOrTripInfo(ride, trip)
   const rideType = ride ? 'car ride' : 'airport trip'
@@ -23,13 +24,14 @@ export const getEnhancedSystemMessageTemplate = (
   const routeEmoji = ride ? '🛣️' : '✈️'
   const timeEmoji = '⏰'
   const moneyEmoji = '💰'
+  const isReRequest = context?.includes('Re-request') || context?.includes('re-request')
 
   switch (action) {
     case 'request':
       if (userRole === 'passenger') {
         return {
-          title: '📤 Request Sent',
-          message: `Your ride request has been sent successfully. The ${ride ? 'driver' : 'traveler'} will be notified.`,
+          title: isReRequest ? '🔄 Re-request Sent' : '📤 Request Sent',
+          message: `Your ${isReRequest ? 're-' : ''}request has been sent successfully. The ${ride ? 'driver' : 'traveler'} will be notified.`,
           icon: '📤',
           priority: 'medium',
           category: 'confirmation',
@@ -37,8 +39,8 @@ export const getEnhancedSystemMessageTemplate = (
         }
       } else {
         return {
-          title: '🚨 New Ride Request',
-          message: `New request from ${passengerName || 'a passenger'} for your ${rideDetails.route}. Tap to review.`,
+          title: isReRequest ? '🔄 Ride Re-request' : '🚨 New Ride Request',
+          message: `${isReRequest ? 'Re-request' : 'New request'} from ${passengerName || 'a passenger'} for your ${rideDetails.route}. Tap to review.`,
           icon: '🚨',
           priority: 'high',
           category: 'confirmation',
