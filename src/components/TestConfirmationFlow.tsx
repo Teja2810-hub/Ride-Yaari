@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Play, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../utils/supabase'
 import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
