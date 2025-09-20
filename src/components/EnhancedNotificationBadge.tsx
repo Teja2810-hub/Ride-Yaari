@@ -337,6 +337,11 @@ export default function EnhancedNotificationBadge({
       // Refresh notifications and stats
       await fetchNotifications()
       await fetchStats()
+      
+      // Force a re-render by updating the component state
+      setTimeout(() => {
+        fetchNotifications()
+      }, 500)
     } catch (error) {
       console.error('Error marking notifications as read:', error)
     }

@@ -175,6 +175,11 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
       await fetchUnreadCount()
       // Re-fetch conversations to update the unread counts
       await fetchConversations()
+      
+      // Force a re-render by updating the component state
+      setTimeout(() => {
+        fetchUnreadCount()
+      }, 500)
     }
 
     setShowDropdown(false)

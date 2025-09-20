@@ -100,7 +100,7 @@ export function useConfirmationFlow({
       // Send comprehensive notification to ride owner
       await notificationService.sendComprehensiveNotification(
         'request',
-        'owner',
+        'passenger', // This should be 'passenger' since we're notifying the owner about a passenger's request
         passengerId,
         rideOwnerId,
         ride,
@@ -172,7 +172,7 @@ export function useConfirmationFlow({
         // Send comprehensive notification to passenger
         await notificationService.sendComprehensiveNotification(
           'accept',
-          'passenger',
+          'owner', // This should be 'owner' since we're notifying the passenger about owner's acceptance
           ownerId,
           passengerId,
           ride,
@@ -243,7 +243,7 @@ export function useConfirmationFlow({
         // Send comprehensive notification to passenger
         await notificationService.sendComprehensiveNotification(
           'reject',
-          'passenger',
+          'owner', // This should be 'owner' since we're notifying the passenger about owner's rejection
           ownerId,
           passengerId,
           ride,

@@ -386,7 +386,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowMainConfirmationButton = () => {
-    if (!currentConfirmation) return true // Show request button
+    if (!currentConfirmation) return !isCurrentUserOwnerOfPreselected() // Only show request button if not the owner
     
     const status = currentConfirmation.status
     if (status === 'rejected') return true // Show "Request Again" button
@@ -394,6 +394,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (status === 'accepted') return false // Use cancel button instead
     
     return false
+  }
+
+  const shouldShowRequestAgainButton = () => {
+    return currentConfirmation && 
+           currentConfirmation.status === 'rejected' && 
+           isCurrentUserPassengerOfConfirmation()
   }
 
   const getDisclaimerContent = (type: string) => {
@@ -752,7 +758,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 {/* Request Again button for rejected rides */}
                 {currentConfirmation && 
                  currentConfirmation.status === 'rejected' && 
-                 isCurrentUserPassengerOfConfirmation() && (
+                 shouldShowRequestAgainButton() && (
                   <button
                     onClick={handleRequestAgain}
                     disabled={confirmationLoading}
