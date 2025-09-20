@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, X, Check, Clock, AlertTriangle, Car, Plane, MessageCircle, Filter, MarkAsRead } from 'lucide-react'
+import { Bell, X, Check, Clock, AlertTriangle, Car, Plane, MessageCircle, Filter, BookMarked as MarkAsRead } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { getSystemMessageTemplate } from '../utils/messageTemplates'
