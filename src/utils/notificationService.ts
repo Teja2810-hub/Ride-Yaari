@@ -205,16 +205,47 @@ export class NotificationService {
     additionalContext?: string
   ): Promise<void> {
     try {
-      // Get template for browser notification
+      // Get enhanced template for browser notification
       const template = getSystemMessageTemplate(action, userRole, ride, trip, true)
+      
+      // Get user names for personalized notifications
+      const { data: senderProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', senderId)
+        .single()
+      
+      const { data: receiverProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', receiverId)
+        .single()
+      
+      const senderName = senderProfile?.full_name || 'User'
+      const receiverName = receiverProfile?.full_name || 'User'
+      
+      // Create personalized notification title and message
+      let notificationTitle = template.title
+      let notificationMessage = template.message
+      
+      if (action === 'request' && userRole === 'owner') {
+        notificationTitle = `🚨 New ${ride ? 'car ride' : 'airport trip'} request`
+        notificationMessage = `${senderName} wants to join your ${ride ? 'car ride' : 'airport trip'}. Tap to review and respond.`
+      } else if (action === 'accept' && userRole === 'passenger') {
+        notificationTitle = '🎉 Request Accepted!'
+        notificationMessage = `Great news! Your request has been accepted. You can now coordinate details.`
+      } else if (action === 'reject' && userRole === 'passenger') {
+        notificationTitle = '😔 Request Declined'
+        notificationMessage = `Your request was declined. You can try requesting again or find other options.`
+      }
       
       // Queue browser notification
       await this.queueBrowserNotification({
         userId: receiverId,
-        title: template.title,
-        message: template.message,
+        title: notificationTitle,
+        message: notificationMessage,
         type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
-        priority: template.priority || 'medium',
+        priority: action === 'request' ? 'high' : action === 'accept' ? 'high' : 'medium',
         rideData: ride,
         tripData: trip
       })

@@ -80,7 +80,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '🎉 Request Accepted!',
-          message: `Great news! Your request for the ${rideType} (${rideDetails.route}) has been accepted! You can now coordinate pickup details and payment with the ${ride ? 'driver' : 'traveler'}.`,
+          message: `🎉 Fantastic! Your request for the ${rideDetails.route} has been ACCEPTED! You can now coordinate pickup details and payment with the ${ride ? 'driver' : 'traveler'}.`,
           icon: '🎉',
           priority: 'high',
           category: 'update',
@@ -101,7 +101,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '😔 Request Declined',
-          message: `Unfortunately, your request for the ${rideType} (${rideDetails.route}) has been declined. You can request to join this ${rideType} again or find other options.`,
+          message: `😔 Your request for the ${rideDetails.route} has been declined. Don't worry - you can request to join this ${ride ? 'car ride' : 'airport trip'} again or find other options!`,
           icon: '😔',
           priority: 'medium',
           category: 'update',
