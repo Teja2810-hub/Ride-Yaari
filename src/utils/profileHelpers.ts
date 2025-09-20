@@ -148,7 +148,7 @@ export const uploadProfileImage = async (
     // Create unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}-${Date.now()}.${fileExt}`
-    const filePath = `profile-images/${fileName}`
+    const filePath = fileName
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -176,10 +176,10 @@ export const uploadProfileImage = async (
  */
 export const deleteProfileImage = async (imageUrl: string): Promise<void> => {
   try {
-    // Extract file path from URL
+    // Extract file name from URL (handle both old and new path formats)
     const urlParts = imageUrl.split('/')
     const fileName = urlParts[urlParts.length - 1]
-    const filePath = `profile-images/${fileName}`
+    const filePath = fileName
 
     const { error } = await supabase.storage
       .from('profile-images')
