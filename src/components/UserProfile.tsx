@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip } from '../types'
@@ -10,6 +10,7 @@ import ConfirmationHistoryView from './ConfirmationHistoryView'
 import ExpiryManagementPanel from './ExpiryManagementPanel'
 import TestConfirmationFlow from './TestConfirmationFlow'
 import NotificationSettings from './NotificationSettings'
+import ProfileEditForm from './ProfileEditForm'
 import { getCurrencySymbol } from '../utils/currencies'
 
 interface UserProfileProps {
@@ -32,6 +33,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [selectedRide, setSelectedRide] = useState<CarRide | null>(null)
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [showRideHistory, setShowRideHistory] = useState(false)
+  const [showProfileEdit, setShowProfileEdit] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -150,6 +152,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
   const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <User size={16} /> },
+    { id: 'edit', label: 'Edit Profile', icon: <UserCog size={16} /> },
     { id: 'trips', label: 'Airport Trips', icon: <Plane size={16} /> },
     { id: 'rides', label: 'Car Rides', icon: <Car size={16} /> },
     { id: 'confirmations', label: 'Confirmations', icon: <MessageCircle size={16} /> },
@@ -187,7 +190,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
             <div className="flex items-center space-x-6">
-              <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center overflow-hidden">
                 {userProfile?.profile_image_url ? (
                   <img
                     src={userProfile.profile_image_url}
@@ -195,12 +198,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     className="w-full h-full object-cover rounded-full"
                   />
                 ) : (
-                  <span className="text-2xl font-bold">
+                  <span className="text-2xl font-bold text-white">
                     {userProfile?.full_name?.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
-              <div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
                 <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
                 <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
                 {userProfile?.age && (
@@ -209,6 +214,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 {userProfile?.gender && (
                   <p className="text-blue-100 capitalize">Gender: {userProfile.gender}</p>
                 )}
+                  </div>
+                  <button
+                    onClick={() => setShowProfileEdit(true)}
+                    className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    <UserCog size={20} />
+                    <span>Edit Profile</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -243,6 +257,24 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
             {activeTab === 'overview' && (
               <div className="space-y-8">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-900 mb-2">Profile Information</h3>
+                      <p className="text-blue-800 text-sm">
+                        Keep your profile up to date to help other travelers connect with you safely.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowProfileEdit(true)}
+                      className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      <UserCog size={16} />
+                      <span>Edit Profile</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-blue-50 rounded-lg p-6 text-center">
                     <Plane size={32} className="text-blue-600 mx-auto mb-4" />
@@ -292,7 +324,34 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <Bell size={16} />
                       <span>Notifications</span>
                     </button>
+                    <button
+                      onClick={() => setShowProfileEdit(true)}
+                      className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      <UserCog size={16} />
+                      <span>Edit Profile</span>
+                    </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'edit' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Edit Profile</h2>
+                  <p className="text-gray-600">
+                    Update your personal information, profile picture, password, and email address.
+                  </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <ProfileEditForm 
+                    onClose={() => setActiveTab('overview')} 
+                    onSuccess={() => {
+                      setActiveTab('overview')
+                      fetchUserData()
+                    }} 
+                  />
                 </div>
               </div>
             )}
@@ -551,6 +610,17 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           onStartChat={onStartChat}
         />
       </div>
+
+      {/* Profile Edit Modal */}
+      {showProfileEdit && (
+        <ProfileEditForm
+          onClose={() => setShowProfileEdit(false)}
+          onSuccess={() => {
+            setShowProfileEdit(false)
+            fetchUserData()
+          }}
+        />
+      )}
     </div>
   )
 }

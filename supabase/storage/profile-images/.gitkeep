@@ -1,0 +1,18 @@
+# Profile Images Storage
+
+This directory is used to store user profile images uploaded through the RideYaari platform.
+
+## Storage Configuration
+
+- **Bucket Name**: profile-images
+- **Access**: Public read access for profile images
+- **File Types**: JPG, PNG, GIF
+- **Max File Size**: 5MB
+- **Naming Convention**: {user_id}-{timestamp}.{extension}
+
+## Security
+
+- Users can only upload images to their own profile
+- File type validation is enforced
+- File size limits are enforced
+- Old images are automatically deleted when new ones are uploaded
