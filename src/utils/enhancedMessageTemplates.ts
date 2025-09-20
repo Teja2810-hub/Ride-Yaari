@@ -70,8 +70,8 @@ export const getEnhancedSystemMessageTemplate = (
     case 'accept':
       if (userRole === 'owner') {
         return {
-          title: '✅ Passenger Confirmed',
-          message: `${emoji} **Passenger Accepted Successfully!**\n\n👤 **Passenger:** ${passengerName || 'Traveler'}\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Agreed Price:** ${rideDetails.pricing}\n\n✅ **Status:** Confirmed! You now have a passenger for your ${rideType}.\n\n📱 **Next Steps:**\n• Exchange contact details for coordination\n• Confirm exact pickup location and time\n• Discuss payment method and timing\n• Share any special instructions`,
+          title: '✅ Request Accepted',
+          message: `You have accepted ${passengerName || 'a passenger'} for your ${rideType} (${rideDetails.route}). You can now coordinate pickup details and payment arrangements.`,
           icon: '✅',
           priority: 'high',
           category: 'update',
@@ -79,8 +79,8 @@ export const getEnhancedSystemMessageTemplate = (
         }
       } else {
         return {
-          title: '🎉 Request Accepted - You\'re In!',
-          message: `${emoji} **FANTASTIC NEWS! 🎉**\n\n✅ **Status:** Your request has been **ACCEPTED**!\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n🎊 **Congratulations!** You're now confirmed for this ${rideType}!\n\n📱 **Important Next Steps:**\n• Contact the ${ride ? 'driver' : 'traveler'} to coordinate details\n• Confirm exact pickup location and time\n• Arrange payment method\n• Be ready at the agreed time and location`,
+          title: '🎉 Request Accepted!',
+          message: `Great news! Your request for the ${rideType} (${rideDetails.route}) has been accepted! You can now coordinate pickup details and payment with the ${ride ? 'driver' : 'traveler'}.`,
           icon: '🎉',
           priority: 'high',
           category: 'update',
@@ -92,7 +92,7 @@ export const getEnhancedSystemMessageTemplate = (
       if (userRole === 'owner') {
         return {
           title: '❌ Request Declined',
-          message: `${emoji} **Request Declined**\n\n👤 **Passenger:** ${passengerName || 'Traveler'}\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n\n❌ **Status:** You have declined this passenger request.\n\n💡 **Note:** The passenger has been notified and can request again if they wish. Your ${rideType} remains available for other requests.`,
+          message: `You have declined the passenger request for your ${rideType} (${rideDetails.route}). The passenger has been notified and can request again if they wish.`,
           icon: '❌',
           priority: 'low',
           category: 'update',
@@ -101,7 +101,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '😔 Request Declined',
-          message: `${emoji} **Request Update**\n\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n😔 **Unfortunately,** your request for this ${rideType} has been declined.\n\n🌟 **Don't Give Up!**\n• You can request to join this ${rideType} again\n• The ${ride ? 'driver' : 'traveler'} might reconsider\n• Check out other available ${ride ? 'rides' : 'trips'} on your route\n• Consider adjusting your travel dates for more options`,
+          message: `Unfortunately, your request for the ${rideType} (${rideDetails.route}) has been declined. You can request to join this ${rideType} again or find other options.`,
           icon: '😔',
           priority: 'medium',
           category: 'update',

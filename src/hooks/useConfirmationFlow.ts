@@ -39,6 +39,39 @@ export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlow
 
   const acceptRequest = useCallback(async (confirmationId: string, userId: string, passengerId: string) => {
     return handleAsync(async () => {
+      // Get confirmation details first for notifications
+      const { data: confirmation, error: fetchError } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          car_rides!ride_confirmations_ride_id_fkey (
+            id,
+            from_location,
+            to_location,
+            departure_date_time,
+            price,
+            currency,
+            user_id
+          ),
+          trips!ride_confirmations_trip_id_fkey (
+            id,
+            leaving_airport,
+            destination_airport,
+            travel_date,
+            price,
+            currency,
+            user_id
+          ),
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            id,
+            full_name
+          )
+        `)
+        .eq('id', confirmationId)
+        .single()
+
+      if (fetchError) throw fetchError
+
       const { error } = await supabase
         .from('ride_confirmations')
         .update({
@@ -50,12 +83,29 @@ export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlow
 
       if (error) throw error
 
-      // Send system message
-      await notificationService.sendEnhancedSystemMessage(
+      // Send comprehensive notification to passenger
+      await notificationService.sendComprehensiveNotification(
         'accept',
         'passenger',
         userId,
-        passengerId
+        passengerId,
+        confirmation.car_rides,
+        confirmation.trips
+      )
+
+      // Send system chat message visible to both parties
+      const passengerName = confirmation.user_profiles?.full_name || 'Passenger'
+      const systemMessage = `Your ride request has been approved! You are confirmed for this ride.`
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: userId,
+          receiver_id: passengerId,
+          message_content: systemMessage,
+          message_type: 'system',
+          is_read: false
+        })
       )
 
       if (onUpdate) onUpdate()
@@ -67,6 +117,39 @@ export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlow
 
   const rejectRequest = useCallback(async (confirmationId: string, userId: string, passengerId: string) => {
     return handleAsync(async () => {
+      // Get confirmation details first for notifications
+      const { data: confirmation, error: fetchError } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          car_rides!ride_confirmations_ride_id_fkey (
+            id,
+            from_location,
+            to_location,
+            departure_date_time,
+            price,
+            currency,
+            user_id
+          ),
+          trips!ride_confirmations_trip_id_fkey (
+            id,
+            leaving_airport,
+            destination_airport,
+            travel_date,
+            price,
+            currency,
+            user_id
+          ),
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            id,
+            full_name
+          )
+        `)
+        .eq('id', confirmationId)
+        .single()
+
+      if (fetchError) throw fetchError
+
       const { error } = await supabase
         .from('ride_confirmations')
         .update({
@@ -78,12 +161,29 @@ export function useConfirmationFlow({ onUpdate, onSuccess }: UseConfirmationFlow
 
       if (error) throw error
 
-      // Send system message
-      await notificationService.sendEnhancedSystemMessage(
+      // Send comprehensive notification to passenger
+      await notificationService.sendComprehensiveNotification(
         'reject',
         'passenger',
         userId,
-        passengerId
+        passengerId,
+        confirmation.car_rides,
+        confirmation.trips
+      )
+
+      // Send system chat message visible to both parties
+      const passengerName = confirmation.user_profiles?.full_name || 'Passenger'
+      const systemMessage = `Your ride request has been declined.`
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: userId,
+          receiver_id: passengerId,
+          message_content: systemMessage,
+          message_type: 'system',
+          is_read: false
+        })
       )
 
       if (onUpdate) onUpdate()

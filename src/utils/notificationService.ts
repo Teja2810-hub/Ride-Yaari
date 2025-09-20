@@ -205,21 +205,21 @@ export class NotificationService {
     additionalContext?: string
   ): Promise<void> {
     try {
-      // Send enhanced system message
-      await this.sendEnhancedSystemMessage(
-        action, 
-        userRole, 
-        senderId, 
-        receiverId, 
-        ride, 
-        trip, 
-        additionalContext
-      )
+      // Get template for browser notification
+      const template = getSystemMessageTemplate(action, userRole, ride, trip, true)
       
-      // Send email notification (if user has email notifications enabled)
-      await this.sendEmailNotification(action, userRole, receiverId, ride, trip)
+      // Queue browser notification
+      await this.queueBrowserNotification({
+        userId: receiverId,
+        title: template.title,
+        message: template.message,
+        type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
+        priority: template.priority || 'medium',
+        rideData: ride,
+        tripData: trip
+      })
       
-      console.log(`Comprehensive notification sent for ${action} by ${userRole}`)
+      console.log(`Comprehensive notification queued for ${action} by ${userRole}`)
     } catch (error) {
       console.error('Failed to send comprehensive notification:', error)
       // Don't throw - we don't want to break the main flow if notifications fail
