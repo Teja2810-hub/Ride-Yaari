@@ -29,7 +29,7 @@ import { User } from 'lucide-react'
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
 function AppContent() {
-  const { user, loading, isGuest } = useAuth()
+  const { user, loading, isGuest, setGuestMode } = useAuth()
   const [currentView, setCurrentView] = useState<AppView>('platform-selector')
   const [showWelcomePopup, setShowWelcomePopup] = useState<boolean>(false)
   const [chatUserId, setChatUserId] = useState<string>('')
