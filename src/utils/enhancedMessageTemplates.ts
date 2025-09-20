@@ -38,7 +38,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '🚨 New Ride Request',
-          message: `New request from ${passengerName || 'a passenger'} for your ${rideDetails.route}. Tap to review.`,
+          message: `New request from ${passengerName || 'a passenger'} for your ${rideDetails.route}. Tap to review and respond.`,
           icon: '🚨',
           priority: 'high',
           category: 'confirmation',
@@ -80,7 +80,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '🎉 Request Accepted - You\'re In!',
-          message: `${emoji} **FANTASTIC NEWS! 🎉**\n\n✅ **Status:** Your request has been **ACCEPTED**!\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n🎊 **Congratulations!** You're now confirmed for this ${rideType}!\n\n📱 **Important Next Steps:**\n• Contact the ${ride ? 'driver' : 'traveler'} to coordinate details\n• Confirm exact pickup location and time\n• Arrange payment method\n• Be ready at the agreed time and location`,
+          message: `Great news! Your request for the ${rideDetails.route} has been accepted! You can now coordinate pickup details.`,
           icon: '🎉',
           priority: 'high',
           category: 'update',
@@ -101,7 +101,7 @@ export const getEnhancedSystemMessageTemplate = (
       } else {
         return {
           title: '😔 Request Declined',
-          message: `${emoji} **Request Update**\n\n${routeEmoji} **Route:** ${rideDetails.route}\n${timeEmoji} **Departure:** ${rideDetails.timing}\n${moneyEmoji} **Price:** ${rideDetails.pricing}\n\n😔 **Unfortunately,** your request for this ${rideType} has been declined.\n\n🌟 **Don't Give Up!**\n• You can request to join this ${rideType} again\n• The ${ride ? 'driver' : 'traveler'} might reconsider\n• Check out other available ${ride ? 'rides' : 'trips'} on your route\n• Consider adjusting your travel dates for more options`,
+          message: `Your request for the ${rideDetails.route} was declined. Don't worry - you can try requesting again or find other options.`,
           icon: '😔',
           priority: 'medium',
           category: 'update',
