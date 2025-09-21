@@ -478,6 +478,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
           </div>
         </div>
+      </div>
 
         {/* Ride History Modal */}
         <RideHistoryModal
@@ -491,7 +492,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           trip={selectedTrip || undefined}
           onStartChat={onStartChat}
         />
-      </div>
 
       {/* Profile Edit Modal */}
       {showProfileEdit && (
