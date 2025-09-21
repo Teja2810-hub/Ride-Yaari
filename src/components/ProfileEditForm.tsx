@@ -81,15 +81,20 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      // Delete old image if exists
-      if (profileData.profile_image_url) {
-        await deleteProfileImage(profileData.profile_image_url)
-      }
-
       const result = await uploadProfileImage(user.id, file)
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to upload image')
+      }
+
+      // Delete old image after successful upload
+      if (profileData.profile_image_url && profileData.profile_image_url !== result.imageUrl) {
+        try {
+          await deleteProfileImage(profileData.profile_image_url)
+        } catch (deleteError) {
+          console.warn('Failed to delete old image:', deleteError)
+          // Don't fail the upload if deletion fails
+        }
       }
 
       setProfileData(prev => ({ ...prev, profile_image_url: result.imageUrl || '' }))
@@ -126,7 +131,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     try {
       const updateData = {
         full_name: profileData.full_name.trim(),
-        profile_image_url: profileData.profile_image_url || undefined,
+        profile_image_url: profileData.profile_image_url || null,
         age: profileData.age ? parseInt(profileData.age) : undefined,
         gender: profileData.gender || undefined
       }
@@ -330,14 +335,9 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error('Profile image failed to load:', profileData.profile_image_url)
-                          // Clear the broken image URL from state
-                          setProfileData(prev => ({ ...prev, profile_image_url: '' }))
-                          // Show user-friendly error message
-                          setError('Profile image failed to load. Please upload a new image.')
-                        }}
-                        onLoad={() => {
-                          console.log('Profile image loaded successfully:', profileData.profile_image_url)
+                          console.warn('Profile image failed to load, showing default avatar')
+                          // Hide the broken image element
+                          e.currentTarget.style.display = 'none'
                         }}
                       />
                     ) : (

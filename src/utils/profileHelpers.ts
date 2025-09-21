@@ -150,11 +150,11 @@ export const uploadProfileImage = async (
     const fileName = `${userId}-${Date.now()}.${fileExt}`
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('profile-images')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       })
 
     if (uploadError) {
@@ -162,11 +162,15 @@ export const uploadProfileImage = async (
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data } = supabase.storage
       .from('profile-images')
       .getPublicUrl(fileName)
 
-    return { success: true, imageUrl: urlData.publicUrl }
+    if (!data?.publicUrl) {
+      throw new Error('Failed to get image URL')
+    }
+
+    return { success: true, imageUrl: data.publicUrl }
   })
 }
 
@@ -176,16 +180,17 @@ export const uploadProfileImage = async (
 export const deleteProfileImage = async (imageUrl: string): Promise<void> => {
   try {
     // Extract file path from URL
-    const urlParts = imageUrl.split('/')
-    const bucketIndex = urlParts.findIndex(part => part === 'profile-images')
+    const url = new URL(imageUrl)
+    const pathParts = url.pathname.split('/')
+    const bucketIndex = pathParts.findIndex(part => part === 'profile-images')
     
-    if (bucketIndex === -1 || bucketIndex >= urlParts.length - 1) {
+    if (bucketIndex === -1 || bucketIndex >= pathParts.length - 1) {
       console.warn('Invalid profile image URL format:', imageUrl)
       return
     }
     
     // Get just the filename (last part of the URL)
-    const fileName = urlParts[urlParts.length - 1]
+    const fileName = pathParts[pathParts.length - 1]
 
     const { error } = await supabase.storage
       .from('profile-images')
