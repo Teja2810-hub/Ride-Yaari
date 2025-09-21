@@ -152,7 +152,7 @@ export const uploadProfileImage = async (
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('profile-images')
-      .upload(`${userId}/${fileName}`, file, {
+      .upload(fileName, file, {
         cacheControl: '3600',
         upsert: false
       })
@@ -164,7 +164,7 @@ export const uploadProfileImage = async (
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('profile-images')
-      .getPublicUrl(`${userId}/${fileName}`)
+      .getPublicUrl(fileName)
 
     return { success: true, imageUrl: urlData.publicUrl }
   })
@@ -184,12 +184,12 @@ export const deleteProfileImage = async (imageUrl: string): Promise<void> => {
       return
     }
     
-    // Get the file path after the bucket name
-    const filePath = urlParts.slice(bucketIndex + 1).join('/')
+    // Get just the filename (last part of the URL)
+    const fileName = urlParts[urlParts.length - 1]
 
     const { error } = await supabase.storage
       .from('profile-images')
-      .remove([filePath])
+      .remove([fileName])
 
     if (error) {
       console.warn('Failed to delete old profile image:', error)

@@ -363,6 +363,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   <span className="text-gray-600">{trips.length} trip{trips.length !== 1 ? 's' : ''}</span>
                 </div>
 
+                {/* Separate sections for trips offered vs trips taken */}
+                <div className="space-y-8">
+                  {/* Trips You're Offering */}
+                  <div>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Plane size={20} className="text-blue-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">Trips You're Offering</h3>
+                      <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
+                        {trips.length}
+                      </span>
+                    </div>
+
                 {trips.length === 0 ? (
                   <div className="text-center py-12">
                     <Plane size={48} className="text-gray-400 mx-auto mb-4" />
@@ -433,6 +447,24 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     ))}
                   </div>
                 )}
+                  </div>
+
+                  {/* Trips You've Joined */}
+                  <div>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <User size={20} className="text-purple-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">Trips You've Joined</h3>
+                    </div>
+                    
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <User size={32} className="text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">This section will show airport trips you've joined as a passenger.</p>
+                      <p className="text-sm text-gray-500 mt-2">Feature coming soon!</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -442,6 +474,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   <h2 className="text-2xl font-bold text-gray-900">Your Car Rides</h2>
                   <span className="text-gray-600">{rides.length} ride{rides.length !== 1 ? 's' : ''}</span>
                 </div>
+
+                {/* Separate sections for rides offered vs rides taken */}
+                <div className="space-y-8">
+                  {/* Rides You're Offering */}
+                  <div>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Car size={20} className="text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">Rides You're Offering</h3>
+                      <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
+                        {rides.length}
+                      </span>
+                    </div>
 
                 {rides.length === 0 ? (
                   <div className="text-center py-12">
@@ -532,6 +578,24 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     ))}
                   </div>
                 )}
+                  </div>
+
+                  {/* Rides You've Joined */}
+                  <div>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <User size={20} className="text-orange-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">Rides You've Joined</h3>
+                    </div>
+                    
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <User size={32} className="text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">This section will show car rides you've joined as a passenger.</p>
+                      <p className="text-sm text-gray-500 mt-2">Feature coming soon!</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

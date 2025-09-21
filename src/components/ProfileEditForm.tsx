@@ -329,6 +329,13 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                         src={profileData.profile_image_url}
                         alt="Profile"
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('Profile image failed to load:', profileData.profile_image_url)
+                          e.currentTarget.style.display = 'none'
+                        }}
+                        onLoad={() => {
+                          console.log('Profile image loaded successfully:', profileData.profile_image_url)
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-blue-100">

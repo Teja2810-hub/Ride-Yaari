@@ -64,6 +64,9 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
                     />
                   </div>
                 )}
