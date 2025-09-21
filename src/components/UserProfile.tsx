@@ -26,7 +26,7 @@ interface UserProfileProps {
   initialTab?: string
 }
 
-type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'history' | 'expiry' | 'test' | 'notifications'
+type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications'
 type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
@@ -237,12 +237,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
   const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <User size={16} /> },
-    { id: 'edit', label: 'Edit Profile', icon: <UserCog size={16} /> },
     { id: 'trips', label: 'Airport Trips', icon: <Plane size={16} /> },
     { id: 'rides', label: 'Car Rides', icon: <Car size={16} /> },
     { id: 'confirmations', label: 'Confirmations', icon: <MessageCircle size={16} /> },
-    { id: 'history', label: 'History', icon: <History size={16} /> },
-    { id: 'expiry', label: 'Expiry Management', icon: <Calendar size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'test', label: 'System Test', icon: <Settings size={16} /> }
   ]
@@ -290,25 +287,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div>
-                <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
-                <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
-                {userProfile?.age && (
-                  <p className="text-blue-100">Age: {userProfile.age}</p>
-                )}
-                {userProfile?.gender && (
-                  <p className="text-blue-100 capitalize">Gender: {userProfile.gender}</p>
-                )}
-                  </div>
-                  <button
-                    onClick={() => setShowProfileEdit(true)}
-                    className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                  >
-                    <UserCog size={20} />
-                    <span>Edit Profile</span>
-                  </button>
-                </div>
-              </div>
+              <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
+              <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -342,24 +322,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
             {activeTab === 'overview' && (
               <div className="space-y-8">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-blue-900 mb-2">Profile Information</h3>
-                      <p className="text-blue-800 text-sm">
-                        Keep your profile up to date to help other travelers connect with you safely.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowProfileEdit(true)}
-                      className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      <UserCog size={16} />
-                      <span>Edit Profile</span>
-                    </button>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-blue-50 rounded-lg p-6 text-center">
                     <Plane size={32} className="text-blue-600 mx-auto mb-4" />
@@ -387,6 +349,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <button
+                      onClick={() => setShowProfileEdit(true)}
+                      className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      <UserCog size={16} />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
                       onClick={() => setActiveTab('trips')}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
@@ -401,18 +370,18 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <span>View Rides</span>
                     </button>
                     <button
+                      onClick={() => setActiveTab('confirmations')}
+                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      <MessageCircle size={16} />
+                      <span>Confirmations</span>
+                    </button>
+                    <button
                       onClick={() => setActiveTab('notifications')}
                       className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                     >
                       <Bell size={16} />
                       <span>Notifications</span>
-                    </button>
-                    <button
-                      onClick={() => setShowProfileEdit(true)}
-                      className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                    >
-                      <UserCog size={16} />
-                      <span>Edit Profile</span>
                     </button>
                     <button
                       onClick={() => setActiveTab('reviews')}
@@ -424,33 +393,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </div>
                 </div>
 
-                {/* Management Tools */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Management Tools</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <button
-                      onClick={() => setActiveTab('confirmations')}
-                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                    >
-                      <MessageCircle size={16} />
-                      <span>Confirmations</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('history')}
-                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-                    >
-                      <History size={16} />
-                      <span>History & Analytics</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('expiry')}
-                      className="flex items-center space-x-2 bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
-                    >
-                      <AlertTriangle size={16} />
-                      <span>Expiry Management</span>
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -510,30 +452,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
-            {activeTab === 'history' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirmation History</h2>
-                  <p className="text-gray-600">
-                    View detailed analytics and history of all your ride confirmations.
-                  </p>
-                </div>
-                <ConfirmationHistoryView onStartChat={onStartChat} />
-              </div>
-            )}
-
-            {activeTab === 'expiry' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Expiry Management</h2>
-                  <p className="text-gray-600">
-                    Monitor and manage confirmation expiry times to ensure timely responses.
-                  </p>
-                </div>
-                <ExpiryManagementPanel onRefresh={fetchUserData} />
-              </div>
-            )}
-
             {activeTab === 'notifications' && (
               <div>
                 <div className="mb-6">
@@ -558,24 +476,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
-            {activeTab === 'reviews' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Review</h2>
-                  <p className="text-gray-600">
-                    Share your experience with RideYaari to help other travelers and improve our platform.
-                  </p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                  <ReviewForm 
-                    onReviewSubmitted={() => {
-                      // Optionally switch back to overview after successful submission
-                      setTimeout(() => setActiveTab('overview'), 2000)
-                    }} 
-                  />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
