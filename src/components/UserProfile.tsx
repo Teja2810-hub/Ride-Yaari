@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog, Star } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
@@ -11,6 +11,7 @@ import ExpiryManagementPanel from './ExpiryManagementPanel'
 import TestConfirmationFlow from './TestConfirmationFlow'
 import NotificationSettings from './NotificationSettings'
 import ProfileEditForm from './ProfileEditForm'
+import ReviewForm from './ReviewForm'
 import JoinedTripsView from './JoinedTripsView'
 import JoinedRidesView from './JoinedRidesView'
 import TripCategorySelector from './TripCategorySelector'
@@ -25,13 +26,13 @@ interface UserProfileProps {
   initialTab?: string
 }
 
-type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'history' | 'expiry' | 'test' | 'notifications'
+type ProfileSection = 'overview' | 'edit-profile' | 'trips' | 'rides' | 'confirmations' | 'history' | 'expiry' | 'notifications' | 'test' | 'submit-review'
 type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab }: UserProfileProps) {
   const { user, userProfile } = useAuth()
-  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab === 'confirmations' ? 'confirmations' : 'overview')
+  const [activeSection, setActiveSection] = useState<ProfileSection>('overview')
   const [tripView, setTripView] = useState<TripView>('selector')
   const [rideView, setRideView] = useState<RideView>('selector')
   const [trips, setTrips] = useState<Trip[]>([])
@@ -52,20 +53,21 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }, [user])
 
   useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab === 'confirmations' ? 'confirmations' : 'overview')
+    if (initialTab === 'confirmations') {
+      setActiveSection('confirmations')
     }
   }, [initialTab])
 
   // Reset views when switching tabs
   useEffect(() => {
-    if (activeTab !== 'trips') {
+    if (activeSection !== 'trips') {
       setTripView('selector')
     }
-    if (activeTab !== 'rides') {
+    if (activeSection !== 'rides') {
       setRideView('selector')
     }
-  }, [activeTab])
+  }, [activeSection])
+
   const fetchUserData = async () => {
     if (!user) return
 
@@ -234,18 +236,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setShowRideHistory(true)
   }
 
-  const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview', label: 'Overview', icon: <User size={16} /> },
-    { id: 'edit', label: 'Edit Profile', icon: <UserCog size={16} /> },
-    { id: 'trips', label: 'Airport Trips', icon: <Plane size={16} /> },
-    { id: 'rides', label: 'Car Rides', icon: <Car size={16} /> },
-    { id: 'confirmations', label: 'Confirmations', icon: <MessageCircle size={16} /> },
-    { id: 'history', label: 'History', icon: <History size={16} /> },
-    { id: 'expiry', label: 'Expiry Management', icon: <Calendar size={16} /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
-    { id: 'test', label: 'System Test', icon: <Settings size={16} /> }
-  ]
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -311,26 +301,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="flex overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-4 font-medium text-sm whitespace-nowrap transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-
           {/* Tab Content */}
           <div className="p-8">
             {error && (
@@ -339,7 +309,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
-            {activeTab === 'overview' && (
+            {activeSection === 'overview' && (
               <div className="space-y-8">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                   <div className="flex items-center justify-between">
@@ -359,21 +329,21 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="bg-blue-50 rounded-lg p-6 text-center">
                     <Plane size={32} className="text-blue-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-blue-600">{trips.length}</h3>
                     <p className="text-blue-800">Airport Trips</p>
                   </div>
-                  <div className="bg-indigo-50 rounded-lg p-6 text-center">
-                    <User size={32} className="text-indigo-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-indigo-600">{joinedTrips.length}</h3>
-                    <p className="text-indigo-800">Trips Joined</p>
-                  </div>
                   <div className="bg-green-50 rounded-lg p-6 text-center">
                     <Car size={32} className="text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-green-600">{rides.length}</h3>
                     <p className="text-green-800">Rides Offered</p>
+                  </div>
+                  <div className="bg-indigo-50 rounded-lg p-6 text-center">
+                    <User size={32} className="text-indigo-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-indigo-600">{joinedTrips.length}</h3>
+                    <p className="text-indigo-800">Trips Joined</p>
                   </div>
                   <div className="bg-emerald-50 rounded-lg p-6 text-center">
                     <User size={32} className="text-emerald-600 mx-auto mb-4" />
@@ -384,38 +354,69 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <button
-                      onClick={() => setActiveTab('trips')}
+                      onClick={() => setActiveSection('trips')}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
                       <Plane size={16} />
                       <span>View Trips</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab('rides')}
+                      onClick={() => setActiveSection('rides')}
                       className="flex items-center space-x-2 bg-green-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                     >
                       <Car size={16} />
                       <span>View Rides</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab('confirmations')}
+                      onClick={() => setActiveSection('confirmations')}
                       className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                     >
                       <MessageCircle size={16} />
                       <span>Confirmations</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab('notifications')}
+                      onClick={() => setActiveSection('notifications')}
                       className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                     >
                       <Bell size={16} />
                       <span>Notifications</span>
                     </button>
                     <button
+                      onClick={() => setActiveSection('submit-review')}
+                      className="flex items-center space-x-2 bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      <Star size={16} />
+                      <span>Submit Review</span>
+                    </button>
+                  </div>
+                  
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button
+                      onClick={() => setActiveSection('history')}
+                      className="flex items-center space-x-2 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      <History size={16} />
+                      <span>View History</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSection('expiry')}
+                      className="flex items-center space-x-2 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      <span>Expiry Management</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSection('test')}
+                      className="flex items-center space-x-2 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings size={16} />
+                      <span>System Test</span>
+                    </button>
+                    <button
                       onClick={() => setShowProfileEdit(true)}
-                      className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                      className="flex items-center space-x-2 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                     >
                       <UserCog size={16} />
                       <span>Edit Profile</span>
@@ -425,7 +426,189 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
-            {activeTab === 'edit' && (
+            {activeSection === 'trips' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Airport Trips</h2>
+                  <p className="text-gray-600">
+                    Manage your airport trips and view trips you've joined as a passenger.
+                  </p>
+                </div>
+                <TripCategorySelector
+                  offeredTrips={trips}
+                  joinedTrips={joinedTrips}
+                  onStartChat={onStartChat}
+                  onEditTrip={onEditTrip}
+                  onDeleteTrip={handleDeleteTrip}
+                  onViewTripHistory={handleViewTripHistory}
+                  onRefresh={fetchUserData}
+                />
+              </div>
+            )}
+
+            {activeSection === 'rides' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Car Rides</h2>
+                  <p className="text-gray-600">
+                    Manage your car rides and view rides you've joined as a passenger.
+                  </p>
+                </div>
+                <RideCategorySelector
+                  offeredRides={rides}
+                  joinedRides={joinedRides}
+                  onStartChat={onStartChat}
+                  onEditRide={onEditRide}
+                  onDeleteRide={handleDeleteRide}
+                  onViewRideHistory={handleViewRideHistory}
+                  onRefresh={fetchUserData}
+                />
+              </div>
+            )}
+
+            {activeSection === 'confirmations' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-purple-600 hover:text-purple-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Ride Confirmations</h2>
+                  <p className="text-gray-600">
+                    Manage your ride requests and confirmations. View pending requests, accepted rides, and handle cancellations.
+                  </p>
+                </div>
+                <UserConfirmationsContent onStartChat={onStartChat} />
+              </div>
+            )}
+
+            {activeSection === 'history' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirmation History</h2>
+                  <p className="text-gray-600">
+                    View detailed analytics and history of all your ride confirmations.
+                  </p>
+                </div>
+                <ConfirmationHistoryView onStartChat={onStartChat} />
+              </div>
+            )}
+
+            {activeSection === 'expiry' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Expiry Management</h2>
+                  <p className="text-gray-600">
+                    Monitor and manage confirmation expiry times to ensure timely responses.
+                  </p>
+                </div>
+                <ExpiryManagementPanel onRefresh={fetchUserData} />
+              </div>
+            )}
+
+            {activeSection === 'notifications' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Notification Settings</h2>
+                  <p className="text-gray-600">
+                    Customize how you receive notifications for ride requests, messages, and updates.
+                  </p>
+                </div>
+                <NotificationSettings />
+              </div>
+            )}
+
+            {activeSection === 'test' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
+                  <p className="text-gray-600">
+                    Test the confirmation flow and system functionality to ensure everything is working correctly.
+                  </p>
+                </div>
+                <TestConfirmationFlow />
+              </div>
+            )}
+
+            {activeSection === 'submit-review' && (
+              <div>
+                <div className="mb-6">
+                  <button
+                    onClick={() => setActiveSection('overview')}
+                    className="flex items-center space-x-2 text-yellow-600 hover:text-yellow-700 font-medium transition-colors mb-4"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>Back to Overview</span>
+                  </button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Review</h2>
+                  <p className="text-gray-600">
+                    Share your experience with RideYaari to help other travelers and improve our platform.
+                  </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <ReviewForm onReviewSubmitted={() => {
+                    // Show success message and optionally redirect back to overview
+                    setTimeout(() => {
+                      setActiveSection('overview')
+                    }, 3000)
+                  }} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Legacy sections for backward compatibility */}
+        {activeSection !== 'overview' && activeSection !== 'trips' && activeSection !== 'rides' && 
+         activeSection !== 'confirmations' && activeSection !== 'history' && activeSection !== 'expiry' && 
+         activeSection !== 'notifications' && activeSection !== 'test' && activeSection !== 'submit-review' && (
+          <div className="p-8">
+            {activeSection === 'edit-profile' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Edit Profile</h2>
@@ -435,17 +618,25 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <ProfileEditForm 
-                    onClose={() => setActiveTab('overview')} 
+                    onClose={() => setActiveSection('overview')} 
                     onSuccess={() => {
-                      setActiveTab('overview')
+                      setActiveSection('overview')
                       fetchUserData()
                     }} 
                   />
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </div>
 
-            {activeTab === 'trips' && (
+      {/* Remove all the old tab content sections since they're now handled above */}
+      {false && (
+        <div>
+          {/* This section is now unused but kept for reference */}
+          <div className="space-y-8">
+            {activeSection === 'trips' && (
               <TripCategorySelector
                 offeredTrips={trips}
                 joinedTrips={joinedTrips}
@@ -457,7 +648,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               />
             )}
 
-            {activeTab === 'rides' && (
+            {activeSection === 'rides' && (
               <RideCategorySelector
                 offeredRides={rides}
                 joinedRides={joinedRides}
@@ -469,67 +660,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               />
             )}
 
-            {activeTab === 'confirmations' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Ride Confirmations</h2>
-                  <p className="text-gray-600">
-                    Manage your ride requests and confirmations. View pending requests, accepted rides, and handle cancellations.
-                  </p>
-                </div>
-                <UserConfirmationsContent onStartChat={onStartChat} />
-              </div>
-            )}
-
-            {activeTab === 'history' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirmation History</h2>
-                  <p className="text-gray-600">
-                    View detailed analytics and history of all your ride confirmations.
-                  </p>
-                </div>
-                <ConfirmationHistoryView onStartChat={onStartChat} />
-              </div>
-            )}
-
-            {activeTab === 'expiry' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Expiry Management</h2>
-                  <p className="text-gray-600">
-                    Monitor and manage confirmation expiry times to ensure timely responses.
-                  </p>
-                </div>
-                <ExpiryManagementPanel onRefresh={fetchUserData} />
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Notification Settings</h2>
-                  <p className="text-gray-600">
-                    Customize how you receive notifications for ride requests, messages, and updates.
-                  </p>
-                </div>
-                <NotificationSettings />
-              </div>
-            )}
-
-            {activeTab === 'test' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
-                  <p className="text-gray-600">
-                    Test the confirmation flow and system functionality to ensure everything is working correctly.
-                  </p>
-                </div>
-                <TestConfirmationFlow />
-              </div>
-            )}
           </div>
-        </div>
+        )}
+      </div>
 
         {/* Ride History Modal */}
         <RideHistoryModal
