@@ -106,9 +106,9 @@ export const isUserBlocked = async (
       .select('id')
       .eq('blocker_id', blockerId)
       .eq('blocked_id', blockedId)
-      .single()
+      .limit(1)
 
-    return !error && !!data
+    return !error && data && data.length > 0
   } catch (error) {
     return false
   }
