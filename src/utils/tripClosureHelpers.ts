@@ -116,6 +116,8 @@ export const reopenTrip = async (
   userId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('reopenTrip called with:', { tripId, userId })
+    
     // Verify ownership and current status
     const { data: trip, error: fetchError } = await supabase
       .from('trips')
@@ -123,6 +125,7 @@ export const reopenTrip = async (
       .eq('id', tripId)
       .single()
 
+    console.log('Trip fetch result:', { trip, fetchError })
     if (fetchError || !trip) {
       throw new Error('Trip not found')
     }
@@ -140,6 +143,7 @@ export const reopenTrip = async (
       throw new Error('Cannot reopen past trips')
     }
 
+    console.log('Updating trip to reopen...')
     // Reopen the trip
     const { error } = await supabase
       .from('trips')
@@ -151,6 +155,7 @@ export const reopenTrip = async (
       .eq('id', tripId)
       .eq('user_id', userId) // Additional security check
 
+    console.log('Update result:', { error })
     if (error) {
       throw new Error(error.message)
     }
@@ -168,6 +173,8 @@ export const reopenRide = async (
   userId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('reopenRide called with:', { rideId, userId })
+    
     // Verify ownership and current status
     const { data: ride, error: fetchError } = await supabase
       .from('car_rides')
@@ -175,6 +182,7 @@ export const reopenRide = async (
       .eq('id', rideId)
       .single()
 
+    console.log('Ride fetch result:', { ride, fetchError })
     if (fetchError || !ride) {
       throw new Error('Ride not found')
     }
@@ -192,6 +200,7 @@ export const reopenRide = async (
       throw new Error('Cannot reopen past rides')
     }
 
+    console.log('Updating ride to reopen...')
     // Reopen the ride
     const { error } = await supabase
       .from('car_rides')
@@ -203,6 +212,7 @@ export const reopenRide = async (
       .eq('id', rideId)
       .eq('user_id', userId) // Additional security check
 
+    console.log('Update result:', { error })
     if (error) {
       throw new Error(error.message)
     }

@@ -101,6 +101,7 @@ export const isUserBlocked = async (
   blockedId: string
 ): Promise<boolean> => {
   try {
+    console.log('Checking if user is blocked:', { blockerId, blockedId })
     const { data, error } = await supabase
       .from('user_blocks')
       .select('id')
@@ -108,8 +109,11 @@ export const isUserBlocked = async (
       .eq('blocked_id', blockedId)
       .limit(1)
 
-    return !error && data && data.length > 0
+    const isBlocked = !error && data && data.length > 0
+    console.log('Blocking check result:', { isBlocked, error })
+    return isBlocked
   } catch (error) {
+    console.error('Error checking if user is blocked:', error)
     return false
   }
 }
@@ -169,6 +173,7 @@ export const isChatDeleted = async (
   otherUserId: string
 ): Promise<boolean> => {
   try {
+    console.log('Checking if chat is deleted:', { userId, otherUserId })
     const { data, error } = await supabase
       .from('chat_deletions')
       .select('id')
@@ -176,8 +181,11 @@ export const isChatDeleted = async (
       .eq('other_user_id', otherUserId)
       .limit(1)
 
-    return !error && data && data.length > 0
+    const isDeleted = !error && data && data.length > 0
+    console.log('Chat deletion check result:', { isDeleted, error })
+    return isDeleted
   } catch (error) {
+    console.error('Error checking if chat is deleted:', error)
     return false
   }
 }

@@ -105,15 +105,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
 
     try {
+      console.log('Checking blocking status between:', user.id, 'and', otherUserId)
       const [blocked, deleted] = await Promise.all([
         isUserBlocked(user.id, otherUserId),
         isChatDeleted(user.id, otherUserId)
       ])
       
+      console.log('Blocking status result:', { blocked, deleted })
       setIsBlocked(blocked)
       setChatDeleted(deleted)
     } catch (error) {
       console.error('Error checking blocking status:', error)
+      // Don't block chat if there's an error checking blocking status
+      setIsBlocked(false)
+      setChatDeleted(false)
     }
   }
 
@@ -218,6 +223,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const fetchMessages = async () => {
     if (!user) return
 
+    console.log('Fetching messages between:', user.id, 'and', otherUserId)
+
     await handleAsync(async () => {
       const { data, error } = await supabase
         .from('chat_messages')
@@ -235,6 +242,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
         .order('created_at')
 
+      console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
         setMessages(data)
       }
@@ -250,11 +258,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setSending(true)
 
     await handleAsync(async () => {
-      // Double-check blocking status before sending
-      const blocked = await isUserBlocked(user.id, otherUserId)
-      if (blocked) {
-        throw new Error('Cannot send message to blocked user')
-      }
+      console.log('Sending message from:', user.id, 'to:', otherUserId)
 
       const { error } = await supabase
         .from('chat_messages')
@@ -265,6 +269,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           is_read: false,
         })
 
+      console.log('Message insert result:', { error })
       if (error) throw error
 
       setNewMessage('')
@@ -423,13 +428,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowCancelButton = () => {
+    // Only show if we have a confirmation, it's accepted, user is involved, and we have preselected ride/trip
     return currentConfirmation && 
            currentConfirmation.status === 'accepted' && 
-           (isCurrentUserOwnerOfConfirmation() || isCurrentUserPassengerOfConfirmation())
+           (isCurrentUserOwnerOfConfirmation() || isCurrentUserPassengerOfConfirmation()) &&
+           (preSelectedRide || preSelectedTrip)
   }
 
   const shouldShowMainConfirmationButton = () => {
-    if (!currentConfirmation) return !isCurrentUserOwnerOfPreselected() // Only show request button if not the owner
+    if (!currentConfirmation) {
+      // Only show request button if not the owner and we have a preselected ride/trip
+      return !isCurrentUserOwnerOfPreselected() && (preSelectedRide || preSelectedTrip)
+    }
     
     const status = currentConfirmation.status
     if (status === 'rejected') return true // Show "Request Again" button
@@ -440,9 +450,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowRequestAgainButton = () => {
+    // Only show if we have a confirmation, it's rejected, user is passenger, and we have preselected ride/trip
     return currentConfirmation && 
            currentConfirmation.status === 'rejected' && 
-           isCurrentUserPassengerOfConfirmation()
+           isCurrentUserPassengerOfConfirmation() &&
+           (preSelectedRide || preSelectedTrip)
   }
 
   const getDisclaimerContent = (type: string) => {
@@ -698,7 +710,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           {/* Passenger Pending Request Message */}
           {currentConfirmation && 
            currentConfirmation.status === 'pending' && 
-           isCurrentUserPassengerOfConfirmation() && (
+           isCurrentUserPassengerOfConfirmation() && 
+           (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -717,7 +730,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           {/* Owner Pending Request Actions */}
           {currentConfirmation && 
            currentConfirmation.status === 'pending' && 
-           isCurrentUserOwnerOfConfirmation() && (
+           isCurrentUserOwnerOfConfirmation() && 
+           (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -756,7 +770,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           {/* Passenger Accepted Message */}
           {currentConfirmation && 
            currentConfirmation.status === 'accepted' && 
-           isCurrentUserPassengerOfConfirmation() && (
+           isCurrentUserPassengerOfConfirmation() && 
+           (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -775,7 +790,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           {/* Passenger Rejected Message */}
           {currentConfirmation && 
            currentConfirmation.status === 'rejected' && 
-           isCurrentUserPassengerOfConfirmation() && (
+           isCurrentUserPassengerOfConfirmation() && 
+           (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -811,7 +827,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           )}
 
           {/* Confirmation Button */}
-          {(preSelectedRide || preSelectedTrip) && (
+          {(preSelectedRide || preSelectedTrip) && !isBlocked && (
             <div className="mb-3 flex justify-center">
               <div className="flex flex-col items-center space-y-2">
                 {/* Main confirmation button */}
@@ -842,19 +858,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   </button>
                 )}
 
-                {/* Request Again button for rejected rides */}
-                {currentConfirmation && 
-                 currentConfirmation.status === 'rejected' && 
-                 shouldShowRequestAgainButton() && (
-                  <button
-                    onClick={handleRequestAgain}
-                    disabled={confirmationLoading}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                  >
-                    <Check size={16} />
-                    <span>Request Ride Again</span>
-                  </button>
-                )}
               </div>
             </div>
           )}
