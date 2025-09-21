@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Search, MessageCircle, User, Car, DollarSign, Clock, AlertTriangle, HelpCircle, Calendar, MapPin, Navigation } from 'lucide-react'
+import { ArrowLeft, Search, MessageCircle, User, Car, DollarSign, Clock, AlertTriangle, HelpCircle, Calendar, MapPin, Navigation, Filter, SortAsc, SortDesc } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide } from '../types'
@@ -23,6 +23,7 @@ interface FindRideProps {
 
 type SearchType = 'from-to' | 'from-only' | 'to-only'
 type LocationSearchType = 'manual' | 'nearby'
+type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
@@ -48,6 +49,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [radiusUnit, setRadiusUnit] = useState('miles')
   const [useCustomRadius, setUseCustomRadius] = useState(false)
   const [customRadius, setCustomRadius] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
@@ -71,6 +74,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
             full_name
           )
         `)
+        .eq('is_closed', false)
         .gte('departure_date_time', new Date().toISOString())
         .order('departure_date_time')
         .limit(20) // Limit results for better performance
@@ -224,10 +228,35 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       // Always filter for future rides
       const now = new Date().toISOString()
       console.log('Filtering for rides after:', now)
-      query = query.gte('departure_date_time', now)
+      query = query
+        .eq('is_closed', false)
+        .gte('departure_date_time', now)
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'date-asc':
+          query = query.order('departure_date_time', { ascending: true })
+          break
+        case 'date-desc':
+          query = query.order('departure_date_time', { ascending: false })
+          break
+        case 'price-asc':
+          query = query.order('price', { ascending: true })
+          break
+        case 'price-desc':
+          query = query.order('price', { ascending: false })
+          break
+        case 'created-asc':
+          query = query.order('created_at', { ascending: true })
+          break
+        case 'created-desc':
+          query = query.order('created_at', { ascending: false })
+          break
+        default:
+          query = query.order('departure_date_time', { ascending: true })
+      }
 
       const { data, error } = await query
-        .order('departure_date_time')
 
       if (error) throw error
 
@@ -882,6 +911,54 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 <p className="text-sm text-gray-500 mt-1">Search for all rides in the selected month</p>
               </div>
             )}
+
+            {/* Sorting and Filters */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Sort & Filter Results
+                </label>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  <Filter size={14} />
+                  <span>{showFilters ? 'Hide' : 'Show'} Options</span>
+                </button>
+              </div>
+              
+              {showFilters && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortOption)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                      >
+                        <option value="date-asc">Departure Date (Earliest First)</option>
+                        <option value="date-desc">Departure Date (Latest First)</option>
+                        <option value="price-asc">Price (Low to High)</option>
+                        <option value="price-desc">Price (High to Low)</option>
+                        <option value="created-desc">Newly Posted (Latest First)</option>
+                        <option value="created-asc">Newly Posted (Oldest First)</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-sm text-blue-700">
+                        <p className="font-medium mb-1">Filter Info:</p>
+                        <ul className="text-xs space-y-1">
+                          <li>• Only shows open rides</li>
+                          <li>• Future departures only</li>
+                          <li>• Excludes your own rides</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"

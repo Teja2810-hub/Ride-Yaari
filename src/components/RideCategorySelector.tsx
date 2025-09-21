@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation } from 'lucide-react'
+import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation, Lock } from 'lucide-react'
 import { CarRide, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
+import TripClosureControls from './TripClosureControls'
 
 interface RideCategorySelectorProps {
   offeredRides: CarRide[]
@@ -296,6 +297,10 @@ export default function RideCategorySelector({
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
+                            <TripClosureControls
+                              ride={ride}
+                              onUpdate={onRefresh}
+                            />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -308,7 +313,7 @@ export default function RideCategorySelector({
                             </button>
                           </div>
                           <div className="flex items-center space-x-3">
-                            {!isExpiredSoon ? (
+                            {!isExpiredSoon && !ride.is_closed ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -322,7 +327,7 @@ export default function RideCategorySelector({
                             ) : (
                               <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
                                 <Edit size={16} />
-                                <span>Cannot Edit</span>
+                                <span>{ride.is_closed ? 'Closed' : 'Cannot Edit'}</span>
                               </div>
                             )}
                             <button
@@ -339,14 +344,38 @@ export default function RideCategorySelector({
                         </div>
 
                         {/* Passenger Management */}
-                        <div className="border-t border-gray-200 pt-6">
-                          <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
-                          <PassengerManagement
-                            ride={ride}
-                            onStartChat={onStartChat}
-                            onUpdate={onRefresh}
-                          />
-                        </div>
+                        {!ride.is_closed && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                            <PassengerManagement
+                              ride={ride}
+                              onStartChat={onStartChat}
+                              onUpdate={onRefresh}
+                            />
+                          </div>
+                        )}
+                        
+                        {ride.is_closed && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <Lock size={20} className="text-red-600" />
+                                <div>
+                                  <h4 className="font-semibold text-red-900">Ride Closed</h4>
+                                  <p className="text-sm text-red-800">
+                                    This ride is closed and not accepting new passengers.
+                                    {ride.closed_reason && ` Reason: ${ride.closed_reason}`}
+                                  </p>
+                                  {ride.closed_at && (
+                                    <p className="text-xs text-red-700 mt-1">
+                                      Closed on {formatDateTime(ride.closed_at)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

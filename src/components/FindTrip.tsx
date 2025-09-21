@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, AlertTriangle, Clock, DollarSign } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, AlertTriangle, Clock, DollarSign, Filter, SortAsc, SortDesc } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Trip } from '../types'
@@ -12,6 +12,8 @@ interface FindTripProps {
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
   isGuest?: boolean
 }
+
+type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
@@ -27,6 +29,8 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
+  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
@@ -54,6 +58,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
             full_name
           )
         `)
+        .eq('is_closed', false)
         .gte('travel_date', now)
         .order('travel_date')
         .limit(20) // Limit results for better performance
@@ -109,9 +114,35 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       }
 
       // Always filter for future trips
-      query = query.gte('travel_date', now)
+      query = query
+        .eq('is_closed', false)
+        .gte('travel_date', now)
 
-      const { data, error } = await query.order('travel_date')
+      // Apply sorting
+      switch (sortBy) {
+        case 'date-asc':
+          query = query.order('travel_date', { ascending: true })
+          break
+        case 'date-desc':
+          query = query.order('travel_date', { ascending: false })
+          break
+        case 'price-asc':
+          query = query.order('price', { ascending: true, nullsLast: true })
+          break
+        case 'price-desc':
+          query = query.order('price', { ascending: false, nullsFirst: true })
+          break
+        case 'created-asc':
+          query = query.order('created_at', { ascending: true })
+          break
+        case 'created-desc':
+          query = query.order('created_at', { ascending: false })
+          break
+        default:
+          query = query.order('travel_date', { ascending: true })
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
 
@@ -260,6 +291,54 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                 <p className="text-sm text-gray-500 mt-1">Search for all trips in the selected month</p>
               </div>
             )}
+
+            {/* Sorting and Filters */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Sort & Filter Results
+                </label>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  <Filter size={14} />
+                  <span>{showFilters ? 'Hide' : 'Show'} Options</span>
+                </button>
+              </div>
+              
+              {showFilters && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortOption)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                      >
+                        <option value="date-asc">Travel Date (Earliest First)</option>
+                        <option value="date-desc">Travel Date (Latest First)</option>
+                        <option value="price-asc">Price (Low to High)</option>
+                        <option value="price-desc">Price (High to Low)</option>
+                        <option value="created-desc">Newly Posted (Latest First)</option>
+                        <option value="created-asc">Newly Posted (Oldest First)</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-sm text-blue-700">
+                        <p className="font-medium mb-1">Filter Info:</p>
+                        <ul className="text-xs space-y-1">
+                          <li>• Only shows open trips</li>
+                          <li>• Future travel dates only</li>
+                          <li>• Excludes your own trips</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"

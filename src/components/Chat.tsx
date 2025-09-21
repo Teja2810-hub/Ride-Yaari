@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle, Check, X, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock, AlertTriangle, MoreVertical, Shield, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
 import EnhancedSystemMessage from './EnhancedSystemMessage'
+import ChatBlockingControls from './ChatBlockingControls'
 import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { supabase } from '../utils/supabase'
 
 interface ChatProps {
@@ -28,6 +30,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [currentConfirmation, setCurrentConfirmation] = useState<RideConfirmation | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { error: chatError, handleAsync, clearError } = useErrorHandler()
+  const [showChatOptions, setShowChatOptions] = useState(false)
+  const [isBlocked, setIsBlocked] = useState(false)
+  const [chatDeleted, setChatDeleted] = useState(false)
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -59,6 +64,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (user) {
       fetchMessages()
       fetchConfirmationStatus()
+      checkBlockingStatus()
       
       // Subscribe to new messages
       const subscription = supabase
@@ -94,6 +100,32 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
+
+  const checkBlockingStatus = async () => {
+    if (!user) return
+
+    try {
+      const [blocked, deleted] = await Promise.all([
+        isUserBlocked(user.id, otherUserId),
+        isChatDeleted(user.id, otherUserId)
+      ])
+      
+      setIsBlocked(blocked)
+      setChatDeleted(deleted)
+    } catch (error) {
+      console.error('Error checking blocking status:', error)
+    }
+  }
+
+  const handleChatBlocked = () => {
+    setIsBlocked(true)
+    setShowChatOptions(false)
+  }
+
+  const handleChatDeleted = () => {
+    setChatDeleted(true)
+    setShowChatOptions(false)
+  }
 
   // Helper functions
   const isCurrentUserOwnerOfPreselected = (): boolean => {
@@ -541,9 +573,52 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <p className="text-xs sm:text-sm text-gray-600">RideYaari User</p>
               </div>
             </div>
+            
+            {/* Chat Options */}
+            <div className="relative">
+              <button
+                onClick={() => setShowChatOptions(!showChatOptions)}
+                className="flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <MoreVertical size={16} />
+              </button>
+              
+              {showChatOptions && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                  <div className="p-2">
+                    <ChatBlockingControls
+                      otherUserId={otherUserId}
+                      otherUserName={otherUserName}
+                      onBlock={handleChatBlocked}
+                      onDeleteChat={handleChatDeleted}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Blocking/Deletion Status */}
+      {(isBlocked || chatDeleted) && (
+        <div className="bg-red-50 border border-red-200 p-4">
+          <div className="flex items-center space-x-3">
+            <Shield size={20} className="text-red-600" />
+            <div>
+              <h4 className="font-semibold text-red-900">
+                {isBlocked ? 'User Blocked' : 'Chat Deleted'}
+              </h4>
+              <p className="text-sm text-red-800">
+                {isBlocked 
+                  ? 'You have blocked this user. They cannot send you messages.'
+                  : 'You have deleted this conversation. It will be hidden from your messages.'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-4">
@@ -780,12 +855,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder={`Message ${otherUserName}...`}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                disabled={sending}
+                disabled={sending || isBlocked}
               />
             </div>
             <button
               type="submit"
-              disabled={!newMessage.trim() || sending}
+              disabled={!newMessage.trim() || sending || isBlocked}
               className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={16} className="sm:w-5 sm:h-5" />

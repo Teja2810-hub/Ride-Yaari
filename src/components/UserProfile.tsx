@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, AlertTriangle, Shield, Archive } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
@@ -12,6 +12,8 @@ import TestConfirmationFlow from './TestConfirmationFlow'
 import NotificationSettings from './NotificationSettings'
 import ProfileEditForm from './ProfileEditForm'
 import ReviewForm from './ReviewForm'
+import BlockedUsersView from './BlockedUsersView'
+import ClosureHistoryView from './ClosureHistoryView'
 import JoinedTripsView from './JoinedTripsView'
 import JoinedRidesView from './JoinedRidesView'
 import TripCategorySelector from './TripCategorySelector'
@@ -26,7 +28,7 @@ interface UserProfileProps {
   initialTab?: string
 }
 
-type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications'
+type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications' | 'blocked' | 'closure-history'
 type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
@@ -241,6 +243,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'trips', label: 'Airport Trips', icon: <Plane size={16} /> },
     { id: 'rides', label: 'Car Rides', icon: <Car size={16} /> },
     { id: 'confirmations', label: 'Confirmations', icon: <MessageCircle size={16} /> },
+    { id: 'blocked', label: 'Blocked Users', icon: <Shield size={16} /> },
+    { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'test', label: 'System Test', icon: <Settings size={16} /> }
   ]
@@ -394,18 +398,18 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <span>Confirmations</span>
                     </button>
                     <button
+                      onClick={() => setActiveTab('blocked')}
+                      className="flex items-center space-x-2 bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                    >
+                      <Shield size={16} />
+                      <span>Blocked Users</span>
+                    </button>
+                    <button
                       onClick={() => setActiveTab('notifications')}
                       className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                     >
                       <Bell size={16} />
                       <span>Notifications</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('reviews')}
-                      className="flex items-center space-x-2 bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
-                    >
-                      <Star size={16} />
-                      <span>Submit Review</span>
                     </button>
                   </div>
                 </div>
@@ -466,6 +470,30 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </p>
                 </div>
                 <UserConfirmationsContent onStartChat={onStartChat} />
+              </div>
+            )}
+
+            {activeTab === 'blocked' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Blocked Users</h2>
+                  <p className="text-gray-600">
+                    Manage users you've blocked. Blocked users cannot send you messages or see your new trips/rides.
+                  </p>
+                </div>
+                <BlockedUsersView onBack={() => setActiveTab('overview')} />
+              </div>
+            )}
+
+            {activeTab === 'closure-history' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Closure History</h2>
+                  <p className="text-gray-600">
+                    View trips and rides you've closed. Closed items don't appear in search results but maintain their history.
+                  </p>
+                </div>
+                <ClosureHistoryView onBack={() => setActiveTab('overview')} />
               </div>
             )}
 

@@ -28,6 +28,9 @@ export interface Trip {
   price?: number
   currency?: string
   negotiable?: boolean
+  is_closed?: boolean
+  closed_at?: string
+  closed_reason?: string
   created_at: string
   user_profiles?: UserProfile
   leaving_airport_info?: Airport
@@ -57,6 +60,9 @@ export interface CarRide {
   price: number
   currency?: string
   negotiable?: boolean
+  is_closed?: boolean
+  closed_at?: string
+  closed_reason?: string
   created_at: string
   user_profiles?: UserProfile
   intermediate_stops?: { address: string; latitude: number | null; longitude: number | null; }[]
@@ -69,6 +75,7 @@ export interface ChatMessage {
   message_content: string
   created_at: string
   is_read?: boolean
+  message_type?: 'user' | 'system'
   sender?: UserProfile
   receiver?: UserProfile
 }

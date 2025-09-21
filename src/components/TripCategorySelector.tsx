@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, Edit, Trash2, AlertTriangle, History } from 'lucide-react'
+import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, Edit, Trash2, AlertTriangle, History, Lock } from 'lucide-react'
 import { Trip, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
+import TripClosureControls from './TripClosureControls'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
@@ -319,6 +320,10 @@ export default function TripCategorySelector({
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
+                            <TripClosureControls
+                              trip={trip}
+                              onUpdate={onRefresh}
+                            />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -331,7 +336,7 @@ export default function TripCategorySelector({
                             </button>
                           </div>
                           <div className="flex items-center space-x-3">
-                            {!isExpiredSoon ? (
+                            {!isExpiredSoon && !trip.is_closed ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -345,7 +350,7 @@ export default function TripCategorySelector({
                             ) : (
                               <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
                                 <Edit size={16} />
-                                <span>Cannot Edit</span>
+                                <span>{trip.is_closed ? 'Closed' : 'Cannot Edit'}</span>
                               </div>
                             )}
                             <button
@@ -362,14 +367,38 @@ export default function TripCategorySelector({
                         </div>
 
                         {/* Passenger Management */}
-                        <div className="border-t border-gray-200 pt-6">
-                          <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
-                          <PassengerManagement
-                            trip={trip}
-                            onStartChat={onStartChat}
-                            onUpdate={onRefresh}
-                          />
-                        </div>
+                        {!trip.is_closed && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                            <PassengerManagement
+                              trip={trip}
+                              onStartChat={onStartChat}
+                              onUpdate={onRefresh}
+                            />
+                          </div>
+                        )}
+                        
+                        {trip.is_closed && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <Lock size={20} className="text-red-600" />
+                                <div>
+                                  <h4 className="font-semibold text-red-900">Trip Closed</h4>
+                                  <p className="text-sm text-red-800">
+                                    This trip is closed and not accepting new passengers.
+                                    {trip.closed_reason && ` Reason: ${trip.closed_reason}`}
+                                  </p>
+                                  {trip.closed_at && (
+                                    <p className="text-xs text-red-700 mt-1">
+                                      Closed on {formatDateTime(trip.closed_at)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
