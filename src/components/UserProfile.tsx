@@ -67,6 +67,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       setRideView('selector')
     }
   }, [activeTab])
+  
   const fetchUserData = async () => {
     if (!user) return
 
@@ -287,8 +288,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
-              <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                  <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
+                  <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                </div>
+              </div>
             </div>
           </div>
 
