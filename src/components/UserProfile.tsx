@@ -288,7 +288,21 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
+                  <div>
+                    <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
+                    <div className="flex items-center space-x-4 mt-2">
+                      {userProfile?.age && (
+                        <span className="text-blue-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                          Age: {userProfile.age}
+                        </span>
+                      )}
+                      {userProfile?.gender && (
+                        <span className="text-blue-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full capitalize">
+                          {userProfile.gender === 'prefer_not_to_say' ? 'Prefer not to say' : userProfile.gender}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                   <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
                 </div>
               </div>
