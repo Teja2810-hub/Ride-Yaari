@@ -331,7 +331,10 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           console.error('Profile image failed to load:', profileData.profile_image_url)
-                          e.currentTarget.style.display = 'none'
+                          // Clear the broken image URL from state
+                          setProfileData(prev => ({ ...prev, profile_image_url: '' }))
+                          // Show user-friendly error message
+                          setError('Profile image failed to load. Please upload a new image.')
                         }}
                         onLoad={() => {
                           console.log('Profile image loaded successfully:', profileData.profile_image_url)
