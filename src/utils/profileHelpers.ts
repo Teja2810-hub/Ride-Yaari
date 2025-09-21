@@ -152,7 +152,7 @@ export const uploadProfileImage = async (
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('profile-images')
-      .upload(fileName, file, {
+      .upload(`${userId}/${fileName}`, file, {
         cacheControl: '3600',
         upsert: false
       })
@@ -164,7 +164,7 @@ export const uploadProfileImage = async (
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('profile-images')
-      .getPublicUrl(fileName)
+      .getPublicUrl(`${userId}/${fileName}`)
 
     return { success: true, imageUrl: urlData.publicUrl }
   })
