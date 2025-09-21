@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
@@ -11,6 +11,7 @@ import ExpiryManagementPanel from './ExpiryManagementPanel'
 import TestConfirmationFlow from './TestConfirmationFlow'
 import NotificationSettings from './NotificationSettings'
 import ProfileEditForm from './ProfileEditForm'
+import ReviewForm from './ReviewForm'
 import JoinedTripsView from './JoinedTripsView'
 import JoinedRidesView from './JoinedRidesView'
 import TripCategorySelector from './TripCategorySelector'
@@ -384,7 +385,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <button
                       onClick={() => setActiveTab('trips')}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -400,13 +401,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <span>View Rides</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab('confirmations')}
-                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                    >
-                      <MessageCircle size={16} />
-                      <span>Confirmations</span>
-                    </button>
-                    <button
                       onClick={() => setActiveTab('notifications')}
                       className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                     >
@@ -419,6 +413,41 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     >
                       <UserCog size={16} />
                       <span>Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('reviews')}
+                      className="flex items-center space-x-2 bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      <Star size={16} />
+                      <span>Submit Review</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Management Tools */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Management Tools</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <button
+                      onClick={() => setActiveTab('confirmations')}
+                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      <MessageCircle size={16} />
+                      <span>Confirmations</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      <History size={16} />
+                      <span>History & Analytics</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('expiry')}
+                      className="flex items-center space-x-2 bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                    >
+                      <AlertTriangle size={16} />
+                      <span>Expiry Management</span>
                     </button>
                   </div>
                 </div>
@@ -526,6 +555,25 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </p>
                 </div>
                 <TestConfirmationFlow />
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Review</h2>
+                  <p className="text-gray-600">
+                    Share your experience with RideYaari to help other travelers and improve our platform.
+                  </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <ReviewForm 
+                    onReviewSubmitted={() => {
+                      // Optionally switch back to overview after successful submission
+                      setTimeout(() => setActiveTab('overview'), 2000)
+                    }} 
+                  />
+                </div>
               </div>
             )}
           </div>
