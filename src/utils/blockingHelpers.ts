@@ -184,9 +184,9 @@ export const isChatDeleted = async (
       .select('id')
       .eq('user_id', userId)
       .eq('other_user_id', otherUserId)
-      .single()
+      .limit(1)
 
-    return !error && !!data
+    return !error && data && data.length > 0
   } catch (error) {
     return false
   }
