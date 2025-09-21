@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { CarRide, Trip } from '../types'
+import { CarRide, Trip, RideConfirmation } from '../types'
 import UserConfirmationsContent from './UserConfirmationsContent'
 import PassengerManagement from './PassengerManagement'
 import RideHistoryModal from './RideHistoryModal'
@@ -11,6 +11,10 @@ import ExpiryManagementPanel from './ExpiryManagementPanel'
 import TestConfirmationFlow from './TestConfirmationFlow'
 import NotificationSettings from './NotificationSettings'
 import ProfileEditForm from './ProfileEditForm'
+import JoinedTripsView from './JoinedTripsView'
+import JoinedRidesView from './JoinedRidesView'
+import TripCategorySelector from './TripCategorySelector'
+import RideCategorySelector from './RideCategorySelector'
 import { getCurrencySymbol } from '../utils/currencies'
 
 interface UserProfileProps {
@@ -22,12 +26,18 @@ interface UserProfileProps {
 }
 
 type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'history' | 'expiry' | 'test' | 'notifications'
+type TripView = 'selector' | 'offered' | 'joined'
+type RideView = 'selector' | 'offered' | 'joined'
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab }: UserProfileProps) {
   const { user, userProfile } = useAuth()
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab === 'confirmations' ? 'confirmations' : 'overview')
+  const [tripView, setTripView] = useState<TripView>('selector')
+  const [rideView, setRideView] = useState<RideView>('selector')
   const [trips, setTrips] = useState<Trip[]>([])
   const [rides, setRides] = useState<CarRide[]>([])
+  const [joinedTrips, setJoinedTrips] = useState<RideConfirmation[]>([])
+  const [joinedRides, setJoinedRides] = useState<RideConfirmation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedRide, setSelectedRide] = useState<CarRide | null>(null)
@@ -47,6 +57,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     }
   }, [initialTab])
 
+  // Reset views when switching tabs
+  useEffect(() => {
+    if (activeTab !== 'trips') {
+      setTripView('selector')
+    }
+    if (activeTab !== 'rides') {
+      setRideView('selector')
+    }
+  }, [activeTab])
   const fetchUserData = async () => {
     if (!user) return
 
@@ -72,8 +91,73 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
       if (ridesError) throw ridesError
 
+      // Fetch trips user has joined (as passenger)
+      const { data: joinedTripsData, error: joinedTripsError } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          trips!ride_confirmations_trip_id_fkey (
+            id,
+            leaving_airport,
+            destination_airport,
+            travel_date,
+            departure_time,
+            departure_timezone,
+            landing_date,
+            landing_time,
+            landing_timezone,
+            price,
+            currency,
+            negotiable,
+            user_id
+          ),
+          user_profiles!ride_confirmations_ride_owner_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        `)
+        .eq('passenger_id', user.id)
+        .not('trip_id', 'is', null)
+        .order('created_at', { ascending: false })
+
+      if (joinedTripsError) throw joinedTripsError
+
+      // Fetch rides user has joined (as passenger)
+      const { data: joinedRidesData, error: joinedRidesError } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          car_rides!ride_confirmations_ride_id_fkey (
+            id,
+            from_location,
+            to_location,
+            from_latitude,
+            from_longitude,
+            to_latitude,
+            to_longitude,
+            departure_date_time,
+            price,
+            currency,
+            negotiable,
+            intermediate_stops,
+            user_id
+          ),
+          user_profiles!ride_confirmations_ride_owner_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        `)
+        .eq('passenger_id', user.id)
+        .not('ride_id', 'is', null)
+        .order('created_at', { ascending: false })
+
+      if (joinedRidesError) throw joinedRidesError
       setTrips(tripsData || [])
       setRides(ridesData || [])
+      setJoinedTrips(joinedTripsData || [])
+      setJoinedRides(joinedRidesData || [])
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -281,15 +365,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <h3 className="text-2xl font-bold text-blue-600">{trips.length}</h3>
                     <p className="text-blue-800">Airport Trips</p>
                   </div>
+                  <div className="bg-indigo-50 rounded-lg p-6 text-center">
+                    <User size={32} className="text-indigo-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-indigo-600">{joinedTrips.length}</h3>
+                    <p className="text-indigo-800">Trips Joined</p>
+                  </div>
                   <div className="bg-green-50 rounded-lg p-6 text-center">
                     <Car size={32} className="text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-green-600">{rides.length}</h3>
-                    <p className="text-green-800">Car Rides</p>
+                    <p className="text-green-800">Rides Offered</p>
                   </div>
-                  <div className="bg-purple-50 rounded-lg p-6 text-center">
-                    <MessageCircle size={32} className="text-purple-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-purple-600">Active</h3>
-                    <p className="text-purple-800">Conversations</p>
+                  <div className="bg-emerald-50 rounded-lg p-6 text-center">
+                    <User size={32} className="text-emerald-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-emerald-600">{joinedRides.length}</h3>
+                    <p className="text-emerald-800">Rides Joined</p>
                   </div>
                 </div>
 
@@ -357,246 +446,254 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             )}
 
             {activeTab === 'trips' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Your Airport Trips</h2>
-                  <span className="text-gray-600">{trips.length} trip{trips.length !== 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Separate sections for trips offered vs trips taken */}
-                <div className="space-y-8">
-                  {/* Trips You're Offering */}
+              <>
+                {tripView === 'selector' && (
+                  <TripCategorySelector
+                    offeredCount={trips.length}
+                    joinedCount={joinedTrips.length}
+                    onSelectOffered={() => setTripView('offered')}
+                    onSelectJoined={() => setTripView('joined')}
+                  />
+                )}
+                
+                {tripView === 'offered' && (
                   <div>
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Plane size={20} className="text-blue-600" />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => setTripView('selector')}
+                          className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        >
+                          <ArrowLeft size={20} />
+                          <span>Back</span>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-900">Trips You're Offering</h2>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900">Trips You're Offering</h3>
-                      <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-                        {trips.length}
-                      </span>
+                      <span className="text-gray-600">{trips.length} trip{trips.length !== 1 ? 's' : ''}</span>
                     </div>
 
-                {trips.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Plane size={48} className="text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips posted yet</h3>
-                    <p className="text-gray-600">Start by posting your first airport trip to connect with other travelers.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {trips.map((trip) => (
-                      <div key={trip.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Plane size={24} className="text-blue-600" />
+                    {trips.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Plane size={48} className="text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips posted yet</h3>
+                        <p className="text-gray-600">Start by posting your first airport trip to connect with other travelers.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {trips.map((trip) => (
+                          <div key={trip.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-4 mb-4">
+                                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Plane size={24} className="text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <h3 className="text-xl font-semibold text-gray-900">
+                                      {trip.leaving_airport} → {trip.destination_airport}
+                                    </h3>
+                                    <p className="text-gray-600">
+                                      {formatDate(trip.travel_date)}
+                                      {trip.departure_time && ` at ${trip.departure_time}`}
+                                      {trip.departure_timezone && ` (${trip.departure_timezone})`}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {trip.price && (
+                                  <div className="mb-4">
+                                    <span className="text-sm font-medium text-green-600">
+                                      Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                      {trip.negotiable && (
+                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                          Negotiable
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                              <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
-                                  {trip.leaving_airport} → {trip.destination_airport}
-                                </h3>
-                                <p className="text-gray-600">
-                                  {formatDate(trip.travel_date)}
-                                  {trip.departure_time && ` at ${trip.departure_time}`}
-                                  {trip.departure_timezone && ` (${trip.departure_timezone})`}
-                                </p>
+
+                              <div className="flex items-center space-x-3">
+                                <button
+                                  onClick={() => handleViewTripHistory(trip)}
+                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                                >
+                                  <History size={16} />
+                                  <span>History</span>
+                                </button>
+                                <button
+                                  onClick={() => onEditTrip(trip)}
+                                  className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                                >
+                                  <Edit size={16} />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteTrip(trip.id)}
+                                  className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                                >
+                                  <Trash2 size={16} />
+                                  <span>Delete</span>
+                                </button>
                               </div>
                             </div>
 
-                            {trip.price && (
-                              <div className="mb-4">
-                                <span className="text-sm font-medium text-green-600">
-                                  Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                                  {trip.negotiable && (
-                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                                      Negotiable
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            )}
+                            {/* Passenger Management for this trip */}
+                            <div className="mt-6 pt-6 border-t border-gray-200">
+                              <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                              <PassengerManagement
+                                trip={trip}
+                                onStartChat={onStartChat}
+                                onUpdate={fetchUserData}
+                              />
+                            </div>
                           </div>
-
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => handleViewTripHistory(trip)}
-                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                            >
-                              <History size={16} />
-                              <span>History</span>
-                            </button>
-                            <button
-                              onClick={() => onEditTrip(trip)}
-                              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                            >
-                              <Edit size={16} />
-                              <span>Edit</span>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTrip(trip.id)}
-                              className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
-                            >
-                              <Trash2 size={16} />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-                  </div>
-
-                  {/* Trips You've Joined */}
-                  <div>
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User size={20} className="text-purple-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900">Trips You've Joined</h3>
-                    </div>
-                    
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <User size={32} className="text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600">This section will show airport trips you've joined as a passenger.</p>
-                      <p className="text-sm text-gray-500 mt-2">Feature coming soon!</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                
+                {tripView === 'joined' && (
+                  <JoinedTripsView
+                    joinedTrips={joinedTrips}
+                    onBack={() => setTripView('selector')}
+                    onStartChat={onStartChat}
+                    onRefresh={fetchUserData}
+                  />
+                )}
+              </>
             )}
 
             {activeTab === 'rides' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Your Car Rides</h2>
-                  <span className="text-gray-600">{rides.length} ride{rides.length !== 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Separate sections for rides offered vs rides taken */}
-                <div className="space-y-8">
-                  {/* Rides You're Offering */}
+              <>
+                {rideView === 'selector' && (
+                  <RideCategorySelector
+                    offeredCount={rides.length}
+                    joinedCount={joinedRides.length}
+                    onSelectOffered={() => setRideView('offered')}
+                    onSelectJoined={() => setRideView('joined')}
+                  />
+                )}
+                
+                {rideView === 'offered' && (
                   <div>
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Car size={20} className="text-green-600" />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => setRideView('selector')}
+                          className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                        >
+                          <ArrowLeft size={20} />
+                          <span>Back</span>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-900">Rides You're Offering</h2>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900">Rides You're Offering</h3>
-                      <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
-                        {rides.length}
-                      </span>
+                      <span className="text-gray-600">{rides.length} ride{rides.length !== 1 ? 's' : ''}</span>
                     </div>
 
-                {rides.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Car size={48} className="text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides posted yet</h3>
-                    <p className="text-gray-600">Start by posting your first car ride to help other travelers save money.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {rides.map((ride) => (
-                      <div key={ride.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <Car size={24} className="text-green-600" />
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
-                                  {ride.from_location} → {ride.to_location}
-                                </h3>
-                                <p className="text-gray-600">
-                                  {formatDateTime(ride.departure_date_time)}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mb-4">
-                              <span className="text-sm font-medium text-green-600">
-                                Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
-                                {ride.negotiable && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                                    Negotiable
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-
-                            {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
-                              <div className="mb-4">
-                                <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {ride.intermediate_stops.map((stop, index) => (
-                                    <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                                      {stop.address}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => handleViewRideHistory(ride)}
-                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                            >
-                              <History size={16} />
-                              <span>History</span>
-                            </button>
-                            <button
-                              onClick={() => onEditRide(ride)}
-                              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                            >
-                              <Edit size={16} />
-                              <span>Edit</span>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteRide(ride.id)}
-                              className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
-                            >
-                              <Trash2 size={16} />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Passenger Management for this ride */}
-                        <div className="mt-6 pt-6 border-t border-gray-200">
-                          <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
-                          <PassengerManagement
-                            ride={ride}
-                            onStartChat={onStartChat}
-                            onUpdate={fetchUserData}
-                          />
-                        </div>
+                    {rides.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Car size={48} className="text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides posted yet</h3>
+                        <p className="text-gray-600">Start by posting your first car ride to help other travelers save money.</p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="space-y-4">
+                        {rides.map((ride) => (
+                          <div key={ride.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-4 mb-4">
+                                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                    <Car size={24} className="text-green-600" />
+                                  </div>
+                                  <div>
+                                    <h3 className="text-xl font-semibold text-gray-900">
+                                      {ride.from_location} → {ride.to_location}
+                                    </h3>
+                                    <p className="text-gray-600">
+                                      {formatDateTime(ride.departure_date_time)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="mb-4">
+                                  <span className="text-sm font-medium text-green-600">
+                                    Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
+                                    {ride.negotiable && (
+                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                        Negotiable
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+
+                                {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                                  <div className="mb-4">
+                                    <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {ride.intermediate_stops.map((stop, index) => (
+                                        <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                                          {stop.address}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center space-x-3">
+                                <button
+                                  onClick={() => handleViewRideHistory(ride)}
+                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                                >
+                                  <History size={16} />
+                                  <span>History</span>
+                                </button>
+                                <button
+                                  onClick={() => onEditRide(ride)}
+                                  className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                                >
+                                  <Edit size={16} />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteRide(ride.id)}
+                                  className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                                >
+                                  <Trash2 size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Passenger Management for this ride */}
+                            <div className="mt-6 pt-6 border-t border-gray-200">
+                              <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                              <PassengerManagement
+                                ride={ride}
+                                onStartChat={onStartChat}
+                                onUpdate={fetchUserData}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-                  </div>
-
-                  {/* Rides You've Joined */}
-                  <div>
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <User size={20} className="text-orange-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900">Rides You've Joined</h3>
-                    </div>
-                    
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <User size={32} className="text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600">This section will show car rides you've joined as a passenger.</p>
-                      <p className="text-sm text-gray-500 mt-2">Feature coming soon!</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                
+                {rideView === 'joined' && (
+                  <JoinedRidesView
+                    joinedRides={joinedRides}
+                    onBack={() => setRideView('selector')}
+                    onStartChat={onStartChat}
+                    onRefresh={fetchUserData}
+                  />
+                )}
+              </>
             )}
 
             {activeTab === 'confirmations' && (
