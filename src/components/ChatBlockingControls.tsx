@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Shield, Trash2, AlertTriangle, MessageCircle, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { blockUser, deleteChatConversation } from '../utils/blockingHelpers'
+import { blockUser, unblockUser, deleteChatConversation, isUserBlocked } from '../utils/blockingHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 
@@ -9,6 +9,7 @@ interface ChatBlockingControlsProps {
   otherUserId: string
   otherUserName: string
   onBlock?: () => void
+  onUnblock?: () => void
   onDeleteChat?: () => void
 }
 
@@ -16,13 +17,32 @@ export default function ChatBlockingControls({
   otherUserId, 
   otherUserName, 
   onBlock, 
+  onUnblock,
   onDeleteChat 
 }: ChatBlockingControlsProps) {
   const { user } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [showBlockModal, setShowBlockModal] = useState(false)
+  const [showUnblockModal, setShowUnblockModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [blockReason, setBlockReason] = useState('')
+  const [isBlocked, setIsBlocked] = useState(false)
+
+  // Check blocking status on mount
+  React.useEffect(() => {
+    checkBlockingStatus()
+  }, [user, otherUserId])
+
+  const checkBlockingStatus = async () => {
+    if (!user) return
+    
+    try {
+      const blocked = await isUserBlocked(user.id, otherUserId)
+      setIsBlocked(blocked)
+    } catch (error) {
+      console.error('Error checking blocking status:', error)
+    }
+  }
 
   const handleBlock = async () => {
     if (!user) return
@@ -36,10 +56,26 @@ export default function ChatBlockingControls({
 
       setShowBlockModal(false)
       setBlockReason('')
+      setIsBlocked(true)
       if (onBlock) onBlock()
     })
   }
 
+  const handleUnblock = async () => {
+    if (!user) return
+
+    await handleAsync(async () => {
+      const result = await unblockUser(user.id, otherUserId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to unblock user')
+      }
+
+      setShowUnblockModal(false)
+      setIsBlocked(false)
+      if (onUnblock) onUnblock()
+    })
+  }
   const handleDeleteChat = async () => {
     if (!user) return
 
@@ -66,13 +102,23 @@ export default function ChatBlockingControls({
           <span>Delete Chat</span>
         </button>
         
-        <button
-          onClick={() => setShowBlockModal(true)}
-          className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors text-sm"
-        >
-          <Shield size={14} />
-          <span>Block User</span>
-        </button>
+        {isBlocked ? (
+          <button
+            onClick={() => setShowUnblockModal(true)}
+            className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors text-sm"
+          >
+            <Shield size={14} />
+            <span>Unblock User</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowBlockModal(true)}
+            className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors text-sm"
+          >
+            <Shield size={14} />
+            <span>Block User</span>
+          </button>
+        )}
       </div>
 
       {error && (
@@ -81,6 +127,65 @@ export default function ChatBlockingControls({
           onDismiss={clearError}
           className="mt-4"
         />
+      )}
+
+      {/* Unblock User Modal */}
+      {showUnblockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Shield size={20} className="text-green-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Unblock User</h2>
+              </div>
+              <button
+                onClick={() => setShowUnblockModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                Are you sure you want to unblock <strong>{otherUserName}</strong>?
+              </p>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Shield size={16} className="text-green-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-green-900 mb-1">What happens when you unblock:</h4>
+                    <ul className="text-sm text-green-800 space-y-1">
+                      <li>• They can send you messages again</li>
+                      <li>• They can see your new trips and rides</li>
+                      <li>• Previous conversations will be restored</li>
+                      <li>• They can request to join your rides/trips</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowUnblockModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUnblock}
+                disabled={isLoading}
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Unblocking...' : 'Unblock User'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Block User Modal */}

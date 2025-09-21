@@ -122,17 +122,7 @@ export const deleteChatConversation = async (
   otherUserId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
-    // First, actually delete the chat messages between these users
-    const { error: deleteMessagesError } = await supabase
-      .from('chat_messages')
-      .delete()
-      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
-
-    if (deleteMessagesError) {
-      throw new Error(`Failed to delete messages: ${deleteMessagesError.message}`)
-    }
-
-    // Then mark the chat as deleted for this user (for UI purposes)
+    // Mark the chat as deleted for this user (this will hide it from their messages list)
     const { error } = await supabase
       .from('chat_deletions')
       .upsert({

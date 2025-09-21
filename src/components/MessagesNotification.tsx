@@ -100,7 +100,8 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
 
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // First get all messages
+      const { data: allMessages, error } = await supabase
         .from('chat_messages')
         .select(`
           *,
@@ -118,7 +119,21 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
 
-      if (!error && data) {
+      if (!error && allMessages) {
+        // Get chat deletions for this user
+        const { data: deletions } = await supabase
+          .from('chat_deletions')
+          .select('other_user_id')
+          .eq('user_id', user.id)
+
+        const deletedUserIds = new Set(deletions?.map(d => d.other_user_id) || [])
+
+        // Filter out deleted conversations
+        const data = allMessages.filter(message => {
+          const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id
+          return !deletedUserIds.has(otherUserId)
+        })
+
         // Group messages by conversation
         const conversationMap = new Map()
         

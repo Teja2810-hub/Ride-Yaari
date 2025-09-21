@@ -122,6 +122,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setShowChatOptions(false)
   }
 
+  const handleChatUnblocked = () => {
+    setIsBlocked(false)
+    setShowChatOptions(false)
+  }
+
   const handleChatDeleted = () => {
     setChatDeleted(true)
     setShowChatOptions(false)
@@ -596,6 +601,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                       otherUserId={otherUserId}
                       otherUserName={otherUserName}
                       onBlock={handleChatBlocked}
+                      onUnblock={handleChatUnblocked}
                       onDeleteChat={handleChatDeleted}
                     />
                   </div>
