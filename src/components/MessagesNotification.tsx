@@ -86,9 +86,6 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         .select('*', { count: 'exact', head: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
-        .not('sender_id', 'in', `(
-          SELECT blocked_id FROM user_blocks WHERE blocker_id = '${user.id}'
-        )`)
 
       if (!error) {
         setUnreadCount(count || 0)
@@ -119,12 +116,6 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
           )
         `)
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .not('sender_id', 'in', `(
-          SELECT blocked_id FROM user_blocks WHERE blocker_id = '${user.id}'
-        )`)
-        .not('receiver_id', 'in', `(
-          SELECT blocked_id FROM user_blocks WHERE blocker_id = '${user.id}'
-        )`)
         .order('created_at', { ascending: false })
 
       if (!error && data) {
