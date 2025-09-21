@@ -116,10 +116,10 @@ export const reopenTrip = async (
   userId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
-    // Verify ownership
+    // Verify ownership and current status
     const { data: trip, error: fetchError } = await supabase
       .from('trips')
-      .select('user_id, travel_date')
+      .select('user_id, travel_date, is_closed')
       .eq('id', tripId)
       .single()
 
@@ -129,6 +129,10 @@ export const reopenTrip = async (
 
     if (trip.user_id !== userId) {
       throw new Error('You can only reopen your own trips')
+    }
+
+    if (!trip.is_closed) {
+      throw new Error('Trip is already open')
     }
 
     // Check if trip is still in the future
@@ -145,11 +149,13 @@ export const reopenTrip = async (
         closed_reason: null
       })
       .eq('id', tripId)
+      .eq('user_id', userId) // Additional security check
 
     if (error) {
       throw new Error(error.message)
     }
 
+    console.log(`Trip ${tripId} reopened successfully`)
     return { success: true }
   })
 }
@@ -162,10 +168,10 @@ export const reopenRide = async (
   userId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
-    // Verify ownership
+    // Verify ownership and current status
     const { data: ride, error: fetchError } = await supabase
       .from('car_rides')
-      .select('user_id, departure_date_time')
+      .select('user_id, departure_date_time, is_closed')
       .eq('id', rideId)
       .single()
 
@@ -175,6 +181,10 @@ export const reopenRide = async (
 
     if (ride.user_id !== userId) {
       throw new Error('You can only reopen your own rides')
+    }
+
+    if (!ride.is_closed) {
+      throw new Error('Ride is already open')
     }
 
     // Check if ride is still in the future
@@ -191,11 +201,13 @@ export const reopenRide = async (
         closed_reason: null
       })
       .eq('id', rideId)
+      .eq('user_id', userId) // Additional security check
 
     if (error) {
       throw new Error(error.message)
     }
 
+    console.log(`Ride ${rideId} reopened successfully`)
     return { success: true }
   })
 }

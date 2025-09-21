@@ -559,7 +559,10 @@ export default function RideCategorySelector({
                           </div>
                         </div>
 
-                        {/* Actions */}
+                            onUpdate={() => {
+                              console.log('TripClosureControls onUpdate called for ride:', ride.id)
+                              onRefresh()
+                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {

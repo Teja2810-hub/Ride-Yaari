@@ -48,13 +48,16 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       return
     }
 
+    console.log(`Attempting to reopen ${type}:`, item.id)
     setReopeningId(item.id)
 
     await handleAsync(async () => {
       let result
       if (type === 'trip') {
+        console.log('Calling reopenTrip with:', item.id, user.id)
         result = await reopenTrip(item.id, user.id)
       } else {
+        console.log('Calling reopenRide with:', item.id, user.id)
         result = await reopenRide(item.id, user.id)
       }
       
@@ -62,12 +65,16 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
         throw new Error(result.error || `Failed to reopen ${type}`)
       }
 
+      console.log(`${type} reopened successfully, updating local state`)
       // Remove from local state
       if (type === 'trip') {
         setClosedTrips(prev => prev.filter(t => t.id !== item.id))
       } else {
         setClosedRides(prev => prev.filter(r => r.id !== item.id))
       }
+      
+      // Show success message
+      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully!`)
     }).finally(() => {
       setReopeningId(null)
     })

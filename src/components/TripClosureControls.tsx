@@ -53,11 +53,15 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
   const handleReopen = async () => {
     if (!user) return
 
+    console.log('Attempting to reopen:', { ride: ride?.id, trip: trip?.id, userId: user.id })
+
     await handleAsync(async () => {
       let result
       if (ride) {
+        console.log('Reopening ride:', ride.id)
         result = await reopenRide(ride.id, user.id)
       } else if (trip) {
+        console.log('Reopening trip:', trip.id)
         result = await reopenTrip(trip.id, user.id)
       } else {
         throw new Error('No ride or trip to reopen')
@@ -67,6 +71,7 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
         throw new Error(result.error || 'Failed to reopen')
       }
 
+      console.log('Reopen successful, calling onUpdate')
       setShowReopenModal(false)
       if (onUpdate) onUpdate()
     })

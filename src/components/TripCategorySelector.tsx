@@ -590,7 +590,10 @@ export default function TripCategorySelector({
                           </div>
                         </div>
 
-                        {/* Actions */}
+                            onUpdate={() => {
+                              console.log('TripClosureControls onUpdate called for trip:', trip.id)
+                              onRefresh()
+                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {

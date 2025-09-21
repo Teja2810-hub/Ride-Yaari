@@ -77,6 +77,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setError('')
 
     try {
+      console.log('Fetching user data for:', user.id)
+      
       // Fetch user's trips
       const { data: tripsData, error: tripsError } = await supabase
         .from('trips')
@@ -85,6 +87,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         .order('created_at', { ascending: false })
 
       if (tripsError) throw tripsError
+      console.log('Fetched trips:', tripsData?.length || 0)
 
       // Fetch user's rides
       const { data: ridesData, error: ridesError } = await supabase
@@ -94,6 +97,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         .order('created_at', { ascending: false })
 
       if (ridesError) throw ridesError
+      console.log('Fetched rides:', ridesData?.length || 0)
 
       // Fetch trips user has joined (as passenger)
       const { data: joinedTripsData, error: joinedTripsError } = await supabase
@@ -126,6 +130,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         .order('created_at', { ascending: false })
 
       if (joinedTripsError) throw joinedTripsError
+      console.log('Fetched joined trips:', joinedTripsData?.length || 0)
 
       // Fetch rides user has joined (as passenger)
       const { data: joinedRidesData, error: joinedRidesError } = await supabase
@@ -158,11 +163,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
         .order('created_at', { ascending: false })
 
       if (joinedRidesError) throw joinedRidesError
+      console.log('Fetched joined rides:', joinedRidesData?.length || 0)
+      
       setTrips(tripsData || [])
       setRides(ridesData || [])
       setJoinedTrips(joinedTripsData || [])
       setJoinedRides(joinedRidesData || [])
+      
+      console.log('User data fetch completed successfully')
     } catch (error: any) {
+      console.error('Error fetching user data:', error)
       setError(error.message)
     } finally {
       setLoading(false)
