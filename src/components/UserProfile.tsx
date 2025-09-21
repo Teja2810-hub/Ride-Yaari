@@ -446,254 +446,27 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             )}
 
             {activeTab === 'trips' && (
-              <>
-                {tripView === 'selector' && (
-                  <TripCategorySelector
-                    offeredCount={trips.length}
-                    joinedCount={joinedTrips.length}
-                    onSelectOffered={() => setTripView('offered')}
-                    onSelectJoined={() => setTripView('joined')}
-                  />
-                )}
-                
-                {tripView === 'offered' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => setTripView('selector')}
-                          className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                        >
-                          <ArrowLeft size={20} />
-                          <span>Back</span>
-                        </button>
-                        <h2 className="text-2xl font-bold text-gray-900">Trips You're Offering</h2>
-                      </div>
-                      <span className="text-gray-600">{trips.length} trip{trips.length !== 1 ? 's' : ''}</span>
-                    </div>
-
-                    {trips.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Plane size={48} className="text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips posted yet</h3>
-                        <p className="text-gray-600">Start by posting your first airport trip to connect with other travelers.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {trips.map((trip) => (
-                          <div key={trip.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-4 mb-4">
-                                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <Plane size={24} className="text-blue-600" />
-                                  </div>
-                                  <div>
-                                    <h3 className="text-xl font-semibold text-gray-900">
-                                      {trip.leaving_airport} → {trip.destination_airport}
-                                    </h3>
-                                    <p className="text-gray-600">
-                                      {formatDate(trip.travel_date)}
-                                      {trip.departure_time && ` at ${trip.departure_time}`}
-                                      {trip.departure_timezone && ` (${trip.departure_timezone})`}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {trip.price && (
-                                  <div className="mb-4">
-                                    <span className="text-sm font-medium text-green-600">
-                                      Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                                      {trip.negotiable && (
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                                          Negotiable
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex items-center space-x-3">
-                                <button
-                                  onClick={() => handleViewTripHistory(trip)}
-                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                                >
-                                  <History size={16} />
-                                  <span>History</span>
-                                </button>
-                                <button
-                                  onClick={() => onEditTrip(trip)}
-                                  className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                                >
-                                  <Edit size={16} />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteTrip(trip.id)}
-                                  className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
-                                >
-                                  <Trash2 size={16} />
-                                  <span>Delete</span>
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Passenger Management for this trip */}
-                            <div className="mt-6 pt-6 border-t border-gray-200">
-                              <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
-                              <PassengerManagement
-                                trip={trip}
-                                onStartChat={onStartChat}
-                                onUpdate={fetchUserData}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {tripView === 'joined' && (
-                  <JoinedTripsView
-                    joinedTrips={joinedTrips}
-                    onBack={() => setTripView('selector')}
-                    onStartChat={onStartChat}
-                    onRefresh={fetchUserData}
-                  />
-                )}
-              </>
+              <TripCategorySelector
+                offeredTrips={trips}
+                joinedTrips={joinedTrips}
+                onStartChat={onStartChat}
+                onEditTrip={onEditTrip}
+                onDeleteTrip={handleDeleteTrip}
+                onViewTripHistory={handleViewTripHistory}
+                onRefresh={fetchUserData}
+              />
             )}
 
             {activeTab === 'rides' && (
-              <>
-                {rideView === 'selector' && (
-                  <RideCategorySelector
-                    offeredCount={rides.length}
-                    joinedCount={joinedRides.length}
-                    onSelectOffered={() => setRideView('offered')}
-                    onSelectJoined={() => setRideView('joined')}
-                  />
-                )}
-                
-                {rideView === 'offered' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => setRideView('selector')}
-                          className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                        >
-                          <ArrowLeft size={20} />
-                          <span>Back</span>
-                        </button>
-                        <h2 className="text-2xl font-bold text-gray-900">Rides You're Offering</h2>
-                      </div>
-                      <span className="text-gray-600">{rides.length} ride{rides.length !== 1 ? 's' : ''}</span>
-                    </div>
-
-                    {rides.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Car size={48} className="text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides posted yet</h3>
-                        <p className="text-gray-600">Start by posting your first car ride to help other travelers save money.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {rides.map((ride) => (
-                          <div key={ride.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-4 mb-4">
-                                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                    <Car size={24} className="text-green-600" />
-                                  </div>
-                                  <div>
-                                    <h3 className="text-xl font-semibold text-gray-900">
-                                      {ride.from_location} → {ride.to_location}
-                                    </h3>
-                                    <p className="text-gray-600">
-                                      {formatDateTime(ride.departure_date_time)}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="mb-4">
-                                  <span className="text-sm font-medium text-green-600">
-                                    Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
-                                    {ride.negotiable && (
-                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                                        Negotiable
-                                      </span>
-                                    )}
-                                  </span>
-                                </div>
-
-                                {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
-                                  <div className="mb-4">
-                                    <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {ride.intermediate_stops.map((stop, index) => (
-                                        <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                                          {stop.address}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex items-center space-x-3">
-                                <button
-                                  onClick={() => handleViewRideHistory(ride)}
-                                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                                >
-                                  <History size={16} />
-                                  <span>History</span>
-                                </button>
-                                <button
-                                  onClick={() => onEditRide(ride)}
-                                  className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                                >
-                                  <Edit size={16} />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteRide(ride.id)}
-                                  className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
-                                >
-                                  <Trash2 size={16} />
-                                  <span>Delete</span>
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Passenger Management for this ride */}
-                            <div className="mt-6 pt-6 border-t border-gray-200">
-                              <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
-                              <PassengerManagement
-                                ride={ride}
-                                onStartChat={onStartChat}
-                                onUpdate={fetchUserData}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {rideView === 'joined' && (
-                  <JoinedRidesView
-                    joinedRides={joinedRides}
-                    onBack={() => setRideView('selector')}
-                    onStartChat={onStartChat}
-                    onRefresh={fetchUserData}
-                  />
-                )}
-              </>
+              <RideCategorySelector
+                offeredRides={rides}
+                joinedRides={joinedRides}
+                onStartChat={onStartChat}
+                onEditRide={onEditRide}
+                onDeleteRide={handleDeleteRide}
+                onViewRideHistory={handleViewRideHistory}
+                onRefresh={fetchUserData}
+              />
             )}
 
             {activeTab === 'confirmations' && (

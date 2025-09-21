@@ -1,102 +1,769 @@
-import React from 'react'
-import { Car, User, ArrowRight, Plus, Users } from 'lucide-react'
+import React, { useState } from 'react'
+import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation } from 'lucide-react'
+import { CarRide, RideConfirmation } from '../types'
+import { getCurrencySymbol } from '../utils/currencies'
+import PassengerManagement from './PassengerManagement'
 
 interface RideCategorySelectorProps {
-  offeredCount: number
-  joinedCount: number
-  onSelectOffered: () => void
-  onSelectJoined: () => void
+  offeredRides: CarRide[]
+  joinedRides: RideConfirmation[]
+  onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
+  onEditRide: (ride: CarRide) => void
+  onDeleteRide: (rideId: string) => void
+  onViewRideHistory: (ride: CarRide) => void
+  onRefresh: () => void
 }
 
 export default function RideCategorySelector({ 
-  offeredCount, 
-  joinedCount, 
-  onSelectOffered, 
-  onSelectJoined 
+  offeredRides,
+  joinedRides,
+  onStartChat,
+  onEditRide,
+  onDeleteRide,
+  onViewRideHistory,
+  onRefresh
 }: RideCategorySelectorProps) {
-  return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Car Rides</h2>
-        <p className="text-gray-600">
-          View rides you're offering to passengers or rides you've joined as a passenger.
-        </p>
-      </div>
+  const [expandedOfferedRide, setExpandedOfferedRide] = useState<string | null>(null)
+  const [expandedJoinedRide, setExpandedJoinedRide] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined'>('overview')
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Rides You're Offering */}
-        <div
-          onClick={onSelectOffered}
-          className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
-        >
-          <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Car size={32} className="text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You're Offering</h3>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Manage car rides you've posted to share costs and help other travelers
-            </p>
-            <div className="bg-green-50 rounded-lg p-4 mb-6 w-full">
-              <div className="flex items-center justify-center space-x-2">
-                <Plus size={20} className="text-green-600" />
-                <span className="text-2xl font-bold text-green-600">{offeredCount}</span>
-                <span className="text-green-800">Ride{offeredCount !== 1 ? 's' : ''} Posted</span>
+  const formatDateTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  const isExpiredOrExpiringSoon = (ride: CarRide): boolean => {
+    const now = new Date()
+    const departureTime = new Date(ride.departure_date_time)
+    
+    // Check if ride is in the past
+    if (departureTime < now) return true
+    
+    // Check if ride is within 1 hour
+    const hoursUntilDeparture = (departureTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+    return hoursUntilDeparture <= 1
+  }
+
+  const toggleOfferedRide = (rideId: string) => {
+    setExpandedOfferedRide(expandedOfferedRide === rideId ? null : rideId)
+  }
+
+  const toggleJoinedRide = (rideId: string) => {
+    setExpandedJoinedRide(expandedJoinedRide === rideId ? null : rideId)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'accepted':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  if (activeSection === 'overview') {
+    return (
+      <div>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Car Rides</h2>
+          <p className="text-gray-600">
+            View rides you're offering to passengers or rides you've joined as a passenger.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Rides You're Offering */}
+          <div
+            onClick={() => setActiveSection('offered')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Car size={32} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You're Offering</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Manage car rides you've posted to share costs and help other travelers
+              </p>
+              <div className="bg-green-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <Plus size={20} className="text-green-600" />
+                  <span className="text-2xl font-bold text-green-600">{offeredRides.length}</span>
+                  <span className="text-green-800">Ride{offeredRides.length !== 1 ? 's' : ''} Posted</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700">
+                View Your Rides
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
-            <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700">
-              View Your Rides
-              <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
-            </div>
           </div>
-        </div>
 
-        {/* Rides You've Joined */}
-        <div
-          onClick={onSelectJoined}
-          className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
-        >
-          <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Users size={32} className="text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You've Joined</h3>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              View car rides where you've been confirmed as a passenger
-            </p>
-            <div className="bg-emerald-50 rounded-lg p-4 mb-6 w-full">
-              <div className="flex items-center justify-center space-x-2">
-                <User size={20} className="text-emerald-600" />
-                <span className="text-2xl font-bold text-emerald-600">{joinedCount}</span>
-                <span className="text-emerald-800">Ride{joinedCount !== 1 ? 's' : ''} Joined</span>
+          {/* Rides You've Joined */}
+          <div
+            onClick={() => setActiveSection('joined')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users size={32} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You've Joined</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                View car rides where you've been confirmed as a passenger
+              </p>
+              <div className="bg-emerald-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <User size={20} className="text-emerald-600" />
+                  <span className="text-2xl font-bold text-emerald-600">{joinedRides.length}</span>
+                  <span className="text-emerald-800">Ride{joinedRides.length !== 1 ? 's' : ''} Joined</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700">
+                View Joined Rides
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
-            <div className="inline-flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700">
-              View Joined Rides
-              <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Car Rides Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900 mb-2">{offeredRides.length + joinedRides.length}</div>
+              <div className="text-gray-700">Total Rides</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">{offeredRides.length}</div>
+              <div className="text-gray-700">As Driver</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-emerald-600 mb-2">{joinedRides.length}</div>
+              <div className="text-gray-700">As Passenger</div>
             </div>
           </div>
         </div>
       </div>
+    )
+  }
 
-      {/* Quick Stats */}
-      <div className="mt-12 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-8">
-        <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Car Rides Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">{offeredCount + joinedCount}</div>
-            <div className="text-gray-700">Total Rides</div>
+  if (activeSection === 'offered') {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setActiveSection('overview')}
+              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+            >
+              <ArrowRight size={20} className="rotate-180" />
+              <span>Back</span>
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900">Rides You're Offering</h2>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">{offeredCount}</div>
-            <div className="text-gray-700">As Driver</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-emerald-600 mb-2">{joinedCount}</div>
-            <div className="text-gray-700">As Passenger</div>
-          </div>
+          <span className="text-gray-600">{offeredRides.length} ride{offeredRides.length !== 1 ? 's' : ''}</span>
         </div>
+
+        {offeredRides.length === 0 ? (
+          <div className="text-center py-12">
+            <Car size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides posted yet</h3>
+            <p className="text-gray-600">Start by posting your first car ride to help other travelers save money.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {offeredRides.map((ride) => {
+              const isExpanded = expandedOfferedRide === ride.id
+              const isExpiredSoon = isExpiredOrExpiringSoon(ride)
+              
+              return (
+                <div key={ride.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Ride Header - Always Visible */}
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleOfferedRide(ride.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <Car size={24} className="text-green-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {ride.from_location} → {ride.to_location}
+                          </h3>
+                          <p className="text-gray-600">
+                            {formatDateTime(ride.departure_date_time)}
+                          </p>
+                          {isExpiredSoon && (
+                            <div className="flex items-center space-x-2 mt-1">
+                              <AlertTriangle size={14} className="text-orange-500" />
+                              <span className="text-xs text-orange-600 font-medium">
+                                {new Date(ride.departure_date_time) < new Date() ? 'Expired' : 'Expires soon'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm font-medium text-green-600">
+                          {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="p-6 space-y-6">
+                        {/* Ride Details */}
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-900 mb-3">Ride Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 mb-1">From</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.from_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">To</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.to_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">Departure</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <Clock size={14} className="mr-1 text-gray-400" />
+                                {formatDateTime(ride.departure_date_time)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <p className="text-gray-600 mb-2">Intermediate Stops:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {ride.intermediate_stops.map((stop, index) => (
+                                  <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
+                                    <Navigation size={10} className="mr-1" />
+                                    {stop.address}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 pt-3 border-t border-green-200">
+                            <span className="text-sm font-medium text-green-600">
+                              Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
+                              {ride.negotiable && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                  Negotiable
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onViewRideHistory(ride)
+                              }}
+                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                            >
+                              <History size={16} />
+                              <span>View History</span>
+                            </button>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            {!isExpiredSoon ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditRide(ride)
+                                }}
+                                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                              >
+                                <Edit size={16} />
+                                <span>Edit</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
+                                <Edit size={16} />
+                                <span>Cannot Edit</span>
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteRide(ride.id)
+                              }}
+                              className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                            >
+                              <Trash2 size={16} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Passenger Management */}
+                        <div className="border-t border-gray-200 pt-6">
+                          <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                          <PassengerManagement
+                            ride={ride}
+                            onStartChat={onStartChat}
+                            onUpdate={onRefresh}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-    </div>
-  )
+    )
+  }
+
+  if (activeSection === 'joined') {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setActiveSection('overview')}
+              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+            >
+              <ArrowRight size={20} className="rotate-180" />
+              <span>Back</span>
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900">Rides You've Joined</h2>
+          </div>
+          <span className="text-gray-600">{joinedRides.length} ride{joinedRides.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        {joinedRides.length === 0 ? (
+          <div className="text-center py-12">
+            <Car size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides joined yet</h3>
+            <p className="text-gray-600">Start by finding and requesting to join car rides!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {joinedRides.map((confirmation) => {
+              const ride = confirmation.car_rides!
+              const driver = confirmation.user_profiles
+              const isExpanded = expandedJoinedRide === confirmation.id
+              
+              return (
+                <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Ride Header - Always Visible */}
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleJoinedRide(confirmation.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {driver?.profile_image_url ? (
+                            <img
+                              src={driver.profile_image_url}
+                              alt={driver.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white font-semibold">
+                              {(driver?.full_name || 'D').charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {ride.from_location} → {ride.to_location}
+                          </h3>
+                          <p className="text-gray-600">
+                            {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                          <span className="capitalize">{confirmation.status}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="p-6 space-y-6">
+                        {/* Ride Details */}
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-900 mb-3">Ride Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 mb-1">From</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.from_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">To</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.to_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">Departure</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <Clock size={14} className="mr-1 text-gray-400" />
+                                {formatDateTime(ride.departure_date_time)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <p className="text-gray-600 mb-2">Intermediate Stops:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {ride.intermediate_stops.map((stop, index) => (
+                                  <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
+                                    <Navigation size={10} className="mr-1" />
+                                    {stop.address}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 pt-3 border-t border-green-200">
+                            <span className="text-sm font-medium text-green-600">
+                              Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
+                              {ride.negotiable && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                  Negotiable
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onViewRideHistory(ride)
+                              }}
+                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                            >
+                              <History size={16} />
+                              <span>View History</span>
+                            </button>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            {!isExpiredSoon ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditRide(ride)
+                                }}
+                                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                              >
+                                <Edit size={16} />
+                                <span>Edit</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
+                                <Edit size={16} />
+                                <span>Cannot Edit</span>
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteRide(ride.id)
+                              }}
+                              className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                            >
+                              <Trash2 size={16} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Passenger Management */}
+                        <div className="border-t border-gray-200 pt-6">
+                          <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                          <PassengerManagement
+                            ride={ride}
+                            onStartChat={onStartChat}
+                            onUpdate={onRefresh}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (activeSection === 'joined') {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setActiveSection('overview')}
+              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+            >
+              <ArrowRight size={20} className="rotate-180" />
+              <span>Back</span>
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900">Rides You've Joined</h2>
+          </div>
+          <span className="text-gray-600">{joinedRides.length} ride{joinedRides.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        {joinedRides.length === 0 ? (
+          <div className="text-center py-12">
+            <Car size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides joined yet</h3>
+            <p className="text-gray-600">Start by finding and requesting to join car rides!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {joinedRides.map((confirmation) => {
+              const ride = confirmation.car_rides!
+              const driver = confirmation.user_profiles
+              const isExpanded = expandedJoinedRide === confirmation.id
+              
+              return (
+                <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Ride Header - Always Visible */}
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleJoinedRide(confirmation.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {driver?.profile_image_url ? (
+                            <img
+                              src={driver.profile_image_url}
+                              alt={driver.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white font-semibold">
+                              {(driver?.full_name || 'D').charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {ride.from_location} → {ride.to_location}
+                          </h3>
+                          <p className="text-gray-600">
+                            {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                          <span className="capitalize">{confirmation.status}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="p-6 space-y-6">
+                        {/* Ride Details */}
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-900 mb-3">Ride Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 mb-1">From</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.from_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">To</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <MapPin size={14} className="mr-1 text-gray-400" />
+                                {ride.to_location}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">Departure</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <Clock size={14} className="mr-1 text-gray-400" />
+                                {formatDateTime(ride.departure_date_time)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <p className="text-gray-600 mb-2">Intermediate Stops:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {ride.intermediate_stops.map((stop, index) => (
+                                  <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
+                                    <Navigation size={10} className="mr-1" />
+                                    {stop.address}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 pt-3 border-t border-green-200">
+                            <span className="text-sm font-medium text-green-600">
+                              Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
+                              {ride.negotiable && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                  Negotiable
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Request Timeline */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <span className="text-green-600 font-bold text-xs">1</span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">Request Submitted</p>
+                                <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                              </div>
+                            </div>
+                            
+                            {confirmation.confirmed_at && (
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                  confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+                                }`}>
+                                  <span className={`font-bold text-xs ${
+                                    confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                                  }`}>2</span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
+                                  </p>
+                                  <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onStartChat(
+                                confirmation.ride_owner_id,
+                                driver?.full_name || 'Driver',
+                                ride,
+                                undefined
+                              )
+                            }}
+                            className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                          >
+                            <User size={16} />
+                            <span>Chat with {driver?.full_name || 'Driver'}</span>
+                          </button>
+
+                          <div className="text-xs text-gray-500">
+                            Request ID: {confirmation.id.slice(0, 8)}...
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return null
 }
