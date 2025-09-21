@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc } from 'lucide-react'
+import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -25,6 +25,15 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'status'>('date-desc')
   const [showFilters, setShowFilters] = useState(false)
   const [recentActions, setRecentActions] = useState<RideConfirmation[]>([])
+  const [expandedSections, setExpandedSections] = useState<{
+    pending: boolean
+    accepted: boolean
+    rejected: boolean
+  }>({
+    pending: true, // Start with pending expanded since it's most important
+    accepted: false,
+    rejected: false
+  })
 
   useEffect(() => {
     if (user) {
@@ -138,6 +147,13 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   const handleDismissAlert = (confirmationId: string) => {
     setRecentActions(prev => prev.filter(c => c.id !== confirmationId))
+  }
+
+  const toggleSection = (section: 'pending' | 'accepted' | 'rejected') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
   }
 
   const filteredAndSortedConfirmations = () => {
@@ -381,60 +397,79 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       {/* Pending Requests */}
       {(categorized.pending.carRides.length > 0 || categorized.pending.airportTrips.length > 0) && (
         <div>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-              <Clock size={20} className="text-yellow-600" />
+          <div 
+            className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl cursor-pointer hover:bg-yellow-100 transition-colors mb-4"
+            onClick={() => toggleSection('pending')}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Clock size={20} className="text-yellow-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Pending Requests</h2>
+              <span className="bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full font-medium">
+                {categorized.pending.carRides.length + categorized.pending.airportTrips.length} requiring action
+              </span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Pending Requests</h2>
-            <span className="bg-yellow-100 text-yellow-800 text-sm px-2 py-1 rounded-full">
-              {categorized.pending.carRides.length + categorized.pending.airportTrips.length}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-yellow-700 font-medium">
+                {expandedSections.pending ? 'Hide Details' : 'Show Details'}
+              </span>
+              {expandedSections.pending ? (
+                <ChevronUp size={20} className="text-yellow-600" />
+              ) : (
+                <ChevronDown size={20} className="text-yellow-600" />
+              )}
+            </div>
           </div>
 
-          {/* Car Rides - Pending */}
-          {categorized.pending.carRides.length > 0 && (
+          {expandedSections.pending && (
             <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Car size={20} className="text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.pending.carRides.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {categorized.pending.carRides.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+              {/* Car Rides - Pending */}
+              {categorized.pending.carRides.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Car size={20} className="text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.pending.carRides.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.pending.carRides.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Airport Trips - Pending */}
-          {categorized.pending.airportTrips.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Plane size={20} className="text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.pending.airportTrips.length}
-                </span>
+              {/* Airport Trips - Pending */}
+              {categorized.pending.airportTrips.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Plane size={20} className="text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.pending.airportTrips.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.pending.airportTrips.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               </div>
-              <div className="space-y-4">
-                {categorized.pending.airportTrips.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
           )}
         </div>
       )}
@@ -442,60 +477,79 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       {/* Accepted Confirmations */}
       {(categorized.accepted.carRides.length > 0 || categorized.accepted.airportTrips.length > 0) && (
         <div>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <Check size={20} className="text-green-600" />
+          <div 
+            className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl cursor-pointer hover:bg-green-100 transition-colors mb-4"
+            onClick={() => toggleSection('accepted')}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Check size={20} className="text-green-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Accepted Confirmations</h2>
+              <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
+                {categorized.accepted.carRides.length + categorized.accepted.airportTrips.length} confirmed
+              </span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Accepted Confirmations</h2>
-            <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
-              {categorized.accepted.carRides.length + categorized.accepted.airportTrips.length}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-green-700 font-medium">
+                {expandedSections.accepted ? 'Hide Details' : 'Show Details'}
+              </span>
+              {expandedSections.accepted ? (
+                <ChevronUp size={20} className="text-green-600" />
+              ) : (
+                <ChevronDown size={20} className="text-green-600" />
+              )}
+            </div>
           </div>
 
-          {/* Car Rides - Accepted */}
-          {categorized.accepted.carRides.length > 0 && (
+          {expandedSections.accepted && (
             <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Car size={20} className="text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.accepted.carRides.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {categorized.accepted.carRides.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+              {/* Car Rides - Accepted */}
+              {categorized.accepted.carRides.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Car size={20} className="text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.accepted.carRides.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.accepted.carRides.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Airport Trips - Accepted */}
-          {categorized.accepted.airportTrips.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Plane size={20} className="text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.accepted.airportTrips.length}
-                </span>
+              {/* Airport Trips - Accepted */}
+              {categorized.accepted.airportTrips.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Plane size={20} className="text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.accepted.airportTrips.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.accepted.airportTrips.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               </div>
-              <div className="space-y-4">
-                {categorized.accepted.airportTrips.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
           )}
         </div>
       )}
@@ -503,60 +557,79 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       {/* Rejected/Cancelled */}
       {(categorized.rejected.carRides.length > 0 || categorized.rejected.airportTrips.length > 0) && (
         <div>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <X size={20} className="text-red-600" />
+          <div 
+            className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-xl cursor-pointer hover:bg-red-100 transition-colors mb-4"
+            onClick={() => toggleSection('rejected')}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <X size={20} className="text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Rejected/Cancelled</h2>
+              <span className="bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full font-medium">
+                {categorized.rejected.carRides.length + categorized.rejected.airportTrips.length} declined
+              </span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Rejected/Cancelled</h2>
-            <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded-full">
-              {categorized.rejected.carRides.length + categorized.rejected.airportTrips.length}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-red-700 font-medium">
+                {expandedSections.rejected ? 'Hide Details' : 'Show Details'}
+              </span>
+              {expandedSections.rejected ? (
+                <ChevronUp size={20} className="text-red-600" />
+              ) : (
+                <ChevronDown size={20} className="text-red-600" />
+              )}
+            </div>
           </div>
 
-          {/* Car Rides - Rejected */}
-          {categorized.rejected.carRides.length > 0 && (
+          {expandedSections.rejected && (
             <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Car size={20} className="text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
-                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.rejected.carRides.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {categorized.rejected.carRides.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+              {/* Car Rides - Rejected */}
+              {categorized.rejected.carRides.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Car size={20} className="text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Car Rides</h3>
+                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.rejected.carRides.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.rejected.carRides.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Airport Trips - Rejected */}
-          {categorized.rejected.airportTrips.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Plane size={20} className="text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
-                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                  {categorized.rejected.airportTrips.length}
-                </span>
+              {/* Airport Trips - Rejected */}
+              {categorized.rejected.airportTrips.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Plane size={20} className="text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Airport Trips</h3>
+                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                      {categorized.rejected.airportTrips.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {categorized.rejected.airportTrips.map((confirmation) => (
+                      <ConfirmationItem
+                        key={confirmation.id}
+                        confirmation={confirmation}
+                        onUpdate={fetchConfirmations}
+                        onStartChat={onStartChat}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               </div>
-              <div className="space-y-4">
-                {categorized.rejected.airportTrips.map((confirmation) => (
-                  <ConfirmationItem
-                    key={confirmation.id}
-                    confirmation={confirmation}
-                    onUpdate={fetchConfirmations}
-                    onStartChat={onStartChat}
-                  />
-                ))}
-              </div>
-            </div>
           )}
         </div>
       )}
