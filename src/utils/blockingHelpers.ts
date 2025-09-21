@@ -126,6 +126,8 @@ export const deleteChatConversation = async (
   otherUserId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('Deleting chat conversation:', { userId, otherUserId })
+    
     // Mark the chat as deleted for this user (this will hide it from their messages list)
     const { error } = await supabase
       .from('chat_deletions')
@@ -135,6 +137,7 @@ export const deleteChatConversation = async (
         deleted_at: new Date().toISOString()
       })
 
+    console.log('Chat deletion result:', { error })
     if (error) {
       throw new Error(error.message)
     }

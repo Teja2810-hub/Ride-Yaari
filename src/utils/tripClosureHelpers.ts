@@ -127,7 +127,8 @@ export const reopenTrip = async (
 
     console.log('Trip fetch result:', { trip, fetchError })
     if (fetchError || !trip) {
-      throw new Error('Trip not found')
+      console.error('Trip fetch error:', fetchError)
+      throw new Error(fetchError?.message || 'Trip not found')
     }
 
     if (trip.user_id !== userId) {
@@ -135,7 +136,8 @@ export const reopenTrip = async (
     }
 
     if (!trip.is_closed) {
-      throw new Error('Trip is already open')
+      console.log('Trip is already open, returning success')
+      return { success: true }
     }
 
     // Check if trip is still in the future
@@ -157,6 +159,7 @@ export const reopenTrip = async (
 
     console.log('Update result:', { error })
     if (error) {
+      console.error('Update error:', error)
       throw new Error(error.message)
     }
 
@@ -184,7 +187,8 @@ export const reopenRide = async (
 
     console.log('Ride fetch result:', { ride, fetchError })
     if (fetchError || !ride) {
-      throw new Error('Ride not found')
+      console.error('Ride fetch error:', fetchError)
+      throw new Error(fetchError?.message || 'Ride not found')
     }
 
     if (ride.user_id !== userId) {
@@ -192,7 +196,8 @@ export const reopenRide = async (
     }
 
     if (!ride.is_closed) {
-      throw new Error('Ride is already open')
+      console.log('Ride is already open, returning success')
+      return { success: true }
     }
 
     // Check if ride is still in the future
@@ -214,6 +219,7 @@ export const reopenRide = async (
 
     console.log('Update result:', { error })
     if (error) {
+      console.error('Update error:', error)
       throw new Error(error.message)
     }
 

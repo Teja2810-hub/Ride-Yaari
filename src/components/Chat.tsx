@@ -33,6 +33,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [showChatOptions, setShowChatOptions] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
   const [chatDeleted, setChatDeleted] = useState(false)
+  const [expiredMessageIds, setExpiredMessageIds] = useState<Set<string>>(new Set())
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -120,6 +121,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       setIsBlocked(false)
       setChatDeleted(false)
     }
+  }
+
+  const handleMessageExpire = (messageId: string) => {
+    setExpiredMessageIds(prev => new Set([...prev, messageId]))
   }
 
   const handleChatBlocked = () => {
@@ -244,7 +249,30 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
-        setMessages(data)
+        // Filter out expired messages and deleted conversations
+        const filteredMessages = data.filter(message => {
+          // Don't show expired messages
+          if (expiredMessageIds.has(message.id)) {
+            return false
+          }
+          
+          // Auto-expire reject/cancel system messages after 10 minutes
+          if (message.message_type === 'system') {
+            const messageTime = new Date(message.created_at)
+            const now = new Date()
+            const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
+            
+            const messageContent = message.message_content.toLowerCase()
+            if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
+              setExpiredMessageIds(prev => new Set([...prev, message.id]))
+              return false
+            }
+          }
+          
+          return true
+        })
+        
+        setMessages(filteredMessages)
       }
       
       setMessagesLoading(false)
@@ -259,6 +287,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     await handleAsync(async () => {
       console.log('Sending message from:', user.id, 'to:', otherUserId)
+
+      // Restore chat if it was deleted (when user sends a new message)
+      if (chatDeleted) {
+        console.log('Restoring deleted chat by sending new message')
+        await supabase
+          .from('chat_deletions')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('other_user_id', otherUserId)
+        
+        setChatDeleted(false)
+      }
 
       const { error } = await supabase
         .from('chat_messages')
@@ -517,7 +557,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   // Mark messages as read when opening chat
   useEffect(() => {
     const markMessagesAsRead = async () => {
-      if (user && otherUserId) {
+      if (user && otherUserId && !isBlocked && !chatDeleted) {
+        console.log('Marking messages as read for chat between:', user.id, 'and', otherUserId)
         await supabase
           .from('chat_messages')
           .update({ is_read: true })
@@ -527,7 +568,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
 
     markMessagesAsRead()
-  }, [user, otherUserId])
+  }, [user, otherUserId, isBlocked, chatDeleted])
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -671,6 +712,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                             timestamp={message.created_at}
                             type={getMessageTypeFromContent(message.message_content)}
                             rideType={preSelectedRide ? 'car' : 'airport'}
+                            onExpire={() => handleMessageExpire(message.id)}
                           />
                         </div>
                       ) : (
@@ -868,7 +910,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={`Message ${otherUserName}...`}
                 className={`w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base ${
                   isBlocked ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}

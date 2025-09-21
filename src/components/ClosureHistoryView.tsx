@@ -44,7 +44,8 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const handleReopen = async (item: Trip | CarRide, type: 'trip' | 'ride') => {
     if (!user) return
 
-    if (!confirm(`Are you sure you want to reopen this ${type}? It will become visible in search results again.`)) {
+    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
+    if (!confirm(confirmMessage)) {
       return
     }
 
@@ -61,6 +62,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
         result = await reopenRide(item.id, user.id)
       }
       
+      console.log('Reopen result:', result)
       if (!result.success) {
         throw new Error(result.error || `Failed to reopen ${type}`)
       }
@@ -74,7 +76,8 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       }
       
       // Show success message
-      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully!`)
+      const successMessage = `${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully! It will now appear in search results.`
+      alert(successMessage)
     }).finally(() => {
       setReopeningId(null)
     })

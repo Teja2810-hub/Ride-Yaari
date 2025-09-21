@@ -80,12 +80,14 @@ export default function ChatBlockingControls({
     if (!user) return
 
     await handleAsync(async () => {
+      console.log('Attempting to delete chat between:', user.id, 'and', otherUserId)
       const result = await deleteChatConversation(user.id, otherUserId)
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to delete chat')
       }
 
+      console.log('Chat deletion successful')
       setShowDeleteModal(false)
       if (onDeleteChat) onDeleteChat()
     })

@@ -8,6 +8,7 @@ interface EnhancedSystemMessageProps {
   rideType?: 'car' | 'airport'
   priority?: 'high' | 'medium' | 'low'
   actionRequired?: boolean
+  onExpire?: () => void
 }
 
 export default function EnhancedSystemMessage({ 
@@ -16,8 +17,46 @@ export default function EnhancedSystemMessage({
   type = 'system',
   rideType = 'car',
   priority = 'medium',
-  actionRequired = false
+  actionRequired = false,
+  onExpire
 }: EnhancedSystemMessageProps) {
+  const [isExpired, setIsExpired] = React.useState(false)
+
+  React.useEffect(() => {
+    // Auto-expire certain message types after 10 minutes
+    if (type === 'reject' || type === 'cancel') {
+      const messageTime = new Date(timestamp)
+      const now = new Date()
+      const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
+      
+      if (minutesSinceMessage >= 10) {
+        setIsExpired(true)
+        if (onExpire) {
+          onExpire()
+        }
+        return
+      }
+      
+      // Set timer for remaining time
+      const remainingMs = (10 * 60 * 1000) - (minutesSinceMessage * 60 * 1000)
+      if (remainingMs > 0) {
+        const timer = setTimeout(() => {
+          setIsExpired(true)
+          if (onExpire) {
+            onExpire()
+          }
+        }, remainingMs)
+        
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [timestamp, type, onExpire])
+
+  // Don't render expired messages
+  if (isExpired) {
+    return null
+  }
+
   const getMessageStyle = () => {
     switch (type) {
       case 'request':

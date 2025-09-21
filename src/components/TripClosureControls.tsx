@@ -67,6 +67,7 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
         throw new Error('No ride or trip to reopen')
       }
       
+      console.log('Reopen operation result:', result)
       if (!result.success) {
         throw new Error(result.error || 'Failed to reopen')
       }
