@@ -9,32 +9,32 @@ body {
   font-weight: 400;
   line-height: 1.6;
   color: #1d1d1f;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 100%),
-              url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f1f5f9' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background: 
+    /* Travel-themed patterns */
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.08'%3E%3C!-- Car icon --%3E%3Cpath d='M20 40h20v8h-20zm25 0h20v8h-20zm-25 12h45v12h-45zm8 16h29v6h-29z'/%3E%3C!-- Plane icon --%3E%3Cpath d='M80 20l-8 8h16l8-8h-16zm-8 12l8 8v16l-8-8v-16zm16 0v16l8 8v-16l-8-8z'/%3E%3C!-- Road lines --%3E%3Cpath d='M0 80h120v2h-120zm0 85h120v2h-120z' stroke='%23cbd5e1' stroke-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E"),
+    /* Gradient overlay */
+    linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(16, 185, 129, 0.02) 50%, rgba(147, 51, 234, 0.02) 100%);
+  background-size: 240px 240px, cover;
   background-attachment: fixed;
-  background-size: 60px 60px, cover;
 }
 
 /* Background overlay for better readability */
 .bg-neutral-bg {
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.92) 0%, rgba(241, 245, 249, 0.92) 100%);
+  backdrop-filter: blur(12px);
 }
 
 /* Enhanced card backgrounds with subtle transparency */
 .card {
   @apply bg-white/95 rounded-3xl shadow-2xl border border-gray-100/50 transition-all duration-300 z-0;
   backdrop-filter: blur(20px);
-}
-
-/* Travel-themed background pattern */
 .travel-bg {
   background-image: 
-    /* Subtle car and plane icons */
-    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.1'%3E%3Cpath d='M20 20h10v5h-10zm15 0h10v5h-10zm-15 10h25v10h-25zm5 15h15v5h-15z'/%3E%3Cpath d='M70 15l-5 5h10l5-5h-10zm-5 10l5 5v10l-5-5v-10zm10 0v10l5 5v-10l-5-5z'/%3E%3C/g%3E%3C/svg%3E"),
-    /* Gradient overlay */
-    linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(16, 185, 129, 0.02) 50%, rgba(147, 51, 234, 0.02) 100%);
-  background-size: 200px 200px, cover;
+    /* Enhanced travel icons with roads */
+    url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.06'%3E%3C!-- Car with wheels --%3E%3Cpath d='M30 60h30v12h-30zm35 0h30v12h-30zm-35 16h65v16h-65zm10 20h45v8h-45z'/%3E%3Ccircle cx='45' cy='88' r='6'/%3E%3Ccircle cx='75' cy='88' r='6'/%3E%3C!-- Airplane --%3E%3Cpath d='M120 30l-12 12h24l12-12h-24zm-12 16l12 12v24l-12-12v-24zm24 0v24l12 12v-24l-12-12z'/%3E%3C!-- Road markings --%3E%3Cpath d='M0 120h160v3h-160zm0 130h160v3h-160z' stroke='%23cbd5e1' stroke-opacity='0.08'/%3E%3Cpath d='M20 125h15v3h-15zm25 0h15v3h-15zm25 0h15v3h-15zm25 0h15v3h-15zm25 0h15v3h-15z'/%3E%3C!-- Airport runway --%3E%3Cpath d='M100 10h50v2h-50zm0 140h50v2h-50z' stroke='%23cbd5e1' stroke-opacity='0.05'/%3E%3C/g%3E%3C/svg%3E"),
+    /* Subtle gradient overlay */
+    linear-gradient(135deg, rgba(59, 130, 246, 0.015) 0%, rgba(16, 185, 129, 0.015) 50%, rgba(147, 51, 234, 0.015) 100%);
+  background-size: 320px 320px, cover;
   background-attachment: fixed;
 }
 

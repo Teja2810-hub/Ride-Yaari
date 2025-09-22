@@ -200,13 +200,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   if (currentStep === 'signup-otp-verification') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Send size={32} className="text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Send size={24} className="text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Verify Your Email</h2>
-            <p className="text-gray-600 mt-2">
+            <h2 className="text-xl font-bold text-gray-900">Verify Your Email</h2>
+            <p className="text-sm text-gray-600 mt-2">
               We've sent a verification code to <strong>{email}</strong>
             </p>
           </div>
@@ -232,7 +232,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 type="text"
                 value={otpToken}
                 onChange={(e) => setOtpToken(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-lg tracking-widest"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-base tracking-widest"
                 placeholder="Enter 6-digit code"
                 required
                 maxLength={6}
@@ -242,7 +242,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading || otpToken.length !== 6}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Verifying...' : 'Verify Email'}
             </button>
@@ -286,12 +286,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <div className="mt-6 border-t border-gray-200 pt-6">
             <button
               onClick={handleContinueAsGuest}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               <UserCheck size={20} />
               <span>Continue as Guest</span>
             </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-1 text-center">
               Browse and search rides without creating an account
             </p>
           </div>
@@ -312,13 +312,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   if (currentStep === 'magic-link-otp-verification') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Send size={32} className="text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Send size={24} className="text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Verify Your Email</h2>
-            <p className="text-gray-600 mt-2">
+            <h2 className="text-xl font-bold text-gray-900">Verify Your Email</h2>
+            <p className="text-sm text-gray-600 mt-2">
               We've sent a verification code to <strong>{email}</strong>
             </p>
           </div>
@@ -344,7 +344,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 type="text"
                 value={otpToken}
                 onChange={(e) => setOtpToken(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-lg tracking-widest"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-center text-base tracking-widest"
                 placeholder="Enter 6-digit code"
                 required
                 maxLength={6}
@@ -355,7 +355,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading || otpToken.length !== 6}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Verifying...' : 'Verify & Sign In'}
             </button>
@@ -399,12 +399,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <div className="mt-6 border-t border-gray-200 pt-6">
             <button
               onClick={handleContinueAsGuest}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               <UserCheck size={20} />
               <span>Continue as Guest</span>
             </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-1 text-center">
               Browse and search rides without creating an account
             </p>
           </div>
@@ -425,10 +425,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   if (currentStep === 'signup') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-600 mt-2">Join our rideshare community - we'll verify your email with a code</p>
+            <h2 className="text-xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-sm text-gray-600 mt-2">Join our rideshare community - we'll verify your email with a code</p>
           </div>
 
           {error && (
@@ -448,7 +448,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="Enter your full name"
                   required
                 />
@@ -465,7 +465,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="Enter your email"
                   required
                 />
@@ -482,7 +482,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="Create a password"
                   required
                   minLength={6}
@@ -500,7 +500,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Sending Verification Code...' : 'Send Verification Code'}
             </button>
@@ -510,7 +510,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Chrome size={20} />
               <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
@@ -529,12 +529,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <div className="mt-6 border-t border-gray-200 pt-6">
             <button
               onClick={handleContinueAsGuest}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               <UserCheck size={20} />
               <span>Continue as Guest</span>
             </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-gray-500 mt-1 text-center">
               Browse and search rides without creating an account
             </p>
           </div>
@@ -555,10 +555,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   // Sign In Form (default)
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+          <h2 className="text-xl font-bold text-gray-900">Welcome Back</h2>
+          <p className="text-sm text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
         {error && (
@@ -584,7 +584,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Enter your email"
                 required
               />
@@ -601,7 +601,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Enter your password"
                 required
                 minLength={6}
@@ -619,7 +619,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
@@ -629,7 +629,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
             <Chrome size={20} />
             <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
@@ -665,11 +665,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               }
             }}
             disabled={loading || !email}
-            className="w-full border border-blue-600 text-blue-600 py-3 px-4 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Sending...' : 'Sign In with Magic Link'}
           </button>
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p className="text-xs text-gray-500 mt-1 text-center">
             Enter your email above, then click to receive a magic link
           </p>
         </div>
@@ -686,12 +686,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
         <div className="mt-6 border-t border-gray-200 pt-6">
           <button
             onClick={handleContinueAsGuest}
-            className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
           >
             <UserCheck size={20} />
             <span>Continue as Guest</span>
           </button>
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p className="text-xs text-gray-500 mt-1 text-center">
             Browse and search rides without creating an account
           </p>
         </div>

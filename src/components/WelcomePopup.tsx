@@ -29,7 +29,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="card bg-gradient-to-br from-neutral-bg to-white shadow-2xl max-w-md w-full p-6 relative animate-fade-in">
+      <div className="card bg-gradient-to-br from-neutral-bg to-white shadow-2xl max-w-sm w-full p-4 sm:p-6 relative animate-fade-in">
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -40,23 +40,23 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <span className="text-3xl mr-2">🇮🇳</span>
-            <h2 className="text-2xl font-bold text-gray-900">Made in India</h2>
+            <h2 className="text-xl font-bold text-gray-900">Made in India</h2>
           </div>
           
-          <p className="text-lg text-gray-700 mb-4">
+          <p className="text-sm text-gray-700 mb-4">
             RideYaari is proudly developed in India with love and dedication to connect travelers worldwide.
           </p>
           
           <div className="bg-gradient-to-r from-orange-50 to-green-50 rounded-lg p-4 mb-6 border border-orange-200">
             <div className="flex items-center justify-center mb-3">
               <Heart size={20} className="text-red-500 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Help Us Grow! 🚀</h3>
+              <h3 className="text-base font-semibold text-gray-900">Help Us Grow! 🚀</h3>
             </div>
             <p className="text-sm text-gray-600 mb-3">
               RideYaari is completely <strong>free to use</strong> and grows stronger with every new user. 
               The more people who join our community, the better connections and opportunities we can create for everyone.
             </p>
-            <p className="text-sm text-blue-600 font-medium mb-4">
+            <p className="text-xs text-blue-600 font-medium mb-4">
               Please share RideYaari with your friends, family, and fellow travelers. 
               Together, we can build the world's most helpful travel community! ✈️🚗
             </p>
@@ -69,7 +69,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
                   const text = encodeURIComponent('Check out RideYaari - Connect with travelers worldwide for airport trips and car rides!')
                   window.open(`https://wa.me/?text=${text}%20${url}`, '_blank')
                 }}
-                className="flex items-center justify-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
+                className="flex items-center justify-center px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs"
                 title="Share on WhatsApp"
               >
                 <span className="mr-1">📱</span>
@@ -81,7 +81,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
                   const url = encodeURIComponent(window.location.origin)
                   window.open(`https://www.instagram.com/`, '_blank')
                 }}
-                className="flex items-center justify-center px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-colors text-sm"
+                className="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-colors text-xs"
                 title="Share on Instagram"
               >
                 <span className="mr-1">📷</span>
@@ -110,7 +110,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
                     alert('Website link copied to clipboard!')
                   }
                 }}
-                className="flex items-center justify-center px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                className="flex items-center justify-center px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs"
                 title="Share Link"
               >
                 <span className="mr-1">🌐</span>
@@ -121,7 +121,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
 
           <button
             onClick={handleClose}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Get Started with RideYaari
           </button>
