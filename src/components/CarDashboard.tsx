@@ -21,7 +21,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
   const { userProfile, signOut, setGuestMode } = useAuth()
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
+    <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
           <div></div>

@@ -277,7 +277,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg p-4">
       <div className="container mx-auto max-w-6xl">
         <div className="mb-6">
           <button

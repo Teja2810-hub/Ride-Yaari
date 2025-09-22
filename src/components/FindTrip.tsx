@@ -491,19 +491,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             <AlertTriangle size={20} />
                             <span>Your Trip</span>
                           </div>
-                        ) : isGuest ? (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Contact Traveler</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Sign up required to chat
-                            </p>
-                          </div>
                         ) : effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
@@ -517,7 +504,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               Sign up required to chat
                             </p>
                           </div>
-                        ) : (
+                        ) : !effectiveIsGuest ? (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Sign up required to chat
+                            </p>
+                          </div>
+                        ) : !effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
@@ -529,6 +529,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             <p className="text-xs text-gray-500 text-center">
                               Chat first, then request confirmation
                             </p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">Sign up required to chat</p>
                           </div>
                         )}
                       </div>

@@ -517,16 +517,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </button>
           </div>
 
-          <div className="mt-4">
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Chrome size={20} />
-              <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
-            </button>
-          </div>
           <div className="mt-6 text-center">
             <button
               onClick={() => setCurrentStep('signin')}
@@ -634,6 +624,17 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        <div className="mt-4">
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            <Chrome size={20} />
+            <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
+          </button>
+        </div>
 
         <div className="mt-4">
           <button

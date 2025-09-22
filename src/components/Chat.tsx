@@ -708,7 +708,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">

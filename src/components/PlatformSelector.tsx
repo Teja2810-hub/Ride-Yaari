@@ -19,7 +19,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
   const { userProfile, signOut, setGuestMode } = useAuth()
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
+    <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-16 space-y-4 sm:space-y-0">

@@ -9,7 +9,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
   const [submitted, setSubmitted] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg p-2 sm:p-4">
       <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
         <div className="mb-6">
           <button

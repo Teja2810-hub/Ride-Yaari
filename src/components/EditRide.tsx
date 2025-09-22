@@ -146,7 +146,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50/90 to-emerald-100/90 travel-bg p-4">
       <div className="container mx-auto max-w-2xl">
         <div className="mb-6">
           <button

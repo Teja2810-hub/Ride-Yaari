@@ -55,16 +55,20 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
-    if (isGuest && !searched) {
+    if (effectiveIsGuest && !searched && !loading) {
       handleAutoSearch()
     }
-  }, [isGuest])
+  }, [effectiveIsGuest, searched, loading])
 
   const handleAutoSearch = async () => {
     setLoading(true)
 
     try {
-      console.log('=== AUTO SEARCH FOR GUEST ===')
+      console.log('=== AUTO SEARCH FOR GUEST RIDES ===')
+      
+      // Get current date to filter out past rides
+      const now = new Date().toISOString()
+      console.log('Filtering rides after:', now)
       
       const { data, error } = await supabase
         .from('car_rides')
@@ -76,7 +80,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           )
         `)
         .eq('is_closed', false)
-        .gte('departure_date_time', new Date().toISOString())
+        .gte('departure_date_time', now)
         .order('departure_date_time')
         .limit(20) // Limit results for better performance
 
@@ -1095,7 +1099,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             <AlertTriangle size={20} />
                             <span>Your Ride</span>
                           </div>
-                        ) : isGuest ? (
+                        ) : effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
@@ -1108,7 +1112,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                               Sign up required to chat
                             </p>
                           </div>
-                        ) : (
+                        ) : !effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
@@ -1120,6 +1124,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             <p className="text-xs text-gray-500 text-center">
                               Chat first, then request confirmation
                             </p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
+                              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Driver</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">Sign up required to chat</p>
                           </div>
                         )}
                       </div>
