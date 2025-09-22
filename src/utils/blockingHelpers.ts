@@ -101,6 +101,12 @@ export const isUserBlocked = async (
   blockedId: string
 ): Promise<boolean> => {
   try {
+    // Validate input parameters
+    if (!blockerId || !blockedId || !blockerId.trim() || !blockedId.trim()) {
+      console.warn('Invalid user IDs provided to isUserBlocked:', { blockerId, blockedId })
+      return false
+    }
+
     console.log('Checking if user is blocked:', { blockerId, blockedId })
     const { data, error } = await supabase
       .from('user_blocks')
@@ -126,6 +132,11 @@ export const deleteChatConversation = async (
   otherUserId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    // Validate input parameters
+    if (!userId || !otherUserId || !userId.trim() || !otherUserId.trim()) {
+      throw new Error('Invalid user IDs provided')
+    }
+
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
     // Delete all existing messages between these users
@@ -213,6 +224,12 @@ export const isChatDeleted = async (
   otherUserId: string
 ): Promise<boolean> => {
   try {
+    // Validate input parameters
+    if (!userId || !otherUserId || !userId.trim() || !otherUserId.trim()) {
+      console.warn('Invalid user IDs provided to isChatDeleted:', { userId, otherUserId })
+      return false
+    }
+
     const { data, error } = await supabase
       .from('user_chat_deletions')
       .select('id')

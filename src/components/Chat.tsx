@@ -84,7 +84,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   useEffect(() => {
-    if (user) {
+    if (user && otherUserId && otherUserId.trim()) {
       fetchMessages()
       fetchConfirmationStatus()
       
@@ -124,13 +124,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
 
   useEffect(() => {
-    if (user) {
+    if (user && otherUserId && otherUserId.trim()) {
       checkBlockingStatus()
     }
   }, [user, otherUserId])
 
   const checkBlockingStatus = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
 
     try {
       console.log('Checking blocking status between:', user.id, 'and', otherUserId)
@@ -186,7 +186,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const fetchConfirmationStatus = async () => {
-    if (!user || (!preSelectedRide && !preSelectedTrip)) return
+    if (!user || !otherUserId || !otherUserId.trim() || (!preSelectedRide && !preSelectedTrip)) return
     
     await handleAsync(async () => {
       // Dynamically construct the select statement based on ride or trip
@@ -254,7 +254,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const fetchMessages = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
 
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
     
@@ -331,7 +331,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user || sending || isBlocked) return
+    if (!newMessage.trim() || !user || !otherUserId || !otherUserId.trim() || sending || isBlocked) return
 
     setSending(true)
 

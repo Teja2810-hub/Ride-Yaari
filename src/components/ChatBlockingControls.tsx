@@ -30,11 +30,13 @@ export default function ChatBlockingControls({
 
   // Check blocking status on mount
   React.useEffect(() => {
-    checkBlockingStatus()
+    if (user && otherUserId && otherUserId.trim()) {
+      checkBlockingStatus()
+    }
   }, [user, otherUserId])
 
   const checkBlockingStatus = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
     
     try {
       const blocked = await isUserBlocked(user.id, otherUserId)
@@ -45,7 +47,7 @@ export default function ChatBlockingControls({
   }
 
   const handleBlock = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
 
     await handleAsync(async () => {
       const result = await blockUser(user.id, otherUserId, blockReason.trim() || undefined)
@@ -62,7 +64,7 @@ export default function ChatBlockingControls({
   }
 
   const handleUnblock = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
 
     await handleAsync(async () => {
       const result = await unblockUser(user.id, otherUserId)
@@ -77,7 +79,7 @@ export default function ChatBlockingControls({
     })
   }
   const handleDeleteChat = async () => {
-    if (!user) return
+    if (!user || !otherUserId || !otherUserId.trim()) return
 
     await handleAsync(async () => {
       console.log('Attempting to delete chat between:', user.id, 'and', otherUserId)
