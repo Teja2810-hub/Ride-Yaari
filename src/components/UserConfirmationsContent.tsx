@@ -513,28 +513,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
                           onUpdate={fetchConfirmations}
                           onStartChat={onStartChat}
                         />
-                        {/* Add cancel button for passengers with pending requests */}
-                        {confirmation.status === 'pending' && confirmation.passenger_id === user?.id && (
-                          <div className="mt-3 flex justify-end">
-                            <button
-                              onClick={() => handleCancelRequest(confirmation.id)}
-                              disabled={cancellingConfirmationId === confirmation.id}
-                              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                            >
-                              {cancellingConfirmationId === confirmation.id ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  <span>Cancelling...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <X size={16} />
-                                  <span>Cancel My Request</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -559,28 +537,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
                           onUpdate={fetchConfirmations}
                           onStartChat={onStartChat}
                         />
-                        {/* Add cancel button for passengers with pending requests */}
-                        {confirmation.status === 'pending' && confirmation.passenger_id === user?.id && (
-                          <div className="mt-3 flex justify-end">
-                            <button
-                              onClick={() => handleCancelRequest(confirmation.id)}
-                              disabled={cancellingConfirmationId === confirmation.id}
-                              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                            >
-                              {cancellingConfirmationId === confirmation.id ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  <span>Cancelling...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <X size={16} />
-                                  <span>Cancel My Request</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
