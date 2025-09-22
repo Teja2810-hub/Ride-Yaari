@@ -13,6 +13,7 @@ import LoadingSpinner from './LoadingSpinner'
 import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { supabase } from '../utils/supabase'
 import { popupManager } from '../utils/popupManager'
+import { getRideOrTripDetails } from '../utils/messageTemplates'
 
 interface ChatProps {
   onBack: () => void
@@ -64,6 +65,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     return 'system'
   }
   useEffect(() => {
+  // Helper function to determine if system message was initiated by current user
+  const isSystemMessageFromCurrentUser = (message: ChatMessage): boolean => {
+    const content = message.message_content.toLowerCase()
+    const currentUserName = user?.email?.split('@')[0] || 'user'
+    
+    // Check if the message mentions the current user as the one taking action
+    if (content.includes(`${currentUserName.toLowerCase()} has`) || 
+        content.includes(`${currentUserName.toLowerCase()} requested`) ||
+        content.includes(`${currentUserName.toLowerCase()} cancelled`) ||
+        content.includes(`${currentUserName.toLowerCase()} accepted`) ||
+        content.includes(`${currentUserName.toLowerCase()} rejected`)) {
+      return true
+    }
+    
+    // If the sender_id matches current user, it's from current user
+    return message.sender_id === user?.id
+  }
     if (user) {
       fetchMessages()
       fetchConfirmationStatus()
@@ -754,13 +772,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
               <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                 {messages.map((message) => {
                   const isOwn = message.sender_id === user?.id
+                  const isSystemFromCurrentUser = message.message_type === 'system' && isSystemMessageFromCurrentUser(message)
                   return (
                     <div
                       key={message.id}
-                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${
+                        message.message_type === 'system' 
+                          ? (isSystemFromCurrentUser ? 'justify-end' : 'justify-start')
+                          : (isOwn ? 'justify-end' : 'justify-start')
+                      }`}
                     >
                       {message.message_type === 'system' ? (
-                        <div className="w-full max-w-md mx-auto">
+                        <div className="max-w-md">
                           <EnhancedSystemMessage
                             message={message.message_content}
                             timestamp={message.created_at}

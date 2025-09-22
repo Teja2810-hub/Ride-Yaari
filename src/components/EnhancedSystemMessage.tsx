@@ -151,7 +151,7 @@ export default function EnhancedSystemMessage({
     return null
   }
   return (
-    <div className={`${style.bgColor} ${style.borderColor} border rounded-lg p-3 my-2 ${style.glowClass} ${
+    <div className={`${style.bgColor} ${style.borderColor} border rounded-lg p-3 my-2 max-w-md ${style.glowClass} ${
       priority === 'high' ? 'border-l-4 border-l-red-500' : 
       actionRequired ? 'border-l-4 border-l-yellow-500' : ''
     }`}>
