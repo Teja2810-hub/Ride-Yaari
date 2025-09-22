@@ -18,8 +18,24 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [resendCooldown, setResendCooldown] = useState(0)
   
   const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, setGuestMode } = useAuth()
+
+  // Cooldown timer effect
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (resendCooldown > 0) {
+      interval = setInterval(() => {
+        setResendCooldown(prev => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [resendCooldown])
+
+  const startResendCooldown = () => {
+    setResendCooldown(60)
+  }
 
   const handleContinueAsGuest = () => {
     setGuestMode(true)
@@ -58,14 +74,17 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { error } = await sendEmailVerificationOtp(email)
+      const { error } = await sendMagicLinkOtp(email)
       if (error) throw error
       
       setSuccess('Magic link sent to your email! Please check your inbox.')
+      startResendCooldown()
     } catch (error: any) {
       console.error('Magic link error:', error)
       if (error?.status === 504) {
         setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else if (error?.status === 429) {
+        setError('Too many requests. Please wait before trying again.')
       } else {
         setError(error?.message || 'Failed to send magic link. Please try again.')
       }
@@ -86,10 +105,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       // Move to OTP verification step
       setCurrentStep('signup-otp-verification')
       setSuccess('Verification code sent to your email!')
+      startResendCooldown()
     } catch (error: any) {
       console.error('Sign up error:', error)
       if (error?.status === 504) {
         setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else if (error?.status === 429) {
+        setError('Too many requests. Please wait before trying again.')
       } else {
         setError(error?.message || 'Failed to create account. Please try again.')
       }
@@ -211,11 +233,28 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
           <div className="mt-6 text-center space-y-3">
             <button
-              onClick={() => sendSignUpOtp(email, password, fullName)}
-              disabled={loading}
+              onClick={async () => {
+                setLoading(true)
+                setError(null)
+                try {
+                  const { error } = await sendSignUpOtp(email, password, fullName)
+                  if (error) throw error
+                  setSuccess('Verification code sent!')
+                  startResendCooldown()
+                } catch (error: any) {
+                  if (error?.status === 429) {
+                    setError('Too many requests. Please wait before trying again.')
+                  } else {
+                    setError(error?.message || 'Failed to resend code.')
+                  }
+                } finally {
+                  setLoading(false)
+                }
+              }}
+              disabled={loading || resendCooldown > 0}
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
-              Resend Code
+              {resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}
             </button>
             <div>
               <button
@@ -307,11 +346,28 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
           <div className="mt-6 text-center space-y-3">
             <button
-              onClick={() => sendMagicLinkOtp(email)}
-              disabled={loading}
+              onClick={async () => {
+                setLoading(true)
+                setError(null)
+                try {
+                  const { error } = await sendMagicLinkOtp(email)
+                  if (error) throw error
+                  setSuccess('Verification code sent!')
+                  startResendCooldown()
+                } catch (error: any) {
+                  if (error?.status === 429) {
+                    setError('Too many requests. Please wait before trying again.')
+                  } else {
+                    setError(error?.message || 'Failed to resend code.')
+                  }
+                } finally {
+                  setLoading(false)
+                }
+              }}
+              disabled={loading || resendCooldown > 0}
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
-              Resend Code
+              {resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}
             </button>
             <div>
               <button
@@ -555,10 +611,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 if (error) throw error
                 setCurrentStep('magic-link-otp-verification')
                 setSuccess('Magic link code sent to your email!')
+                startResendCooldown()
               } catch (error: any) {
                 console.error('Magic link error:', error)
                 if (error?.status === 504) {
                   setError('Connection to server timed out. Please check your internet connection or try again later.')
+                } else if (error?.status === 429) {
+                  setError('Too many requests. Please wait before trying again.')
                 } else {
                   setError(error?.message || 'Failed to send magic link. Please try again.')
                 }
