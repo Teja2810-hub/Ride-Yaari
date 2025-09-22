@@ -128,7 +128,7 @@ export const deleteChatConversation = async (
   return retryWithBackoff(async () => {
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
-    // First, delete all existing messages between these users
+    // Delete all existing messages between these users
     const { error: deleteMessagesError } = await supabase
       .from('chat_messages')
       .delete()
@@ -139,16 +139,18 @@ export const deleteChatConversation = async (
       throw new Error(deleteMessagesError.message)
     }
 
-    // Remove any existing chat deletion records for this conversation
-    const { error: removeRecordError } = await supabase
+    // Add a chat deletion record for this user
+    const { error: insertRecordError } = await supabase
       .from('user_chat_deletions')
-      .delete()
-      .eq('user_id', userId)
-      .eq('other_user_id', otherUserId)
+      .upsert({
+        user_id: userId,
+        other_user_id: otherUserId,
+        deleted_at: new Date().toISOString()
+      })
 
-    // Don't throw error if no records exist to delete
-    if (removeRecordError && removeRecordError.code !== 'PGRST116') {
-      console.error('Error removing chat deletion record:', removeRecordError)
+    if (insertRecordError) {
+      console.error('Error creating chat deletion record:', insertRecordError)
+      throw new Error(insertRecordError.message)
     }
 
     console.log('Chat conversation completely deleted for user:', userId)
