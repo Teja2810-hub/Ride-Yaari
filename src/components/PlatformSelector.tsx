@@ -22,17 +22,17 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
-            className="group cursor-pointer card p-6 sm:p-8 min-h-[360px] sm:min-h-[400px] flex items-center justify-center hover:shadow-2xl"
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-16 space-y-4 sm:space-y-0">
           <div></div>
           
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-accent-blue to-blue-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             {isGuest && (
               <button
                 onClick={() => setGuestMode(false)}
-              <p className="text-sm sm:text-base text-text-secondary mb-4 font-light max-w-xs leading-relaxed">
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
               >
                 <User size={18} />
-              <div className="space-y-2 text-sm text-text-secondary mb-6">
+                <span>Sign Up</span>
               </button>
             )}
             <button
@@ -56,17 +56,17 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                 </button>
                 <div className="text-right">
                   <p className="text-sm text-text-secondary font-light">Welcome,</p>
-            className="group cursor-pointer card p-6 sm:p-8 min-h-[360px] sm:min-h-[400px] flex items-center justify-center hover:shadow-2xl"
+                  <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
                 </div>
                 {userProfile?.profile_image_url && (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-md">
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
-              <p className="text-sm sm:text-base text-text-secondary mb-4 font-light max-w-xs leading-relaxed">
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
-              <div className="space-y-2 text-sm text-text-secondary mb-6">
+                      }}
                     />
                   </div>
                 )}
@@ -208,12 +208,12 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                     <span className="text-white font-semibold text-sm">2</span>
                   </div>
                 </div>
-        <div className="card p-10 sm:p-16 mb-20 mt-16 sm:mt-24">
+                <h4 className="font-semibold text-text-primary mb-3 text-lg">Global Network</h4>
                 <p className="text-text-secondary text-base font-light leading-relaxed">Connect with travelers and drivers worldwide for maximum convenience</p>
               </div>
               <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <div className="w-10 h-10 bg-accent-blue rounded-2xl flex items-center justify-center shadow-md">
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <div className="w-8 h-8 bg-accent-blue rounded-xl flex items-center justify-center">
                     <span className="text-white font-semibold text-sm">3</span>
                   </div>
                 </div>
@@ -221,8 +221,8 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                 <p className="text-text-secondary text-base font-light leading-relaxed">Intuitive interface makes posting and finding trips simple and fast</p>
               </div>
             </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <div className="w-10 h-10 bg-accent-blue rounded-2xl flex items-center justify-center shadow-md">
+          </div>
+
           {/* Reviews Section */}
           <div className="mb-20">
             <ReviewDisplay title="What Our Community Says" maxReviews={6} />
@@ -230,8 +230,8 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           
           {/* Call to Action */}
           <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <div className="w-10 h-10 bg-accent-blue rounded-2xl flex items-center justify-center shadow-md">
+            <button
+              className="btn-primary text-lg px-12 py-4"
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
