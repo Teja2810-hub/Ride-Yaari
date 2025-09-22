@@ -29,6 +29,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [newMessage, setNewMessage] = useState('')
   const [messagesLoading, setMessagesLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [cancellingRequest, setCancellingRequest] = useState(false)
   const [currentConfirmation, setCurrentConfirmation] = useState<RideConfirmation | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { error: chatError, handleAsync, clearError } = useErrorHandler()
@@ -503,7 +504,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const handlePassengerCancel = async (confirmationId: string) => {
     if (!user || !currentConfirmation) return
     
-    setLoading(true)
+    setCancellingRequest(true)
 
     await handleAsync(async () => {
       const { error } = await supabase
@@ -532,10 +533,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         })
 
       // Refresh confirmation status and messages
-      fetchConfirmationStatus()
-      fetchMessages()
+      await fetchConfirmationStatus()
+      await fetchMessages()
     }).finally(() => {
-      setLoading(false)
+      setCancellingRequest(false)
     })
   }
 
@@ -861,7 +862,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
            isCurrentUserPassengerOfConfirmation() && 
            (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between">
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <Clock size={16} className="text-yellow-600" />
                 </div>
@@ -871,6 +872,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                     You requested a ride and it's waiting for approval.
                   </p>
                 </div>
+                <button
+                  onClick={() => handlePassengerCancel(currentConfirmation.id)}
+                  disabled={cancellingRequest}
+                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                >
+                  {cancellingRequest ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Cancelling...</span>
+                    </>
+                  ) : (
+                    <>
+                      <X size={14} />
+                      <span>Cancel Request</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}
