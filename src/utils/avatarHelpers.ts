@@ -16,7 +16,7 @@ export const getDefaultAvatarUrl = (gender: string, fullName: string): string =>
   // Use different background colors based on gender
   const colorSchemes = {
     male: {
-      bg: '4F46E5', // Indigo
+      bg: '3B82F6', // Blue
       text: 'FFFFFF'
     },
     female: {
@@ -39,8 +39,15 @@ export const getDefaultAvatarUrl = (gender: string, fullName: string): string =>
 
   const scheme = colorSchemes[gender as keyof typeof colorSchemes] || colorSchemes.default
 
-  // Generate avatar using a service like UI Avatars or similar
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initial)}&background=${scheme.bg}&color=${scheme.text}&size=200&font-size=0.6&bold=true&format=png`
+  // Generate gender-appropriate avatar
+  if (gender === 'male') {
+    return `https://avatar.iran.liara.run/public/boy?username=${encodeURIComponent(fullName)}`
+  } else if (gender === 'female') {
+    return `https://avatar.iran.liara.run/public/girl?username=${encodeURIComponent(fullName)}`
+  } else {
+    // For other/prefer_not_to_say/default, use initials with color scheme
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(initial)}&background=${scheme.bg}&color=${scheme.text}&size=200&font-size=0.6&bold=true&format=png`
+  }
 }
 
 /**

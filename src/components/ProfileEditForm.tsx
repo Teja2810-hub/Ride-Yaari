@@ -41,7 +41,7 @@ interface EmailData {
 }
 
 export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormProps) {
-  const { user, userProfile } = useAuth()
+  const { user, userProfile, refreshUserProfile } = useAuth()
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'email'>('profile')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
@@ -144,6 +144,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
       }
 
       setSuccess('Profile updated successfully!')
+      // Refresh the profile in context to update UI immediately
+      await refreshUserProfile()
       if (onSuccess) onSuccess()
     } catch (error: any) {
       console.error('Error updating profile:', error)

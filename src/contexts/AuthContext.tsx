@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean
   isGuest: boolean
   setGuestMode: (isGuest: boolean) => void
+  refreshUserProfile: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
   sendSignUpOtp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
@@ -113,6 +114,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Unexpected error in fetchUserProfile:', error)
       setUserProfile(null)
+    }
+  }
+
+  const refreshUserProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id)
     }
   }
 
@@ -264,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isGuest,
     setGuestMode,
+    refreshUserProfile,
     signIn,
     signUp,
     sendSignUpOtp,
