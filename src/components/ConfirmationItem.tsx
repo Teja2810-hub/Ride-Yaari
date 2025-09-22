@@ -11,6 +11,7 @@ import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { Trash2 } from 'lucide-react'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -39,6 +40,12 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [reversalTimeRemaining, setReversalTimeRemaining] = useState<number | null>(null)
   const [canRequestAgainState, setCanRequestAgainState] = useState(true)
   const [requestCooldownTime, setRequestCooldownTime] = useState<Date | null>(null)
+  const [showConfirmModal, setShowConfirmModal] = useState<{
+    show: boolean
+    type: 'accept' | 'reject' | 'cancel'
+    title: string
+    message: string
+  }>({ show: false, type: 'accept', title: '', message: '' })
 
   // Check reversal eligibility and request-again eligibility on mount
   React.useEffect(() => {
@@ -132,18 +139,21 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   const handleAccept = async () => {
     if (!user) return
+    setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
     hideDisclaimer()
     await acceptRequest(confirmation.id, user.id, confirmation.passenger_id)
   }
 
   const handleReject = async () => {
     if (!user) return
+    setShowConfirmModal({ show: false, type: 'reject', title: '', message: '' })
     hideDisclaimer()
     await rejectRequest(confirmation.id, user.id, confirmation.passenger_id)
   }
 
   const handleCancel = async () => {
     if (!user) return
+    setShowConfirmModal({ show: false, type: 'cancel', title: '', message: '' })
     hideDisclaimer()
     await cancelConfirmation(
       confirmation.id, 
@@ -152,6 +162,31 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       ride,
       trip
     )
+  }
+
+  const showConfirmationModal = (type: 'accept' | 'reject' | 'cancel') => {
+    const passengerName = confirmation.user_profiles.full_name
+    const rideType = ride ? 'car ride' : 'airport trip'
+    
+    let title = ''
+    let message = ''
+    
+    switch (type) {
+      case 'accept':
+        title = 'Accept Request'
+        message = `Are you sure you want to accept ${passengerName}'s request for this ${rideType}?`
+        break
+      case 'reject':
+        title = 'Reject Request'
+        message = `Are you sure you want to reject ${passengerName}'s request for this ${rideType}?`
+        break
+      case 'cancel':
+        title = 'Cancel Ride'
+        message = `Are you sure you want to cancel this confirmed ${rideType}?`
+        break
+    }
+    
+    setShowConfirmModal({ show: true, type, title, message })
   }
 
   const formatDateTime = (dateTimeString: string) => {
@@ -490,7 +525,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {confirmation.status === 'pending' && isCurrentUserOwner && (
               <>
                 <button
-                  onClick={() => showDisclaimer('owner-reject-request', confirmation)}
+                  onClick={() => showConfirmationModal('reject')}
                   disabled={isLoading}
                   className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                 >
@@ -498,7 +533,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                   <span>Reject</span>
                 </button>
                 <button
-                  onClick={() => showDisclaimer('owner-accept-request', confirmation)}
+                  onClick={() => showConfirmationModal('accept')}
                   disabled={isLoading}
                   className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                 >
@@ -519,7 +554,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Accepted status actions */}
             {confirmation.status === 'accepted' && (
               <button
-                onClick={() => showDisclaimer('cancel-confirmed-ride', confirmation)}
+                onClick={() => showConfirmationModal('cancel')}
                 disabled={isLoading}
                 className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
               >
@@ -575,6 +610,99 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         </div>
       </div>
 
+      {/* Custom Confirmation Modal */}
+      {showConfirmModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                showConfirmModal.type === 'accept' ? 'bg-green-100' :
+                showConfirmModal.type === 'reject' ? 'bg-red-100' :
+                'bg-orange-100'
+              }`}>
+                {showConfirmModal.type === 'accept' ? (
+                  <Check size={32} className="text-green-600" />
+                ) : showConfirmModal.type === 'reject' ? (
+                  <X size={32} className="text-red-600" />
+                ) : (
+                  <AlertTriangle size={32} className="text-orange-600" />
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{showConfirmModal.title}</h2>
+              <p className="text-gray-600">{showConfirmModal.message}</p>
+            </div>
+            
+            <div className={`border rounded-lg p-4 mb-6 ${
+              showConfirmModal.type === 'accept' ? 'bg-green-50 border-green-200' :
+              showConfirmModal.type === 'reject' ? 'bg-red-50 border-red-200' :
+              'bg-orange-50 border-orange-200'
+            }`}>
+              <h4 className={`font-semibold mb-2 ${
+                showConfirmModal.type === 'accept' ? 'text-green-900' :
+                showConfirmModal.type === 'reject' ? 'text-red-900' :
+                'text-orange-900'
+              }`}>
+                {showConfirmModal.type === 'accept' ? 'This will:' :
+                 showConfirmModal.type === 'reject' ? 'This will:' :
+                 'Warning:'}
+              </h4>
+              <ul className={`text-sm space-y-1 ${
+                showConfirmModal.type === 'accept' ? 'text-green-800' :
+                showConfirmModal.type === 'reject' ? 'text-red-800' :
+                'text-orange-800'
+              }`}>
+                {showConfirmModal.type === 'accept' ? (
+                  <>
+                    <li>• Confirm the passenger for your ride</li>
+                    <li>• Notify the passenger of acceptance</li>
+                    <li>• Create a commitment to provide the ride</li>
+                  </>
+                ) : showConfirmModal.type === 'reject' ? (
+                  <>
+                    <li>• Decline the passenger's request</li>
+                    <li>• Notify the passenger of your decision</li>
+                    <li>• Allow the passenger to request again</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• Cancel the confirmed ride arrangement</li>
+                    <li>• Notify the other party immediately</li>
+                    <li>• This may affect your reputation</li>
+                  </>
+                )}
+              </ul>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (showConfirmModal.type === 'accept') {
+                    handleAccept()
+                  } else if (showConfirmModal.type === 'reject') {
+                    handleReject()
+                  } else {
+                    handleCancel()
+                  }
+                }}
+                className={`flex-1 text-white py-3 px-4 rounded-lg font-medium transition-colors ${
+                  showConfirmModal.type === 'accept' ? 'bg-green-600 hover:bg-green-700' :
+                  showConfirmModal.type === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                  'bg-orange-600 hover:bg-orange-700'
+                }`}
+              >
+                Yes, {showConfirmModal.type === 'accept' ? 'Accept' : 
+                      showConfirmModal.type === 'reject' ? 'Reject' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Disclaimer Modals */}
       <DisclaimerModal
         isOpen={confirmationState.showDisclaimer && confirmationState.disclaimerType === 'owner-accept-request'}

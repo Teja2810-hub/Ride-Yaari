@@ -17,6 +17,11 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [unblockingUserId, setUnblockingUserId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [showUnblockModal, setShowUnblockModal] = useState<{
+    show: boolean
+    userId: string
+    userName: string
+  }>({ show: false, userId: '', userName: '' })
 
   useEffect(() => {
     if (user) {
@@ -36,6 +41,7 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
   const handleUnblock = async (blockedUserId: string) => {
     if (!user) return
 
+    setShowUnblockModal({ show: false, userId: '', userName: '' })
     setUnblockingUserId(blockedUserId)
 
     await handleAsync(async () => {
@@ -57,10 +63,9 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
   }
 
   const showUnblockConfirmation = (blockedUserId: string, userName: string) => {
-    if (confirm(`Are you sure you want to unblock ${userName}? They will be able to contact you again.`)) {
-      handleUnblock(blockedUserId)
-    }
+    setShowUnblockModal({ show: true, userId: blockedUserId, userName })
   }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -234,6 +239,48 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Custom Unblock Confirmation Modal */}
+      {showUnblockModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageCircle size={32} className="text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Unblock User</h2>
+              <p className="text-gray-600">
+                Are you sure you want to unblock <strong>{showUnblockModal.userName}</strong>?
+              </p>
+            </div>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-green-900 mb-2">What will happen:</h4>
+              <ul className="text-sm text-green-800 space-y-1">
+                <li>• They will be able to contact you again</li>
+                <li>• They can see your new trips and rides</li>
+                <li>• Previous conversations will be restored</li>
+                <li>• They can request to join your rides/trips</li>
+              </ul>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowUnblockModal({ show: false, userId: '', userName: '' })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUnblock(showUnblockModal.userId)}
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Yes, Unblock User
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

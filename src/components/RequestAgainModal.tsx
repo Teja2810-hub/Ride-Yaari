@@ -122,11 +122,20 @@ export default function RequestAgainModal({
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Cannot Request Again</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
           <div className="text-center">
             <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock size={32} className="text-yellow-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Cannot Request Again</h2>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Request Not Available</h3>
             <p className="text-gray-600 mb-4">
               {eligibility.reason || 'You cannot request this ride again at this time.'}
             </p>
@@ -137,13 +146,13 @@ export default function RequestAgainModal({
                 </p>
               </div>
             )}
-            <button
-              onClick={onClose}
-              className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-            >
-              Close
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+          >
+            Understood
+          </button>
         </div>
       </div>
     )

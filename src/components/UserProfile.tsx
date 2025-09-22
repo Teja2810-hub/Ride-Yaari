@@ -47,6 +47,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [showRideHistory, setShowRideHistory] = useState(false)
   const [showProfileEdit, setShowProfileEdit] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState<{
+    show: boolean
+    type: 'trip' | 'ride'
+    id: string
+    name: string
+  }>({ show: false, type: 'trip', id: '', name: '' })
 
   useEffect(() => {
     if (user) {
@@ -180,9 +186,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }
 
   const handleDeleteTrip = async (tripId: string) => {
-    if (!confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
-      return
-    }
+    setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })
 
     try {
       const { error } = await supabase
@@ -194,14 +198,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
       setTrips(trips.filter(trip => trip.id !== tripId))
     } catch (error: any) {
-      alert('Failed to delete trip: ' + error.message)
+      setError('Failed to delete trip: ' + error.message)
     }
   }
 
   const handleDeleteRide = async (rideId: string) => {
-    if (!confirm('Are you sure you want to delete this ride? This action cannot be undone.')) {
-      return
-    }
+    setShowDeleteModal({ show: false, type: 'ride', id: '', name: '' })
 
     try {
       const { error } = await supabase
@@ -213,8 +215,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
       setRides(rides.filter(ride => ride.id !== rideId))
     } catch (error: any) {
-      alert('Failed to delete ride: ' + error.message)
+      setError('Failed to delete ride: ' + error.message)
     }
+  }
+
+  const showDeleteConfirmation = (type: 'trip' | 'ride', id: string, name: string) => {
+    setShowDeleteModal({ show: true, type, id, name })
   }
 
   const formatDateTime = (dateTimeString: string) => {
@@ -453,7 +459,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 joinedTrips={joinedTrips}
                 onStartChat={onStartChat}
                 onEditTrip={onEditTrip}
-                onDeleteTrip={handleDeleteTrip}
+                onDeleteTrip={(tripId) => {
+                  const trip = trips.find(t => t.id === tripId)
+                  const tripName = trip ? `${trip.leaving_airport} → ${trip.destination_airport}` : 'this trip'
+                  showDeleteConfirmation('trip', tripId, tripName)
+                }}
                 onViewTripHistory={handleViewTripHistory}
                 onRefresh={fetchUserData}
               />
@@ -465,7 +475,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 joinedRides={joinedRides}
                 onStartChat={onStartChat}
                 onEditRide={onEditRide}
-                onDeleteRide={handleDeleteRide}
+                onDeleteRide={(rideId) => {
+                  const ride = rides.find(r => r.id === rideId)
+                  const rideName = ride ? `${ride.from_location} → ${ride.to_location}` : 'this ride'
+                  showDeleteConfirmation('ride', rideId, rideName)
+                }}
                 onViewRideHistory={handleViewRideHistory}
                 onRefresh={fetchUserData}
               />
@@ -557,6 +571,59 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             fetchUserData()
           }}
         />
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {showDeleteModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={32} className="text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Delete {showDeleteModal.type}</h2>
+              <p className="text-gray-600">
+                Are you sure you want to delete <strong>{showDeleteModal.name}</strong>?
+              </p>
+            </div>
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={16} className="text-red-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-red-900 mb-1">Warning:</h4>
+                  <ul className="text-sm text-red-800 space-y-1">
+                    <li>• This action cannot be undone</li>
+                    <li>• All associated confirmations will be removed</li>
+                    <li>• Chat conversations will remain but the {showDeleteModal.type} reference will be lost</li>
+                    <li>• Passengers will be notified if they had confirmed requests</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (showDeleteModal.type === 'trip') {
+                    handleDeleteTrip(showDeleteModal.id)
+                  } else {
+                    handleDeleteRide(showDeleteModal.id)
+                  }
+                }}
+                className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Yes, Delete {showDeleteModal.type}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

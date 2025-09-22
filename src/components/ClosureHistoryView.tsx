@@ -25,6 +25,11 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const [sortBy, setSortBy] = useState<SortOption>('closed-desc')
   const [reopeningId, setReopeningId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [showReopenModal, setShowReopenModal] = useState<{
+    show: boolean
+    item: Trip | CarRide | null
+    type: 'trip' | 'ride'
+  }>({ show: false, item: null, type: 'trip' })
 
   useEffect(() => {
     if (user) {
@@ -45,6 +50,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const handleReopen = async (item: Trip | CarRide, type: 'trip' | 'ride') => {
     if (!user) return
 
+    setShowReopenModal({ show: false, item: null, type: 'trip' })
 
     console.log(`Attempting to reopen ${type}:`, item.id)
     setReopeningId(item.id)
@@ -81,11 +87,9 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   }
 
   const showReopenConfirmation = (item: Trip | CarRide, type: 'trip' | 'ride') => {
-    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
-    if (confirm(confirmMessage)) {
-      handleReopen(item, type)
-    }
+    setShowReopenModal({ show: true, item, type })
   }
+
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
       weekday: 'short',
@@ -419,12 +423,47 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
           })}
         </div>
       )}
+
+      {/* Custom Reopen Confirmation Modal */}
+      {showReopenModal.show && showReopenModal.item && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Unlock size={32} className="text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Reopen {showReopenModal.type}</h2>
+              <p className="text-gray-600">
+                Are you sure you want to reopen this {showReopenModal.type}?
+              </p>
+            </div>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-green-900 mb-2">What will happen:</h4>
+              <ul className="text-sm text-green-800 space-y-1">
+                <li>• The {showReopenModal.type} will become visible in search results again</li>
+                <li>• New passengers can request to join</li>
+                <li>• You'll receive new confirmation requests</li>
+                <li>• Existing confirmed passengers remain confirmed</li>
+              </ul>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowReopenModal({ show: false, item: null, type: 'trip' })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleReopen(showReopenModal.item!, showReopenModal.type)}
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              >
+                Yes, Reopen {showReopenModal.type}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
-}
-  function showReopenConfirmation(item: Trip | CarRide, type: 'trip' | 'ride') {
-    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
-    if (confirm(confirmMessage)) {
-      handleReopen(item, type)
-    }
-  }

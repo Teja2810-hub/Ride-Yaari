@@ -26,6 +26,11 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [disclaimerAction, setDisclaimerAction] = useState<ActionType>('accept')
   const [selectedConfirmation, setSelectedConfirmation] = useState<RideConfirmation | null>(null)
+  const [showConfirmModal, setShowConfirmModal] = useState<{
+    show: boolean
+    type: ActionType
+    confirmation: RideConfirmation | null
+  }>({ show: false, type: 'accept', confirmation: null })
 
   const sendEnhancedSystemMessage = async (
     action: 'accept' | 'reject' | 'cancel',
@@ -142,9 +147,63 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
   }
 
   const handleAction = (action: ActionType, confirmation: RideConfirmation) => {
-    setDisclaimerAction(action)
-    setSelectedConfirmation(confirmation)
-    setShowDisclaimer(true)
+    setShowConfirmModal({ show: true, type: action, confirmation })
+  }
+
+  const handleConfirmModalAction = async () => {
+    if (!user || !showConfirmModal.confirmation) return
+
+    setShowConfirmModal({ show: false, type: 'accept', confirmation: null })
+    setActionLoading(showConfirmModal.confirmation.id)
+
+    try {
+      let newStatus: string
+
+      switch (showConfirmModal.type) {
+        case 'accept':
+          newStatus = 'accepted'
+          break
+        case 'reject':
+          newStatus = 'rejected'
+          break
+        case 'cancel':
+          newStatus = 'rejected'
+          break
+        default:
+          throw new Error('Invalid action')
+      }
+
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: newStatus,
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', showConfirmModal.confirmation.id)
+
+      if (error) throw error
+
+      // Send system message to passenger
+      const userRole = showConfirmModal.type === 'cancel' ? 'owner' : 'owner'
+      const action = showConfirmModal.type === 'cancel' ? 'cancel' : showConfirmModal.type
+      
+      await sendEnhancedSystemMessage(
+        action as 'accept' | 'reject' | 'cancel',
+        userRole,
+        user.id,
+        showConfirmModal.confirmation.passenger_id,
+        showConfirmModal.confirmation
+      )
+
+      fetchConfirmations()
+      if (onUpdate) onUpdate()
+    } catch (error: any) {
+      console.error(`Error ${showConfirmModal.type}ing request:`, error)
+      setError(`Failed to ${showConfirmModal.type} request. Please try again.`)
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   const handleConfirmAction = async () => {
@@ -537,6 +596,104 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
           </div>
         )}
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {showConfirmModal.show && showConfirmModal.confirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                showConfirmModal.type === 'accept' ? 'bg-green-100' :
+                showConfirmModal.type === 'reject' ? 'bg-red-100' :
+                'bg-orange-100'
+              }`}>
+                {showConfirmModal.type === 'accept' ? (
+                  <Check size={32} className="text-green-600" />
+                ) : showConfirmModal.type === 'reject' ? (
+                  <X size={32} className="text-red-600" />
+                ) : (
+                  <AlertTriangle size={32} className="text-orange-600" />
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {showConfirmModal.type === 'accept' ? 'Accept Request' :
+                 showConfirmModal.type === 'reject' ? 'Reject Request' :
+                 'Cancel Ride'}
+              </h2>
+              <p className="text-gray-600">
+                {showConfirmModal.type === 'accept' 
+                  ? `Accept ${showConfirmModal.confirmation.user_profiles.full_name}'s request?`
+                  : showConfirmModal.type === 'reject'
+                    ? `Reject ${showConfirmModal.confirmation.user_profiles.full_name}'s request?`
+                    : `Cancel the confirmed ride with ${showConfirmModal.confirmation.user_profiles.full_name}?`
+                }
+              </p>
+            </div>
+            
+            <div className={`border rounded-lg p-4 mb-6 ${
+              showConfirmModal.type === 'accept' ? 'bg-green-50 border-green-200' :
+              showConfirmModal.type === 'reject' ? 'bg-red-50 border-red-200' :
+              'bg-orange-50 border-orange-200'
+            }`}>
+              <h4 className={`font-semibold mb-2 ${
+                showConfirmModal.type === 'accept' ? 'text-green-900' :
+                showConfirmModal.type === 'reject' ? 'text-red-900' :
+                'text-orange-900'
+              }`}>
+                {showConfirmModal.type === 'cancel' ? 'Warning:' : 'This will:'}
+              </h4>
+              <ul className={`text-sm space-y-1 ${
+                showConfirmModal.type === 'accept' ? 'text-green-800' :
+                showConfirmModal.type === 'reject' ? 'text-red-800' :
+                'text-orange-800'
+              }`}>
+                {showConfirmModal.type === 'accept' ? (
+                  <>
+                    <li>• Confirm the passenger for your ride</li>
+                    <li>• Notify the passenger of acceptance</li>
+                    <li>• Create a commitment to provide the ride</li>
+                  </>
+                ) : showConfirmModal.type === 'reject' ? (
+                  <>
+                    <li>• Decline the passenger's request</li>
+                    <li>• Notify the passenger of your decision</li>
+                    <li>• Allow the passenger to request again</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• Remove the passenger from your ride</li>
+                    <li>• Notify the passenger immediately</li>
+                    <li>• This may affect your reputation</li>
+                  </>
+                )}
+              </ul>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowConfirmModal({ show: false, type: 'accept', confirmation: null })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmModalAction}
+                disabled={isLoading}
+                className={`flex-1 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                  showConfirmModal.type === 'accept' ? 'bg-green-600 hover:bg-green-700' :
+                  showConfirmModal.type === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                  'bg-orange-600 hover:bg-orange-700'
+                }`}
+              >
+                {isLoading ? 'Processing...' : 
+                 showConfirmModal.type === 'accept' ? 'Yes, Accept' :
+                 showConfirmModal.type === 'reject' ? 'Yes, Reject' :
+                 'Yes, Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Disclaimer Modal */}
       <DisclaimerModal
