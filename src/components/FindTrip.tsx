@@ -35,9 +35,10 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
-    if (effectiveIsGuest && !searched && !loading) {
-      handleAutoSearch()
-    }
+    // Remove auto-search for guests - they should search manually
+    // if (effectiveIsGuest && !searched && !loading) {
+    //   handleAutoSearch()
+    // }
   }, [effectiveIsGuest, searched, loading])
 
   const handleAutoSearch = async () => {
@@ -360,11 +361,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         </div>
 
         {/* Search Results */}
-        {(searched || effectiveIsGuest) && (
+        {searched && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {effectiveIsGuest && !searched ? 'Available Trips' : 'Search Results'}
+                Search Results
               </h2>
               <span className="text-gray-600">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''} found

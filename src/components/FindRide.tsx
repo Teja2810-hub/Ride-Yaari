@@ -55,9 +55,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
-    if (effectiveIsGuest && !searched && !loading) {
-      handleAutoSearch()
-    }
+    // Remove auto-search for guests - they should search manually
+    // if (effectiveIsGuest && !searched && !loading) {
+    //   handleAutoSearch()
+    // }
   }, [effectiveIsGuest, searched, loading])
 
   const handleAutoSearch = async () => {
@@ -987,11 +988,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         </div>
 
         {/* Search Results */}
-        {(searched || effectiveIsGuest) && (
+        {searched && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {effectiveIsGuest && !searched ? 'Available Rides' : 'Search Results'}
+                Search Results
               </h2>
               <span className="text-gray-600">
                 {rides.length} ride{rides.length !== 1 ? 's' : ''} found
