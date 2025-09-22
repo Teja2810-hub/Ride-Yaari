@@ -64,7 +64,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (content.includes('cancelled')) return 'cancel'
     return 'system'
   }
-  useEffect(() => {
+
   // Helper function to determine if system message was initiated by current user
   const isSystemMessageFromCurrentUser = (message: ChatMessage): boolean => {
     const content = message.message_content.toLowerCase()
@@ -83,6 +83,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     return message.sender_id === user?.id
   }
     if (user) {
+  useEffect(() => {
       fetchMessages()
       fetchConfirmationStatus()
       
@@ -262,9 +263,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       .select('deleted_at')
       .eq('user_id', user.id)
       .eq('other_user_id', otherUserId)
-      .single()
+      .limit(1)
     
-    const chatDeletedAt = chatDeletionData?.deleted_at ? new Date(chatDeletionData.deleted_at) : null
+    const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
 
     await handleAsync(async () => {
       let query = supabase
