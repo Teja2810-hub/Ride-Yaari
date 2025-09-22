@@ -236,9 +236,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
 
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
+    
+    // First check if this chat has been deleted by the current user
+    const { data: chatDeletionData } = await supabase
+      .from('user_chat_deletions')
+      .select('deleted_at')
+      .eq('user_id', user.id)
+      .eq('other_user_id', otherUserId)
+      .single()
+    
+    const chatDeletedAt = chatDeletionData?.deleted_at ? new Date(chatDeletionData.deleted_at) : null
 
     await handleAsync(async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('chat_messages')
         .select(`
           *,
@@ -253,6 +263,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         `)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
         .order('created_at')
+      
+      // If chat was deleted, only show messages after the deletion time
+      if (chatDeletedAt) {
+        query = query.gte('created_at', chatDeletedAt.toISOString())
+      }
+      
+      const { data, error } = await query
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
@@ -281,9 +298,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         
         setMessages(filteredMessages)
         
-        // If no messages exist after filtering, this means the chat was deleted
-        if (filteredMessages.length === 0 && data.length === 0) {
-          console.log('No messages found - chat may have been deleted')
+        // If chat was deleted and no new messages exist, we're starting fresh
+        if (chatDeletedAt && filteredMessages.length === 0) {
+          console.log('Chat was deleted and no new messages - starting fresh conversation')
         }
       }
       

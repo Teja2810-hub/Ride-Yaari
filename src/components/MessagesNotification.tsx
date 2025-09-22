@@ -126,10 +126,12 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         // Get user's chat deletions to filter out deleted chats
         const { data: deletions } = await supabase
           .from('user_chat_deletions')
-          .select('other_user_id')
+          .select('other_user_id, deleted_at')
           .eq('user_id', user.id)
 
-        const deletedUserIds = new Set(deletions?.map(d => d.other_user_id) || [])
+        const deletedChats = new Map(
+          (deletions || []).map(d => [d.other_user_id, new Date(d.deleted_at)])
+        )
 
         // Group messages by conversation
         const conversationMap = new Map()
@@ -138,18 +140,28 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
           const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id
           const otherUser = message.sender_id === user.id ? message.receiver : message.sender
           
-          // Skip conversations that the user has deleted
-          if (deletedUserIds.has(otherUserId)) {
+          // Skip messages from before chat deletion
+          const deletedAt = deletedChats.get(otherUserId)
+          if (deletedAt && new Date(message.created_at) <= deletedAt) {
             continue
           }
           
           if (!conversationMap.has(otherUserId)) {
             // Count unread messages for this conversation
-            const unreadMessages = data.filter(m => 
+            const unreadMessages = data.filter(m => {
+              // Only count messages after deletion (if any)
+              const messageDate = new Date(m.created_at)
+              const userDeletedAt = deletedChats.get(otherUserId)
+              if (userDeletedAt && messageDate <= userDeletedAt) {
+                return false
+              }
+              
+              return (
               m.sender_id === otherUserId && 
               m.receiver_id === user.id && 
               !m.is_read
-            ).length
+              )
+            }).length
 
             conversationMap.set(otherUserId, {
               id: message.id,

@@ -191,3 +191,27 @@ export const isChatDeleted = async (
     return false
   }
 }
+
+/**
+ * Get chat deletion timestamp for a user
+ */
+export const getChatDeletionTime = async (
+  userId: string,
+  otherUserId: string
+): Promise<Date | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_chat_deletions')
+      .select('deleted_at')
+      .eq('user_id', userId)
+      .eq('other_user_id', otherUserId)
+      .single()
+
+    if (error || !data) return null
+    
+    return new Date(data.deleted_at)
+  } catch (error) {
+    console.error('Error getting chat deletion time:', error)
+    return null
+  }
+}
