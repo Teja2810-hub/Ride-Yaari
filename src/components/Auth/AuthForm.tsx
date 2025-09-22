@@ -19,7 +19,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   
-  const { signIn, signUp, sendMagicLinkOtp, sendSignUpOtp, verifySignUpOtp, verifyMagicLinkOtp, setGuestMode } = useAuth()
+  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, setGuestMode } = useAuth()
 
   const handleContinueAsGuest = () => {
     setGuestMode(true)
@@ -58,11 +58,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { error } = await sendMagicLinkOtp(email)
+      const { error } = await sendEmailVerificationOtp(email)
       if (error) throw error
       
-      setCurrentStep('magic-link-otp-verification')
-      setSuccess('Verification code sent to your email! Please check your inbox.')
+      setSuccess('Magic link sent to your email! Please check your inbox.')
     } catch (error: any) {
       console.error('Magic link error:', error)
       if (error?.status === 504) {
@@ -81,11 +80,16 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { error } = await sendSignUpOtp(email, password, fullName)
+      const { error } = await signUp(email, password, fullName)
       if (error) throw error
       
-      setCurrentStep('signup-otp-verification')
-      setSuccess('Verification code sent to your email! Please check your inbox.')
+      // Account created successfully, no email verification needed
+      setSuccess('Account created successfully! You can now sign in.')
+      setTimeout(() => {
+        setCurrentStep('signin')
+        setError(null)
+        setSuccess(null)
+      }, 2000)
     } catch (error: any) {
       console.error('Sign up error:', error)
       if (error?.status === 504) {
@@ -98,55 +102,21 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     }
   }
 
-  const handleSignUpOTPVerification = async (e: React.FormEvent) => {
+  const handleOTPVerification = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      // Get stored signup data
-      const storedData = localStorage.getItem('rideyaari-signup-data')
-      if (!storedData) {
-        throw new Error('Signup session expired. Please start over.')
-      }
-      
-      const signupData = JSON.parse(storedData)
-      
-      // Check if data is not too old (30 minutes)
-      if (Date.now() - signupData.timestamp > 30 * 60 * 1000) {
-        localStorage.removeItem('rideyaari-signup-data')
-        throw new Error('Signup session expired. Please start over.')
-      }
-      
-      const { error } = await verifySignUpOtp(signupData.email, otpToken, signupData.password, signupData.fullName)
-      if (error) throw error
-      
-      setSuccess('Account created successfully! You are now signed in.')
-      if (onClose) onClose()
-    } catch (error: any) {
-      console.error('OTP verification error:', error)
-      if (error?.status === 504) {
-        setError('Connection to server timed out. Please check your internet connection or try again later.')
-      } else {
-        setError(error?.message || 'Invalid verification code. Please try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleMagicLinkOTPVerification = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { data, error } = await verifyMagicLinkOtp(email, otpToken)
+      const { data, error } = await verifyOTP(email, otpToken, 'magiclink')
       if (error) throw error
       
       if (data.user) {
-        setSuccess('Signed in successfully!')
-        if (onClose) onClose()
+        setSuccess('Email verified successfully! You can now sign in.')
+        // Reset form and go back to sign in
+        setCurrentStep('signin')
+        setOtpToken('')
+        setError(null)
       }
     } catch (error: any) {
       console.error('OTP verification error:', error)
@@ -170,7 +140,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setCurrentStep('signin')
   }
 
-  if (currentStep === 'signup-otp-verification') {
+  if (currentStep === 'otp-verification') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
@@ -178,9 +148,9 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Send size={32} className="text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Complete Your Sign Up</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Verify Your Email</h2>
             <p className="text-gray-600 mt-2">
-              We've sent a 6-digit verification code to <strong>{email}</strong>
+              We've sent a verification code to <strong>{email}</strong>
             </p>
           </div>
 
@@ -196,7 +166,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </div>
           )}
 
-          <form onSubmit={handleSignUpOTPVerification} className="space-y-4">
+          <form onSubmit={handleOTPVerification} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Verification Code
@@ -209,7 +179,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 placeholder="Enter 6-digit code"
                 required
                 maxLength={6}
-                autoComplete="one-time-code"
               />
             </div>
 
@@ -218,19 +187,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               disabled={loading || otpToken.length !== 6}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Creating Account...' : 'Verify & Create Account'}
+              {loading ? 'Verifying...' : 'Verify Email'}
             </button>
           </form>
 
           <div className="mt-6 text-center space-y-3">
             <button
-              onClick={() => {
-                const storedData = localStorage.getItem('rideyaari-signup-data')
-                if (storedData) {
-                  const signupData = JSON.parse(storedData)
-                  sendSignUpOtp(signupData.email, signupData.password, signupData.fullName)
-                }
-              }}
+              onClick={() => handleSignUp(new Event('submit') as any)}
               disabled={loading}
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
@@ -241,7 +204,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 onClick={resetForm}
                 className="text-gray-600 hover:text-gray-700 font-medium text-sm"
               >
-                Start Over
+                Back to Sign In
               </button>
             </div>
           </div>
@@ -311,6 +274,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 placeholder="Enter 6-digit code"
                 required
                 maxLength={6}
+                autoComplete="one-time-code"
               />
             </div>
 
@@ -319,13 +283,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               disabled={loading || otpToken.length !== 6}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Verifying...' : 'Verify Email'}
+              {loading ? 'Verifying...' : 'Verify & Sign In'}
             </button>
           </form>
 
           <div className="mt-6 text-center space-y-3">
             <button
-              onClick={() => handleMagicLinkSignIn()}
+              onClick={() => sendMagicLinkOtp(email)}
               disabled={loading}
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
@@ -373,7 +337,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-600 mt-2">Join our rideshare community</p>
+            <p className="text-gray-600 mt-2">Join our rideshare community - we'll verify your email with a code</p>
           </div>
 
           {error && (
@@ -447,7 +411,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Sending Verification Code...' : 'Send Verification Code'}
             </button>
           </form>
 

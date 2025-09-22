@@ -91,13 +91,12 @@ export const authWithRetry = {
     })
   },
   
-  sendEmailVerificationOtp: async (email: string) => {
+  sendSignUpOtp: async (email: string) => {
     return retrySupabaseOperation(async () => {
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
       
@@ -109,12 +108,45 @@ export const authWithRetry = {
     })
   },
   
-  verifyOTP: async (email: string, token: string, type: 'email' | 'magiclink') => {
+  sendMagicLinkOtp: async (email: string) => {
+    return retrySupabaseOperation(async () => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false,
+        }
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      return { error: null }
+    })
+  },
+  
+  verifySignUpOtp: async (email: string, token: string) => {
     return retrySupabaseOperation(async () => {
       const { data, error } = await supabase.auth.verifyOtp({
         email: email,
         token: token,
-        type: type
+        type: 'email'
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      return { data, error: null }
+    })
+  },
+  
+  verifyMagicLinkOtp: async (email: string, token: string) => {
+    return retrySupabaseOperation(async () => {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email'
       })
       
       if (error) {
