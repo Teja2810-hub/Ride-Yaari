@@ -120,7 +120,6 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         .order('created_at', { ascending: false })
 
       if (!error && allMessages) {
-        // Since we now delete messages completely, no need to filter for deletions
         const data = allMessages
         console.log('Messages count:', data.length)
 
@@ -152,6 +151,9 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         }
         
         setConversations(Array.from(conversationMap.values()))
+        
+        // Force refresh of conversations after any database changes
+        console.log('Conversations updated:', conversationMap.size)
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)
@@ -168,7 +170,7 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
-    // Mark messages as read
+    // Mark messages as read first
     const { error } = await supabase
       .from('chat_messages')
       .update({ is_read: true })
@@ -176,15 +178,9 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
       .eq('receiver_id', user?.id)
 
     if (!error) {
-      // Re-fetch the actual unread count from database to ensure accuracy
+      // Re-fetch counts and conversations to ensure accuracy
       await fetchUnreadCount()
-      // Re-fetch conversations to update the unread counts
       await fetchConversations()
-      
-      // Force a re-render by updating the component state
-      setTimeout(() => {
-        fetchUnreadCount()
-      }, 500)
     }
 
     setShowDropdown(false)

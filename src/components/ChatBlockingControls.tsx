@@ -89,7 +89,15 @@ export default function ChatBlockingControls({
 
       console.log('Chat deletion successful')
       setShowDeleteModal(false)
-      if (onDeleteChat) onDeleteChat()
+      
+      // Force a page refresh or navigate back to ensure clean state
+      if (onDeleteChat) {
+        onDeleteChat()
+        // Add a small delay to ensure the deletion is processed
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
+      }
     })
   }
 

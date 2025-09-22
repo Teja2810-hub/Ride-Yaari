@@ -141,8 +141,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const handleChatDeleted = () => {
-    setChatDeleted(true)
+    // Instead of just setting state, navigate back to dashboard
+    console.log('Chat deleted, navigating back')
     setShowChatOptions(false)
+    onBack()
   }
 
   // Helper functions
@@ -252,7 +254,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
-        // Filter out expired messages and deleted conversations
+        // Filter out expired messages
         const filteredMessages = data.filter(message => {
           // Don't show expired messages
           if (expiredMessageIds.has(message.id)) {
@@ -276,6 +278,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         })
         
         setMessages(filteredMessages)
+        
+        // If no messages exist after filtering, this means the chat was deleted
+        if (filteredMessages.length === 0 && data.length === 0) {
+          console.log('No messages found - chat may have been deleted')
+        }
       }
       
       setMessagesLoading(false)

@@ -128,7 +128,7 @@ export const deleteChatConversation = async (
   return retryWithBackoff(async () => {
     console.log('Deleting chat conversation:', { userId, otherUserId })
     
-    // Actually delete all chat messages between these two users
+    // Delete all chat messages between these two users completely
     const { error: deleteError } = await supabase
       .from('chat_messages')
       .delete()
@@ -138,6 +138,12 @@ export const deleteChatConversation = async (
     if (deleteError) {
       throw new Error(deleteError.message)
     }
+
+    // Also clean up any chat deletion records (since we're doing hard delete now)
+    await supabase
+      .from('chat_deletions')
+      .delete()
+      .or(`and(user_id.eq.${userId},other_user_id.eq.${otherUserId}),and(user_id.eq.${otherUserId},other_user_id.eq.${userId})`)
 
     return { success: true }
   })
