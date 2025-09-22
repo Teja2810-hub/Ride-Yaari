@@ -513,9 +513,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Chrome size={20} />
-              <span>{loading ? 'Signing Up...' : 'Continue with Google'}</span>
+              <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
             </button>
           </div>
+
           <div className="mt-4">
             <button
               onClick={handleGoogleSignIn}
