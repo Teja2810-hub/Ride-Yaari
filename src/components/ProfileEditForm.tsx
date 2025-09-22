@@ -446,7 +446,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                     setProfileData(prev => {
                       // Update avatar if no custom image is set
                       const shouldUpdateAvatar = !prev.profile_image_url || 
-                        prev.profile_image_url.includes('ui-avatars.com')
+                        prev.profile_image_url.includes('ui-avatars.com') ||
+                        prev.profile_image_url.includes('avatar.iran.liara.run')
                       
                       return {
                         ...prev,

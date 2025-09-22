@@ -128,18 +128,15 @@ export const deleteChatConversation = async (
   return retryWithBackoff(async () => {
     console.log('Deleting chat conversation:', { userId, otherUserId })
     
-    // Mark the chat as deleted for this user (this will hide it from their messages list)
-    const { error } = await supabase
-      .from('chat_deletions')
-      .upsert({
-        user_id: userId,
-        other_user_id: otherUserId,
-        deleted_at: new Date().toISOString()
-      })
+    // Actually delete all chat messages between these two users
+    const { error: deleteError } = await supabase
+      .from('chat_messages')
+      .delete()
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
 
-    console.log('Chat deletion result:', { error })
-    if (error) {
-      throw new Error(error.message)
+    console.log('Chat deletion result:', { deleteError })
+    if (deleteError) {
+      throw new Error(deleteError.message)
     }
 
     return { success: true }
@@ -169,26 +166,13 @@ export const restoreChatConversation = async (
 }
 
 /**
- * Check if chat is deleted for a user
+ * Check if chat is deleted for a user (legacy function - now always returns false since we delete messages completely)
  */
 export const isChatDeleted = async (
   userId: string,
   otherUserId: string
 ): Promise<boolean> => {
-  try {
-    console.log('Checking if chat is deleted:', { userId, otherUserId })
-    const { data, error } = await supabase
-      .from('chat_deletions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('other_user_id', otherUserId)
-      .limit(1)
-
-    const isDeleted = !error && data && data.length > 0
-    console.log('Chat deletion check result:', { isDeleted, error })
-    return isDeleted
-  } catch (error) {
-    console.error('Error checking if chat is deleted:', error)
-    return false
-  }
+  // Since we now delete messages completely, chats are never "deleted" in the hidden sense
+  // They're either completely gone (no messages) or they exist
+  return false
 }

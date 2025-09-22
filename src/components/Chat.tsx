@@ -66,7 +66,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (user) {
       fetchMessages()
       fetchConfirmationStatus()
-      checkBlockingStatus()
       
       // Subscribe to new messages
       const subscription = supabase
@@ -103,19 +102,22 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
 
+  useEffect(() => {
+    if (user) {
+      checkBlockingStatus()
+    }
+  }, [user, otherUserId])
+
   const checkBlockingStatus = async () => {
     if (!user) return
 
     try {
       console.log('Checking blocking status between:', user.id, 'and', otherUserId)
-      const [blocked, deleted] = await Promise.all([
-        isUserBlocked(user.id, otherUserId),
-        isChatDeleted(user.id, otherUserId)
-      ])
+      const blocked = await isUserBlocked(user.id, otherUserId)
       
-      console.log('Blocking status result:', { blocked, deleted })
+      console.log('Blocking status result:', { blocked })
       setIsBlocked(blocked)
-      setChatDeleted(deleted)
+      setChatDeleted(false) // Since we delete messages completely, never show as "deleted"
     } catch (error) {
       console.error('Error checking blocking status:', error)
       // Don't block chat if there's an error checking blocking status
@@ -288,18 +290,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     await handleAsync(async () => {
       console.log('Sending message from:', user.id, 'to:', otherUserId)
-
-      // Restore chat if it was deleted (when user sends a new message)
-      if (chatDeleted) {
-        console.log('Restoring deleted chat by sending new message')
-        await supabase
-          .from('chat_deletions')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('other_user_id', otherUserId)
-        
-        setChatDeleted(false)
-      }
 
       const { error } = await supabase
         .from('chat_messages')
@@ -696,19 +686,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       </div>
 
       {/* Blocking/Deletion Status */}
-      {(isBlocked || chatDeleted) && (
+      {isBlocked && (
         <div className="bg-red-50 border border-red-200 p-4">
           <div className="flex items-center space-x-3">
             <Shield size={20} className="text-red-600" />
             <div>
-              <h4 className="font-semibold text-red-900">
-                {isBlocked ? 'User Blocked' : 'Chat Deleted'}
-              </h4>
+              <h4 className="font-semibold text-red-900">User Blocked</h4>
               <p className="text-sm text-red-800">
-                {isBlocked 
-                  ? 'You have blocked this user. They cannot send you messages.'
-                  : 'You have deleted this conversation. It will be hidden from your messages.'
-                }
+                You have blocked this user. They cannot send you messages.
               </p>
             </div>
           </div>

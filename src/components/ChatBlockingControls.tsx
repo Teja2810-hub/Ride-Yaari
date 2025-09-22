@@ -297,10 +297,10 @@ export default function ChatBlockingControls({
                   <div>
                     <h4 className="font-semibold text-orange-900 mb-1">What happens:</h4>
                     <ul className="text-sm text-orange-800 space-y-1">
-                      <li>• The conversation will be hidden from your messages</li>
-                      <li>• You can still receive new messages from this user</li>
-                      <li>• The other user will still see the conversation</li>
-                      <li>• You can restore the chat by messaging them again</li>
+                      <li>• All messages between you and this user will be permanently deleted</li>
+                      <li>• This action cannot be undone</li>
+                      <li>• The other user will also lose access to the conversation</li>
+                      <li>• You can start a fresh conversation by messaging them again</li>
                     </ul>
                   </div>
                 </div>

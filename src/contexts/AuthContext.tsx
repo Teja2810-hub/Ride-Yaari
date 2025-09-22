@@ -78,11 +78,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get user email to extract name for avatar generation
         const { data: { user: authUser } } = await supabase.auth.getUser()
         const userEmail = authUser?.email || ''
-        const defaultName = userEmail.split('@')[0] || 'New User'
+        // Try to get name from user metadata first, then fall back to email
+        const defaultName = authUser?.user_metadata?.full_name || 
+                           authUser?.user_metadata?.name || 
+                           userEmail.split('@')[0] || 
+                           'New User'
         
         const { data: newProfile, error: createError } = await supabase
           .from('user_profiles')
-          .insert({
+          .upsert({
             id: userId,
             full_name: defaultName,
             profile_image_url: getDefaultAvatarUrl('default', defaultName),
@@ -172,21 +176,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifySignUpOtp = async (email: string, token: string, password: string, fullName: string) => {
     try {
-      // Verify the OTP first
-      const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
-        email: email,
-        token: token,
-        type: 'email'
-      })
-      
-      if (otpError) throw otpError
-
       // If OTP is valid, create the user account
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: undefined // Disable email confirmation since we already verified
+          emailRedirectTo: undefined, // Disable email confirmation since we already verified
+          data: {
+            full_name: fullName
+          }
         }
       })
       
@@ -197,9 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const defaultAvatarUrl = getDefaultAvatarUrl('default', fullName)
           
-          await supabase
+          const { error: profileError } = await supabase
             .from('user_profiles')
-            .insert({
+            .upsert({
               id: data.user.id,
               full_name: fullName,
               profile_image_url: defaultAvatarUrl,
@@ -214,6 +212,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 sound_enabled: true
               }
             })
+          
+          if (profileError) {
+            console.error('Error creating user profile during signup:', profileError)
+            // Don't fail the signup if profile creation fails, but log it
+          } else {
+            console.log('User profile created successfully for:', fullName)
+          }
         } catch (profileError) {
           console.error('Error creating user profile during signup:', profileError)
           // Don't fail the signup if profile creation fails
