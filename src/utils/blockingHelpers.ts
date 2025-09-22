@@ -128,7 +128,7 @@ export const deleteChatConversation = async (
   return retryWithBackoff(async () => {
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
-    // Add a deletion record for this user (soft delete)
+    // Add a deletion record for this user (soft delete) with current timestamp
     const { error: insertError } = await supabase
       .from('user_chat_deletions')
       .upsert({
@@ -142,6 +142,30 @@ export const deleteChatConversation = async (
     console.log('Chat deletion record result:', { insertError })
     if (insertError) {
       throw new Error(insertError.message)
+    }
+
+    return { success: true }
+  })
+}
+
+/**
+ * Clear chat deletion record to allow new conversations
+ */
+export const clearChatDeletion = async (
+  userId: string,
+  otherUserId: string
+): Promise<{ success: boolean; error?: string }> => {
+  return retryWithBackoff(async () => {
+    console.log('Clearing chat deletion for user:', { userId, otherUserId })
+    
+    const { error } = await supabase
+      .from('user_chat_deletions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('other_user_id', otherUserId)
+
+    if (error) {
+      throw new Error(error.message)
     }
 
     return { success: true }

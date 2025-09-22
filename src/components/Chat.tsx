@@ -733,9 +733,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             <div>
               <h4 className="font-semibold text-orange-900">Chat Deleted</h4>
               <p className="text-sm text-orange-800">
-                You have deleted this chat. It's hidden from your messages list.
+                You have deleted this chat. Start a new conversation to chat again.
               </p>
             </div>
+            <button
+              onClick={() => setShowStartNewChatModal(true)}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors text-sm"
+            >
+              Start New Chat
+            </button>
           </div>
         </div>
       )}
