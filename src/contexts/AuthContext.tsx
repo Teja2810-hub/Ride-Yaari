@@ -65,7 +65,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!error && data && data.length > 0) {
       setUserProfile(data[0])
+    } else if (!error) {
+      // Auto-create user profile if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: userId,
+          full_name: 'New User'
+        })
+        .select()
+        .single()
+      
+      if (!createError && newProfile) {
+        setUserProfile(newProfile)
+      } else {
+        console.error('Error creating user profile:', createError)
+        setUserProfile(null)
+      }
     } else {
+      console.error('Error fetching user profile:', error)
       setUserProfile(null)
     }
   }

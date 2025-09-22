@@ -207,10 +207,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
       }
 
-      const { data, error } = await query.single()
+      const { data, error } = await query.limit(1)
 
-      if (!error && data) {
-        setCurrentConfirmation(data)
+      if (!error && data && data.length > 0) {
+        setCurrentConfirmation(data[0])
       } else {
         setCurrentConfirmation(null)
       }
