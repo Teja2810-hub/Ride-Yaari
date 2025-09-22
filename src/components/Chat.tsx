@@ -12,6 +12,7 @@ import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
 import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { supabase } from '../utils/supabase'
+import { popupManager } from '../utils/popupManager'
 
 interface ChatProps {
   onBack: () => void
@@ -321,13 +322,21 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   const handlePassengerRequestConfirmation = () => {
     if (!user) return
-    showDisclaimer('passenger-request')
+    
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('passenger-request', user.id)) {
+      showDisclaimer('passenger-request')
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmPassengerRequest()
+    }
   }
 
   const handleConfirmPassengerRequest = async () => {
     if (!user) return
 
     hideDisclaimer()
+    popupManager.markDisclaimerShown('passenger-request', user.id)
 
     await handleAsync(async () => {
       const isOwner = isCurrentUserOwnerOfPreselected()
@@ -365,7 +374,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const handleOwnerAcceptRequest = () => {
-    showDisclaimer('owner-accept')
+    if (!user) return
+    
+    if (popupManager.shouldShowDisclaimer('owner-accept', user.id)) {
+      showDisclaimer('owner-accept')
+    } else {
+      handleConfirmOwnerAcceptRequest()
+    }
   }
 
   const handleConfirmOwnerAcceptRequest = async () => {
@@ -377,11 +392,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
+    popupManager.markDisclaimerShown('owner-accept', user.id)
     await acceptRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleOwnerRejectRequest = () => {
-    showDisclaimer('owner-reject')
+    if (!user) return
+    
+    if (popupManager.shouldShowDisclaimer('owner-reject', user.id)) {
+      showDisclaimer('owner-reject')
+    } else {
+      handleConfirmOwnerRejectRequest()
+    }
   }
 
   const handleConfirmOwnerRejectRequest = async () => {
@@ -393,11 +415,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
+    popupManager.markDisclaimerShown('owner-reject', user.id)
     await rejectRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleCancelConfirmedRide = () => {
-    showDisclaimer('cancel-confirmed')
+    if (!user) return
+    
+    if (popupManager.shouldShowDisclaimer('cancel-confirmed', user.id)) {
+      showDisclaimer('cancel-confirmed')
+    } else {
+      handleConfirmCancelConfirmedRide()
+    }
   }
 
   const handleConfirmCancelConfirmedRide = async () => {
@@ -409,6 +438,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
+    popupManager.markDisclaimerShown('cancel-confirmed', user.id)
     const isOwner = isCurrentUserOwnerOfConfirmation()
     await cancelConfirmation(
       currentConfirmation.id,

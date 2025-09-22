@@ -6,6 +6,7 @@ import { Trip } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
+import { popupManager } from '../utils/popupManager'
 
 interface FindTripProps {
   onBack: () => void
@@ -159,11 +160,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const handleChatClick = (userId: string, userName: string, trip: Trip) => {
     setSelectedChatUser({ userId, userName })
     setSelectedChatTrip(trip)
-    setShowDisclaimer(true)
+    
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('chat-trip', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmChat()
+    }
   }
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-trip', user?.id)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
   }
 

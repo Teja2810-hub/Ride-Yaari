@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Heart } from 'lucide-react'
+import { popupManager } from '../utils/popupManager'
+import { useAuth } from '../contexts/AuthContext'
 
 interface WelcomePopupProps {
   isOpen: boolean
@@ -7,13 +9,29 @@ interface WelcomePopupProps {
 }
 
 export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
+  const { user } = useAuth()
+  
+  // Check if welcome popup should be shown
+  React.useEffect(() => {
+    if (isOpen && !popupManager.shouldShowWelcome(user?.id)) {
+      // If welcome shouldn't be shown, auto-close
+      onClose()
+      return
+    }
+  }, [isOpen, user?.id, onClose])
+
+  const handleClose = () => {
+    popupManager.markWelcomeShown(user?.id)
+    onClose()
+  }
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="card bg-gradient-to-br from-neutral-bg to-white shadow-2xl max-w-md w-full p-6 relative animate-fade-in">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <X size={24} />
@@ -102,7 +120,7 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Get Started with RideYaari

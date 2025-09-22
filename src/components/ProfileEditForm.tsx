@@ -15,6 +15,7 @@ import {
   validatePasswordData,
   validateEmailData
 } from '../utils/profileHelpers'
+import { getDefaultAvatarUrl } from '../utils/avatarHelpers'
 
 interface ProfileEditFormProps {
   onClose: () => void
@@ -438,7 +439,22 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                 </label>
                 <select
                   value={profileData.gender}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value }))}
+                  onChange={(e) => {
+                    const newGender = e.target.value
+                    setProfileData(prev => {
+                      // Update avatar if no custom image is set
+                      const shouldUpdateAvatar = !prev.profile_image_url || 
+                        prev.profile_image_url.includes('ui-avatars.com')
+                      
+                      return {
+                        ...prev,
+                        gender: newGender,
+                        profile_image_url: shouldUpdateAvatar 
+                          ? getDefaultAvatarUrl(newGender || 'default', prev.full_name)
+                          : prev.profile_image_url
+                      }
+                    })
+                  }}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
                   <option value="">Select gender</option>
@@ -447,6 +463,9 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                   <option value="other">Other</option>
                   <option value="prefer_not_to_say">Prefer not to say</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecting a gender will update your default avatar if you haven't uploaded a custom image
+                </p>
               </div>
 
               <div className="flex space-x-3">

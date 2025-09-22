@@ -8,6 +8,7 @@ import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { haversineDistance } from '../utils/distance'
 import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
+import { popupManager } from '../utils/popupManager'
 
 interface LocationData {
   address: string
@@ -522,11 +523,19 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
     setSelectedChatUser({ userId, userName })
     setSelectedChatRide(ride)
-    setShowDisclaimer(true)
+    
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('chat-ride', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmChat()
+    }
   }
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-ride', user?.id)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined)
   }
 

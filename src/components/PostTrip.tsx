@@ -6,6 +6,7 @@ import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { timezones, getDefaultTimezone } from '../utils/timezones'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
+import { popupManager } from '../utils/popupManager'
 
 interface PostTripProps {
   onBack: () => void
@@ -41,7 +42,13 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
       return
     }
     
-    setShowDisclaimer(true)
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('trip', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmPost()
+    }
   }
 
   const handleConfirmPost = async () => {
@@ -50,6 +57,9 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
     setLoading(true)
     setError('')
     setShowDisclaimer(false)
+    
+    // Mark disclaimer as shown
+    popupManager.markDisclaimerShown('trip', user.id)
 
     try {
       const { error } = await supabase

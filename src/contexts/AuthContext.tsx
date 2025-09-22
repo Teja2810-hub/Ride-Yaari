@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase, authWithRetry } from '../utils/supabase'
 import { UserProfile } from '../types'
+import { getDefaultAvatarUrl } from '../utils/avatarHelpers'
 
 interface AuthContextType {
   user: User | null
@@ -72,11 +73,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it
         console.log('Profile not found, creating new profile for user:', userId)
+        
+        // Get user email to extract name for avatar generation
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const userEmail = authUser?.email || ''
+        const defaultName = userEmail.split('@')[0] || 'New User'
+        
         const { data: newProfile, error: createError } = await supabase
           .from('user_profiles')
           .insert({
             id: userId,
-            full_name: 'New User',
+            full_name: defaultName,
+            profile_image_url: getDefaultAvatarUrl('default', defaultName),
             notification_preferences: {
               email_notifications: true,
               browser_notifications: true,
@@ -176,6 +184,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       
       if (error) throw error
+      
+      // Create user profile with default avatar after successful signup
+      if (data.user) {
+        try {
+          const defaultAvatarUrl = getDefaultAvatarUrl('default', fullName)
+          
+          await supabase
+            .from('user_profiles')
+            .insert({
+              id: data.user.id,
+              full_name: fullName,
+              profile_image_url: defaultAvatarUrl,
+              notification_preferences: {
+                email_notifications: true,
+                browser_notifications: true,
+                ride_requests: true,
+                ride_confirmations: true,
+                messages: true,
+                system_updates: true,
+                marketing_emails: false,
+                sound_enabled: true
+              }
+            })
+        } catch (profileError) {
+          console.error('Error creating user profile during signup:', profileError)
+          // Don't fail the signup if profile creation fails
+        }
+      }
       
       // Clear temporary signup data
       localStorage.removeItem('rideyaari-signup-data')

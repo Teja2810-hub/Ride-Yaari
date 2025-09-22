@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabase'
 import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
+import { popupManager } from '../utils/popupManager'
 
 interface LocationData {
   address: string
@@ -41,7 +42,13 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       return
     }
     
-    setShowDisclaimer(true)
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('ride', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmPost()
+    }
   }
 
   const handleConfirmPost = async () => {
@@ -50,6 +57,9 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
     setLoading(true)
     setError('')
     setShowDisclaimer(false)
+    
+    // Mark disclaimer as shown
+    popupManager.markDisclaimerShown('ride', user.id)
 
     try {
       console.log('Posting ride with locations:', { fromLocation, toLocation, intermediateStops })

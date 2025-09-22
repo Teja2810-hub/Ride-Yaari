@@ -76,8 +76,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       }
       
       // Show success message
-      const successMessage = `${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully! It will now appear in search results.`
-      alert(successMessage)
+      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully! It will now appear in search results.`)
     }).finally(() => {
       setReopeningId(null)
     })

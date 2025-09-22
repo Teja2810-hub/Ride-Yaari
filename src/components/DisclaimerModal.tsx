@@ -1,5 +1,7 @@
 import React from 'react'
 import { AlertTriangle, X } from 'lucide-react'
+import { popupManager } from '../utils/popupManager'
+import { useAuth } from '../contexts/AuthContext'
 
 interface DisclaimerContent {
   title: string
@@ -154,7 +156,29 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
 }
 
 export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, type, content }: DisclaimerModalProps) {
+  const { user } = useAuth()
+  
+  // Check if disclaimer should be shown
+  React.useEffect(() => {
+    if (isOpen && !popupManager.shouldShowDisclaimer(type, user?.id)) {
+      // If disclaimer shouldn't be shown, auto-confirm
+      onConfirm()
+      return
+    }
+  }, [isOpen, type, user?.id, onConfirm])
+
   if (!isOpen) return null
+
+  // Mark disclaimer as shown when user interacts with it
+  const handleConfirm = () => {
+    popupManager.markDisclaimerShown(type, user?.id)
+    onConfirm()
+  }
+
+  const handleClose = () => {
+    popupManager.markDisclaimerShown(type, user?.id)
+    onClose()
+  }
 
   const disclaimerContent = content || getDisclaimerContent(type)
 
@@ -201,13 +225,13 @@ export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, t
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 border border-gray-300 text-gray-700 py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base"
           >
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={loading}
             className="flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >

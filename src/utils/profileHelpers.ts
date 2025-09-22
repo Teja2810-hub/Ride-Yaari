@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { retryWithBackoff } from './errorUtils'
+import { getDefaultAvatarUrl } from './avatarHelpers'
 
 export interface ProfileUpdateData {
   full_name?: string
@@ -38,6 +39,11 @@ export const updateUserProfile = async (
     if (fetchError && fetchError.code === 'PGRST116') {
       // Profile doesn't exist, create it first
       console.log('Profile does not exist, creating it first')
+      
+      // Generate default avatar if none provided
+      const defaultAvatar = profileData.profile_image_url || 
+        getDefaultAvatarUrl(profileData.gender || 'default', profileData.full_name || 'User')
+      
       const { error: createError } = await supabase
         .from('user_profiles')
         .insert({
@@ -45,7 +51,7 @@ export const updateUserProfile = async (
           full_name: profileData.full_name || 'New User',
           age: profileData.age,
           gender: profileData.gender,
-          profile_image_url: profileData.profile_image_url,
+          profile_image_url: defaultAvatar,
           notification_preferences: {
             email_notifications: true,
             browser_notifications: true,
@@ -72,9 +78,16 @@ export const updateUserProfile = async (
     
     // Profile exists, update it
     console.log('Profile exists, updating...')
+    
+    // If updating gender and using default avatar, update avatar too
+    const updateData = { ...profileData }
+    if (profileData.gender && profileData.profile_image_url?.includes('ui-avatars.com')) {
+      updateData.profile_image_url = getDefaultAvatarUrl(profileData.gender, profileData.full_name || 'User')
+    }
+    
     const { error } = await supabase
       .from('user_profiles')
-      .update(profileData)
+      .update(updateData)
       .eq('id', userId)
 
     if (error) {

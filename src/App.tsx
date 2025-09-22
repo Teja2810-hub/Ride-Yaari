@@ -25,6 +25,7 @@ import { Trip, CarRide } from './types'
 import WhatsAppChatButton from './components/WhatsAppChatButton'
 import { createErrorMessage } from './utils/errorUtils'
 import { User } from 'lucide-react'
+import { popupManager } from './utils/popupManager'
 
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
@@ -52,15 +53,14 @@ function AppContent() {
   // Check if user is visiting for the first time
   React.useEffect(() => {
     if ((user && !loading && !isGuest) || (!user && !loading && isGuest)) {
-      const hasVisited = localStorage.getItem('rideyaari-visited')
-      if (!hasVisited) {
+      if (popupManager.shouldShowWelcome(user?.id)) {
         setShowWelcomePopup(true)
-        localStorage.setItem('rideyaari-visited', 'true')
       }
     }
   }, [user, loading, isGuest])
 
   const handleCloseWelcomePopup = () => {
+    popupManager.markWelcomeShown(user?.id)
     setShowWelcomePopup(false)
   }
 

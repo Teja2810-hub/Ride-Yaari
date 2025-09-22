@@ -50,6 +50,9 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
 
       // Remove from local state
       setBlockedUsers(prev => prev.filter(u => u.blocked_id !== blockedUserId))
+      
+      // Show success message
+      alert('User unblocked successfully!')
     }).finally(() => {
       setUnblockingUserId(null)
     })

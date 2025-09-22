@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { getDefaultAvatarUrl } from '../../utils/avatarHelpers'
 
 interface AuthFormProps {
   onClose?: () => void

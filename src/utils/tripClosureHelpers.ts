@@ -155,7 +155,6 @@ export const reopenTrip = async (
         closed_reason: null
       })
       .eq('id', tripId)
-      .eq('user_id', userId) // Additional security check
 
     console.log('Update result:', { error })
     if (error) {
@@ -215,7 +214,6 @@ export const reopenRide = async (
         closed_reason: null
       })
       .eq('id', rideId)
-      .eq('user_id', userId) // Additional security check
 
     console.log('Update result:', { error })
     if (error) {
