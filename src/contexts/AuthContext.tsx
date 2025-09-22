@@ -58,32 +58,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-
-    if (!error && data && data.length > 0) {
-      setUserProfile(data[0])
-    } else if (!error) {
-      // Auto-create user profile if it doesn't exist
-      const { data: newProfile, error: createError } = await supabase
+    try {
+      const { data, error } = await supabase
         .from('user_profiles')
-        .insert({
-          id: userId,
-          full_name: 'New User'
-        })
-        .select()
+        .select('*')
+        .eq('id', userId)
         .single()
-      
-      if (!createError && newProfile) {
-        setUserProfile(newProfile)
+
+      if (!error && data) {
+        setUserProfile(data)
+      } else if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        console.log('Profile not found, creating new profile for user:', userId)
+        const { data: newProfile, error: createError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: userId,
+            full_name: 'New User',
+            notification_preferences: {
+              email_notifications: true,
+              browser_notifications: true,
+              ride_requests: true,
+              ride_confirmations: true,
+              messages: true,
+              system_updates: true,
+              marketing_emails: false,
+              sound_enabled: true
+            }
+          })
+          .select()
+          .single()
+        
+        if (!createError && newProfile) {
+          console.log('Profile created successfully:', newProfile)
+          setUserProfile(newProfile)
+        } else {
+          console.error('Error creating user profile:', createError)
+          setUserProfile(null)
+        }
       } else {
-        console.error('Error creating user profile:', createError)
+        console.error('Error fetching user profile:', error)
         setUserProfile(null)
       }
-    } else {
-      console.error('Error fetching user profile:', error)
+    } catch (error) {
+      console.error('Unexpected error in fetchUserProfile:', error)
       setUserProfile(null)
     }
   }
@@ -99,20 +117,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const data = await authWithRetry.signUp(email, password)
+      // Sign up with email confirmation disabled
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: undefined // Disable email confirmation
+        }
+      })
+      
+      if (error) throw error
       
       // Create user profile after successful signup
       if (data.user) {
+        console.log('Creating user profile for:', data.user.id)
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
             id: data.user.id,
-            full_name: fullName
+            full_name: fullName,
+            notification_preferences: {
+              email_notifications: true,
+              browser_notifications: true,
+              ride_requests: true,
+              ride_confirmations: true,
+              messages: true,
+              system_updates: true,
+              marketing_emails: false,
+              sound_enabled: true
+            }
           })
         
         if (profileError) {
           console.error('Error creating user profile:', profileError)
-          throw profileError
+          // Don't throw error here, let the user sign in and we'll create profile later
         }
       }
       
@@ -124,7 +162,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendEmailVerificationOtp = async (email: string) => {
     try {
-      await authWithRetry.sendEmailVerificationOtp(email)
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false
+        }
+      })
+      
+      if (error) throw error
       return { error: null }
     } catch (error: any) {
       return { error }
@@ -133,7 +178,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyOTP = async (email: string, token: string, type: 'email' | 'magiclink') => {
     try {
-      const { data } = await authWithRetry.verifyOTP(email, token, type)
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email'
+      })
+      
+      if (error) throw error
       return { data, error: null }
     } catch (error: any) {
       return { data: null, error }

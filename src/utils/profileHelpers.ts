@@ -26,15 +26,63 @@ export const updateUserProfile = async (
   profileData: ProfileUpdateData
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('Updating user profile:', { userId, profileData })
+    
+    // First check if profile exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('id', userId)
+      .single()
+    
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // Profile doesn't exist, create it first
+      console.log('Profile does not exist, creating it first')
+      const { error: createError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: userId,
+          full_name: profileData.full_name || 'New User',
+          age: profileData.age,
+          gender: profileData.gender,
+          profile_image_url: profileData.profile_image_url,
+          notification_preferences: {
+            email_notifications: true,
+            browser_notifications: true,
+            ride_requests: true,
+            ride_confirmations: true,
+            messages: true,
+            system_updates: true,
+            marketing_emails: false,
+            sound_enabled: true
+          }
+        })
+      
+      if (createError) {
+        console.error('Error creating profile:', createError)
+        throw new Error(createError.message)
+      }
+      
+      console.log('Profile created successfully')
+      return { success: true }
+    } else if (fetchError) {
+      console.error('Error checking existing profile:', fetchError)
+      throw new Error(fetchError.message)
+    }
+    
+    // Profile exists, update it
+    console.log('Profile exists, updating...')
     const { error } = await supabase
       .from('user_profiles')
       .update(profileData)
       .eq('id', userId)
 
     if (error) {
+      console.error('Error updating profile:', error)
       throw new Error(error.message)
     }
 
+    console.log('Profile updated successfully')
     return { success: true }
   })
 }

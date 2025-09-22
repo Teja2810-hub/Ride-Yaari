@@ -83,12 +83,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       const { error } = await signUp(email, password, fullName)
       if (error) throw error
       
-      // Send OTP for verification
-      const { error: otpError } = await sendEmailVerificationOtp(email)
-      if (otpError) throw otpError
-      
-      setCurrentStep('otp-verification')
-      setSuccess('Account created! Please check your email for the verification code.')
+      // Account created successfully, no email verification needed
+      setSuccess('Account created successfully! You can now sign in.')
+      setTimeout(() => {
+        setCurrentStep('signin')
+        setError(null)
+        setSuccess(null)
+      }, 2000)
     } catch (error: any) {
       console.error('Sign up error:', error)
       if (error?.status === 504) {
@@ -107,7 +108,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { data, error } = await verifyOTP(email, otpToken, 'email')
+      const { data, error } = await verifyOTP(email, otpToken, 'magiclink')
       if (error) throw error
       
       if (data.user) {
