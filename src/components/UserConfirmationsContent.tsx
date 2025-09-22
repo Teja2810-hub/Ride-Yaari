@@ -34,6 +34,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     accepted: false,
     rejected: false
   })
+  const [cancellingConfirmationId, setCancellingConfirmationId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -147,6 +148,76 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   const handleDismissAlert = (confirmationId: string) => {
     setRecentActions(prev => prev.filter(c => c.id !== confirmationId))
+  }
+
+  const handleCancelRequest = async (confirmationId: string) => {
+    if (!user) return
+
+    setCancellingConfirmationId(confirmationId)
+
+    await handleAsync(async () => {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+        .eq('passenger_id', user.id) // Ensure only passenger can cancel their own request
+        .eq('status', 'pending') // Only allow cancelling pending requests
+
+      if (error) throw error
+
+      // Get confirmation details for system message
+      const { data: confirmation } = await supabase
+        .from('ride_confirmations')
+        .select(`
+          *,
+          car_rides!ride_confirmations_ride_id_fkey (
+            from_location,
+            to_location,
+            departure_date_time
+          ),
+          trips!ride_confirmations_trip_id_fkey (
+            leaving_airport,
+            destination_airport,
+            travel_date
+          ),
+          user_profiles!ride_confirmations_passenger_id_fkey (
+            full_name
+          )
+        `)
+        .eq('id', confirmationId)
+        .single()
+
+      if (confirmation) {
+        const ride = confirmation.car_rides
+        const trip = confirmation.trips
+        const passengerName = confirmation.user_profiles?.full_name || 'Passenger'
+        
+        const rideDetails = ride 
+          ? `car ride from ${ride.from_location} to ${ride.to_location}`
+          : trip 
+            ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
+            : 'ride'
+
+        // Send system message to ride owner
+        await supabase
+          .from('chat_messages')
+          .insert({
+            sender_id: user.id,
+            receiver_id: confirmation.ride_owner_id,
+            message_content: `🚫 ${passengerName} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
+            message_type: 'system',
+            is_read: false
+          })
+      }
+
+      fetchConfirmations()
+    }).finally(() => {
+      setCancellingConfirmationId(null)
+    })
   }
 
   const toggleSection = (section: 'pending' | 'accepted' | 'rejected') => {
@@ -436,12 +507,35 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
                   </div>
                   <div className="space-y-4">
                     {categorized.pending.carRides.map((confirmation) => (
-                      <ConfirmationItem
-                        key={confirmation.id}
-                        confirmation={confirmation}
-                        onUpdate={fetchConfirmations}
-                        onStartChat={onStartChat}
-                      />
+                      <div key={confirmation.id}>
+                        <ConfirmationItem
+                          confirmation={confirmation}
+                          onUpdate={fetchConfirmations}
+                          onStartChat={onStartChat}
+                        />
+                        {/* Add cancel button for passengers with pending requests */}
+                        {confirmation.status === 'pending' && confirmation.passenger_id === user?.id && (
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              onClick={() => handleCancelRequest(confirmation.id)}
+                              disabled={cancellingConfirmationId === confirmation.id}
+                              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                            >
+                              {cancellingConfirmationId === confirmation.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Cancelling...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <X size={16} />
+                                  <span>Cancel My Request</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -459,12 +553,35 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
                   </div>
                   <div className="space-y-4">
                     {categorized.pending.airportTrips.map((confirmation) => (
-                      <ConfirmationItem
-                        key={confirmation.id}
-                        confirmation={confirmation}
-                        onUpdate={fetchConfirmations}
-                        onStartChat={onStartChat}
-                      />
+                      <div key={confirmation.id}>
+                        <ConfirmationItem
+                          confirmation={confirmation}
+                          onUpdate={fetchConfirmations}
+                          onStartChat={onStartChat}
+                        />
+                        {/* Add cancel button for passengers with pending requests */}
+                        {confirmation.status === 'pending' && confirmation.passenger_id === user?.id && (
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              onClick={() => handleCancelRequest(confirmation.id)}
+                              disabled={cancellingConfirmationId === confirmation.id}
+                              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                            >
+                              {cancellingConfirmationId === confirmation.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Cancelling...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <X size={16} />
+                                  <span>Cancel My Request</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
