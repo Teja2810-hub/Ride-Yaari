@@ -126,24 +126,23 @@ export const deleteChatConversation = async (
   otherUserId: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
-    console.log('Deleting chat conversation:', { userId, otherUserId })
+    console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
-    // Delete all chat messages between these two users completely
-    const { error: deleteError } = await supabase
-      .from('chat_messages')
-      .delete()
-      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
+    // Add a deletion record for this user (soft delete)
+    const { error: insertError } = await supabase
+      .from('user_chat_deletions')
+      .upsert({
+        user_id: userId,
+        other_user_id: otherUserId,
+        deleted_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,other_user_id'
+      })
 
-    console.log('Chat deletion result:', { deleteError })
-    if (deleteError) {
-      throw new Error(deleteError.message)
+    console.log('Chat deletion record result:', { insertError })
+    if (insertError) {
+      throw new Error(insertError.message)
     }
-
-    // Also clean up any chat deletion records (since we're doing hard delete now)
-    await supabase
-      .from('chat_deletions')
-      .delete()
-      .or(`and(user_id.eq.${userId},other_user_id.eq.${otherUserId}),and(user_id.eq.${otherUserId},other_user_id.eq.${userId})`)
 
     return { success: true }
   })
@@ -158,7 +157,7 @@ export const restoreChatConversation = async (
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
     const { error } = await supabase
-      .from('chat_deletions')
+      .from('user_chat_deletions')
       .delete()
       .eq('user_id', userId)
       .eq('other_user_id', otherUserId)
@@ -172,13 +171,23 @@ export const restoreChatConversation = async (
 }
 
 /**
- * Check if chat is deleted for a user (legacy function - now always returns false since we delete messages completely)
+ * Check if chat is deleted for a user
  */
 export const isChatDeleted = async (
   userId: string,
   otherUserId: string
 ): Promise<boolean> => {
-  // Since we now delete messages completely, chats are never "deleted" in the hidden sense
-  // They're either completely gone (no messages) or they exist
-  return false
+  try {
+    const { data, error } = await supabase
+      .from('user_chat_deletions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('other_user_id', otherUserId)
+      .limit(1)
+
+    return !error && data && data.length > 0
+  } catch (error) {
+    console.error('Error checking if chat is deleted:', error)
+    return false
+  }
 }

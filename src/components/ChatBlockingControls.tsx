@@ -90,13 +90,8 @@ export default function ChatBlockingControls({
       console.log('Chat deletion successful')
       setShowDeleteModal(false)
       
-      // Force a page refresh or navigate back to ensure clean state
       if (onDeleteChat) {
         onDeleteChat()
-        // Add a small delay to ensure the deletion is processed
-        setTimeout(() => {
-          window.location.reload()
-        }, 500)
       }
     })
   }
@@ -305,10 +300,10 @@ export default function ChatBlockingControls({
                   <div>
                     <h4 className="font-semibold text-orange-900 mb-1">What happens:</h4>
                     <ul className="text-sm text-orange-800 space-y-1">
-                      <li>• All messages between you and this user will be permanently deleted</li>
-                      <li>• This action cannot be undone</li>
-                      <li>• The other user will also lose access to the conversation</li>
+                      <li>• The chat will be hidden from your messages list</li>
+                      <li>• The other user will still see the conversation</li>
                       <li>• You can start a fresh conversation by messaging them again</li>
+                      <li>• This only affects your view of the chat</li>
                     </ul>
                   </div>
                 </div>

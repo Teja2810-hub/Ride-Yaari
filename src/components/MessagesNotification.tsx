@@ -123,12 +123,25 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
         const data = allMessages
         console.log('Messages count:', data.length)
 
+        // Get user's chat deletions to filter out deleted chats
+        const { data: deletions } = await supabase
+          .from('user_chat_deletions')
+          .select('other_user_id')
+          .eq('user_id', user.id)
+
+        const deletedUserIds = new Set(deletions?.map(d => d.other_user_id) || [])
+
         // Group messages by conversation
         const conversationMap = new Map()
         
         for (const message of data) {
           const otherUserId = message.sender_id === user.id ? message.receiver_id : message.sender_id
           const otherUser = message.sender_id === user.id ? message.receiver : message.sender
+          
+          // Skip conversations that the user has deleted
+          if (deletedUserIds.has(otherUserId)) {
+            continue
+          }
           
           if (!conversationMap.has(otherUserId)) {
             // Count unread messages for this conversation
