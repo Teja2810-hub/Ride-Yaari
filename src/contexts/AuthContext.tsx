@@ -11,8 +11,10 @@ interface AuthContextType {
   setGuestMode: (isGuest: boolean) => void
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
-  sendEmailVerificationOtp: (email: string) => Promise<{ error: any }>
-  verifyOTP: (email: string, token: string, type: 'email' | 'magiclink') => Promise<{ data: any, error: any }>
+  sendSignUpOtp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
+  verifySignUpOtp: (email: string, token: string, password: string, fullName: string) => Promise<{ error: any }>
+  sendMagicLinkOtp: (email: string) => Promise<{ error: any }>
+  verifyMagicLinkOtp: (email: string, token: string) => Promise<{ data: any, error: any }>
   signOut: () => Promise<void>
 }
 
@@ -117,12 +119,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      // Sign up with email confirmation disabled
+      // This method is now deprecated - use sendSignUpOtp instead
+      throw new Error('Please use the OTP verification flow for sign up')
+    } catch (error: any) {
+      return { error }
+    }
+  }
+
+  const sendSignUpOtp = async (email: string, password: string, fullName: string) => {
+    try {
+      // Store signup data temporarily in localStorage for OTP verification
+      const signupData = {
+        email,
+        password,
+        fullName,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('rideyaari-signup-data', JSON.stringify(signupData))
+
+      // Send OTP for email verification
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false, // Don't create user yet
+          data: {
+            full_name: fullName
+          }
+        }
+      })
+      
+      if (error) throw error
+      return { error: null }
+    } catch (error: any) {
+      return { error }
+    }
+  }
+
+  const verifySignUpOtp = async (email: string, token: string, password: string, fullName: string) => {
+    try {
+      // Verify the OTP first
+      const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email'
+      })
+      
+      if (otpError) throw otpError
+
+      // If OTP is valid, create the user account
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: undefined // Disable email confirmation
+          emailRedirectTo: undefined // Disable email confirmation since we already verified
         }
       })
       
@@ -154,13 +203,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+      // Clear temporary signup data
+      localStorage.removeItem('rideyaari-signup-data')
+      
       return { error: null }
     } catch (error: any) {
       return { error }
     }
   }
 
-  const sendEmailVerificationOtp = async (email: string) => {
+  const sendMagicLinkOtp = async (email: string) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
@@ -176,12 +228,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const verifyOTP = async (email: string, token: string, type: 'email' | 'magiclink') => {
+  const verifyMagicLinkOtp = async (email: string, token: string) => {
     try {
       const { data, error } = await supabase.auth.verifyOtp({
         email: email,
         token: token,
-        type: 'email'
+        type: 'magiclink'
       })
       
       if (error) throw error
@@ -204,8 +256,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setGuestMode,
     signIn,
     signUp,
-    sendEmailVerificationOtp,
-    verifyOTP,
+    sendSignUpOtp,
+    verifySignUpOtp,
+    sendMagicLinkOtp,
+    verifyMagicLinkOtp,
     signOut,
   }
 

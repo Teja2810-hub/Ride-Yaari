@@ -6,7 +6,7 @@ interface AuthFormProps {
   onClose?: () => void
 }
 
-type AuthStep = 'signin' | 'signup' | 'otp-verification'
+type AuthStep = 'signin' | 'signup' | 'signup-otp-verification' | 'magic-link-otp-verification'
 
 export default function AuthForm({ onClose }: AuthFormProps) {
   const [currentStep, setCurrentStep] = useState<AuthStep>('signin')
@@ -19,7 +19,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   
-  const { signIn, signUp, sendEmailVerificationOtp, verifyOTP, setGuestMode } = useAuth()
+  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, setGuestMode } = useAuth()
 
   const handleContinueAsGuest = () => {
     setGuestMode(true)
