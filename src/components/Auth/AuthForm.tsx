@@ -80,16 +80,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { error } = await signUp(email, password, fullName)
+      const { error } = await sendSignUpOtp(email, password, fullName)
       if (error) throw error
       
-      // Account created successfully, no email verification needed
-      setSuccess('Account created successfully! You can now sign in.')
-      setTimeout(() => {
-        setCurrentStep('signin')
-        setError(null)
-        setSuccess(null)
-      }, 2000)
+      // Move to OTP verification step
+      setCurrentStep('signup-otp-verification')
+      setSuccess('Verification code sent to your email!')
     } catch (error: any) {
       console.error('Sign up error:', error)
       if (error?.status === 504) {
@@ -102,24 +98,46 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     }
   }
 
-  const handleOTPVerification = async (e: React.FormEvent) => {
+  const handleSignUpOTPVerification = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      const { data, error } = await verifyOTP(email, otpToken, 'magiclink')
+      const { error } = await verifySignUpOtp(email, otpToken, password, fullName)
       if (error) throw error
       
-      if (data.user) {
-        setSuccess('Email verified successfully! You can now sign in.')
-        // Reset form and go back to sign in
+      setSuccess('Account created successfully! You can now sign in.')
+      setTimeout(() => {
         setCurrentStep('signin')
         setOtpToken('')
         setError(null)
-      }
+        setSuccess(null)
+      }, 2000)
     } catch (error: any) {
       console.error('OTP verification error:', error)
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Invalid verification code. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMagicLinkOTPVerification = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await verifyMagicLinkOtp(email, otpToken)
+      if (error) throw error
+      
+      if (onClose) onClose()
+    } catch (error: any) {
+      console.error('Magic link OTP verification error:', error)
       if (error?.status === 504) {
         setError('Connection to server timed out. Please check your internet connection or try again later.')
       } else {
@@ -140,7 +158,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setCurrentStep('signin')
   }
 
-  if (currentStep === 'otp-verification') {
+  if (currentStep === 'signup-otp-verification') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
@@ -166,7 +184,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </div>
           )}
 
-          <form onSubmit={handleOTPVerification} className="space-y-4">
+          <form onSubmit={handleSignUpOTPVerification} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Verification Code
@@ -193,7 +211,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
           <div className="mt-6 text-center space-y-3">
             <button
-              onClick={() => handleSignUp(new Event('submit') as any)}
+              onClick={() => sendSignUpOtp(email, password, fullName)}
               disabled={loading}
               className="text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
@@ -525,7 +543,29 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
         <div className="mt-4">
           <button
-            onClick={handleMagicLinkSignIn}
+            onClick={async () => {
+              if (!email) {
+                setError('Please enter your email address first')
+                return
+              }
+              setLoading(true)
+              setError(null)
+              try {
+                const { error } = await sendMagicLinkOtp(email)
+                if (error) throw error
+                setCurrentStep('magic-link-otp-verification')
+                setSuccess('Magic link code sent to your email!')
+              } catch (error: any) {
+                console.error('Magic link error:', error)
+                if (error?.status === 504) {
+                  setError('Connection to server timed out. Please check your internet connection or try again later.')
+                } else {
+                  setError(error?.message || 'Failed to send magic link. Please try again.')
+                }
+              } finally {
+                setLoading(false)
+              }
+            }}
             disabled={loading || !email}
             className="w-full border border-blue-600 text-blue-600 py-3 px-4 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
