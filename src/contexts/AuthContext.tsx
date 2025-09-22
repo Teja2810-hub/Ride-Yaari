@@ -17,6 +17,7 @@ interface AuthContextType {
   verifySignUpOtp: (email: string, token: string, password: string, fullName: string) => Promise<{ error: any }>
   sendMagicLinkOtp: (email: string) => Promise<{ error: any }>
   verifyMagicLinkOtp: (email: string, token: string) => Promise<{ data: any, error: any }>
+  signInWithGoogle: () => Promise<{ error: any }>
   signOut: () => Promise<void>
 }
 
@@ -265,6 +266,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signInWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      })
+      
+      if (error) throw error
+      return { error: null }
+    } catch (error: any) {
+      return { error }
+    }
+  }
+
   const signOut = async () => {
     setIsGuest(false)
     await supabase.auth.signOut()
@@ -283,6 +304,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     verifySignUpOtp,
     sendMagicLinkOtp,
     verifyMagicLinkOtp,
+    signInWithGoogle,
     signOut,
   }
 

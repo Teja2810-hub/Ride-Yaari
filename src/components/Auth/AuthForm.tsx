@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck, Chrome } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getDefaultAvatarUrl } from '../../utils/avatarHelpers'
 
@@ -21,7 +21,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
   
-  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, setGuestMode } = useAuth()
+  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, signInWithGoogle, setGuestMode } = useAuth()
 
   // Cooldown timer effect
   React.useEffect(() => {
@@ -43,6 +43,22 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     if (onClose) onClose()
   }
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await signInWithGoogle()
+      if (error) throw error
+      
+      if (onClose) onClose()
+    } catch (error: any) {
+      console.error('Google sign in error:', error)
+      setError(error?.message || 'Failed to sign in with Google. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -490,6 +506,26 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </button>
           </form>
 
+          <div className="mt-4">
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Chrome size={20} />
+              <span>{loading ? 'Signing Up...' : 'Continue with Google'}</span>
+            </button>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Chrome size={20} />
+              <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
+            </button>
+          </div>
           <div className="mt-6 text-center">
             <button
               onClick={() => setCurrentStep('signin')}

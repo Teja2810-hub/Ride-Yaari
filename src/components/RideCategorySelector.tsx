@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation, Lock } from 'lucide-react'
+import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation, Lock, CheckCircle, XCircle } from 'lucide-react'
 import { CarRide, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
@@ -52,6 +52,35 @@ export default function RideCategorySelector({
     return hoursUntilDeparture <= 1
   }
 
+  const getRideStatus = (ride: CarRide): { status: 'open' | 'closed' | 'expired'; color: string; icon: React.ReactNode; label: string } => {
+    const now = new Date()
+    const departureTime = new Date(ride.departure_date_time)
+    
+    if (ride.is_closed) {
+      return {
+        status: 'closed',
+        color: 'bg-red-100 text-red-800 border-red-200',
+        icon: <Lock size={14} className="text-red-600" />,
+        label: 'Closed'
+      }
+    }
+    
+    if (departureTime <= now) {
+      return {
+        status: 'expired',
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        icon: <XCircle size={14} className="text-gray-600" />,
+        label: 'Expired'
+      }
+    }
+    
+    return {
+      status: 'open',
+      color: 'bg-green-100 text-green-800 border-green-200',
+      icon: <CheckCircle size={14} className="text-green-600" />,
+      label: 'Open'
+    }
+  }
   const toggleOfferedRide = (rideId: string) => {
     setExpandedOfferedRide(expandedOfferedRide === rideId ? null : rideId)
   }
@@ -189,6 +218,7 @@ export default function RideCategorySelector({
             {offeredRides.map((ride) => {
               const isExpanded = expandedOfferedRide === ride.id
               const isExpiredSoon = isExpiredOrExpiringSoon(ride)
+              const rideStatus = getRideStatus(ride)
               
               return (
                 <div key={ride.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
@@ -209,17 +239,13 @@ export default function RideCategorySelector({
                           <p className="text-gray-600">
                             {formatDateTime(ride.departure_date_time)}
                           </p>
-                          {isExpiredSoon && (
-                            <div className="flex items-center space-x-2 mt-1">
-                              <AlertTriangle size={14} className="text-orange-500" />
-                              <span className="text-xs text-orange-600 font-medium">
-                                {new Date(ride.departure_date_time) < new Date() ? 'Expired' : 'Expires soon'}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${rideStatus.color}`}>
+                          {rideStatus.icon}
+                          <span>{rideStatus.label}</span>
+                        </div>
                         <span className="text-sm font-medium text-green-600">
                           {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
                         </span>
@@ -297,10 +323,12 @@ export default function RideCategorySelector({
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <TripClosureControls
-                              ride={ride}
-                              onUpdate={onRefresh}
-                            />
+                            {rideStatus.status !== 'expired' && (
+                              <TripClosureControls
+                                ride={ride}
+                                onUpdate={onRefresh}
+                              />
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -313,7 +341,7 @@ export default function RideCategorySelector({
                             </button>
                           </div>
                           <div className="flex items-center space-x-3">
-                            {!isExpiredSoon && !ride.is_closed ? (
+                            {rideStatus.status === 'open' ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -327,7 +355,7 @@ export default function RideCategorySelector({
                             ) : (
                               <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
                                 <Edit size={16} />
-                                <span>{ride.is_closed ? 'Closed' : 'Cannot Edit'}</span>
+                                <span>{rideStatus.label === 'Closed' ? 'Closed' : rideStatus.label === 'Expired' ? 'Expired' : 'Cannot Edit'}</span>
                               </div>
                             )}
                             <button
@@ -344,7 +372,7 @@ export default function RideCategorySelector({
                         </div>
 
                         {/* Passenger Management */}
-                        {!ride.is_closed && (
+                        {rideStatus.status === 'open' && (
                           <div className="border-t border-gray-200 pt-6">
                             <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
                             <PassengerManagement
@@ -355,7 +383,7 @@ export default function RideCategorySelector({
                           </div>
                         )}
                         
-                        {ride.is_closed && (
+                        {rideStatus.status === 'closed' && (
                           <div className="border-t border-gray-200 pt-6">
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                               <div className="flex items-center space-x-3">
@@ -371,6 +399,25 @@ export default function RideCategorySelector({
                                       Closed on {formatDateTime(ride.closed_at)}
                                     </p>
                                   )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {rideStatus.status === 'expired' && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <XCircle size={20} className="text-gray-600" />
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">Ride Expired</h4>
+                                  <p className="text-sm text-gray-800">
+                                    This ride has passed its departure time and is no longer active.
+                                  </p>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Departure was {formatDateTime(ride.departure_date_time)}
+                                  </p>
                                 </div>
                               </div>
                             </div>

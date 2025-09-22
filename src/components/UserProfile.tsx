@@ -364,6 +364,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <Plane size={32} className="text-blue-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-blue-600">{trips.length}</h3>
                     <p className="text-blue-800">Airport Trips</p>
+                    <div className="mt-2 text-xs text-gray-600">
+                      <p>Open: {trips.filter(t => !t.is_closed && new Date(t.travel_date) > new Date()).length}</p>
+                      <p>Closed: {trips.filter(t => t.is_closed).length}</p>
+                      <p>Expired: {trips.filter(t => !t.is_closed && new Date(t.travel_date) <= new Date()).length}</p>
+                    </div>
                   </div>
                   <div className="bg-indigo-50 rounded-lg p-6 text-center">
                     <User size={32} className="text-indigo-600 mx-auto mb-4" />
@@ -374,6 +379,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <Car size={32} className="text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-green-600">{rides.length}</h3>
                     <p className="text-green-800">Rides Offered</p>
+                    <div className="mt-2 text-xs text-gray-600">
+                      <p>Open: {rides.filter(r => !r.is_closed && new Date(r.departure_date_time) > new Date()).length}</p>
+                      <p>Closed: {rides.filter(r => r.is_closed).length}</p>
+                      <p>Expired: {rides.filter(r => !r.is_closed && new Date(r.departure_date_time) <= new Date()).length}</p>
+                    </div>
                   </div>
                   <div className="bg-emerald-50 rounded-lg p-6 text-center">
                     <User size={32} className="text-emerald-600 mx-auto mb-4" />

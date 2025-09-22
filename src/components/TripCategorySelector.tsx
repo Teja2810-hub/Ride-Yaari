@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, Edit, Trash2, AlertTriangle, History, Lock } from 'lucide-react'
+import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, Edit, Trash2, AlertTriangle, History, Lock, CheckCircle, XCircle } from 'lucide-react'
 import { Trip, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
@@ -61,6 +61,35 @@ export default function TripCategorySelector({
     return hoursUntilTravel <= 1
   }
 
+  const getTripStatus = (trip: Trip): { status: 'open' | 'closed' | 'expired'; color: string; icon: React.ReactNode; label: string } => {
+    const now = new Date()
+    const travelDate = new Date(trip.travel_date)
+    
+    if (trip.is_closed) {
+      return {
+        status: 'closed',
+        color: 'bg-red-100 text-red-800 border-red-200',
+        icon: <Lock size={14} className="text-red-600" />,
+        label: 'Closed'
+      }
+    }
+    
+    if (travelDate <= now) {
+      return {
+        status: 'expired',
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        icon: <XCircle size={14} className="text-gray-600" />,
+        label: 'Expired'
+      }
+    }
+    
+    return {
+      status: 'open',
+      color: 'bg-green-100 text-green-800 border-green-200',
+      icon: <CheckCircle size={14} className="text-green-600" />,
+      label: 'Open'
+    }
+  }
   const toggleOfferedTrip = (tripId: string) => {
     setExpandedOfferedTrip(expandedOfferedTrip === tripId ? null : tripId)
   }
@@ -198,6 +227,7 @@ export default function TripCategorySelector({
             {offeredTrips.map((trip) => {
               const isExpanded = expandedOfferedTrip === trip.id
               const isExpiredSoon = isExpiredOrExpiringSoon(trip)
+              const tripStatus = getTripStatus(trip)
               
               return (
                 <div key={trip.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
@@ -219,17 +249,13 @@ export default function TripCategorySelector({
                             {formatDate(trip.travel_date)}
                             {trip.departure_time && ` at ${trip.departure_time}`}
                           </p>
-                          {isExpiredSoon && (
-                            <div className="flex items-center space-x-2 mt-1">
-                              <AlertTriangle size={14} className="text-orange-500" />
-                              <span className="text-xs text-orange-600 font-medium">
-                                {new Date(trip.travel_date) < new Date() ? 'Expired' : 'Expires soon'}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${tripStatus.color}`}>
+                          {tripStatus.icon}
+                          <span>{tripStatus.label}</span>
+                        </div>
                         {trip.price && (
                           <span className="text-sm font-medium text-green-600">
                             {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
@@ -320,10 +346,12 @@ export default function TripCategorySelector({
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <TripClosureControls
-                              trip={trip}
-                              onUpdate={onRefresh}
-                            />
+                            {tripStatus.status !== 'expired' && (
+                              <TripClosureControls
+                                trip={trip}
+                                onUpdate={onRefresh}
+                              />
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -336,7 +364,7 @@ export default function TripCategorySelector({
                             </button>
                           </div>
                           <div className="flex items-center space-x-3">
-                            {!isExpiredSoon && !trip.is_closed ? (
+                            {tripStatus.status === 'open' ? (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -350,7 +378,7 @@ export default function TripCategorySelector({
                             ) : (
                               <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
                                 <Edit size={16} />
-                                <span>{trip.is_closed ? 'Closed' : 'Cannot Edit'}</span>
+                                <span>{tripStatus.label === 'Closed' ? 'Closed' : tripStatus.label === 'Expired' ? 'Expired' : 'Cannot Edit'}</span>
                               </div>
                             )}
                             <button
@@ -367,7 +395,7 @@ export default function TripCategorySelector({
                         </div>
 
                         {/* Passenger Management */}
-                        {!trip.is_closed && (
+                        {tripStatus.status === 'open' && (
                           <div className="border-t border-gray-200 pt-6">
                             <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
                             <PassengerManagement
@@ -378,7 +406,7 @@ export default function TripCategorySelector({
                           </div>
                         )}
                         
-                        {trip.is_closed && (
+                        {tripStatus.status === 'closed' && (
                           <div className="border-t border-gray-200 pt-6">
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                               <div className="flex items-center space-x-3">
@@ -394,6 +422,25 @@ export default function TripCategorySelector({
                                       Closed on {formatDateTime(trip.closed_at)}
                                     </p>
                                   )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {tripStatus.status === 'expired' && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <XCircle size={20} className="text-gray-600" />
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">Trip Expired</h4>
+                                  <p className="text-sm text-gray-800">
+                                    This trip has passed its travel date and is no longer active.
+                                  </p>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Travel date was {formatDate(trip.travel_date)}
+                                  </p>
                                 </div>
                               </div>
                             </div>
