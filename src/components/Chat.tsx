@@ -479,6 +479,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     })
   }
 
+  const handlePassengerCancel = async (confirmationId: string) => {
+    if (!user || !currentConfirmation) return
+    
+    await cancelPassengerRequest(
+      confirmationId,
+      user.id,
+      currentConfirmation.ride_owner_id,
+      preSelectedRide,
+      preSelectedTrip
+    )
+  }
+
   const getConfirmationButtonText = () => {
     if (!currentConfirmation) {
       // No confirmation exists - show request button

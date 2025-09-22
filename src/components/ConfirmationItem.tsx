@@ -610,6 +610,70 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         </div>
       </div>
 
+      {/* Passenger Cancel Request Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <X size={32} className="text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Cancel Request</h2>
+              <p className="text-gray-600">
+                Are you sure you want to cancel your request for this {ride ? 'car ride' : 'airport trip'}?
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-blue-900 mb-2">Trip Details:</h4>
+              <div className="text-sm text-blue-800 space-y-1">
+                <p><strong>Route:</strong> {
+                  ride 
+                    ? `${ride.from_location} → ${ride.to_location}`
+                    : `${trip?.leaving_airport} → ${trip?.destination_airport}`
+                }</p>
+                <p><strong>Timing:</strong> {
+                  ride 
+                    ? formatDateTime(ride.departure_date_time)
+                    : formatDate(trip?.travel_date || '')
+                }</p>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-900 mb-1">What happens:</h4>
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    <li>• Your request will be cancelled</li>
+                    <li>• The {ride ? 'driver' : 'traveler'} will be notified</li>
+                    <li>• You can send a new request later if needed</li>
+                    <li>• The {ride ? 'ride' : 'trip'} becomes available for others</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Keep Request
+              </button>
+              <button
+                onClick={handlePassengerCancel}
+                disabled={isLoading}
+                className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Cancelling...' : 'Cancel Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Custom Confirmation Modal */}
       {showConfirmModal.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
