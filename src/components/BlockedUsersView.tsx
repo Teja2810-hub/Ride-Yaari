@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Shield, User, Trash2, MessageCircle, AlertTriangle, Search, Calendar } from 'lucide-react'
+import { ArrowLeft, Shield, User, Trash2, MessageCircle, AlertTriangle, Search, Calendar, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getBlockedUsers, unblockUser, BlockedUser } from '../utils/blockingHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
@@ -16,6 +16,7 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [unblockingUserId, setUnblockingUserId] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -35,10 +36,6 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
   const handleUnblock = async (blockedUserId: string) => {
     if (!user) return
 
-    if (!confirm('Are you sure you want to unblock this user? They will be able to contact you again.')) {
-      return
-    }
-
     setUnblockingUserId(blockedUserId)
 
     await handleAsync(async () => {
@@ -51,13 +48,19 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
       // Remove from local state
       setBlockedUsers(prev => prev.filter(u => u.blocked_id !== blockedUserId))
       
-      // Show success message
-      alert('User unblocked successfully!')
+      // Show success message in UI
+      setSuccessMessage('User unblocked successfully!')
+      setTimeout(() => setSuccessMessage(''), 3000)
     }).finally(() => {
       setUnblockingUserId(null)
     })
   }
 
+  const showUnblockConfirmation = (blockedUserId: string, userName: string) => {
+    if (confirm(`Are you sure you want to unblock ${userName}? They will be able to contact you again.`)) {
+      handleUnblock(blockedUserId)
+    }
+  }
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -109,6 +112,14 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
         />
       )}
 
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <CheckCircle size={20} className="text-green-600" />
+            <p className="text-green-800">{successMessage}</p>
+          </div>
+        </div>
+      )}
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
@@ -203,7 +214,7 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
                   </div>
                   
                   <button
-                    onClick={() => handleUnblock(blockedUser.blocked_id)}
+                    onClick={() => showUnblockConfirmation(blockedUser.blocked_id, blockedUser.user_profiles.full_name)}
                     disabled={unblockingUserId === blockedUser.blocked_id}
                     className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                   >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Archive, Car, Plane, Calendar, Clock, Unlock, Search, Filter, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Archive, Car, Plane, Calendar, Clock, Unlock, Search, Filter, AlertTriangle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getClosureHistory, reopenTrip, reopenRide } from '../utils/tripClosureHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
@@ -24,6 +24,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [sortBy, setSortBy] = useState<SortOption>('closed-desc')
   const [reopeningId, setReopeningId] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -44,10 +45,6 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const handleReopen = async (item: Trip | CarRide, type: 'trip' | 'ride') => {
     if (!user) return
 
-    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
-    if (!confirm(confirmMessage)) {
-      return
-    }
 
     console.log(`Attempting to reopen ${type}:`, item.id)
     setReopeningId(item.id)
@@ -75,13 +72,20 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
         setClosedRides(prev => prev.filter(r => r.id !== item.id))
       }
       
-      // Show success message
-      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully! It will now appear in search results.`)
+      // Show success message in UI
+      setSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} reopened successfully! It will now appear in search results.`)
+      setTimeout(() => setSuccessMessage(''), 5000)
     }).finally(() => {
       setReopeningId(null)
     })
   }
 
+  const showReopenConfirmation = (item: Trip | CarRide, type: 'trip' | 'ride') => {
+    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
+    if (confirm(confirmMessage)) {
+      handleReopen(item, type)
+    }
+  }
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
       weekday: 'short',
@@ -190,6 +194,14 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
         />
       )}
 
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <CheckCircle size={20} className="text-green-600" />
+            <p className="text-green-800">{successMessage}</p>
+          </div>
+        </div>
+      )}
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-gray-50 rounded-lg p-4 text-center">
@@ -327,7 +339,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                     
                     {!isPast && (
                       <button
-                        onClick={() => handleReopen(item, type)}
+                        onClick={() => showReopenConfirmation(item, type)}
                         disabled={reopeningId === item.id}
                         className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
                       >
@@ -410,3 +422,9 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
     </div>
   )
 }
+  function showReopenConfirmation(item: Trip | CarRide, type: 'trip' | 'ride') {
+    const confirmMessage = `Are you sure you want to reopen this ${type}? It will become visible in search results again.`
+    if (confirm(confirmMessage)) {
+      handleReopen(item, type)
+    }
+  }
