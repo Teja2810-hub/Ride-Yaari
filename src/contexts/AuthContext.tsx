@@ -177,32 +177,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error
       
-      // Create user profile after successful signup
-      if (data.user) {
-        console.log('Creating user profile for:', data.user.id)
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            full_name: fullName,
-            notification_preferences: {
-              email_notifications: true,
-              browser_notifications: true,
-              ride_requests: true,
-              ride_confirmations: true,
-              messages: true,
-              system_updates: true,
-              marketing_emails: false,
-              sound_enabled: true
-            }
-          })
-        
-        if (profileError) {
-          console.error('Error creating user profile:', profileError)
-          // Don't throw error here, let the user sign in and we'll create profile later
-        }
-      }
-      
       // Clear temporary signup data
       localStorage.removeItem('rideyaari-signup-data')
       
