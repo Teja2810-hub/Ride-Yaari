@@ -82,8 +82,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     // If the sender_id matches current user, it's from current user
     return message.sender_id === user?.id
   }
-    if (user) {
+
   useEffect(() => {
+    if (user) {
       fetchMessages()
       fetchConfirmationStatus()
       
