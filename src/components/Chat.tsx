@@ -35,6 +35,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [isBlocked, setIsBlocked] = useState(false)
   const [chatDeleted, setChatDeleted] = useState(false)
   const [expiredMessageIds, setExpiredMessageIds] = useState<Set<string>>(new Set())
+  const [showStartNewChatModal, setShowStartNewChatModal] = useState(false)
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -738,26 +739,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         </div>
       )}
 
-      {chatDeleted && (
-        <div className="bg-orange-50 border border-orange-200 p-4">
-          <div className="flex items-center space-x-3">
-            <AlertTriangle size={20} className="text-orange-600" />
-            <div>
-              <h4 className="font-semibold text-orange-900">Chat Deleted</h4>
-              <p className="text-sm text-orange-800">
-                You have deleted this chat. Start a new conversation to chat again.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowStartNewChatModal(true)}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors text-sm"
-            >
-              Start New Chat
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-4">
         <div className="container mx-auto max-w-full sm:max-w-xl md:max-w-4xl">
@@ -984,21 +965,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className={`w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base ${
-                  isBlocked || chatDeleted ? 'bg-gray-100 cursor-not-allowed' : ''
+                  isBlocked ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
-                disabled={sending || isBlocked || chatDeleted}
+                disabled={sending || isBlocked}
                 placeholder={
                   isBlocked ? 'Cannot message blocked user' : 
-                  chatDeleted ? 'Chat deleted - start new conversation' : 
                   `Message ${otherUserName}...`
                 }
               />
             </div>
             <button
               type="submit"
-              disabled={!newMessage.trim() || sending || isBlocked || chatDeleted}
+              disabled={!newMessage.trim() || sending || isBlocked}
               className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isBlocked || chatDeleted ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+                isBlocked ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
               <Send size={16} className="sm:w-5 sm:h-5" />

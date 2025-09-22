@@ -40,6 +40,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const [reversalTimeRemaining, setReversalTimeRemaining] = useState<number | null>(null)
   const [canRequestAgainState, setCanRequestAgainState] = useState(true)
   const [requestCooldownTime, setRequestCooldownTime] = useState<Date | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState<{
     show: boolean
     type: 'accept' | 'reject' | 'cancel'
@@ -119,6 +120,42 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       console.error('Error requesting again:', error)
       alert('Failed to send request. Please try again.')
     }
+  }
+
+  const handlePassengerCancel = async () => {
+    if (!user) return
+
+    setShowCancelModal(false)
+    setLoading(true)
+
+    await handleAsync(async () => {
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmation.id)
+
+      if (error) throw error
+
+      // Send system message to ride owner
+      const rideDetails = getRideOrTripDetails()
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: confirmation.ride_owner_id,
+          message_content: `🚫 ${user.email?.split('@')[0] || 'Passenger'} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      onUpdate()
+    }).finally(() => {
+      setLoading(false)
+    })
   }
 
   const isCurrentUserOwner = confirmation.ride_owner_id === user?.id
@@ -545,9 +582,19 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
             {/* Pending status for passengers */}
             {confirmation.status === 'pending' && isCurrentUserPassenger && (
-              <div className="flex items-center space-x-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-medium text-sm">
-                <Clock size={16} />
-                <span>Awaiting Response</span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  disabled={isLoading}
+                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                >
+                  <X size={16} />
+                  <span>Cancel Request</span>
+                </button>
+                <div className="flex items-center space-x-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-medium text-sm">
+                  <Clock size={16} />
+                  <span>Awaiting Response</span>
+                </div>
               </div>
             )}
 
@@ -609,6 +656,70 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
           </div>
         </div>
       </div>
+
+      {/* Passenger Cancel Request Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <X size={32} className="text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Cancel Request</h2>
+              <p className="text-gray-600">
+                Are you sure you want to cancel your request for this {ride ? 'car ride' : 'airport trip'}?
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-blue-900 mb-2">Trip Details:</h4>
+              <div className="text-sm text-blue-800 space-y-1">
+                <p><strong>Route:</strong> {
+                  ride 
+                    ? `${ride.from_location} → ${ride.to_location}`
+                    : `${trip?.leaving_airport} → ${trip?.destination_airport}`
+                }</p>
+                <p><strong>Timing:</strong> {
+                  ride 
+                    ? formatDateTime(ride.departure_date_time)
+                    : formatDate(trip?.travel_date || '')
+                }</p>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-900 mb-1">What happens:</h4>
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    <li>• Your request will be cancelled</li>
+                    <li>• The {ride ? 'driver' : 'traveler'} will be notified</li>
+                    <li>• You can send a new request later if needed</li>
+                    <li>• The {ride ? 'ride' : 'trip'} becomes available for others</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Keep Request
+              </button>
+              <button
+                onClick={handlePassengerCancel}
+                disabled={isLoading}
+                className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Cancelling...' : 'Cancel Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Passenger Cancel Request Modal */}
       {showCancelModal && (

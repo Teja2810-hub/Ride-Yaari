@@ -128,21 +128,30 @@ export const deleteChatConversation = async (
   return retryWithBackoff(async () => {
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
-    // Add a deletion record for this user (soft delete) with current timestamp
-    const { error: insertError } = await supabase
-      .from('user_chat_deletions')
-      .upsert({
-        user_id: userId,
-        other_user_id: otherUserId,
-        deleted_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,other_user_id'
-      })
+    // First, delete all existing messages between these users
+    const { error: deleteMessagesError } = await supabase
+      .from('chat_messages')
+      .delete()
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
 
-    console.log('Chat deletion record result:', { insertError })
-    if (insertError) {
-      throw new Error(insertError.message)
+    if (deleteMessagesError) {
+      console.error('Error deleting messages:', deleteMessagesError)
+      throw new Error(deleteMessagesError.message)
     }
+
+    // Remove any existing chat deletion records for this conversation
+    const { error: removeRecordError } = await supabase
+      .from('user_chat_deletions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('other_user_id', otherUserId)
+
+    // Don't throw error if no records exist to delete
+    if (removeRecordError && removeRecordError.code !== 'PGRST116') {
+      console.error('Error removing chat deletion record:', removeRecordError)
+    }
+
+    console.log('Chat conversation completely deleted for user:', userId)
 
     return { success: true }
   })
