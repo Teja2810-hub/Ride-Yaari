@@ -28,7 +28,7 @@ body {
 
 /* Enhanced card backgrounds with subtle transparency */
 .card {
-  @apply bg-white/88 rounded-3xl shadow-2xl border border-gray-100/40 transition-all duration-300 z-0;
+  @apply bg-white/[.88] rounded-3xl shadow-2xl border border-gray-100/40 transition-all duration-300 z-0;
   backdrop-filter: blur(25px);
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.15),
@@ -124,7 +124,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Card styles */
 .card {
-  @apply bg-white/88 rounded-3xl shadow-2xl border border-gray-100/40 transition-all duration-300 z-0;
+  @apply bg-white/[.88] rounded-3xl shadow-2xl border border-gray-100/40 transition-all duration-300 z-0;
   backdrop-filter: blur(25px);
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.15),
