@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import { notificationService } from './notificationService'
 import { CarRide, Trip, RideConfirmation } from '../types'
 import { retryWithBackoff, validateConfirmationFlow } from './errorUtils'
+import { getUserDisplayName } from './messageTemplates'
 
 /**
  * Check if a user can request again for a specific ride/trip
