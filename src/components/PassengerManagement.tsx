@@ -177,7 +177,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       const { error } = await supabase
         .from('ride_confirmations')
         .update({
-        const passengerName = confirmation.user_profiles?.full_name || await getUserDisplayName(confirmation.passenger_id)
+          status: newStatus,
           confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
