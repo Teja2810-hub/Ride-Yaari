@@ -13,7 +13,7 @@ import LoadingSpinner from './LoadingSpinner'
 import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { supabase } from '../utils/supabase'
 import { popupManager } from '../utils/popupManager'
-import { getRideOrTripDetails } from '../utils/messageTemplates'
+import { getRideOrTripDetails, getUserDisplayName } from '../utils/messageTemplates'
 
 interface ChatProps {
   onBack: () => void
@@ -522,12 +522,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       const ride = preSelectedRide
       const trip = preSelectedTrip
       const rideDetails = getRideOrTripDetails(ride, trip)
+      const userName = await getUserDisplayName(user.id)
       await supabase
         .from('chat_messages')
         .insert({
           sender_id: user.id,
           receiver_id: currentConfirmation.ride_owner_id,
-          message_content: `🚫 ${user.email?.split('@')[0] || 'Passenger'} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
+          message_content: `🚫 ${userName} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
           message_type: 'system',
           is_read: false
         })

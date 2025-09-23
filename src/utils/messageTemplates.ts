@@ -1,5 +1,6 @@
 import { CarRide, Trip } from '../types'
 import { getEnhancedSystemMessageTemplate } from './enhancedMessageTemplates'
+import { supabase } from './supabase'
 
 export interface MessageTemplate {
   title: string
@@ -239,4 +240,37 @@ export const isNotificationActionRequired = (
 ): boolean => {
   const template = getSystemMessageTemplate(action, userRole, undefined, undefined, true)
   return template.actionRequired || false
+}
+
+/**
+ * Get user's actual name from profile instead of email
+ */
+export const getUserDisplayName = async (userId: string): Promise<string> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single()
+
+    if (!error && profile?.full_name) {
+      return profile.full_name
+    }
+
+    // Fallback to getting name from auth user metadata
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (!authError && user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name
+    }
+
+    // Last resort fallback to email prefix
+    if (!authError && user?.email) {
+      return user.email.split('@')[0]
+    }
+
+    return 'User'
+  } catch (error) {
+    console.error('Error getting user display name:', error)
+    return 'User'
+  }
 }
