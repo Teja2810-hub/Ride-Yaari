@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabase'
 import { RideConfirmation, CarRide, Trip } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { notificationService } from '../utils/notificationService'
+import { getUserDisplayName } from '../utils/messageTemplates'
 
 interface PassengerManagementProps {
   ride?: CarRide
@@ -176,7 +177,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       const { error } = await supabase
         .from('ride_confirmations')
         .update({
-          status: newStatus,
+        const passengerName = confirmation.user_profiles?.full_name || await getUserDisplayName(confirmation.passenger_id)
           confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })

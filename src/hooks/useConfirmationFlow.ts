@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabase'
 import { notificationService } from '../utils/notificationService'
 import { CarRide, Trip } from '../types'
 import { useErrorHandler } from './useErrorHandler'
+import { getUserDisplayName } from '../utils/messageTemplates'
 
 interface ConfirmationState {
   showDisclaimer: boolean
@@ -73,7 +74,7 @@ export function useConfirmationFlow({
         .eq('id', passengerId)
         .single()
 
-      const passengerName = passengerProfile?.full_name || 'Unknown'
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(passengerId)
 
       // Get ride/trip data for notifications
       let ride: CarRide | undefined
@@ -165,7 +166,7 @@ export function useConfirmationFlow({
         .single()
 
       if (confirmation) {
-        const passengerName = confirmation.user_profiles?.full_name || 'Unknown'
+        const passengerName = confirmation.user_profiles?.full_name || await getUserDisplayName(passengerId)
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
@@ -236,7 +237,7 @@ export function useConfirmationFlow({
         .single()
 
       if (confirmation) {
-        const passengerName = confirmation.user_profiles?.full_name || 'Unknown'
+        const passengerName = confirmation.user_profiles?.full_name || await getUserDisplayName(passengerId)
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
@@ -308,7 +309,7 @@ export function useConfirmationFlow({
 
       if (confirmation) {
         const otherUserId = isOwner ? confirmation.passenger_id : confirmation.ride_owner_id
-        const cancellingUserName = isOwner ? 'Driver' : confirmation.user_profiles?.full_name || 'Passenger'
+        const cancellingUserName = isOwner ? await getUserDisplayName(userId) : confirmation.user_profiles?.full_name || await getUserDisplayName(userId)
         const receiverRole = isOwner ? 'passenger' : 'owner'
 
         // Send comprehensive notification to the other party
@@ -372,7 +373,7 @@ export function useConfirmationFlow({
         .eq('id', userId)
         .single()
 
-      const passengerName = passengerProfile?.full_name || 'Passenger'
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(userId)
 
       // Send comprehensive notification to ride owner about re-request
       await notificationService.sendComprehensiveNotification(
@@ -434,7 +435,7 @@ export function useConfirmationFlow({
         .eq('id', passengerId)
         .single()
 
-      const passengerName = passengerProfile?.full_name || 'Passenger'
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(passengerId)
 
       // Send system chat message to ride owner
       const rideDetails = ride 
