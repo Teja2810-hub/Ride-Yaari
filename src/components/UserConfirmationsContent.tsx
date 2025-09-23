@@ -214,7 +214,8 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
           })
       }
 
-      fetchConfirmations()
+      // Force immediate refresh of confirmations
+      await fetchConfirmations()
     }).finally(() => {
       setCancellingConfirmationId(null)
     })

@@ -120,6 +120,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         .eq('is_closed', false)
         .gte('travel_date', now)
 
+      // Exclude user's own trips if not a guest
+      if (!effectiveIsGuest && user) {
+        query = query.neq('user_id', user.id)
+      }
+
       // Apply sorting
       switch (sortBy) {
         case 'date-asc':

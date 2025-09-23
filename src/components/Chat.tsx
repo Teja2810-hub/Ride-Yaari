@@ -533,9 +533,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           is_read: false
         })
 
-      // Refresh confirmation status and messages
-      await fetchConfirmationStatus()
-      await fetchMessages()
+      // Force refresh confirmation status and messages
+      setCurrentConfirmation(null) // Clear current confirmation immediately
+      await Promise.all([
+        fetchConfirmationStatus(),
+        fetchMessages()
+      ])
     }).finally(() => {
       setCancellingRequest(false)
     })

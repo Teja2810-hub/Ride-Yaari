@@ -240,6 +240,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         .eq('is_closed', false)
         .gte('departure_date_time', now)
 
+      // Exclude user's own rides if not a guest
+      if (!effectiveIsGuest && user) {
+        query = query.neq('user_id', user.id)
+      }
+
       // Apply sorting
       switch (sortBy) {
         case 'date-asc':
