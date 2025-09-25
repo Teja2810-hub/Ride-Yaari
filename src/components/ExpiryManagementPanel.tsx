@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Clock, AlertTriangle, RefreshCw, Trash2, CheckCircle, X, Calendar, Filter } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { checkConfirmationExpiry, batchExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { checkConfirmationExpiry, autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
 
 interface ExpiryManagementPanelProps {
@@ -121,23 +121,23 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
     setProcessing(true)
     
     try {
-      const result = await batchExpireConfirmations()
+      const result = await autoExpireConfirmations()
       
       if (result.expired > 0) {
-        alert(`Successfully expired ${result.expired} confirmations.`)
+        alert(`Successfully cleaned up ${result.expired} expired confirmations.`)
         if (onRefresh) onRefresh()
         await fetchExpiryData()
       } else {
-        alert('No confirmations needed expiring.')
+        alert('No expired confirmations found.')
       }
 
       if (result.errors.length > 0) {
         console.error('Batch expire errors:', result.errors)
-        alert(`Some errors occurred during batch processing. Check console for details.`)
+        alert(`Some errors occurred during cleanup. Check console for details.`)
       }
     } catch (error: any) {
-      console.error('Error in batch expire:', error)
-      alert('Failed to process expired confirmations.')
+      console.error('Error in auto cleanup:', error)
+      alert('Failed to clean up expired confirmations.')
     } finally {
       setProcessing(false)
     }
@@ -271,7 +271,7 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
                 className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 <Trash2 size={16} />
-                <span>{processing ? 'Processing...' : `Expire ${stats.expired} Confirmations`}</span>
+                <span>{processing ? 'Cleaning up...' : `Manual Cleanup (${stats.expired})`}</span>
               </button>
             )}
           </div>
@@ -548,7 +548,8 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
         
         <div className="mt-4 p-3 bg-blue-100 rounded-lg">
           <p className="text-sm text-blue-900">
-            <strong>💡 Pro Tip:</strong> Respond to ride requests promptly to avoid automatic expiry. 
+            <strong>💡 Pro Tip:</strong> The system automatically cleans up expired confirmations every 3 minutes. 
+            Manual cleanup is available for immediate processing if needed.
             The system helps maintain active and timely confirmations for better user experience.
           </p>
         </div>

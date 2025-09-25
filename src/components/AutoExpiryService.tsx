@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Clock, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { batchExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
 
 interface AutoExpiryServiceProps {
   onExpiryProcessed?: (expiredCount: number) => void
@@ -23,8 +23,8 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
       // Run initial check
       runExpiryCheck()
       
-      // Set up periodic checks every 10 minutes
-      const interval = setInterval(runExpiryCheck, 10 * 60 * 1000)
+      // Set up periodic checks every 5 minutes for more responsive cleanup
+      const interval = setInterval(runExpiryCheck, 5 * 60 * 1000)
       
       return () => clearInterval(interval)
     }
@@ -37,9 +37,9 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
     setError('')
 
     try {
-      console.log('Running automatic expiry check...')
+      console.log('Running automatic confirmation expiry check...')
       
-      const result = await batchExpireConfirmations()
+      const result = await autoExpireConfirmations()
       
       setStats(prev => ({
         totalProcessed: prev.totalProcessed + result.processed,
@@ -50,7 +50,7 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
       setLastRun(new Date())
 
       if (result.expired > 0) {
-        console.log(`Auto-expired ${result.expired} confirmations`)
+        console.log(`Automatically expired ${result.expired} confirmations`)
         if (onExpiryProcessed) {
           onExpiryProcessed(result.expired)
         }
@@ -58,11 +58,11 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
       if (result.errors.length > 0) {
         console.error('Auto-expiry errors:', result.errors)
-        setError(`${result.errors.length} errors occurred during auto-expiry`)
+        setError(`${result.errors.length} errors occurred during automatic expiry`)
       }
     } catch (error: any) {
       console.error('Error in auto-expiry service:', error)
-      setError('Auto-expiry service encountered an error')
+      setError('Automatic expiry service encountered an error')
     } finally {
       setIsRunning(false)
     }
@@ -91,9 +91,9 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
   if (!user) return null
 
   return (
-    <div className="fixed bottom-4 left-4 z-40">
+    <div className="fixed bottom-4 left-4 z-40 pointer-events-none">
       {(isRunning || stats.lastBatchSize > 0 || error) && (
-        <div className={`bg-white border rounded-lg shadow-lg p-3 max-w-xs transition-all duration-300 ${
+        <div className={`bg-white border rounded-lg shadow-lg p-3 max-w-xs transition-all duration-300 pointer-events-auto ${
           error ? 'border-red-200' : 
           stats.lastBatchSize > 0 ? 'border-yellow-200' : 
           'border-blue-200'
@@ -114,11 +114,11 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
                 <CheckCircle size={14} className="text-green-600" />
               )}
             </div>
-            <h4 className="font-semibold text-gray-900 text-sm">Auto-Expiry Service</h4>
+            <h4 className="font-semibold text-gray-900 text-sm">Automatic Cleanup</h4>
           </div>
           
           {isRunning && (
-            <p className="text-xs text-blue-600">Checking for expired confirmations...</p>
+            <p className="text-xs text-blue-600">Cleaning up expired confirmations...</p>
           )}
           
           {error && (
@@ -127,14 +127,14 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
           
           {stats.lastBatchSize > 0 && !isRunning && (
             <p className="text-xs text-yellow-600">
-              Expired {stats.lastBatchSize} confirmation{stats.lastBatchSize !== 1 ? 's' : ''}
+              Automatically cleaned up {stats.lastBatchSize} expired confirmation{stats.lastBatchSize !== 1 ? 's' : ''}
             </p>
           )}
           
           <div className="text-xs text-gray-500 mt-2 space-y-1">
             <p>Last run: {formatLastRun()}</p>
             {stats.totalExpired > 0 && (
-              <p>Total expired: {stats.totalExpired}</p>
+              <p>Total cleaned up: {stats.totalExpired}</p>
             )}
           </div>
         </div>

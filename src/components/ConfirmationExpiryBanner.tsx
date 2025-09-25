@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, AlertTriangle, X, RefreshCw } from 'lucide-react'
+import { Clock, AlertTriangle, X, RefreshCw, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { batchExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
@@ -20,17 +20,47 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
   })
   const [showBanner, setShowBanner] = useState(false)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
+  const [autoCleanupEnabled, setAutoCleanupEnabled] = useState(true)
+  const [lastAutoCleanup, setLastAutoCleanup] = useState<Date | null>(null)
 
   useEffect(() => {
     if (user) {
       checkExpiryStats()
       
-      // Check every 5 minutes
-      const interval = setInterval(checkExpiryStats, 5 * 60 * 1000)
+      // Check every 3 minutes and auto-cleanup if enabled
+      const interval = setInterval(() => {
+        checkExpiryStats()
+        if (autoCleanupEnabled) {
+          performAutoCleanup()
+        }
+      }, 3 * 60 * 1000)
+      
       return () => clearInterval(interval)
     }
   }, [user])
 
+  const performAutoCleanup = async () => {
+    if (!user || isLoading) return
+
+    try {
+      const result = await autoExpireConfirmations()
+      
+      if (result.expired > 0) {
+        console.log(`Auto-cleanup: expired ${result.expired} confirmations`)
+        setLastAutoCleanup(new Date())
+        
+        // Update stats after cleanup
+        await checkExpiryStats()
+        
+        if (onRefresh) {
+          onRefresh()
+        }
+      }
+    } catch (error: any) {
+      console.error('Error in auto-cleanup:', error)
+      // Don't show error to user for background cleanup
+    }
+  }
   const checkExpiryStats = async () => {
     if (!user) return
 
@@ -42,28 +72,14 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
         total: confirmationStats.total
       })
       
-      setShowBanner(confirmationStats.expiringSoon > 0 || confirmationStats.expired > 0)
+      // Only show banner for expiring soon (expired ones are auto-cleaned)
+      setShowBanner(confirmationStats.expiringSoon > 0)
       setLastChecked(new Date())
     })
   }
 
-  const handleCleanupExpired = async () => {
-    if (!user) return
 
-    await handleAsync(async () => {
-      const result = await batchExpireConfirmations()
-      
-      if (result.expired > 0) {
-        alert(`${result.expired} expired confirmations have been cleaned up.`)
-        if (onRefresh) onRefresh()
-        checkExpiryStats()
-      } else {
-        alert('No expired confirmations found.')
-      }
-    })
-  }
-
-  if (!showBanner || (!stats.expiringSoon && !stats.expired)) {
+  if (!showBanner || stats.expiringSoon === 0) {
     return null
   }
 
@@ -79,7 +95,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
         />
       )}
       
-      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-6">
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 mb-6">
         {isLoading && (
           <div className="mb-4">
             <LoadingSpinner size="sm" text="Checking expiry status..." />
@@ -93,27 +109,35 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-yellow-900 mb-2">
-              Confirmation Expiry Notice
+              Confirmations Expiring Soon
             </h3>
             
             {stats.expiringSoon > 0 && (
               <div className="mb-2">
                 <p className="text-sm text-yellow-800">
                   <strong>{stats.expiringSoon}</strong> confirmation{stats.expiringSoon !== 1 ? 's' : ''} 
-                  {stats.expiringSoon === 1 ? ' is' : ' are'} expiring soon (within 24 hours of departure).
+                  {stats.expiringSoon === 1 ? ' is' : ' are'} expiring soon (within 24 hours of departure). 
+                  These will be automatically cleaned up when they expire.
                 </p>
               </div>
             )}
             
-            {stats.expired > 0 && (
-              <div className="mb-2">
-                <p className="text-sm text-red-800">
-                  <AlertTriangle size={14} className="inline mr-1" />
-                  <strong>{stats.expired}</strong> confirmation{stats.expired !== 1 ? 's have' : ' has'} expired 
-                  and {stats.expired === 1 ? 'needs' : 'need'} cleanup.
-                </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+              <div className="flex items-center space-x-2">
+                <CheckCircle size={16} className="text-green-600" />
+                <div>
+                  <h4 className="font-semibold text-green-900 text-sm">Automatic Cleanup Enabled</h4>
+                  <p className="text-xs text-green-800">
+                    Expired confirmations are automatically cleaned up every 3 minutes. No manual action required.
+                  </p>
+                  {lastAutoCleanup && (
+                    <p className="text-xs text-green-700 mt-1">
+                      Last auto-cleanup: {lastAutoCleanup.toLocaleTimeString()}
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
 
             <div className="flex items-center space-x-4 mt-3">
               <button
@@ -125,16 +149,16 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
                 <span>Refresh</span>
               </button>
               
-              {stats.expired > 0 && (
-                <button
-                  onClick={handleCleanupExpired}
-                  disabled={isLoading}
-                  className="flex items-center space-x-2 bg-yellow-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-yellow-700 transition-colors text-sm disabled:opacity-50"
-                >
-                  <AlertTriangle size={14} />
-                  <span>Cleanup Expired</span>
-                </button>
-              )}
+              <button
+                onClick={() => setAutoCleanupEnabled(!autoCleanupEnabled)}
+                className={`text-sm font-medium transition-colors ${
+                  autoCleanupEnabled 
+                    ? 'text-green-700 hover:text-green-800' 
+                    : 'text-gray-600 hover:text-gray-700'
+                }`}
+              >
+                Auto-cleanup: {autoCleanupEnabled ? 'ON' : 'OFF'}
+              </button>
             </div>
 
             {lastChecked && (

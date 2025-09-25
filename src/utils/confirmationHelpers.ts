@@ -456,6 +456,83 @@ export const expirePendingConfirmations = async (): Promise<{ expiredCount: numb
 }
 
 /**
+ * Automatically expire confirmations that have passed their deadline
+ */
+export const autoExpireConfirmations = async (): Promise<{ 
+  processed: number
+  expired: number
+  errors: string[]
+}> => {
+  return retryWithBackoff(async () => {
+    console.log('Starting automatic confirmation expiry process...')
+    
+    const { data: pendingConfirmations, error: fetchError } = await supabase
+      .from('ride_confirmations')
+      .select(`
+        *,
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          departure_date_time,
+          from_location,
+          to_location
+        ),
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          travel_date,
+          leaving_airport,
+          destination_airport
+        ),
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          id,
+          full_name
+        )
+      `)
+      .eq('status', 'pending')
+
+    if (fetchError) {
+      throw fetchError
+    }
+
+    const now = new Date()
+    const expiredIds: string[] = []
+    const errors: string[] = []
+    const processed = pendingConfirmations?.length || 0
+
+    console.log(`Found ${processed} pending confirmations to check`)
+
+    for (const confirmation of pendingConfirmations || []) {
+      try {
+        const ride = confirmation.car_rides
+        const trip = confirmation.trips
+        const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
+        
+        // Calculate expiry time based on ride type
+        const expiryHours = ride ? 2 : 4
+        const expiryDate = new Date(departureTime.getTime() - (expiryHours * 60 * 60 * 1000))
+        
+        // Check if confirmation has expired
+        if (now >= expiryDate) {
+          console.log(`Confirmation ${confirmation.id} has expired (${expiryHours}h before departure)`)
+          expiredIds.push(confirmation.id)
+        }
+      } catch (error: any) {
+        errors.push(`Error processing confirmation ${confirmation.id}: ${error.message}`)
+      }
+    }
+
+    console.log(`Found ${expiredIds.length} expired confirmations`)
+
+    // Expire confirmations in batch
+    if (expiredIds.length > 0) {
+      try {
+        const { error: updateError } = await supabase
+          .from('ride_confirmations')
+          .update({
+            status: 'rejected',
+  // Redirect to the new auto-expire function for backward compatibility
+  return autoExpireConfirmations()
+}
+
  * Get confirmation statistics including expiry information
  */
 export const getConfirmationStats = async (
