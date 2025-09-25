@@ -18,7 +18,6 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
     expired: 0,
     total: 0
   })
-  const [showBanner, setShowBanner] = useState(false)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
   const [autoCleanupEnabled, setAutoCleanupEnabled] = useState(true)
   const [lastAutoCleanup, setLastAutoCleanup] = useState<Date | null>(null)
@@ -85,14 +84,12 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
         total: confirmationStats.total
       })
       
-      // Only show banner for expiring soon (expired ones are auto-cleaned)
-      setShowBanner(confirmationStats.expiringSoon > 0)
       setLastChecked(new Date())
     })
   }
 
-
-  if (!showBanner || stats.expiringSoon === 0) {
+  // Only show banner if there are confirmations expiring soon (within 6 hours for urgency)
+  if (stats.expiringSoon === 0) {
     return null
   }
 
@@ -141,7 +138,7 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
                 <div>
                   <h4 className="font-semibold text-green-900 text-sm">Automatic Cleanup Enabled</h4>
                   <p className="text-xs text-green-800">
-                    Expired confirmations are automatically cleaned up every 3 minutes. No manual action required.
+                    Expired confirmations are automatically cleaned up in the background. No action required.
                   </p>
                   {lastAutoCleanup && (
                     <p className="text-xs text-green-700 mt-1">
@@ -182,12 +179,6 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
           </div>
         </div>
         
-        <button
-          onClick={() => setShowBanner(false)}
-          className="text-yellow-600 hover:text-yellow-700 transition-colors"
-        >
-          <X size={20} />
-        </button>
       </div>
     </div>
     </>

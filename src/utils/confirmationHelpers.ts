@@ -464,7 +464,7 @@ export const autoExpireConfirmations = async (): Promise<{
   errors: string[]
 }> => {
   return retryWithBackoff(async () => {
-    console.log('Starting automatic confirmation expiry process...')
+    // Run silently in background - only log errors
     
     // Get current timestamp to ensure we only process each confirmation once
     const processStartTime = new Date().toISOString()
@@ -503,7 +503,10 @@ export const autoExpireConfirmations = async (): Promise<{
     const errors: string[] = []
     const processed = pendingConfirmations?.length || 0
 
-    console.log(`Found ${processed} pending confirmations to check`)
+    // Only log if there are confirmations to process
+    if (processed > 0) {
+      console.log(`Background cleanup: checking ${processed} pending confirmations`)
+    }
 
     for (const confirmation of pendingConfirmations || []) {
       try {
@@ -524,7 +527,8 @@ export const autoExpireConfirmations = async (): Promise<{
         
         // Check if confirmation has expired
         if (now >= expiryDate) {
-          console.log(`Confirmation ${confirmation.id} has expired (${expiryHours}h before departure)`)
+          // Only log expired confirmations for debugging
+          console.log(`Background cleanup: expired confirmation ${confirmation.id.slice(0, 8)}... (${expiryHours}h rule)`)
           expiredIds.push(confirmation.id)
         }
       } catch (error: any) {
@@ -532,7 +536,10 @@ export const autoExpireConfirmations = async (): Promise<{
       }
     }
 
-    console.log(`Found ${expiredIds.length} expired confirmations`)
+    // Only log if there are expired confirmations
+    if (expiredIds.length > 0) {
+      console.log(`Background cleanup: found ${expiredIds.length} expired confirmations`)
+    }
 
     // Expire confirmations in batch
     if (expiredIds.length > 0) {
@@ -550,7 +557,6 @@ export const autoExpireConfirmations = async (): Promise<{
         )
         
         if (stillPendingIds.length === 0) {
-          console.log('All confirmations already processed, skipping')
           return { processed, expired: 0, errors }
         }
         
@@ -597,9 +603,6 @@ export const autoExpireConfirmations = async (): Promise<{
                   trip,
                   'Request expired due to proximity to departure time'
                 )
-                console.log(`Sent expiry notification for confirmation ${confirmationId}`)
-              } else {
-                console.log(`Expiry notification already sent for confirmation ${confirmationId}`)
               }
             } catch (messageError: any) {
               console.error(`Error sending expiry message for ${confirmationId}:`, messageError)
@@ -615,7 +618,10 @@ export const autoExpireConfirmations = async (): Promise<{
       }
     }
 
-    console.log(`Expired ${expiredIds.length} confirmations`)
+    // Only log successful cleanup if there were expired confirmations
+    if (expiredIds.length > 0) {
+      console.log(`Background cleanup: successfully expired ${expiredIds.length} confirmations`)
+    }
 
     return {
       processed,

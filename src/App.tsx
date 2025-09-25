@@ -371,7 +371,12 @@ function AppContent() {
       </ErrorBoundary>
       <WhatsAppChatButton />
       <ErrorBoundary>
-        <AutoExpiryService onExpiryProcessed={(count) => console.log(`Auto-expired ${count} confirmations`)} />
+        <AutoExpiryService onExpiryProcessed={(count) => {
+          // Handle cleanup silently in background
+          if (count > 0) {
+            console.log(`Background cleanup: processed ${count} expired confirmations`)
+          }
+        }} />
       </ErrorBoundary>
       
       {/* Auth Prompt Modal */}
