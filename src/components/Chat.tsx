@@ -505,6 +505,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user || !currentConfirmation) return
     
     setCancellingRequest(true)
+    
+    // Immediately update local state to hide the button
+    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
 
     await handleAsync(async () => {
       const { error } = await supabase
@@ -533,12 +536,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           is_read: false
         })
 
-      // Force refresh confirmation status and messages
-      setCurrentConfirmation(null) // Clear current confirmation immediately
-      await Promise.all([
-        fetchConfirmationStatus(),
-        fetchMessages()
-      ])
+      // Refresh confirmation status and messages
+      await fetchConfirmationStatus()
+      await fetchMessages()
     }).finally(() => {
       setCancellingRequest(false)
     })

@@ -454,11 +454,8 @@ export function useConfirmationFlow({
           is_read: false
         })
 
-      // Force immediate update
-      if (onUpdate) {
-        await new Promise(resolve => setTimeout(resolve, 100)) // Small delay to ensure DB update is complete
-        onUpdate()
-      }
+      // Trigger immediate update
+      if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Request cancelled successfully!')
     })
   }, [handleAsync, onUpdate, onSuccess])

@@ -154,6 +154,15 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     if (!user) return
 
     setCancellingConfirmationId(confirmationId)
+    
+    // Immediately update the local state to reflect the cancellation
+    setConfirmations(prev => 
+      prev.map(conf => 
+        conf.id === confirmationId 
+          ? { ...conf, status: 'rejected' as const, updated_at: new Date().toISOString() }
+          : conf
+      )
+    )
 
     await handleAsync(async () => {
       const { error } = await supabase
@@ -214,8 +223,8 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
           })
       }
 
-      // Force immediate refresh of confirmations
-      await fetchConfirmations()
+      // Refresh confirmations to get the latest data from server
+      fetchConfirmations()
     }).finally(() => {
       setCancellingConfirmationId(null)
     })
