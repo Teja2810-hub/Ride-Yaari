@@ -402,6 +402,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <UserCog size={16} />
                       <span>Edit Profile</span>
                     </button>
+                    <a
+                      href="https://www.buymeacoffee.com/rideyaari"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 bg-yellow-500 text-black px-4 py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors text-center"
+                    >
+                      <span>☕</span>
+                      <span>Buy me a coffee</span>
+                    </a>
                     <button
                       onClick={() => setActiveTab('trips')}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"

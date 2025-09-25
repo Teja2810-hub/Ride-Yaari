@@ -83,6 +83,23 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                   <p className="text-sm sm:text-base text-green-700">We'll get back to you within 24 hours.</p>
                 </div>
               ) : (
+                <div className="mb-6">
+                  <p className="text-blue-100 mb-4">
+                    <strong>Support the Developer:</strong> I'm a solo developer working hard to make RideYaari better every day.
+                  </p>
+                  <a
+                    href="https://www.buymeacoffee.com/rideyaari"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block hover:scale-105 transition-transform"
+                  >
+                    <img 
+                      src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                      alt="Buy me a coffee"
+                      className="h-10"
+                    />
+                  </a>
+                </div>
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault()

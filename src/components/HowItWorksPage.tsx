@@ -215,6 +215,23 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
               <p className="text-blue-100 mb-6">
                 Join thousands of travelers who trust RideYaari for safe, affordable, and convenient connections
               </p>
+              <div className="mb-6">
+                <p className="text-blue-100 mb-4">
+                  <strong>Support the Developer:</strong> I'm a solo developer working to make travel connections easier for everyone.
+                </p>
+                <a
+                  href="https://www.buymeacoffee.com/rideyaari"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block hover:scale-105 transition-transform"
+                >
+                  <img 
+                    src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                    alt="Buy me a coffee"
+                    className="h-10"
+                  />
+                </a>
+              </div>
               <button
                 onClick={() => {
                   window.location.href = '/';

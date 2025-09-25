@@ -73,6 +73,23 @@ export default function ReviewsPage({ onBack }: ReviewsPageProps) {
                 <div className="text-blue-100">Countries Connected</div>
               </div>
             </div>
+            <div className="mt-8">
+              <p className="text-blue-100 mb-4">
+                <strong>Support the Developer:</strong> Help keep RideYaari free and growing!
+              </p>
+              <a
+                href="https://www.buymeacoffee.com/rideyaari"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block hover:scale-105 transition-transform"
+              >
+                <img 
+                  src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                  alt="Buy me a coffee"
+                  className="h-10"
+                />
+              </a>
+            </div>
           </div>
         </div>
       </div>

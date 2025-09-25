@@ -39,12 +39,12 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
 
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <span className="text-3xl mr-2">🇮🇳</span>
-            <h2 className="text-xl font-bold text-gray-900">Made in India</h2>
+            <span className="text-3xl mr-2">☕</span>
+            <h2 className="text-xl font-bold text-gray-900">Support RideYaari</h2>
           </div>
           
           <p className="text-sm text-gray-700 mb-4">
-            RideYaari is proudly developed in India with love and dedication to connect travelers worldwide.
+            RideYaari is developed with love and dedication to connect travelers worldwide.
           </p>
           
           <div className="bg-gradient-to-r from-orange-50 to-green-50 rounded-lg p-4 mb-6 border border-orange-200">
@@ -61,33 +61,32 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
               Together, we can build the world's most helpful travel community! ✈️🚗
             </p>
             
+            {/* Solo Developer Support Section */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-gray-700 mb-2">
+                <strong>I'm a solo developer</strong> - you can buy me a coffee below and help me!
+              </p>
+              <p className="text-xs text-gray-600 mb-3 italic">
+                "A coffee a day keeps the homeless away" ☕
+              </p>
+              <div className="flex justify-center">
+                <a 
+                  href="https://www.buymeacoffee.com/rideyaari" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block hover:scale-105 transition-transform"
+                >
+                  <img 
+                    src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                    alt="Buy me a coffee"
+                    className="h-10"
+                  />
+                </a>
+              </div>
+            </div>
+            
             {/* Share buttons */}
             <div className="flex justify-center space-x-3">
-              <button
-                onClick={() => {
-                  const url = encodeURIComponent(window.location.origin)
-                  const text = encodeURIComponent('Check out RideYaari - Connect with travelers worldwide for airport trips and car rides!')
-                  window.open(`https://wa.me/?text=${text}%20${url}`, '_blank')
-                }}
-                className="flex items-center justify-center px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs"
-                title="Share on WhatsApp"
-              >
-                <span className="mr-1">📱</span>
-                <span>WhatsApp</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  const url = encodeURIComponent(window.location.origin)
-                  window.open(`https://www.instagram.com/`, '_blank')
-                }}
-                className="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-colors text-xs"
-                title="Share on Instagram"
-              >
-                <span className="mr-1">📷</span>
-                <span>Instagram</span>
-              </button>
-              
               <button
                 onClick={async () => {
                   if (navigator.share && navigator.canShare && navigator.canShare({
@@ -110,11 +109,11 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
                     alert('Website link copied to clipboard!')
                   }
                 }}
-                className="flex items-center justify-center px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs"
+                className="flex items-center justify-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
                 title="Share Link"
               >
                 <span className="mr-1">🌐</span>
-                <span>Share</span>
+                <span>Share RideYaari</span>
               </button>
             </div>
           </div>

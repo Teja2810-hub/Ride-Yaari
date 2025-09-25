@@ -18,11 +18,24 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
           <div className="md:col-span-1">
             <h3 className="text-xl font-bold text-gray-900 mb-4">RideYaari</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Connect travelers worldwide for airport trips and car rides. Made in India with love.
+              Connect travelers worldwide for airport trips and car rides. Made with love.
             </p>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span className="text-lg">🇮🇳</span>
-              <span>Proudly Made in India</span>
+            <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+              <span className="text-lg">☕</span>
+              <span>Support the Developer</span>
+            </div>
+            <a
+              href="https://www.buymeacoffee.com/rideyaari"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block hover:scale-105 transition-transform"
+            >
+              <img 
+                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                alt="Buy me a coffee"
+                className="h-8"
+              />
+            </a>
             </div>
           </div>
 
