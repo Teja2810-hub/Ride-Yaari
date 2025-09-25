@@ -549,7 +549,7 @@ export const autoExpireConfirmations = async (): Promise<{
             await notificationService.sendEnhancedSystemMessage(
               'reject',
               'passenger',
-              'system',
+              SYSTEM_USER_ID,
               confirmation.passenger_id,
               ride,
               trip,
