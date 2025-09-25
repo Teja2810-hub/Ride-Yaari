@@ -17,6 +17,7 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
     lastBatchSize: 0
   })
   const [error, setError] = useState('')
+  const [showNotification, setShowNotification] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -51,6 +52,13 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
       if (result.expired > 0) {
         console.log(`Automatically expired ${result.expired} confirmations`)
+        
+        // Show notification briefly for successful cleanup
+        setShowNotification(true)
+        setTimeout(() => {
+          setShowNotification(false)
+        }, 3000) // Hide after 3 seconds
+        
         if (onExpiryProcessed) {
           onExpiryProcessed(result.expired)
         }
@@ -58,11 +66,13 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
       if (result.errors.length > 0) {
         console.error('Auto-expiry errors:', result.errors)
-        setError(`${result.errors.length} errors occurred during automatic expiry`)
+        // Log errors but don't show them to user - handle silently in background
+        console.warn(`Auto-expiry service: ${result.errors.length} errors occurred but continuing operation`)
       }
     } catch (error: any) {
       console.error('Error in auto-expiry service:', error)
-      setError('Automatic expiry service encountered an error')
+      // Log error but don't show to user - this is a background service
+      console.warn('Auto-expiry service encountered an error but continuing operation:', error)
     } finally {
       setIsRunning(false)
     }
@@ -92,24 +102,20 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
   return (
     <div className="fixed bottom-4 left-4 z-40 pointer-events-none">
-      {(isRunning || stats.lastBatchSize > 0 || error) && (
+      {(isRunning || showNotification) && (
         <div className={`bg-white border rounded-lg shadow-lg p-3 max-w-xs transition-all duration-300 pointer-events-auto ${
-          error ? 'border-red-200' : 
-          stats.lastBatchSize > 0 ? 'border-yellow-200' : 
+          stats.lastBatchSize > 0 ? 'border-green-200' : 
           'border-blue-200'
         }`}>
           <div className="flex items-center space-x-2 mb-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-              error ? 'bg-red-100' :
-              stats.lastBatchSize > 0 ? 'bg-yellow-100' :
+              stats.lastBatchSize > 0 ? 'bg-green-100' :
               'bg-blue-100'
             }`}>
               {isRunning ? (
                 <RefreshCw size={14} className="text-blue-600 animate-spin" />
-              ) : error ? (
-                <AlertTriangle size={14} className="text-red-600" />
               ) : stats.lastBatchSize > 0 ? (
-                <Clock size={14} className="text-yellow-600" />
+                <CheckCircle size={14} className="text-green-600" />
               ) : (
                 <CheckCircle size={14} className="text-green-600" />
               )}
@@ -118,25 +124,20 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
           </div>
           
           {isRunning && (
-            <p className="text-xs text-blue-600">Cleaning up expired confirmations...</p>
+            <p className="text-xs text-blue-600">Processing confirmations...</p>
           )}
           
-          {error && (
-            <p className="text-xs text-red-600">{error}</p>
-          )}
-          
-          {stats.lastBatchSize > 0 && !isRunning && (
-            <p className="text-xs text-yellow-600">
-              Automatically cleaned up {stats.lastBatchSize} expired confirmation{stats.lastBatchSize !== 1 ? 's' : ''}
+          {stats.lastBatchSize > 0 && !isRunning && showNotification && (
+            <p className="text-xs text-green-600">
+              ✅ Cleaned up {stats.lastBatchSize} expired confirmation{stats.lastBatchSize !== 1 ? 's' : ''}
             </p>
           )}
           
-          <div className="text-xs text-gray-500 mt-2 space-y-1">
-            <p>Last run: {formatLastRun()}</p>
-            {stats.totalExpired > 0 && (
-              <p>Total cleaned up: {stats.totalExpired}</p>
-            )}
-          </div>
+          {!isRunning && showNotification && (
+            <div className="text-xs text-gray-500 mt-2">
+              <p>Completed at {formatLastRun()}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
