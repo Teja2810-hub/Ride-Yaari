@@ -21,8 +21,10 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
               Connect travelers worldwide for airport trips and car rides. Made with love.
             </p>
             <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-              <span className="text-lg">☕</span>
-              <span>Support the Developer</span>
+                <span>☕Support the Developer<br />
+                <p>Running this app means feeding my servers endless API snacks and pulling all-nighters. If you like free rides, fuel my caffeine fund! 😭 
+                </p>
+              </span>
             </div>
             <a
               href="https://www.buymeacoffee.com/rideyaari"

@@ -85,17 +85,17 @@ export default function HelpPage({ onBack }: HelpPageProps) {
               ) : (
                 <>
                   <div className="mb-6">
-                    <p className="text-blue-100 mb-4">
-                      <strong>Support the Developer:</strong> I'm a solo developer working hard to make RideYaari better every day.
+                    <p className="text-yellow-600 mb-4">
+                      <strong>Support the Developer:</strong>  My servers are always hungry for API calls and my wallet is on a diet. Coding at 2am with tears in my eyes 🥲 so you can ride for free. Buy me a coffee to keep the servers (and me) alive! A coffee a day keeps my homelessness away!
                     </p>
                     <a
                       href="https://www.buymeacoffee.com/rideyaari"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block hover:scale-105 transition-transform"
+                      className="inline-block hover:scale-105 transition-transform bg-yellow-300 rounded-lg p-1 border-2 border-black"
                     >
                       <img 
-                        src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                        src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=ffe066&font_family=Comic&outline_colour=000000&coffee_colour=000000" 
                         alt="Buy me a coffee"
                         className="h-10"
                       />

@@ -64,10 +64,10 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
             {/* Solo Developer Support Section */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-gray-700 mb-2">
-                <strong>I'm a solo developer</strong> - you can buy me a coffee below and help me!
+                <strong>I'm a solo developer</strong> -  My servers eat API calls for breakfast, lunch, and dinner—and I pay the bill. Coding at midnight, crying at sunrise. Help me survive the grind with a coffee? 🥲
               </p>
               <p className="text-xs text-gray-600 mb-3 italic">
-                "A coffee a day keeps the homeless away" ☕
+                "A coffee a day keeps the homelessness away" ☕
               </p>
               <div className="flex justify-center">
                 <a 

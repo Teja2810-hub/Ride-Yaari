@@ -217,7 +217,7 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
               </p>
               <div className="mb-6">
                 <p className="text-blue-100 mb-4">
-                  <strong>Support the Developer:</strong> I'm a solo developer working to make travel connections easier for everyone.
+                  <strong>Support the Developer:</strong> Every API call drains my soul (and my bank account). Late-night coding, endless bug hunts, and servers that never sleep—send help (or coffee) ☕😭
                 </p>
                 <a
                   href="https://www.buymeacoffee.com/rideyaari"
