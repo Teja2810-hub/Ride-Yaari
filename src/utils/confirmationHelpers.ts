@@ -529,16 +529,52 @@ export const autoExpireConfirmations = async (): Promise<{
           .from('ride_confirmations')
           .update({
             status: 'rejected',
+            confirmed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .in('id', expiredIds)
+
+        if (updateError) {
+          errors.push(`Error expiring confirmations: ${updateError.message}`)
+        }
+
+        // Send system messages for expired confirmations
+        for (const confirmationId of expiredIds) {
+          const confirmation = pendingConfirmations?.find(c => c.id === confirmationId)
+          if (confirmation) {
+            const ride = confirmation.car_rides
+            const trip = confirmation.trips
+            
+            // Notify passenger about expiry
+            await notificationService.sendEnhancedSystemMessage(
+              'reject',
+              'passenger',
+              'system',
+              confirmation.passenger_id,
+              ride,
+              trip,
+              'Request expired due to proximity to departure time'
+            )
           }
+        }
+      } catch (error: any) {
+        errors.push(`Error processing expired confirmations: ${error.message}`)
+      }
           )
       }
     }
-  }
-  )
-  // Redirect to the new auto-expire function for backward compatibility
-  return autoExpireConfirmations()
+
+    console.log(`Expired ${expiredIds.length} confirmations`)
+
+    return {
+      processed,
+      expired: expiredIds.length,
+      errors
+    }
+  })
 }
 
+/**
  * Get confirmation statistics including expiry information
  */
 export const getConfirmationStats = async (
