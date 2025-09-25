@@ -2,6 +2,9 @@ import { supabase } from './supabase'
 import { getSystemMessageTemplate } from './messageTemplates'
 import { CarRide, Trip, UserProfile } from '../types'
 
+// System user ID for automated messages (valid UUID format)
+export const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000'
+
 export interface NotificationPayload {
   userId: string
   title: string

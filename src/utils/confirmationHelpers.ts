@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { notificationService } from './notificationService'
+import { notificationService, SYSTEM_USER_ID } from './notificationService'
 import { CarRide, Trip, RideConfirmation } from '../types'
 import { retryWithBackoff, validateConfirmationFlow } from './errorUtils'
 import { getUserDisplayName } from './messageTemplates'
@@ -441,7 +441,7 @@ export const expirePendingConfirmations = async (): Promise<{ expiredCount: numb
           await notificationService.sendEnhancedSystemMessage(
             'reject',
             'passenger',
-            'system',
+            SYSTEM_USER_ID,
             confirmation.passenger_id,
             ride,
             trip,
