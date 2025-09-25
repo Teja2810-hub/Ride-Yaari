@@ -83,86 +83,88 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                   <p className="text-sm sm:text-base text-green-700">We'll get back to you within 24 hours.</p>
                 </div>
               ) : (
-                <div className="mb-6">
-                  <p className="text-blue-100 mb-4">
-                    <strong>Support the Developer:</strong> I'm a solo developer working hard to make RideYaari better every day.
-                  </p>
-                  <a
-                    href="https://www.buymeacoffee.com/rideyaari"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block hover:scale-105 transition-transform"
-                  >
-                    <img 
-                      src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
-                      alt="Buy me a coffee"
-                      className="h-10"
-                    />
-                  </a>
-                </div>
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    setSubmitted(true)
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Subject</label>
-                    <select
-                      name="subject"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                      required
+                <>
+                  <div className="mb-6">
+                    <p className="text-blue-100 mb-4">
+                      <strong>Support the Developer:</strong> I'm a solo developer working hard to make RideYaari better every day.
+                    </p>
+                    <a
+                      href="https://www.buymeacoffee.com/rideyaari"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block hover:scale-105 transition-transform"
                     >
-                      <option value="">Select a subject</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="technical">Technical Support</option>
-                      <option value="safety">Safety Concern</option>
-                      <option value="feedback">Feedback & Suggestions</option>
-                      <option value="feature_request">Feature Request</option>
-                      <option value="bug_report">Bug Report</option>
-                      <option value="other">Other</option>
-                    </select>
+                      <img 
+                        src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                        alt="Buy me a coffee"
+                        className="h-10"
+                      />
+                    </a>
                   </div>
-
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Message</label>
-                    <textarea
-                      name="message"
-                      rows={4}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                      placeholder="You can submit feedback, ask any questions, suggest new features, or report any bugs you've found. We appreciate all input to help improve RideYaari!"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      setSubmitted(true)
+                    }}
+                    className="space-y-4"
                   >
-                    Send Message
-                  </button>
-                </form>
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Subject</label>
+                      <select
+                        name="subject"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                        required
+                      >
+                        <option value="">Select a subject</option>
+                        <option value="general">General Inquiry</option>
+                        <option value="technical">Technical Support</option>
+                        <option value="safety">Safety Concern</option>
+                        <option value="feedback">Feedback & Suggestions</option>
+                        <option value="feature_request">Feature Request</option>
+                        <option value="bug_report">Bug Report</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Message</label>
+                      <textarea
+                        name="message"
+                        rows={4}
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                        placeholder="You can submit feedback, ask any questions, suggest new features, or report any bugs you've found. We appreciate all input to help improve RideYaari!"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                    >
+                      Send Message
+                    </button>
+                  </form>
+                </>
               )}
             </div>
           </div>

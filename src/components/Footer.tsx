@@ -36,7 +36,6 @@ export default function Footer({ onHelp, onReviews, onHowItWorks, onPrivacyPolic
                 className="h-8"
               />
             </a>
-            </div>
           </div>
 
           {/* Quick Links */}
