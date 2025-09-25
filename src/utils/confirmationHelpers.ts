@@ -529,6 +529,12 @@ export const autoExpireConfirmations = async (): Promise<{
           .from('ride_confirmations')
           .update({
             status: 'rejected',
+          }
+          )
+      }
+    }
+  }
+  )
   // Redirect to the new auto-expire function for backward compatibility
   return autoExpireConfirmations()
 }
