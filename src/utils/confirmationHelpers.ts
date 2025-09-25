@@ -560,7 +560,6 @@ export const autoExpireConfirmations = async (): Promise<{
       } catch (error: any) {
         errors.push(`Error processing expired confirmations: ${error.message}`)
       }
-      }
     }
 
     console.log(`Expired ${expiredIds.length} confirmations`)
