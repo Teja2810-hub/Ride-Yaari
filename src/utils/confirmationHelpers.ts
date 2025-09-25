@@ -466,6 +466,9 @@ export const autoExpireConfirmations = async (): Promise<{
   return retryWithBackoff(async () => {
     console.log('Starting automatic confirmation expiry process...')
     
+    // Get current timestamp to ensure we only process each confirmation once
+    const processStartTime = new Date().toISOString()
+    
     const { data: pendingConfirmations, error: fetchError } = await supabase
       .from('ride_confirmations')
       .select(`
@@ -488,6 +491,7 @@ export const autoExpireConfirmations = async (): Promise<{
         )
       `)
       .eq('status', 'pending')
+      .lt('updated_at', processStartTime) // Only process confirmations that haven't been updated recently
 
     if (fetchError) {
       throw fetchError
@@ -495,6 +499,7 @@ export const autoExpireConfirmations = async (): Promise<{
 
     const now = new Date()
     const expiredIds: string[] = []
+    const processedConfirmations = new Set<string>()
     const errors: string[] = []
     const processed = pendingConfirmations?.length || 0
 
@@ -502,6 +507,13 @@ export const autoExpireConfirmations = async (): Promise<{
 
     for (const confirmation of pendingConfirmations || []) {
       try {
+        // Skip if already processed in this run
+        if (processedConfirmations.has(confirmation.id)) {
+          continue
+        }
+        
+        processedConfirmations.add(confirmation.id)
+        
         const ride = confirmation.car_rides
         const trip = confirmation.trips
         const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
@@ -525,6 +537,23 @@ export const autoExpireConfirmations = async (): Promise<{
     // Expire confirmations in batch
     if (expiredIds.length > 0) {
       try {
+        // First, check if any of these confirmations have already been processed
+        const { data: alreadyProcessed } = await supabase
+          .from('ride_confirmations')
+          .select('id, status')
+          .in('id', expiredIds)
+          .neq('status', 'pending')
+        
+        // Filter out already processed confirmations
+        const stillPendingIds = expiredIds.filter(id => 
+          !alreadyProcessed?.some(processed => processed.id === id)
+        )
+        
+        if (stillPendingIds.length === 0) {
+          console.log('All confirmations already processed, skipping')
+          return { processed, expired: 0, errors }
+        }
+        
         const { error: updateError } = await supabase
           .from('ride_confirmations')
           .update({
@@ -532,33 +561,57 @@ export const autoExpireConfirmations = async (): Promise<{
             confirmed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .in('id', expiredIds)
+          .in('id', stillPendingIds)
+          .eq('status', 'pending') // Additional safety check
 
         if (updateError) {
           errors.push(`Error expiring confirmations: ${updateError.message}`)
+          return { processed, expired: 0, errors }
         }
 
-        // Send system messages for expired confirmations
-        for (const confirmationId of expiredIds) {
+        // Send system messages for expired confirmations (only once per confirmation)
+        for (const confirmationId of stillPendingIds) {
           const confirmation = pendingConfirmations?.find(c => c.id === confirmationId)
           if (confirmation) {
             const ride = confirmation.car_rides
             const trip = confirmation.trips
             
-            // Notify passenger about expiry
-            await notificationService.sendEnhancedSystemMessage(
-              'reject',
-              'passenger',
-              SYSTEM_USER_ID,
-              confirmation.passenger_id,
-              ride,
-              trip,
-              'Request expired due to proximity to departure time'
-            )
+            try {
+              // Check if we've already sent an expiry message for this confirmation
+              const { data: existingMessages } = await supabase
+                .from('chat_messages')
+                .select('id')
+                .eq('sender_id', SYSTEM_USER_ID)
+                .eq('receiver_id', confirmation.passenger_id)
+                .ilike('message_content', '%Request expired due to proximity to departure time%')
+                .limit(1)
+              
+              if (!existingMessages || existingMessages.length === 0) {
+                // Only send message if we haven't sent one before
+                await notificationService.sendEnhancedSystemMessage(
+                  'reject',
+                  'passenger',
+                  SYSTEM_USER_ID,
+                  confirmation.passenger_id,
+                  ride,
+                  trip,
+                  'Request expired due to proximity to departure time'
+                )
+                console.log(`Sent expiry notification for confirmation ${confirmationId}`)
+              } else {
+                console.log(`Expiry notification already sent for confirmation ${confirmationId}`)
+              }
+            } catch (messageError: any) {
+              console.error(`Error sending expiry message for ${confirmationId}:`, messageError)
+              errors.push(`Error sending expiry message for ${confirmationId}: ${messageError.message}`)
+            }
           }
         }
+        
+        return { processed, expired: stillPendingIds.length, errors }
       } catch (error: any) {
         errors.push(`Error processing expired confirmations: ${error.message}`)
+        return { processed, expired: 0, errors }
       }
     }
 

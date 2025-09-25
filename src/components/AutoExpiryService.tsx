@@ -40,6 +40,9 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
     try {
       console.log('Running automatic confirmation expiry check...')
       
+      // Add a small delay to prevent rapid successive calls
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       const result = await autoExpireConfirmations()
       
       setStats(prev => ({

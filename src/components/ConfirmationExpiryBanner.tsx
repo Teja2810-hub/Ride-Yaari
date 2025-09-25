@@ -42,6 +42,16 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
   const performAutoCleanup = async () => {
     if (!user || isLoading) return
 
+    // Prevent multiple simultaneous cleanup operations
+    const cleanupKey = `cleanup-${user.id}-${Date.now()}`
+    const existingCleanup = sessionStorage.getItem('rideyaari-cleanup-running')
+    
+    if (existingCleanup) {
+      console.log('Cleanup already running, skipping')
+      return
+    }
+    
+    sessionStorage.setItem('rideyaari-cleanup-running', cleanupKey)
     try {
       const result = await autoExpireConfirmations()
       
@@ -59,6 +69,9 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
     } catch (error: any) {
       console.error('Error in auto-cleanup:', error)
       // Don't show error to user for background cleanup
+    } finally {
+      // Clear the cleanup lock
+      sessionStorage.removeItem('rideyaari-cleanup-running')
     }
   }
   const checkExpiryStats = async () => {
