@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Send, Clock, TriangleAlert as AlertTriangle, Globe, DollarSign, User } from 'lucide-react't { useAuth } from '../contexts/AuthContext'
+import { ArrowLeft, Calendar, Send, Clock, TriangleAlert as AlertTriangle, Globe, DollarSign, User } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
