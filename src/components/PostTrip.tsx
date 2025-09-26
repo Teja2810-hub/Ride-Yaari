@@ -15,6 +15,7 @@ interface PostTripProps {
 
 export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
   const { user, setGuestMode } = useAuth()
+  const effectiveIsGuest = isGuest || !user
   const [leavingAirport, setLeavingAirport] = useState('')
   const [destinationAirport, setDestinationAirport] = useState('')
   const [travelDate, setTravelDate] = useState('')
@@ -37,7 +38,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
     e.preventDefault()
     
     // Check if user is a guest
-    if (isGuest) {
+    if (effectiveIsGuest) {
       setShowAuthPrompt(true)
       return
     }
@@ -154,7 +155,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Trip</h1>
             <p className="text-gray-600">Share your flight details to help other travelers</p>
-            {isGuest && (
+            {effectiveIsGuest && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   <strong>Browsing as Guest:</strong> You can fill out the form, but you'll need to sign up to post your trip.
@@ -390,14 +391,14 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
 
             <button
               type="submit"
-              disabled={loading || !leavingAirport || !destinationAirport || !travelDate || !departureTime || isGuest}
+              disabled={loading || !leavingAirport || !destinationAirport || !travelDate || !departureTime}
               className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isGuest 
+                effectiveIsGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
             >
-              {loading ? 'Posting Trip...' : isGuest ? 'Sign Up to Post Trip' : 'Post My Trip'}
+              {loading ? 'Posting Trip...' : effectiveIsGuest ? 'Sign Up to Post Trip' : 'Post My Trip'}
             </button>
           </form>
         </div>

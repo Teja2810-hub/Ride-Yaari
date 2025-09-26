@@ -169,7 +169,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
           >
             <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
+            {loading ? 'Posting Ride...' : effectiveIsGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
           </button>
         </div>
 
