@@ -333,7 +333,6 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    disabled={!price}
                   >
                     {currencies.map((curr) => (
                       <option key={curr.code} value={curr.code}>
@@ -344,19 +343,23 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
                 </div>
               </div>
 
-              {price && (
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="negotiable"
-                    checked={negotiable}
-                    onChange={(e) => setNegotiable(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
-                    Price is negotiable
-                  </label>
-                </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="negotiable"
+                  checked={negotiable}
+                  onChange={(e) => setNegotiable(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  disabled={!price}
+                />
+                <label htmlFor="negotiable" className={`text-sm font-medium ${!price ? 'text-gray-400' : 'text-gray-700'}`}>
+                  Price is negotiable
+                </label>
+              </div>
+              {!price && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter a price above to enable negotiable option
+                </p>
               )}
             </div>
 
@@ -387,7 +390,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
 
             <button
               type="submit"
-              disabled={loading || !leavingAirport || !destinationAirport || !travelDate || !departureTime}
+              disabled={loading || !leavingAirport || !destinationAirport || !travelDate || !departureTime || isGuest}
               className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 isGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
