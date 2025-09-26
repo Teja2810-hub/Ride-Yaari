@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw, Home, HelpCircle } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, RefreshCw, Hop as Home, Circle as HelpCircle } from 'lucide-react'
 import { reportErrorToBackend } from '../utils/errorUtils'
 
 interface Props {

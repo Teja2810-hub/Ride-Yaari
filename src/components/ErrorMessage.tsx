@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, RefreshCw, X } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { reportErrorToBackend } from '../utils/errorUtils'
 import { useAuth } from '../contexts/AuthContext'
 
