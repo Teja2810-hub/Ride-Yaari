@@ -3,7 +3,7 @@ import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X } from 'l
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import LocationAutocomplete from './LocationAutocomplete'
-import DisclaimerModal from './DisclaimerModal'
+import { DisclaimerModal } from './DisclaimerModal'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
 
