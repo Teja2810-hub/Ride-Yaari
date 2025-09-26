@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck, Chrome } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck, Chromium as Chrome } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { getDefaultAvatarUrl } from '../../utils/avatarHelpers'
 
@@ -116,13 +116,24 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
-      const { error } = await sendSignUpOtp(email, password, fullName)
+      const { error, skipOtp } = await sendSignUpOtp(email, password, fullName) as any
       if (error) throw error
       
-      // Move to OTP verification step
-      setCurrentStep('signup-otp-verification')
-      setSuccess('Verification code sent to your email!')
-      startResendCooldown()
+      // If OTP was skipped (disabled), show success and redirect to sign in
+      if (skipOtp) {
+        setSuccess('Account created successfully! You can now sign in.')
+        setTimeout(() => {
+          setCurrentStep('signin')
+          setError(null)
+          setSuccess(null)
+          setPassword('') // Clear password for security
+        }, 2000)
+      } else {
+        // Move to OTP verification step
+        setCurrentStep('signup-otp-verification')
+        setSuccess('Verification code sent to your email!')
+        startResendCooldown()
+      }
     } catch (error: any) {
       console.error('Sign up error:', error)
       if (error?.status === 504) {
@@ -658,7 +669,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 } else if (error?.status === 429) {
                   setError('Too many requests. Please wait before trying again.')
                 } else {
-                  setError(error?.message || 'Failed to send magic link. Please try again.')
+                  setError(error?.message || 'Magic link is currently unavailable. Please use email and password to sign in.')
                 }
               } finally {
                 setLoading(false)

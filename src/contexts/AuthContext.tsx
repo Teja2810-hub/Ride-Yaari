@@ -148,28 +148,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendSignUpOtp = async (email: string, password: string, fullName: string) => {
     try {
-      // Store signup data temporarily in localStorage for OTP verification
-      const signupData = {
-        email,
-        password,
-        fullName,
-        timestamp: Date.now()
-      }
-      localStorage.setItem('rideyaari-signup-data', JSON.stringify(signupData))
-
-      // Send OTP for email verification
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: false, // Don't create user yet
-          data: {
-            full_name: fullName
-          }
+      // Try OTP first, fallback to direct signup if OTP is disabled
+      try {
+        // Store signup data temporarily in localStorage for OTP verification
+        const signupData = {
+          email,
+          password,
+          fullName,
+          timestamp: Date.now()
         }
-      })
+        localStorage.setItem('rideyaari-signup-data', JSON.stringify(signupData))
+
+        // Send OTP for email verification
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            shouldCreateUser: false, // Don't create user yet
+            data: {
+              full_name: fullName
+            }
+          }
+        })
+        
+        if (error) throw error
+        return { error: null }
+      } catch (otpError: any) {
+        // If OTP is disabled, fall back to direct signup
+        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('Signups not allowed for otp')) {
+          console.log('OTP disabled, falling back to direct signup')
+          
+          // Clear any stored signup data since we're doing direct signup
+          localStorage.removeItem('rideyaari-signup-data')
+          
+          // Directly create the user account
+          const { data, error: signupError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName
+              }
+            }
+          })
+          
+          if (signupError) throw signupError
+          
+          // Create user profile with default avatar after successful signup
+          if (data.user) {
+            try {
+              const defaultAvatarUrl = getDefaultAvatarUrl('default', fullName)
+              
+              const { error: profileError } = await supabase
+                .from('user_profiles')
+                .upsert({
+                  id: data.user.id,
+                  full_name: fullName,
+                  profile_image_url: defaultAvatarUrl,
+                  notification_preferences: {
+                    email_notifications: true,
+                    browser_notifications: true,
+                    ride_requests: true,
+                    ride_confirmations: true,
+                    messages: true,
+                    system_updates: true,
+                    marketing_emails: false,
+                    sound_enabled: true
+                  }
+                })
+              
+              if (profileError) {
+                console.error('Error creating user profile during signup:', profileError)
+              }
+            } catch (profileError) {
+              console.error('Error creating user profile during signup:', profileError)
+            }
+          }
+          
+          return { error: null, skipOtp: true }
+        } else {
+          throw otpError
+        }
+      }
       
-      if (error) throw error
-      return { error: null }
     } catch (error: any) {
       return { error }
     }
@@ -237,15 +297,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: false
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            shouldCreateUser: false
+          }
+        })
+        
+        if (error) throw error
+        return { error: null }
+      } catch (otpError: any) {
+        // If OTP is disabled, return a helpful error message
+        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('Signups not allowed for otp')) {
+          throw new Error('Magic link sign-in is currently unavailable. Please use email and password to sign in.')
+        } else {
+          throw otpError
         }
-      })
+      }
       
-      if (error) throw error
-      return { error: null }
     } catch (error: any) {
       return { error }
     }
