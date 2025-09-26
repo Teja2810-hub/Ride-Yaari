@@ -40,7 +40,18 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                   <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">How does RideYaari work?</h3>
                   <p className="text-gray-600 text-xs sm:text-sm">
                     RideYaari connects travelers through two services: Airport Trips for sharing flight itineraries 
-                    and arranging deliveries/assistance, and Car Rides for carpooling to share travel costs.
+                    and arranging deliveries/assistance, and Car Rides for carpooling to share travel costs.<br />
+                    For a step-by-step guide, check out our{' '}
+                    <button
+                      onClick={() => {
+                        window.location.hash = '#how-it-works'
+                        onBack()
+                      }}
+                      className="text-blue-600 hover:text-blue-700 underline font-medium"
+                    >
+                      How It Works page
+                    </button>
+                    .
                   </p>
                 </div>
 
@@ -69,24 +80,6 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                 </div>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-3 sm:p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">How does RideYaari work step by step?</h3>
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  For a detailed step-by-step guide on how RideYaari works, including both Airport Trips and Car Rides, 
-                  please visit our{' '}
-                  <button
-                    onClick={() => {
-                      // Navigate to how it works page
-                      window.location.hash = '#how-it-works'
-                      onBack() // This will trigger the parent to show how it works
-                    }}
-                    className="text-blue-600 hover:text-blue-700 underline font-medium"
-                  >
-                    How It Works page
-                  </button>
-                  {' '}which explains everything in detail with examples and safety guidelines.
-                </p>
-              </div>
             </div>
 
             {/* Contact Form */}
