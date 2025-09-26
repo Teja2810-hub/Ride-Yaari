@@ -129,6 +129,22 @@ function AppContent() {
     setCurrentView('how-it-works')
   }
 
+  // Handle hash-based navigation for how it works
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#how-it-works') {
+        setCurrentView('how-it-works')
+        window.location.hash = '' // Clear the hash
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    // Check initial hash
+    handleHashChange()
+
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   const handleReviews = () => {
     setCurrentView('reviews')
   }
