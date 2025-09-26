@@ -268,12 +268,14 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
                     Service Price
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <span className="absolute left-3 top-3 text-gray-400 font-medium">
+                      {getCurrencySymbol(currency)}
+                    </span>
                     <input
                       type="number"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
