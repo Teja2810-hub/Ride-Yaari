@@ -42,11 +42,6 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
       return
     }
     
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-    
     // Check if disclaimer should be shown
     if (popupManager.shouldShowDisclaimer('trip', user?.id)) {
       setShowDisclaimer(true)
@@ -196,14 +191,12 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Travel Date <span className="text-red-500">*</span>
                 </label>
-                  <span className="absolute left-3 top-3 text-gray-400 font-medium">
-                    {getCurrencySymbol(currency)}
-                  </span>
+                <div className="relative">
                   <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
                     type="date"
                     value={travelDate}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    onChange={(e) => setTravelDate(e.target.value)}
                     min={getTomorrowDate()}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     required

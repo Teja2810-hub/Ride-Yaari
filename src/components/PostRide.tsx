@@ -42,11 +42,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       return
     }
     
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-    
     // Check if disclaimer should be shown
     if (popupManager.shouldShowDisclaimer('ride', user?.id)) {
       setShowDisclaimer(true)
@@ -284,14 +279,12 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                   Price per Passenger <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-3 text-gray-400 font-medium">
-                    {getCurrencySymbol(currency)}
-                  </span>
+                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                     placeholder="0.00"
                     min="0"
                     step="0.01"
