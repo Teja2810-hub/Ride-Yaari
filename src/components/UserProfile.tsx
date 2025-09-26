@@ -18,6 +18,7 @@ import JoinedTripsView from './JoinedTripsView'
 import JoinedRidesView from './JoinedRidesView'
 import TripCategorySelector from './TripCategorySelector'
 import RideCategorySelector from './RideCategorySelector'
+import SystemHealthDashboard from './SystemHealthDashboard'
 import { getCurrencySymbol } from '../utils/currencies'
 
 interface UserProfileProps {
@@ -262,7 +263,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'blocked', label: 'Blocked Users', icon: <Shield size={16} /> },
     { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
-    { id: 'test', label: 'System Test', icon: <Settings size={16} /> }
+    { id: 'test', label: 'System Health', icon: <Settings size={16} /> }
   ]
 
   if (loading) {
@@ -555,12 +556,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             {activeTab === 'test' && (
               <div>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health & Error Monitoring</h2>
                   <p className="text-gray-600">
-                    Test the confirmation flow and system functionality to ensure everything is working correctly.
+                    Monitor system health, view error reports, and configure notification webhooks.
                   </p>
                 </div>
-                <TestConfirmationFlow />
+                <SystemHealthDashboard />
               </div>
             )}
 

@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { reportErrorToBackend } from './errorUtils'
+import { notificationService } from './notificationService'
 
 /**
  * Global error handler for unhandled promise rejections
@@ -8,6 +9,15 @@ export function setupGlobalErrorHandling(userId?: string) {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason)
+    
+    // Send browser notification for critical errors
+    if (typeof event.reason === 'object' && event.reason?.severity === 'critical') {
+      notificationService.sendBrowserNotification(
+        'Critical Error Detected',
+        'A critical error occurred in RideYaari. Our team has been notified.',
+        '🚨'
+      ).catch(console.warn)
+    }
     
     reportErrorToBackend(
       event.reason,
@@ -24,6 +34,15 @@ export function setupGlobalErrorHandling(userId?: string) {
   window.addEventListener('error', (event) => {
     console.error('Global JavaScript error:', event.error)
     
+    // Send browser notification for critical JavaScript errors
+    if (event.error && event.filename?.includes('main') || event.error?.name === 'ChunkLoadError') {
+      notificationService.sendBrowserNotification(
+        'Application Error',
+        'An application error occurred. Please refresh the page.',
+        '⚠️'
+      ).catch(console.warn)
+    }
+    
     reportErrorToBackend(
       event.error || new Error(event.message),
       `Global Error - ${event.filename}:${event.lineno}:${event.colno}`,
@@ -36,6 +55,16 @@ export function setupGlobalErrorHandling(userId?: string) {
   window.addEventListener('error', (event) => {
     if (event.target !== window) {
       console.error('Resource loading error:', event.target)
+      
+      // Send browser notification for critical resource failures
+      const target = event.target as any
+      if (target?.src?.includes('main') || target?.href?.includes('main')) {
+        notificationService.sendBrowserNotification(
+          'Resource Loading Error',
+          'Failed to load critical application resources. Please refresh the page.',
+          '📡'
+        ).catch(console.warn)
+      }
       
       reportErrorToBackend(
         new Error(`Failed to load resource: ${(event.target as any)?.src || (event.target as any)?.href || 'unknown'}`),
@@ -54,9 +83,19 @@ export async function reportCriticalError(
   error: any,
   context: string,
   userId?: string,
-  additionalMetadata?: Record<string, any>
+  additionalMetadata?: Record<string, any>,
+  sendNotification: boolean = true
 ): Promise<void> {
   try {
+    // Send immediate browser notification for critical errors
+    if (sendNotification) {
+      notificationService.sendBrowserNotification(
+        'Critical System Error',
+        'A critical error has been detected and reported to our development team.',
+        '🚨'
+      ).catch(console.warn)
+    }
+    
     const errorReport = {
       context,
       error_message: error?.message || 'Critical error occurred',
@@ -87,6 +126,16 @@ export async function reportCriticalError(
 
     if (insertError) {
       console.error('Failed to report critical error:', insertError)
+      
+      // Send fallback notification
+      if (sendNotification) {
+        notificationService.sendBrowserNotification(
+          'Error Reporting Failed',
+          'Failed to report error to backend. Please contact support if issues persist.',
+          '❌'
+        ).catch(console.warn)
+      }
+      
       // Store in localStorage as absolute fallback
       const criticalErrors = JSON.parse(localStorage.getItem('rideyaari-critical-errors') || '[]')
       criticalErrors.push({
@@ -98,6 +147,15 @@ export async function reportCriticalError(
     }
   } catch (reportingError) {
     console.error('Complete failure in critical error reporting:', reportingError)
+    
+    // Last resort notification
+    if (sendNotification) {
+      notificationService.sendBrowserNotification(
+        'System Error',
+        'Multiple system errors detected. Please refresh the page and contact support.',
+        '💥'
+      ).catch(console.warn)
+    }
   }
 }
 
