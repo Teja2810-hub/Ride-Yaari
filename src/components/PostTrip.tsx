@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Send, Clock, TriangleAlert as AlertTriangle, Globe, DollarSign } from 'lucide-react'
+import { ArrowLeft, Calendar, Send, Clock, AlertTriangle, Globe, DollarSign } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import AirportAutocomplete from './AirportAutocomplete'
@@ -38,6 +38,11 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
     
     // Check if user is a guest
     if (isGuest) {
+      setShowAuthPrompt(true)
+      return
+    }
+    
+    if (!user) {
       setShowAuthPrompt(true)
       return
     }
