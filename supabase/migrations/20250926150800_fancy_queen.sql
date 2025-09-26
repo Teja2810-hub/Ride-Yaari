@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS public.error_reports (
   url text,
   user_id uuid REFERENCES public.user_profiles(id) ON DELETE SET NULL,
   is_resolved boolean DEFAULT false,
-  severity text DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
   error_code text,
   session_id text,
   metadata jsonb DEFAULT '{}'::jsonb,
@@ -39,24 +38,13 @@ CREATE TABLE IF NOT EXISTS public.error_reports (
 -- Add indexes for efficient querying
 CREATE INDEX IF NOT EXISTS idx_error_reports_timestamp ON public.error_reports(timestamp);
 CREATE INDEX IF NOT EXISTS idx_error_reports_user_id ON public.error_reports(user_id);
-CREATE INDEX IF NOT EXISTS idx_error_reports_severity ON public.error_reports(severity);
 CREATE INDEX IF NOT EXISTS idx_error_reports_is_resolved ON public.error_reports(is_resolved);
 CREATE INDEX IF NOT EXISTS idx_error_reports_context ON public.error_reports(context);
 
 -- Enable Row Level Security
 ALTER TABLE public.error_reports ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow authenticated users to insert error reports
-CREATE POLICY "Authenticated users can insert error reports"
-  ON public.error_reports FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
 
--- Policy: Allow public (guest) users to insert error reports
-CREATE POLICY "Public users can insert error reports"
-  ON public.error_reports FOR INSERT
-  TO public
-  WITH CHECK (true);
 
 -- Policy: Allow authenticated users to view error reports (for admin purposes)
 CREATE POLICY "Authenticated users can view error reports"
