@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Bug, AlertTriangle, Zap, Info, Play, CheckCircle, X } from 'lucide-react'
+import { Bug, TriangleAlert as AlertTriangle, Zap, Info, Play, CircleCheck as CheckCircle, X } from 'lucide-react'
 import { reportErrorToBackend, reportCriticalError } from '../utils/errorUtils'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from './LoadingSpinner'

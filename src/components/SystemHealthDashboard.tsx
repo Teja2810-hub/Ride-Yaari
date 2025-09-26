@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, Database, Wifi, Shield, Clock, TrendingUp, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react'
+import { Activity, Database, Wifi, Shield, Clock, TrendingUp, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, RefreshCw } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useErrorHandler } from '../hooks/useErrorHandler'

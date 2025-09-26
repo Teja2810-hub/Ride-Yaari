@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Settings, CheckCircle, AlertTriangle, Copy, ExternalLink, Play, RefreshCw, X } from 'lucide-react'
+import { Settings, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Copy, ExternalLink, Play, RefreshCw, X } from 'lucide-react'
 import { testWebhookConfig, getWebhookSetupInstructions, validateWebhookConfig, WebhookConfig } from '../utils/webhookSetup'
 import LoadingSpinner from './LoadingSpinner'
 import ErrorMessage from './ErrorMessage'

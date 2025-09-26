@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, AlertTriangle, Shield, Archive } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
@@ -556,12 +556,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             {activeTab === 'test' && (
               <div>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health & Error Monitoring</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
                   <p className="text-gray-600">
-                    Monitor system health, view error reports, and configure notification webhooks.
+                    Test the confirmation flow and system functionality to ensure everything is working correctly.
                   </p>
                 </div>
-                <SystemHealthDashboard />
+                <TestConfirmationFlow />
               </div>
             )}
 

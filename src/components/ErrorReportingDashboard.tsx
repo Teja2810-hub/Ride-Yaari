@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { AlertTriangle, CheckCircle, Clock, TrendingUp, Filter, Search, Download, RefreshCw, Eye, X, Calendar, User, Globe, Smartphone } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, TrendingUp, ListFilter as Filter, Search, Download, RefreshCw, Eye, X, Calendar, User, Globe, Smartphone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { useErrorHandler } from '../hooks/useErrorHandler'
