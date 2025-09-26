@@ -1,5 +1,7 @@
 import React from 'react'
 import { AlertTriangle, RefreshCw, X } from 'lucide-react'
+import { reportErrorToBackend } from '../utils/errorUtils'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ErrorMessageProps {
   title?: string
@@ -8,6 +10,8 @@ interface ErrorMessageProps {
   onDismiss?: () => void
   type?: 'error' | 'warning' | 'info'
   className?: string
+  reportError?: boolean
+  context?: string
 }
 
 export default function ErrorMessage({
@@ -16,8 +20,24 @@ export default function ErrorMessage({
   onRetry,
   onDismiss,
   type = 'error',
-  className = ''
+  className = '',
+  reportError = false,
+  context
 }: ErrorMessageProps) {
+  const { user } = useAuth()
+
+  // Report error to backend if requested
+  React.useEffect(() => {
+    if (reportError && type === 'error') {
+      reportErrorToBackend(
+        new Error(message),
+        context || 'ErrorMessage Component',
+        undefined,
+        user?.id
+      ).catch(console.warn)
+    }
+  }, [reportError, message, context, user?.id, type])
+
   const getTypeStyles = () => {
     switch (type) {
       case 'warning':
@@ -52,7 +72,12 @@ export default function ErrorMessage({
         <AlertTriangle size={20} className={`${styles.icon} mt-0.5 flex-shrink-0`} />
         <div className="flex-1 min-w-0">
           <h3 className={`font-semibold ${styles.text} mb-1`}>{title}</h3>
-          <p className={`text-sm ${styles.text} leading-relaxed`}>{message}</p>
+          <p className={`text-sm ${styles.text} leading-relaxed`}>
+            {type === 'error' && reportError 
+              ? 'Something went wrong. Our team has been notified and will investigate this issue.'
+              : message
+            }
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           {onRetry && (

@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Home, HelpCircle } from 'lucide-react'
+import { reportErrorToBackend } from '../utils/errorUtils'
 
 interface Props {
   children: ReactNode
@@ -12,6 +13,7 @@ interface State {
   error: Error | null
   errorInfo: ErrorInfo | null
   errorId: string
+  userId?: string
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -21,7 +23,8 @@ export default class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorId: ''
+      errorId: '',
+      userId: undefined
     }
   }
 
@@ -33,7 +36,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({
       error,
       errorInfo
@@ -47,34 +50,35 @@ export default class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo)
     }
 
-    // Report to error tracking service (if available)
-    this.reportError(error, errorInfo)
+    // Get user ID from auth context if available
+    let userId: string | undefined
+    try {
+      const authData = localStorage.getItem('supabase.auth.token')
+      if (authData) {
+        const parsed = JSON.parse(authData)
+        userId = parsed?.user?.id
+      }
+    } catch (authError) {
+      console.warn('Could not extract user ID for error reporting:', authError)
+    }
+
+    this.setState({ userId })
+
+    // Report to backend for developer notification
+    await this.reportError(error, errorInfo, userId)
   }
 
-  reportError = (error: Error, errorInfo: ErrorInfo) => {
+  reportError = async (error: Error, errorInfo: ErrorInfo, userId?: string) => {
     try {
-      // Store error in localStorage for debugging
-      const errorReport = {
-        timestamp: new Date().toISOString(),
-        errorId: this.state.errorId,
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-        userAgent: navigator.userAgent,
-        url: window.location.href
-      }
-      
-      const existingErrors = JSON.parse(localStorage.getItem('rideyaari-errors') || '[]')
-      existingErrors.push(errorReport)
-      
-      // Keep only last 10 errors
-      if (existingErrors.length > 10) {
-        existingErrors.splice(0, existingErrors.length - 10)
-      }
-      
-      localStorage.setItem('rideyaari-errors', JSON.stringify(existingErrors))
+      // Report to backend for developer notification
+      await reportErrorToBackend(
+        error,
+        'React Error Boundary',
+        errorInfo.componentStack,
+        userId
+      )
     } catch (storageError) {
-      console.error('Failed to store error report:', storageError)
+      console.error('Failed to report error:', storageError)
     }
   }
 
@@ -83,7 +87,8 @@ export default class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      errorId: ''
+      errorId: '',
+      userId: undefined
     })
   }
 
@@ -91,20 +96,6 @@ export default class ErrorBoundary extends Component<Props, State> {
     window.location.href = '/'
   }
 
-  copyErrorDetails = () => {
-    const errorDetails = {
-      errorId: this.state.errorId,
-      message: this.state.error?.message,
-      stack: this.state.error?.stack,
-      componentStack: this.state.errorInfo?.componentStack,
-      timestamp: new Date().toISOString(),
-      url: window.location.href
-    }
-    
-    navigator.clipboard.writeText(JSON.stringify(errorDetails, null, 2))
-      .then(() => alert('Error details copied to clipboard'))
-      .catch(() => alert('Failed to copy error details'))
-  }
 
   render() {
     if (this.state.hasError) {
@@ -121,31 +112,39 @@ export default class ErrorBoundary extends Component<Props, State> {
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h1>
               <p className="text-gray-600">
-                We encountered an unexpected error. Don't worry, this has been logged and we'll fix it soon.
+                We encountered an unexpected error. Don't worry, our team has been automatically notified and we'll fix it soon.
               </p>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-start space-x-3">
-                <Bug size={20} className="text-red-600 mt-0.5" />
+                <HelpCircle size={20} className="text-blue-600 mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-red-900 mb-2">Error Details</h3>
-                  <p className="text-sm text-red-800 mb-2">
-                    <strong>Error ID:</strong> {this.state.errorId}
+                  <h3 className="font-semibold text-blue-900 mb-2">What happened?</h3>
+                  <p className="text-sm text-blue-800 mb-2">
+                    The application encountered an unexpected issue while processing your request.
                   </p>
-                  <p className="text-sm text-red-800 mb-2">
-                    <strong>Message:</strong> {this.state.error?.message}
+                  <p className="text-sm text-blue-800">
+                    <strong>Error ID:</strong> {this.state.errorId} (for support reference)
                   </p>
-                  <details className="text-sm text-red-700">
-                    <summary className="cursor-pointer font-medium">Technical Details</summary>
-                    <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-auto max-h-32">
-                      {this.state.error?.stack}
-                    </pre>
-                  </details>
                 </div>
               </div>
             </div>
 
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={20} className="text-green-600 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900 mb-2">We're on it!</h3>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>• Our development team has been automatically notified</li>
+                    <li>• The error details have been logged for investigation</li>
+                    <li>• We'll work to fix this issue as quickly as possible</li>
+                    <li>• You can try refreshing the page or going back to the home page</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
@@ -165,17 +164,17 @@ export default class ErrorBoundary extends Component<Props, State> {
                 </button>
               </div>
 
-              <button
-                onClick={this.copyErrorDetails}
-                className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors text-sm"
-              >
-                <Bug size={16} />
-                <span>Copy Error Details</span>
-              </button>
 
               <div className="text-center">
                 <p className="text-sm text-gray-500">
-                  If this problem persists, please contact support with Error ID: <strong>{this.state.errorId}</strong>
+                  If this problem persists, please contact support at{' '}
+                  <a 
+                    href="mailto:support@rideyaari.com" 
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    support@rideyaari.com
+                  </a>
+                  {' '}with Error ID: <strong>{this.state.errorId}</strong>
                 </p>
               </div>
             </div>

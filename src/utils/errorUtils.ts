@@ -2,6 +2,9 @@
  * Utility functions for error handling and user-friendly error messages
  */
 
+import { supabase } from './supabase'
+import { useAuth } from '../contexts/AuthContext'
+
 export interface ErrorDetails {
   code?: string
   message: string
@@ -126,6 +129,90 @@ export function parseError(error: any): ErrorDetails {
 }
 
 /**
+ * Report error to backend for developer notification
+ */
+export async function reportErrorToBackend(
+  error: any,
+  context?: string,
+  componentStack?: string,
+  userId?: string
+): Promise<void> {
+  try {
+    const errorDetails = parseError(error)
+    const sessionId = sessionStorage.getItem('rideyaari-session-id') || 
+                     `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    // Store session ID for tracking
+    if (!sessionStorage.getItem('rideyaari-session-id')) {
+      sessionStorage.setItem('rideyaari-session-id', sessionId)
+    }
+
+    const errorReport = {
+      context: context || 'Unknown Context',
+      error_message: errorDetails.message,
+      error_stack: error?.stack || null,
+      component_stack: componentStack || null,
+      user_agent: navigator.userAgent,
+      url: window.location.href,
+      user_id: userId || null,
+      severity: errorDetails.severity,
+      error_code: errorDetails.code || null,
+      session_id: sessionId,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        retryable: errorDetails.retryable,
+        userMessage: errorDetails.userMessage,
+        browserInfo: {
+          language: navigator.language,
+          platform: navigator.platform,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine
+        },
+        windowInfo: {
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio
+        }
+      }
+    }
+
+    // Send to Supabase
+    const { error: insertError } = await supabase
+      .from('error_reports')
+      .insert(errorReport)
+
+    if (insertError) {
+      console.error('Failed to report error to backend:', insertError)
+      // Store in localStorage as fallback
+      const fallbackErrors = JSON.parse(localStorage.getItem('rideyaari-unreported-errors') || '[]')
+      fallbackErrors.push({
+        ...errorReport,
+        failedToReport: true,
+        reportError: insertError.message
+      })
+      localStorage.setItem('rideyaari-unreported-errors', JSON.stringify(fallbackErrors.slice(-10)))
+    } else {
+      console.log('Error reported to backend successfully')
+    }
+  } catch (reportingError) {
+    console.error('Critical error in error reporting system:', reportingError)
+    // Last resort - store in localStorage
+    try {
+      const criticalErrors = JSON.parse(localStorage.getItem('rideyaari-critical-errors') || '[]')
+      criticalErrors.push({
+        originalError: error?.message || 'Unknown error',
+        reportingError: reportingError?.message || 'Unknown reporting error',
+        timestamp: new Date().toISOString(),
+        context: context || 'Unknown'
+      })
+      localStorage.setItem('rideyaari-critical-errors', JSON.stringify(criticalErrors.slice(-5)))
+    } catch (storageError) {
+      console.error('Complete error reporting failure:', storageError)
+    }
+  }
+}
+
+/**
  * Log error for debugging and analytics
  */
 export function logError(error: any, context?: string) {
@@ -141,10 +228,16 @@ export function logError(error: any, context?: string) {
     },
     userAgent: navigator.userAgent,
     url: window.location.href,
-    userId: null // Could be populated if user context is available
+    userId: null
   }
 
   console.error('RideYaari Error:', logEntry)
+
+  // Report to backend for developer notification
+  reportErrorToBackend(error, context, undefined, logEntry.userId || undefined)
+    .catch(reportingError => {
+      console.warn('Failed to report error to backend:', reportingError)
+    })
 
   // Store in localStorage for debugging
   try {

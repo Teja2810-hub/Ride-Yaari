@@ -26,6 +26,7 @@ import WhatsAppChatButton from './components/WhatsAppChatButton'
 import { createErrorMessage } from './utils/errorUtils'
 import { User } from 'lucide-react'
 import { popupManager } from './utils/popupManager'
+import { setupGlobalErrorHandling } from './utils/errorReporting'
 
 type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
@@ -42,12 +43,16 @@ function AppContent() {
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
+  // Set up global error handling with user context
+  React.useEffect(() => {
+    if (user) {
+      setupGlobalErrorHandling(user.id)
+    }
+  }, [user])
   // Global error handler
   const handleGlobalError = (error: Error, errorInfo: any) => {
-    const errorDetails = createErrorMessage(error, 'Global Error Boundary')
-    console.error('Global error caught:', errorDetails)
-    
-    // Could send to error tracking service here
+    console.error('Global error caught by App ErrorBoundary:', error)
+    // Error reporting is now handled automatically by ErrorBoundary component
   }
 
   // Check if user is visiting for the first time

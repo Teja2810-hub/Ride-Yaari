@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react'
+import { reportErrorToBackend } from '../utils/errorUtils'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ErrorState {
   error: string | null
@@ -15,6 +17,7 @@ interface UseErrorHandlerReturn {
 }
 
 export function useErrorHandler(): UseErrorHandlerReturn {
+  const { user } = useAuth()
   const [state, setState] = useState<ErrorState>({
     error: null,
     isLoading: false
@@ -60,12 +63,22 @@ export function useErrorHandler(): UseErrorHandlerReturn {
         errorMessage = 'The requested resource was not found.'
       }
       
+      // Report error to backend for developer notification
+      reportErrorToBackend(
+        error,
+        'useErrorHandler Hook',
+        undefined,
+        user?.id
+      ).catch(reportingError => {
+        console.warn('Failed to report error to backend:', reportingError)
+      })
+      
       setError(errorMessage)
       return null
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user?.id])
 
   return {
     error: state.error,
