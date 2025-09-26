@@ -20,6 +20,7 @@ interface PostRideProps {
 
 export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
   const { user, setGuestMode } = useAuth()
+  const effectiveIsGuest = isGuest || !user
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
   const [intermediateStops, setIntermediateStops] = useState<LocationData[]>([])
