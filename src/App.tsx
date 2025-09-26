@@ -117,10 +117,6 @@ function AppContent() {
     setCurrentView('help')
   }
 
-  const handleHelpWithHowItWorks = () => {
-    setCurrentView('help')
-  }
-
   const handleViewConfirmations = () => {
     if (isGuest) {
       setShowAuthPrompt(true)
@@ -267,7 +263,7 @@ function AppContent() {
                 case 'help':
                   return (
                     <ErrorBoundary>
-                      <HelpPage onBack={handleBackToDashboard} onHowItWorks={handleHowItWorks} />
+                      <HelpPage onBack={handleBackToDashboard} />
                     </ErrorBoundary>
                   )
                 case 'how-it-works':

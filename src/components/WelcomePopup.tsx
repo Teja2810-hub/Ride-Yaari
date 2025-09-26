@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Heart, Plane, Car } from 'lucide-react'
+import { X, Heart } from 'lucide-react'
 import { popupManager } from '../utils/popupManager'
 import { useAuth } from '../contexts/AuthContext'
 

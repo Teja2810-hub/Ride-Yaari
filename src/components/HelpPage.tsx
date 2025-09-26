@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Circle as HelpCircle, Mail, Phone, MessageSquare, Send } from 'lucide-react'
+import { ArrowLeft, HelpCircle, Mail, Phone, MessageSquare, Send } from 'lucide-react'
 
 interface HelpPageProps {
   onBack: () => void
-  onHowItWorks?: () => void
 }
 
-export default function HelpPage({ onBack, onHowItWorks }: HelpPageProps) {
+export default function HelpPage({ onBack }: HelpPageProps) {
   const [submitted, setSubmitted] = useState(false)
 
   return (
@@ -41,13 +40,7 @@ export default function HelpPage({ onBack, onHowItWorks }: HelpPageProps) {
                   <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">How does RideYaari work?</h3>
                   <p className="text-gray-600 text-xs sm:text-sm">
                     RideYaari connects travelers through two services: Airport Trips for sharing flight itineraries 
-                    and arranging deliveries/assistance, and Car Rides for carpooling to share travel costs.{' '}
-                    <button
-                      onClick={onHowItWorks}
-                      className="text-blue-600 hover:text-blue-700 font-medium underline"
-                    >
-                      Learn more about how it works
-                    </button>
+                    and arranging deliveries/assistance, and Car Rides for carpooling to share travel costs.
                   </p>
                 </div>
 
