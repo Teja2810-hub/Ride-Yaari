@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, HelpCircle, Mail, Phone, MessageSquare, Send } from 'lucide-react'
+import { ArrowLeft, Circle as HelpCircle, Mail, Phone, MessageSquare, Send } from 'lucide-react'
 
 interface HelpPageProps {
   onBack: () => void
