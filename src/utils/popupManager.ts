@@ -79,6 +79,8 @@ class PopupManager {
       if (wasShownForPair) {
         return false
       }
+      // For chat guidelines, only show once per user pair, not per session
+      return true
     }
     
     const today = new Date().toDateString()
@@ -105,6 +107,8 @@ class PopupManager {
     if (type.includes('chat') && userId && otherUserId) {
       const pairKey = `chat-guideline-${userId}-${otherUserId}`
       localStorage.setItem(pairKey, 'true')
+      // Don't update the general disclaimer state for chat guidelines
+      return
     }
     
     state.disclaimerShown = true

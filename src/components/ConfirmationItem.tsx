@@ -130,9 +130,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     setShowCancelModal(false)
     setLoading(true)
     
-    // Immediately update the confirmation status in the parent component
-    // This will cause the UI to update immediately
-    const updatedConfirmation = { ...confirmation, status: 'rejected' as const }
+    // Immediately update local state to reflect the cancellation
+    // This ensures the UI updates immediately
+    onUpdate() // Trigger parent component update
 
     await handleAsync(async () => {
       const { error } = await supabase

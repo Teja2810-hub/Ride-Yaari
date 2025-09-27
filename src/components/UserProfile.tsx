@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive, PenTool } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
@@ -29,7 +29,7 @@ interface UserProfileProps {
   initialTab?: string
 }
 
-type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications' | 'blocked' | 'closure-history'
+type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications' | 'blocked' | 'closure-history' | 'review'
 type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
@@ -262,6 +262,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'confirmations', label: 'Confirmations', icon: <MessageCircle size={16} /> },
     { id: 'blocked', label: 'Blocked Users', icon: <Shield size={16} /> },
     { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
+    { id: 'review', label: 'Submit Review', icon: <Star size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'test', label: 'System Health', icon: <Settings size={16} /> }
   ]
@@ -438,6 +439,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <Bell size={16} />
                       <span>Notifications</span>
                     </button>
+                    <button
+                      onClick={() => setActiveTab('review')}
+                      className="flex items-center space-x-2 bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      <Star size={16} />
+                      <span>Submit Review</span>
+                    </button>
                   </div>
                   
                   {/* Support Developer Section */}
@@ -578,6 +586,22 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
+            {activeTab === 'review' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Review</h2>
+                  <p className="text-gray-600">
+                    Share your experience with RideYaari to help other travelers and improve our platform.
+                  </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <ReviewForm onReviewSubmitted={() => {
+                    // Optionally refresh or show success message
+                    console.log('Review submitted successfully from profile')
+                  }} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
