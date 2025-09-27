@@ -1109,7 +1109,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 </span>
                                 {ride.negotiable && (
                                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                    Negotiable
+                                    {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
                                   </span>
                                 )}
                               </div>
