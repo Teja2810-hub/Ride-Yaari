@@ -411,7 +411,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                       <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-4">
                           <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                            <User size={24} className="text-blue-600" />
+                            {trip.user_profiles?.profile_image_url ? (
+                              <img
+                                src={trip.user_profiles.profile_image_url}
+                                alt={trip.user_profiles.full_name}
+                                className="w-full h-full object-cover rounded-full"
+                                onError={(e) => {
+                                  // Fallback to icon if image fails to load
+                                  e.currentTarget.style.display = 'none'
+                                  e.currentTarget.parentElement!.innerHTML = '<svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
+                                }}
+                              />
+                            ) : (
+                              <User size={24} className="text-blue-600" />
+                            )}
                           </div>
                           <div>
                             <h3 className="text-xl font-semibold text-gray-900">
