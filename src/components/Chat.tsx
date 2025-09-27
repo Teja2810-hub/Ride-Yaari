@@ -14,7 +14,6 @@ import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { supabase } from '../utils/supabase'
 import { popupManager } from '../utils/popupManager'
 import { getRideOrTripDetails, getUserDisplayName } from '../utils/messageTemplates'
-import { RealtimeChannel } from '@supabase/supabase-js'
 
 interface ChatProps {
   onBack: () => void
@@ -39,7 +38,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [chatDeleted, setChatDeleted] = useState(false)
   const [expiredMessageIds, setExpiredMessageIds] = useState<Set<string>>(new Set())
   const [showStartNewChatModal, setShowStartNewChatModal] = useState(false)
-  const channelRef = useRef<RealtimeChannel | null>(null)
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -54,7 +52,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   } = useConfirmationFlow({
     onUpdate: () => {
       fetchConfirmationStatus()
-      // Don't refetch messages here to avoid conflicts
+      fetchMessages()
     }
   })
 
@@ -86,298 +84,235 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     return message.sender_id === user?.id
   }
 
-  // Single, comprehensive useEffect to handle all chat operations
   useEffect(() => {
-    // Flag to track if component is still mounted
-    let isMounted = true
-    let currentChannel: RealtimeChannel | null = null
-
-    const setupChat = async () => {
-      if (!user || !otherUserId || !otherUserId.trim()) {
-        if (isMounted) setMessagesLoading(false)
-        return
-      }
-
-      console.log('Setting up chat between:', user.id, 'and', otherUserId)
-
-      try {
-        // 1. Check blocking and deletion status first
-        const [blocked, deleted] = await Promise.all([
-          isUserBlocked(user.id, otherUserId),
-          isChatDeleted(user.id, otherUserId)
-        ])
-
-        if (!isMounted) return
-
-        setIsBlocked(blocked)
-        setChatDeleted(deleted)
-
-        // 2. Fetch confirmation status
-        await fetchConfirmationStatusInternal()
-
-        if (!isMounted) return
-
-        // 3. Fetch messages with deletion filter
-        let chatDeletedAt: Date | null = null
-        if (deleted) {
-          const { data: chatDeletionData } = await supabase
-            .from('user_chat_deletions')
-            .select('deleted_at')
-            .eq('user_id', user.id)
-            .eq('other_user_id', otherUserId)
-            .limit(1)
-          
-          if (chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at) {
-            chatDeletedAt = new Date(chatDeletionData[0].deleted_at)
-          }
-        }
-
-        let query = supabase
-          .from('chat_messages')
-          .select(`
-            *,
-            sender:user_profiles!chat_messages_sender_id_fkey (
-              id,
-              full_name
-            ),
-            receiver:user_profiles!chat_messages_receiver_id_fkey (
-              id,
-              full_name
-            )
-          `)
-          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-          .order('created_at')
+    if (user && otherUserId && otherUserId.trim()) {
+      const controller = new AbortController()
+      
+      // Add small delay to ensure previous component cleanup is complete
+      const initializeChat = async () => {
+        await new Promise(resolve => setTimeout(resolve, 100))
         
-        // Filter messages after deletion time if chat was deleted
-        if (chatDeletedAt) {
-          query = query.gte('created_at', chatDeletedAt.toISOString())
-        }
+        if (controller.signal.aborted) return
         
-        const { data: messagesData, error: messagesError } = await query
-
-        if (!isMounted) return
-
-        if (messagesError) {
-          console.error('Error fetching messages:', messagesError)
-          setMessages([])
-        } else {
-          // Filter out expired messages
-          const filteredMessages = (messagesData || []).filter(message => {
-            try {
-              if (expiredMessageIds.has(message.id)) {
-                return false
-              }
-              
-              // Auto-expire reject/cancel system messages after 10 minutes
-              if (message.message_type === 'system') {
-                const messageTime = new Date(message.created_at)
-                const now = new Date()
-                const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
-                
-                const messageContent = message.message_content.toLowerCase()
-                if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
-                  setExpiredMessageIds(prev => new Set([...prev, message.id]))
-                  return false
-                }
-              }
-              
-              return true
-            } catch (filterError) {
-              console.warn('Error filtering message:', message.id, filterError)
-              return true
-            }
-          })
-          
-          setMessages(filteredMessages)
-        }
-
-        // 4. Clean up any existing channel before creating new one
-        if (channelRef.current) {
-          console.log('Cleaning up existing channel before creating new one')
-          supabase.removeChannel(channelRef.current)
-          channelRef.current = null
-        }
-
-        // 5. Create unique channel name to avoid conflicts
+      fetchMessages(controller.signal)
+      fetchConfirmationStatus()
+      
         const channelName = `chat:${user.id}:${otherUserId}:${Date.now()}`
         console.log('Creating new chat channel:', channelName)
         
-        // 6. Set up real-time subscription
-        currentChannel = supabase
-          .channel(channelName, {
-            config: {
-              broadcast: { self: true },
-              presence: { key: user.id }
-            }
-          })
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'chat_messages',
-              filter: `or(and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}))`,
-            },
-            (payload) => {
-              console.log('New message received via subscription:', payload)
-              if (isMounted) {
-                // Add small delay to ensure message is fully processed
-                setTimeout(() => {
-                  if (isMounted) {
-                    setMessages(prev => {
-                      // Check if message already exists to prevent duplicates
-                      const messageExists = prev.some(msg => msg.id === payload.new.id)
-                      if (messageExists) {
-                        return prev
-                      }
-                      return [...prev, payload.new as ChatMessage]
-                    })
-                  }
-                }, 100)
+        const channel = supabase
+          .channel(channelName)
+        .channel(`chat:${user.id}:${otherUserId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `or(and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}))`,
+          },
+          (payload) => {
+            console.log('New message received via subscription:', payload)
+            // Add small delay to ensure message is fully processed
+            setTimeout(() => {
+              if (!controller.signal.aborted) {
+                fetchMessages(controller.signal)
               }
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'ride_confirmations',
-            },
-            () => {
-              console.log('Confirmation update received via subscription')
-              if (isMounted) {
-                // Add small delay to ensure updates are fully processed
-                setTimeout(() => {
-                  if (isMounted) {
-                    fetchConfirmationStatusInternal()
-                  }
-                }, 100)
-              }
-            }
-          )
-          .subscribe((status) => {
-            console.log('Channel subscription status:', status)
-            if (status === 'SUBSCRIBED' && isMounted) {
-              setMessagesLoading(false)
-            } else if (status === 'CHANNEL_ERROR' && isMounted) {
-              console.error('Channel subscription error')
-              setMessagesLoading(false)
-            }
-          })
-
-        // Store reference for cleanup
-        channelRef.current = currentChannel
-
-        // 7. Mark messages as read
-        if (!blocked && !deleted) {
-          try {
-            await supabase
-              .from('chat_messages')
-              .update({ is_read: true })
-              .eq('sender_id', otherUserId)
-              .eq('receiver_id', user.id)
-          } catch (error) {
-            console.error('Error marking messages as read:', error)
+            }, 500)
           }
-        }
-
-      } catch (error) {
-        console.error('Error setting up chat:', error)
-        if (isMounted) {
-          setMessagesLoading(false)
-          setMessages([])
-        }
-      }
-    }
-
-    const fetchConfirmationStatusInternal = async () => {
-      if (!user || !otherUserId || !otherUserId.trim() || (!preSelectedRide && !preSelectedTrip)) return
-      
-      try {
-        let selectStatement = `
-          *,
-          user_profiles!ride_confirmations_passenger_id_fkey (
-            id,
-            full_name
-          )`
-        
-        if (preSelectedRide) {
-          selectStatement += `,
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time,
-            price,
-            currency,
-            user_id
-          )`
-        } else if (preSelectedTrip) {
-          selectStatement += `,
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date,
-            price,
-            currency,
-            user_id
-          )`
-        }
-
-        let query = supabase
-          .from('ride_confirmations')
-          .select(selectStatement)
-
-        if (preSelectedRide) {
-          query = query
-            .eq('ride_id', preSelectedRide.id)
-            .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
-        } else if (preSelectedTrip) {
-          query = query
-            .eq('trip_id', preSelectedTrip.id)
-            .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
-        }
-
-        const { data, error } = await query.limit(1)
-        
-        if (!error && data && data.length > 0 && isMounted) {
-          setCurrentConfirmation(data[0])
-        } else if (isMounted) {
-          setCurrentConfirmation(null)
-        }
-      } catch (error) {
-        console.error('Error fetching confirmation status:', error)
-        if (isMounted) {
-          setCurrentConfirmation(null)
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'ride_confirmations',
+          },
+          () => {
+            console.log('Confirmation update received via subscription')
+            // Add small delay to ensure updates are fully processed
+            setTimeout(() => {
+              if (!controller.signal.aborted) {
+                fetchConfirmationStatus()
+                fetchMessages(controller.signal)
+              }
+            }, 500)
+          }
+        )
+        .subscribe()
+        return () => {
+          console.log('Cleaning up chat subscriptions for channel:', channelName)
+          supabase.removeChannel(channel)
         }
       }
-    }
-
-    // Initialize chat setup
-    setupChat()
-
-    // Cleanup function
-    return () => {
-      console.log('Chat component unmounting, cleaning up...')
-      isMounted = false
       
-      if (currentChannel) {
-        console.log('Removing channel subscription:', currentChannel.topic)
-        supabase.removeChannel(currentChannel)
-      }
-      
-      if (channelRef.current) {
-        console.log('Cleaning up channel ref')
-        channelRef.current = null
+      initializeChat().then(cleanup => {
+        if (cleanup && !controller.signal.aborted) {
+          controller.signal.addEventListener('abort', cleanup)
+        }
+      })
+
+      return () => {
+        console.log('Aborting requests and unsubscribing from chat subscriptions')
+        controller.abort()
       }
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
 
+  useEffect(() => {
+    if (user && otherUserId && otherUserId.trim()) {
+      checkBlockingStatus()
+    }
+  }, [user, otherUserId])
+
+  const checkBlockingStatus = async () => {
+    if (!user || !otherUserId || !otherUserId.trim()) return
+
+    try {
+      console.log('Checking blocking status between:', user.id, 'and', otherUserId)
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Blocking status check timeout')), 10000)
+      )
+      
+      const [blocked, deleted] = await Promise.race([
+        Promise.all([
+          isUserBlocked(user.id, otherUserId),
+          isChatDeleted(user.id, otherUserId)
+        ]),
+        timeoutPromise
+      ]) as [boolean, boolean]
+      
+      console.log('Blocking status result:', { blocked, deleted })
+      setIsBlocked(blocked)
+      setChatDeleted(deleted)
+    } catch (error) {
+      console.error('Error checking blocking status:', error)
+      // Don't block chat if there's an error checking blocking status
+      setIsBlocked(false)
+      setChatDeleted(false)
+    }
+  }
+
+  const handleMessageExpire = (messageId: string) => {
+    setExpiredMessageIds(prev => new Set([...prev, messageId]))
+  }
+
+  const handleChatBlocked = () => {
+    setIsBlocked(true)
+    setShowChatOptions(false)
+  }
+
+  const handleChatUnblocked = () => {
+    setIsBlocked(false)
+    setShowChatOptions(false)
+  }
+
+  const handleChatDeleted = () => {
+    console.log('Chat deleted, cleaning up and navigating back')
+    
+    // Clear all chat state
+    setMessages([])
+    setCurrentConfirmation(null)
+    setExpiredMessageIds(new Set())
+    setNewMessage('')
+    
+    // Set deletion state
+    setChatDeleted(true)
+    setShowChatOptions(false)
+    
+    // Navigate back after state cleanup
+    onBack()
+  }
+
+  // Helper functions
+  const isCurrentUserOwnerOfPreselected = (): boolean => {
+    if (preSelectedRide) return preSelectedRide.user_id === user?.id
+    if (preSelectedTrip) return preSelectedTrip.user_id === user?.id
+    return false
+  }
+
+  const isCurrentUserPassengerOfConfirmation = (): boolean => {
+    return currentConfirmation?.passenger_id === user?.id
+  }
+
+  const isCurrentUserOwnerOfConfirmation = (): boolean => {
+    return currentConfirmation?.ride_owner_id === user?.id
+  }
+
   const fetchConfirmationStatus = async () => {
-    // This is now handled internally by the main useEffect
-    // Keep this function for backward compatibility with other components
+    if (!user || !otherUserId || !otherUserId.trim() || (!preSelectedRide && !preSelectedTrip)) return
+    
+    console.log('Fetching confirmation status for:', { userId: user.id, otherUserId, rideId: preSelectedRide?.id, tripId: preSelectedTrip?.id })
+    
+    await handleAsync(async () => {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Confirmation status fetch timeout')), 15000)
+      )
+      
+      // Dynamically construct the select statement based on ride or trip
+      let selectStatement = `
+        *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          id,
+          full_name
+        )`
+      
+      if (preSelectedRide) {
+        selectStatement += `,
+        car_rides!ride_confirmations_ride_id_fkey (
+          id,
+          from_location,
+          to_location,
+          departure_date_time,
+          price,
+          currency,
+          user_id
+        )`
+      } else if (preSelectedTrip) {
+        selectStatement += `,
+        trips!ride_confirmations_trip_id_fkey (
+          id,
+          leaving_airport,
+          destination_airport,
+          travel_date,
+          price,
+          currency,
+          user_id
+        )`
+      }
+
+      let query = supabase
+        .from('ride_confirmations')
+        .select(selectStatement)
+
+      if (preSelectedRide) {
+        query = query
+          .eq('ride_id', preSelectedRide.id)
+          .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
+      } else if (preSelectedTrip) {
+        query = query
+          .eq('trip_id', preSelectedTrip.id)
+          .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
+      }
+
+      const { data, error } = await Promise.race([
+        query.limit(1),
+        timeoutPromise
+      ]) as { data: any; error: any }
+
+      console.log('Confirmation status query result:', { data, error })
+      
+      if (!error && data && data.length > 0) {
+        setCurrentConfirmation(data[0])
+        console.log('Current confirmation set:', data[0])
+      } else {
+        setCurrentConfirmation(null)
+        console.log('No confirmation found')
+      }
+    })
   }
 
   useEffect(() => {
@@ -386,6 +321,135 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const fetchMessages = async (signal?: AbortSignal) => {
+    if (!user || !otherUserId || !otherUserId.trim()) return
+
+    console.log('Fetching messages between:', user.id, 'and', otherUserId)
+    
+    setMessagesLoading(true)
+    
+    await handleAsync(async () => {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Messages fetch timeout')), 15000)
+      )
+      
+      // Check if this chat has been deleted by the current user
+      let chatDeletedAt: Date | null = null
+      try {
+        const { data: chatDeletionData, error: deletionError } = await Promise.race([
+          supabase
+            .from('user_chat_deletions')
+            .select('deleted_at')
+            .eq('user_id', user.id)
+            .eq('other_user_id', otherUserId)
+            .limit(1),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Chat deletion check timeout')), 5000)
+          )
+        ]) as { data: any; error: any }
+        
+        if (!deletionError && chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at) {
+          chatDeletedAt = new Date(chatDeletionData[0].deleted_at)
+          console.log('Chat was deleted at:', chatDeletedAt.toISOString())
+        }
+      } catch (deletionCheckError) {
+        console.warn('Error checking chat deletion status, continuing without filter:', deletionCheckError)
+        // Continue without deletion filter if there's an error
+      }
+
+      let query = supabase
+        .from('chat_messages')
+        .select(`
+          *,
+          sender:user_profiles!chat_messages_sender_id_fkey (
+            id,
+            full_name
+          ),
+          receiver:user_profiles!chat_messages_receiver_id_fkey (
+            id,
+            full_name
+          )
+        `)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+        .order('created_at')
+      
+      // If chat was deleted, only show messages after the deletion time
+      if (chatDeletedAt) {
+        console.log('Filtering messages after deletion time:', chatDeletedAt.toISOString())
+        query = query.gte('created_at', chatDeletedAt.toISOString())
+      }
+      
+      // Add abort signal to the query if provided
+      if (signal) {
+        query = query.abortSignal(signal)
+      }
+      
+      const { data, error } = await Promise.race([
+        query,
+        timeoutPromise
+      ]) as { data: any; error: any }
+
+      // Check if the request was aborted
+      if (error && error.name === 'AbortError') {
+        console.log('Fetch messages request was aborted')
+        return
+      }
+
+      console.log('Messages fetch result:', { data: data?.length, error })
+      if (!error && data) {
+        // Filter out expired messages with better error handling
+        const filteredMessages = data.filter(message => {
+          try {
+            // Don't show expired messages
+            if (expiredMessageIds.has(message.id)) {
+              return false
+            }
+            
+            // Auto-expire reject/cancel system messages after 10 minutes
+            if (message.message_type === 'system') {
+              const messageTime = new Date(message.created_at)
+              const now = new Date()
+              const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
+              
+              const messageContent = message.message_content.toLowerCase()
+              if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
+                setExpiredMessageIds(prev => new Set([...prev, message.id]))
+                return false
+              }
+            }
+            
+            return true
+          } catch (filterError) {
+            console.warn('Error filtering message:', message.id, filterError)
+            return true // Include message if filtering fails
+          }
+        })
+        
+        console.log('Filtered messages count:', filteredMessages.length)
+        setMessages(filteredMessages)
+        
+        // Handle fresh conversation after deletion
+        if (chatDeletedAt) {
+          if (filteredMessages.length === 0) {
+            console.log('Chat was deleted and no new messages - starting fresh conversation')
+            // Clear any existing state that might interfere
+            setCurrentConfirmation(null)
+            setExpiredMessageIds(new Set())
+          } else {
+            console.log(`Chat was deleted but found ${filteredMessages.length} new messages since deletion`)
+          }
+        }
+      } else if (error) {
+        console.error('Error fetching messages:', error)
+        // Set empty messages array on error to prevent infinite loading
+        setMessages([])
+      }
+    })
+    
+    setMessagesLoading(false)
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -397,21 +461,32 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     await handleAsync(async () => {
       console.log('Sending message from:', user.id, 'to:', otherUserId)
 
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: otherUserId,
-          message_content: newMessage.trim(),
-          is_read: false,
-        })
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Send message timeout')), 10000)
+      )
+      
+      const { error } = await Promise.race([
+        supabase
+          .from('chat_messages')
+          .insert({
+            sender_id: user.id,
+            receiver_id: otherUserId,
+            message_content: newMessage.trim(),
+            is_read: false,
+          }),
+        timeoutPromise
+      ]) as { error: any }
 
       console.log('Message insert result:', { error })
       if (error) throw error
 
       setNewMessage('')
       
-      // Message will be added via real-time subscription
+      // Fetch messages with a small delay to ensure the new message is included
+      setTimeout(() => {
+        fetchMessages()
+      }, 500)
     }).finally(() => {
       setSending(false)
     })
@@ -465,7 +540,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         await createConfirmation(rideId, tripId, rideOwnerId, passengerId)
       }
 
-      // Confirmation status will be updated via the subscription
+      fetchMessages()
+      fetchConfirmationStatus()
     })
   }
 
@@ -594,56 +670,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           is_read: false
         })
 
-      // Status will be updated via subscription
+      // Refresh confirmation status and messages
+      await fetchConfirmationStatus()
+      await fetchMessages()
     }).finally(() => {
       setCancellingRequest(false)
     })
-  }
-
-  const handleMessageExpire = (messageId: string) => {
-    setExpiredMessageIds(prev => new Set([...prev, messageId]))
-  }
-
-  const handleChatBlocked = () => {
-    setIsBlocked(true)
-    setShowChatOptions(false)
-  }
-
-  const handleChatUnblocked = () => {
-    setIsBlocked(false)
-    setShowChatOptions(false)
-  }
-
-  const handleChatDeleted = () => {
-    console.log('Chat deleted, cleaning up and navigating back')
-    
-    // Clear all chat state
-    setMessages([])
-    setCurrentConfirmation(null)
-    setExpiredMessageIds(new Set())
-    setNewMessage('')
-    
-    // Set deletion state
-    setChatDeleted(true)
-    setShowChatOptions(false)
-    
-    // Navigate back after state cleanup
-    onBack()
-  }
-
-  // Helper functions
-  const isCurrentUserOwnerOfPreselected = (): boolean => {
-    if (preSelectedRide) return preSelectedRide.user_id === user?.id
-    if (preSelectedTrip) return preSelectedTrip.user_id === user?.id
-    return false
-  }
-
-  const isCurrentUserPassengerOfConfirmation = (): boolean => {
-    return currentConfirmation?.passenger_id === user?.id
-  }
-
-  const isCurrentUserOwnerOfConfirmation = (): boolean => {
-    return currentConfirmation?.ride_owner_id === user?.id
   }
 
   const getConfirmationButtonText = () => {
@@ -732,10 +764,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             'This will confirm the passenger for your ride',
             'The passenger will be notified of your acceptance',
             'You are committing to provide the ride as discussed',
-            'Make sure you have agreed on pickup details and payment',
-            'Once accepted, both parties are committed to the arrangement'
+            'Make sure you have agreed on pickup details and payment'
           ],
-          explanation: `You are accepting a passenger for the ${rideDetails}. This is a commitment to provide the ride as discussed.`
+          explanation: `You are accepting a passenger for the ${rideDetails}. This is a commitment to provide the ride.`
         }
       case 'owner-reject':
         return {
@@ -744,8 +775,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             'This will decline the passenger\'s request',
             'The passenger will be notified of your decision',
             'The passenger can request again if they wish',
-            'Consider explaining your reason in chat',
-            'This action can be reversed if you change your mind'
+            'Consider explaining your reason in chat'
           ],
           explanation: `You are rejecting a request for the ${rideDetails}. The passenger will be able to request again.`
         }
@@ -756,8 +786,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             'This will cancel the confirmed ride arrangement',
             'The other party will be notified immediately',
             'This may affect your reputation on the platform',
-            'Consider discussing the reason in chat first',
-            'This should only be done if absolutely necessary'
+            'Consider discussing the reason in chat first'
           ],
           explanation: `You are cancelling the confirmed ${rideDetails}. This should only be done if absolutely necessary.`
         }
@@ -769,6 +798,38 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         }
     }
   }
+
+  // Mark messages as read when opening chat
+  useEffect(() => {
+    const markMessagesAsRead = async () => {
+      if (user && otherUserId && otherUserId.trim() && !isBlocked && !chatDeleted && messages.length > 0) {
+        console.log('Marking messages as read for chat between:', user.id, 'and', otherUserId)
+        
+        try {
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Mark as read timeout')), 5000)
+          )
+          
+          await Promise.race([
+            supabase
+              .from('chat_messages')
+              .update({ is_read: true })
+              .eq('sender_id', otherUserId)
+              .eq('receiver_id', user.id),
+            timeoutPromise
+          ])
+          
+          console.log('Messages marked as read successfully')
+        } catch (error) {
+          console.error('Error marking messages as read:', error)
+          // Don't block the chat if marking as read fails
+        }
+      }
+    }
+
+    markMessagesAsRead()
+  }, [user, otherUserId, isBlocked, chatDeleted, messages.length])
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
