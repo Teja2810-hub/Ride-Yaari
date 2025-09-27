@@ -213,7 +213,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           *,
           user_profiles:user_id (
             id,
-            full_name
+            full_name,
+            profile_image_url
           )
         `)
 

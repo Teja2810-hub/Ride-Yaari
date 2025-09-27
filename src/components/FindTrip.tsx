@@ -93,7 +93,8 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
           *,
           user_profiles:user_id (
             id,
-            full_name
+            full_name,
+            profile_image_url
           )
         `)
 
