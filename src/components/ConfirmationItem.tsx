@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, TriangleAlert as AlertTriangle, History, RotateCcw, RefreshCw } from 'lucide-react'
+import { Check, X, MessageCircle, Car, Plane, Calendar, MapPin, Clock, User, AlertTriangle, History, RotateCcw, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { RideConfirmation } from '../types'
 import DisclaimerModal from './DisclaimerModal'

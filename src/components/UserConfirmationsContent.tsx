@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -348,12 +348,34 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
         <p className="text-gray-600 mb-6">
           You don't have any ride confirmations yet. Start by posting a ride or requesting to join one!
         </p>
+        <button
+          onClick={handleRequestNewRide}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        >
+          Request a Ride
+        </button>
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
+      {/* Request New Ride Button */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Request a New Ride</h3>
+            <p className="text-gray-600">Browse available trips and rides to request confirmation</p>
+          </div>
+          <button
+            onClick={handleRequestNewRide}
+            className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Check size={20} />
+            <span>Request Ride</span>
+          </button>
+        </div>
+      </div>
       {/* Expiry Management Banner */}
       <ConfirmationExpiryBanner onRefresh={fetchConfirmations} />
 

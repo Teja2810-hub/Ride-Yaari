@@ -47,6 +47,9 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [selectedChatRide, setSelectedChatRide] = useState<CarRide | null>(null)
   const [showRadiusHelp, setShowRadiusHelp] = useState(false)
   const [strictSearch, setStrictSearch] = useState(false)
+  const [radiusUnit, setRadiusUnit] = useState('miles')
+  const [useCustomRadius, setUseCustomRadius] = useState(false)
+  const [customRadius, setCustomRadius] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
 

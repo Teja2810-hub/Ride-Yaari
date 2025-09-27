@@ -27,6 +27,9 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
+  const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
 
