@@ -35,12 +35,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     rejected: false
   })
   const [cancellingConfirmationId, setCancellingConfirmationId] = useState<string | null>(null)
-  const [showTripSelectionModal, setShowTripSelectionModal] = useState(false)
-  const [availableTrips, setAvailableTrips] = useState<Trip[]>([])
-  const [availableRides, setAvailableRides] = useState<CarRide[]>([])
-  const [selectedTripForRequest, setSelectedTripForRequest] = useState<Trip | null>(null)
-  const [selectedRideForRequest, setSelectedRideForRequest] = useState<CarRide | null>(null)
-  const [showConfirmRequestModal, setShowConfirmRequestModal] = useState(false)
 
   useEffect(() => {
     if (user) {
