@@ -310,21 +310,21 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-3xl font-bold">{userProfile?.full_name}</h1>
-                    <div className="flex items-center space-x-4 mt-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold truncate max-w-48 sm:max-w-none">{userProfile?.full_name}</h1>
+                    <div className="flex flex-wrap items-center gap-2 sm:space-x-4 mt-2">
                       {userProfile?.age && (
-                        <span className="text-blue-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        <span className="text-blue-100 text-xs sm:text-sm bg-white bg-opacity-20 px-2 sm:px-3 py-1 rounded-full">
                           Age: {userProfile.age}
                         </span>
                       )}
                       {userProfile?.gender && (
-                        <span className="text-blue-100 text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full capitalize">
+                        <span className="text-blue-100 text-xs sm:text-sm bg-white bg-opacity-20 px-2 sm:px-3 py-1 rounded-full capitalize">
                           {userProfile.gender === 'prefer_not_to_say' ? 'Prefer not to say' : userProfile.gender}
                         </span>
                       )}
                     </div>
                   </div>
-                  <p className="text-blue-100">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                  <p className="text-blue-100 text-xs sm:text-sm text-right">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -360,12 +360,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
             {activeTab === 'overview' && (
               <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                   <div className="bg-blue-50 rounded-lg p-6 text-center">
                     <Plane size={32} className="text-blue-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-blue-600">{trips.length}</h3>
                     <p className="text-blue-800">Airport Trips</p>
-                    <div className="mt-2 text-xs text-gray-600">
+                    <div className="mt-2 text-xs text-gray-600 hidden sm:block">
                       <p>Open: {trips.filter(t => !t.is_closed && new Date(t.travel_date) > new Date()).length}</p>
                       <p>Closed: {trips.filter(t => t.is_closed).length}</p>
                       <p>Expired: {trips.filter(t => !t.is_closed && new Date(t.travel_date) <= new Date()).length}</p>
@@ -380,7 +380,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <Car size={32} className="text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-green-600">{rides.length}</h3>
                     <p className="text-green-800">Rides Offered</p>
-                    <div className="mt-2 text-xs text-gray-600">
+                    <div className="mt-2 text-xs text-gray-600 hidden sm:block">
                       <p>Open: {rides.filter(r => !r.is_closed && new Date(r.departure_date_time) > new Date()).length}</p>
                       <p>Closed: {rides.filter(r => r.is_closed).length}</p>
                       <p>Expired: {rides.filter(r => !r.is_closed && new Date(r.departure_date_time) <= new Date()).length}</p>
@@ -395,7 +395,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     <button
                       onClick={() => setShowProfileEdit(true)}
                       className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
@@ -403,15 +403,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <UserCog size={16} />
                       <span>Edit Profile</span>
                     </button>
-                    <a
-                      href="https://www.buymeacoffee.com/rideyaari"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 bg-yellow-500 text-black px-4 py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors text-center"
-                    >
-                      <span>☕</span>
-                      <span>Buy me a coffee</span>
-                    </a>
                     <button
                       onClick={() => setActiveTab('trips')}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -447,6 +438,28 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <Bell size={16} />
                       <span>Notifications</span>
                     </button>
+                  </div>
+                  
+                  {/* Support Developer Section */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="text-center">
+                      <h4 className="font-semibold text-yellow-900 mb-2">☕ Support the Developer</h4>
+                      <p className="text-sm text-yellow-800 mb-3">
+                        Help keep RideYaari free and growing! Every coffee helps maintain the servers and fund new features.
+                      </p>
+                      <a
+                        href="https://www.buymeacoffee.com/rideyaari"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block hover:scale-105 transition-transform"
+                      >
+                        <img 
+                          src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
+                          alt="Buy me a coffee"
+                          className="h-10"
+                        />
+                      </a>
+                    </div>
                   </div>
                 </div>
 

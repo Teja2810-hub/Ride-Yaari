@@ -67,12 +67,12 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
               <p className="text-xs text-gray-600 mb-2 sm:mb-3 italic">
                 "A coffee a day keeps the homelessness away" ☕
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <a 
                   href="https://www.buymeacoffee.com/rideyaari" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-block hover:scale-105 transition-transform w-full sm:w-40"
+                  className="inline-block hover:scale-105 transition-transform col-span-2 sm:col-span-1 sm:w-40"
                 >
                   <img 
                     src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=rideyaari&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" 
@@ -80,42 +80,44 @@ export default function WelcomePopup({ isOpen, onClose }: WelcomePopupProps) {
                     className="h-8 sm:h-10 w-full object-contain"
                   />
                 </a>
-                <button
-                  onClick={handleGetStarted}
-                  className="flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs sm:text-sm font-medium w-full sm:w-40 min-w-[120px]"
-                  title="Learn How RideYaari Works"
-                >
-                  <span className="mr-1">📚</span>
-                  <span>How It Works</span>
-                </button>
-                <button
-                  onClick={async () => {
-                    if (navigator.share && navigator.canShare && navigator.canShare({
-                      title: 'RideYaari',
-                      text: 'Check out RideYaari - Connect with travelers worldwide!',
-                      url: window.location.origin
-                    })) {
-                      try {
-                        await navigator.share({
-                          title: 'RideYaari',
-                          text: 'Check out RideYaari - Connect with travelers worldwide!',
-                          url: window.location.origin
-                        })
-                      } catch (error) {
+                <div className="grid grid-cols-2 gap-2 col-span-2 sm:col-span-1 sm:flex sm:gap-2">
+                  <button
+                    onClick={handleGetStarted}
+                    className="flex items-center justify-center px-2 sm:px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs sm:text-sm font-medium"
+                    title="Learn How RideYaari Works"
+                  >
+                    <span className="mr-1">📚</span>
+                    <span>How It Works</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (navigator.share && navigator.canShare && navigator.canShare({
+                        title: 'RideYaari',
+                        text: 'Check out RideYaari - Connect with travelers worldwide!',
+                        url: window.location.origin
+                      })) {
+                        try {
+                          await navigator.share({
+                            title: 'RideYaari',
+                            text: 'Check out RideYaari - Connect with travelers worldwide!',
+                            url: window.location.origin
+                          })
+                        } catch (error) {
+                          navigator.clipboard.writeText(window.location.origin)
+                          alert('Website link copied to clipboard!')
+                        }
+                      } else {
                         navigator.clipboard.writeText(window.location.origin)
                         alert('Website link copied to clipboard!')
                       }
-                    } else {
-                      navigator.clipboard.writeText(window.location.origin)
-                      alert('Website link copied to clipboard!')
-                    }
-                  }}
-                  className="flex items-center justify-center px-3 sm:px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs sm:text-sm font-medium w-full sm:w-40 min-w-[120px]"
-                  title="Share Link"
-                >
-                  <span className="mr-1">🌐</span>
-                  <span>Share</span>
-                </button>
+                    }}
+                    className="flex items-center justify-center px-2 sm:px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs sm:text-sm font-medium"
+                    title="Share Link"
+                  >
+                    <span className="mr-1">🌐</span>
+                    <span>Share</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
