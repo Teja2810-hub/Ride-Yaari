@@ -1041,20 +1041,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                       <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-4">
                           <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full">
-                            {ride.user_profiles?.profile_image_url ? (
-                              <img
-                                src={ride.user_profiles.profile_image_url}
-                                alt={ride.user_profiles.full_name}
-                                className="w-full h-full object-cover rounded-full"
-                                onError={(e) => {
-                                  // Fallback to icon if image fails to load
-                                  e.currentTarget.style.display = 'none'
-                                  e.currentTarget.parentElement!.innerHTML = '<svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
-                                }}
-                              />
-                            ) : (
-                              <User size={24} className="text-green-600" />
-                            )}
+                            <User size={24} className="text-green-600" />
                           </div>
                           <div>
                             <h3 className="text-xl font-semibold text-gray-900">
