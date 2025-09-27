@@ -189,6 +189,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const fetchConfirmationStatus = async () => {
     if (!user || !otherUserId || !otherUserId.trim() || (!preSelectedRide && !preSelectedTrip)) return
     
+    console.log('Fetching confirmation status for:', { userId: user.id, otherUserId, rideId: preSelectedRide?.id, tripId: preSelectedTrip?.id })
+    
     await handleAsync(async () => {
       // Dynamically construct the select statement based on ride or trip
       let selectStatement = `
@@ -238,10 +240,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       const { data, error } = await query.limit(1)
 
+      console.log('Confirmation status query result:', { data, error })
+      
       if (!error && data && data.length > 0) {
         setCurrentConfirmation(data[0])
+        console.log('Current confirmation set:', data[0])
       } else {
         setCurrentConfirmation(null)
+        console.log('No confirmation found')
       }
     })
   }
@@ -258,6 +264,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user || !otherUserId || !otherUserId.trim()) return
 
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
+    
+    setMessagesLoading(true)
     
     // First check if this chat has been deleted by the current user
     const { data: chatDeletionData } = await supabase
@@ -325,9 +333,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           console.log('Chat was deleted and no new messages - starting fresh conversation')
         }
       }
-      
-      setMessagesLoading(false)
     })
+    
+    setMessagesLoading(false)
   }
 
   const sendMessage = async (e: React.FormEvent) => {

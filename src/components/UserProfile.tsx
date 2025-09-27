@@ -263,7 +263,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'blocked', label: 'Blocked Users', icon: <Shield size={16} /> },
     { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
-    { id: 'test', label: 'System Health', icon: <Settings size={16} /> }
+    { id: 'test', label: 'System Health', icon: <Settings size={16} /> },
+    { id: 'reviews', label: 'Submit Review', icon: <Star size={16} /> }
   ]
 
   if (loading) {
@@ -463,6 +464,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </div>
                 </div>
 
+                {/* Review Section */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Share Your Experience</h3>
+                  <ReviewForm onReviewSubmitted={() => {
+                    // Refresh the page to show the new review
+                    window.location.reload()
+                  }} />
+                </div>
               </div>
             )}
 
@@ -578,6 +587,24 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               </div>
             )}
 
+            {activeTab === 'reviews' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Review</h2>
+                  <p className="text-gray-600">
+                    Share your experience with RideYaari to help other travelers and improve our platform.
+                  </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <ReviewForm onReviewSubmitted={() => {
+                    // Show success message and refresh
+                    setTimeout(() => {
+                      window.location.reload()
+                    }, 2000)
+                  }} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
