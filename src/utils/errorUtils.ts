@@ -176,16 +176,10 @@ export async function reportErrorToBackend(
       }
     }
 
-    // Send to Supabase with timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Error reporting timeout')), 5000)
-    })
-    
-    const insertPromise = supabase
+    // Send to Supabase
+    const { error: insertError } = await supabase
       .from('error_reports')
       .insert(errorReport)
-    
-    const { error: insertError } = await Promise.race([insertPromise, timeoutPromise]) as any
 
     if (insertError) {
       console.error('Failed to report error to backend:', insertError)
