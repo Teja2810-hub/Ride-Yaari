@@ -1077,8 +1077,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             Don't have an account? Create one
           </button>
         </div>
-
-        )}
       </div>
     </div>
   )
