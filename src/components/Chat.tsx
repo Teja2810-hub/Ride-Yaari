@@ -27,7 +27,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
-  const [messagesLoading, setMessagesLoading] = useState(true)
+  const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [cancellingRequest, setCancellingRequest] = useState(false)
   const [currentConfirmation, setCurrentConfirmation] = useState<RideConfirmation | null>(null)
@@ -86,7 +86,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
-      setMessagesLoading(true) // Reset loading state when chat opens
+      setMessagesLoading(true)
+      setMessages([]) // Clear previous messages
       fetchMessages()
       fetchConfirmationStatus()
       
@@ -293,6 +294,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const fetchMessages = async () => {
     if (!user || !otherUserId || !otherUserId.trim()) return
 
+    setMessagesLoading(true)
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
     
     try {
@@ -360,6 +362,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         if (chatDeletedAt && filteredMessages.length === 0) {
           console.log('Chat was deleted and no new messages - starting fresh conversation')
         }
+      } else {
+        console.error('Error fetching messages:', error)
+        setMessages([])
       }
       
     } catch (error) {
@@ -765,7 +770,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   if (messagesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading conversation...</p>
