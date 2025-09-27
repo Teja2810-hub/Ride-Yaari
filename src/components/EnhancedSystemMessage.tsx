@@ -23,19 +23,17 @@ export default function EnhancedSystemMessage({
   const [isExpired, setIsExpired] = React.useState(false)
 
   React.useEffect(() => {
-    // Auto-expire accept/reject messages immediately when chat is opened
+    // Auto-expire accept/reject messages immediately when component mounts or when chat is reopened
     const messageContent = message.toLowerCase()
-    if (messageContent.includes('request approved') || messageContent.includes('request was approved') ||
-        messageContent.includes('request declined') || messageContent.includes('request was declined') ||
-        messageContent.includes('request accepted') || messageContent.includes('request was accepted') ||
-        messageContent.includes('request rejected') || messageContent.includes('request was rejected')) {
-      // These specific approval/rejection messages should disappear immediately when chat is opened
+    if (messageContent.includes('accepted') || messageContent.includes('approved') || 
+        messageContent.includes('declined') || messageContent.includes('rejected')) {
+      // These messages should disappear immediately when chat is reopened
       const timer = setTimeout(() => {
         setIsExpired(true)
         if (onExpire) {
           onExpire()
         }
-      }, 50) // Very short delay to ensure immediate expiry
+      }, 100) // Very short delay to ensure message is seen briefly
       
       return () => clearTimeout(timer)
     }
@@ -49,7 +47,7 @@ export default function EnhancedSystemMessage({
         }
       }, 30000) // 30 seconds
       
-      return () => clearTimeout(timer)
+      return
     }
     
     // Auto-expire cancel messages after 10 minutes

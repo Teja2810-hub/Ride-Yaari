@@ -341,7 +341,6 @@ export function useConfirmationFlow({
           })
       }
 
-      // Force immediate UI update
       if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Ride cancelled successfully!')
     })

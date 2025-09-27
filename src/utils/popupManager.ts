@@ -74,14 +74,12 @@ class PopupManager {
     
     // For chat disclaimers, check if shown for this specific user pair
     if (type.includes('chat') && userId && otherUserId) {
-      // Create a consistent pair key regardless of order
-      const sortedIds = [userId, otherUserId].sort()
-      const pairKey = `chat-guideline-${sortedIds[0]}-${sortedIds[1]}`
+      const pairKey = `chat-guideline-${userId}-${otherUserId}`
       const wasShownForPair = localStorage.getItem(pairKey)
       if (wasShownForPair) {
         return false
       }
-      // For chat guidelines, only show once per user pair, forever
+      // For chat guidelines, only show once per user pair, not per session
       return true
     }
     
@@ -107,9 +105,7 @@ class PopupManager {
     
     // For chat disclaimers, mark as shown for this specific user pair
     if (type.includes('chat') && userId && otherUserId) {
-      // Create a consistent pair key regardless of order
-      const sortedIds = [userId, otherUserId].sort()
-      const pairKey = `chat-guideline-${sortedIds[0]}-${sortedIds[1]}`
+      const pairKey = `chat-guideline-${userId}-${otherUserId}`
       localStorage.setItem(pairKey, 'true')
       // Don't update the general disclaimer state for chat guidelines
       return
