@@ -390,6 +390,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     verifyMagicLinkOtp,
     signInWithGoogle,
     resetPassword,
+    resetPassword,
     signOut,
   }
 
