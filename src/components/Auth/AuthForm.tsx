@@ -506,6 +506,34 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      setError('Please enter your email address first')
+                      return
+                    }
+                    setLoading(true)
+                    setError(null)
+                    try {
+                      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: `${window.location.origin}/reset-password`
+                      })
+                      if (error) throw error
+                      setSuccess('Password reset email sent! Please check your inbox.')
+                    } catch (error: any) {
+                      setError(error?.message || 'Failed to send password reset email. Please try again.')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  disabled={loading || !email}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </div>
 
             <button
