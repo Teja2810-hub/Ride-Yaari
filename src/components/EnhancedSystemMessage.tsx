@@ -1,5 +1,5 @@
 import React from 'react'
-import { Clock, Check, X, AlertTriangle, Car, Plane, MessageCircle, Gift } from 'lucide-react'
+import { Clock, Check, X, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, Gift } from 'lucide-react'
 
 interface EnhancedSystemMessageProps {
   message: string
