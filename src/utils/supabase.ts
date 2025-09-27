@@ -157,6 +157,46 @@ export const authWithRetry = {
     })
   },
   
+  sendPasswordReset: async (email: string) => {
+    return retrySupabaseOperation(async () => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      return { error: null }
+    })
+  },
+  
+  verifyPasswordReset: async (email: string, token: string, newPassword: string) => {
+    return retrySupabaseOperation(async () => {
+      // First verify the OTP token
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'recovery'
+      })
+      
+      if (verifyError) {
+        throw verifyError
+      }
+      
+      // Then update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+      
+      if (updateError) {
+        throw updateError
+      }
+      
+      return { error: null }
+    })
+  },
+  
   signOut: async () => {
     return retrySupabaseOperation(async () => {
       const { error } = await supabase.auth.signOut()

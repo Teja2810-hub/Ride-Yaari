@@ -18,6 +18,8 @@ interface AuthContextType {
   sendMagicLinkOtp: (email: string) => Promise<{ error: any }>
   verifyMagicLinkOtp: (email: string, token: string) => Promise<{ data: any, error: any }>
   signInWithGoogle: () => Promise<{ error: any }>
+  sendPasswordReset: (email: string) => Promise<{ error: any }>
+  verifyPasswordReset: (email: string, token: string, newPassword: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
 }
 

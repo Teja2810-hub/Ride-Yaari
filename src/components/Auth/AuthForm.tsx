@@ -20,6 +20,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [resetToken, setResetToken] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, signInWithGoogle, setGuestMode } = useAuth()
 
@@ -142,6 +147,88 @@ export default function AuthForm({ onClose }: AuthFormProps) {
         setError('Too many requests. Please wait before trying again.')
       } else {
         setError(error?.message || 'Failed to create account. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) {
+      setError('Please enter your email address first')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+      
+      if (error) throw error
+      
+      setCurrentStep('forgot-password')
+      setSuccess('Password reset code sent to your email!')
+      startResendCooldown()
+    } catch (error: any) {
+      console.error('Forgot password error:', error)
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else if (error?.status === 429) {
+        setError('Too many requests. Please wait before trying again.')
+      } else {
+        setError(error?.message || 'Failed to send reset code. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetToken || !newPassword || newPassword !== confirmPassword) {
+      setError('Please fill in all fields and ensure passwords match')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Verify the reset token and update password
+      const { error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: resetToken,
+        type: 'recovery'
+      })
+
+      if (error) throw error
+
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (updateError) throw updateError
+
+      setSuccess('Password updated successfully! You can now sign in with your new password.')
+      setTimeout(() => {
+        setCurrentStep('signin')
+        setResetToken('')
+        setNewPassword('')
+        setConfirmPassword('')
+        setError(null)
+        setSuccess(null)
+      }, 2000)
+    } catch (error: any) {
+      console.error('Password reset error:', error)
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else {
+        setError(error?.message || 'Invalid reset code or failed to update password. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -812,6 +899,26 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               onClick={onClose}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
+          {/* Forgot Password Link */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                if (!email) {
+                  setError('Please enter your email address first')
+                  return
+                }
+                handleForgotPassword({ preventDefault: () => {} } as React.FormEvent)
+              }}
+              disabled={loading || !email}
+              className="text-blue-600 hover:text-blue-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Forgot your password?
+            </button>
+            <p className="text-xs text-gray-500 mt-1">
+              Enter your email above, then click to reset your password
+            </p>
+          </div>
+
               ×
             </button>
           )}
