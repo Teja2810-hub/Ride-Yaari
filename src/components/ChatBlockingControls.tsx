@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Shield, Trash2, AlertTriangle, MessageCircle, X } from 'lucide-react'
+import { Shield, Trash2, TriangleAlert as AlertTriangle, MessageCircle, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { blockUser, unblockUser, deleteChatConversation, isUserBlocked } from '../utils/blockingHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
