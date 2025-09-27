@@ -101,6 +101,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             filter: `or(and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}))`,
           },
           (payload) => {
+            console.log('New message received via subscription:', payload)
             fetchMessages()
           }
         )
@@ -112,6 +113,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             table: 'ride_confirmations',
           },
           () => {
+            console.log('Confirmation update received via subscription')
             fetchConfirmationStatus()
             fetchMessages()
           }
@@ -119,6 +121,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .subscribe()
 
       return () => {
+        console.log('Unsubscribing from chat subscriptions')
         subscription.unsubscribe()
       }
     }
@@ -135,8 +138,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     try {
       console.log('Checking blocking status between:', user.id, 'and', otherUserId)
-      const blocked = await isUserBlocked(user.id, otherUserId)
-      const deleted = await isChatDeleted(user.id, otherUserId)
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Blocking status check timeout')), 10000)
+      )
+      
+      const [blocked, deleted] = await Promise.race([
+        Promise.all([
+          isUserBlocked(user.id, otherUserId),
+          isChatDeleted(user.id, otherUserId)
+        ]),
+        timeoutPromise
+      ]) as [boolean, boolean]
       
       console.log('Blocking status result:', { blocked, deleted })
       setIsBlocked(blocked)
@@ -192,6 +206,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     console.log('Fetching confirmation status for:', { userId: user.id, otherUserId, rideId: preSelectedRide?.id, tripId: preSelectedTrip?.id })
     
     await handleAsync(async () => {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Confirmation status fetch timeout')), 15000)
+      )
+      
       // Dynamically construct the select statement based on ride or trip
       let selectStatement = `
         *,
@@ -238,7 +257,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           .or(`and(ride_owner_id.eq.${user.id},passenger_id.eq.${otherUserId}),and(ride_owner_id.eq.${otherUserId},passenger_id.eq.${user.id})`)
       }
 
-      const { data, error } = await query.limit(1)
+      const { data, error } = await Promise.race([
+        query.limit(1),
+        timeoutPromise
+      ]) as { data: any; error: any }
 
       console.log('Confirmation status query result:', { data, error })
       
@@ -267,17 +289,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     setMessagesLoading(true)
     
-    // First check if this chat has been deleted by the current user
-    const { data: chatDeletionData } = await supabase
-      .from('user_chat_deletions')
-      .select('deleted_at')
-      .eq('user_id', user.id)
-      .eq('other_user_id', otherUserId)
-      .limit(1)
-    
-    const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
-
     await handleAsync(async () => {
+      // First check if this chat has been deleted by the current user
+      const { data: chatDeletionData, error: deletionError } = await supabase
+        .from('user_chat_deletions')
+        .select('deleted_at')
+        .eq('user_id', user.id)
+        .eq('other_user_id', otherUserId)
+        .limit(1)
+      
+      if (deletionError) {
+        console.error('Error checking chat deletion status:', deletionError)
+        // Continue without deletion filter if there's an error
+      }
+      
+      const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
+      console.log('Chat deletion check result:', { chatDeletedAt, deletionError })
+
       let query = supabase
         .from('chat_messages')
         .select(`
@@ -296,6 +324,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       
       // If chat was deleted, only show messages after the deletion time
       if (chatDeletedAt) {
+        console.log('Filtering messages after deletion time:', chatDeletedAt.toISOString())
         query = query.gte('created_at', chatDeletedAt.toISOString())
       }
       
@@ -326,6 +355,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           return true
         })
         
+        console.log('Filtered messages count:', filteredMessages.length)
         setMessages(filteredMessages)
         
         // If chat was deleted and no new messages exist, we're starting fresh
@@ -347,20 +377,32 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     await handleAsync(async () => {
       console.log('Sending message from:', user.id, 'to:', otherUserId)
 
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: otherUserId,
-          message_content: newMessage.trim(),
-          is_read: false,
-        })
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Send message timeout')), 10000)
+      )
+      
+      const { error } = await Promise.race([
+        supabase
+          .from('chat_messages')
+          .insert({
+            sender_id: user.id,
+            receiver_id: otherUserId,
+            message_content: newMessage.trim(),
+            is_read: false,
+          }),
+        timeoutPromise
+      ]) as { error: any }
 
       console.log('Message insert result:', { error })
       if (error) throw error
 
       setNewMessage('')
-      fetchMessages()
+      
+      // Fetch messages with a small delay to ensure the new message is included
+      setTimeout(() => {
+        fetchMessages()
+      }, 500)
     }).finally(() => {
       setSending(false)
     })
@@ -676,13 +718,29 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   // Mark messages as read when opening chat
   useEffect(() => {
     const markMessagesAsRead = async () => {
-      if (user && otherUserId && !isBlocked && !chatDeleted) {
+      if (user && otherUserId && otherUserId.trim() && !isBlocked && !chatDeleted) {
         console.log('Marking messages as read for chat between:', user.id, 'and', otherUserId)
-        await supabase
-          .from('chat_messages')
-          .update({ is_read: true })
-          .eq('sender_id', otherUserId)
-          .eq('receiver_id', user.id)
+        
+        try {
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Mark as read timeout')), 5000)
+          )
+          
+          await Promise.race([
+            supabase
+              .from('chat_messages')
+              .update({ is_read: true })
+              .eq('sender_id', otherUserId)
+              .eq('receiver_id', user.id),
+            timeoutPromise
+          ])
+          
+          console.log('Messages marked as read successfully')
+        } catch (error) {
+          console.error('Error marking messages as read:', error)
+          // Don't block the chat if marking as read fails
+        }
       }
     }
 
@@ -714,7 +772,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   if (messagesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading conversation..." />
+        <div className="text-center">
+          <LoadingSpinner size="lg" text="Loading conversation..." />
+          <button
+            onClick={() => {
+              console.log('User clicked skip loading')
+              setMessagesLoading(false)
+              setMessages([])
+            }}
+            className="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm"
+          >
+            Skip loading (if taking too long)
+          </button>
+        </div>
       </div>
     )
   }

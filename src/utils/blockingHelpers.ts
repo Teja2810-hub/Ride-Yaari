@@ -108,12 +108,21 @@ export const isUserBlocked = async (
     }
 
     console.log('Checking if user is blocked:', { blockerId, blockedId })
-    const { data, error } = await supabase
-      .from('user_blocks')
-      .select('id')
-      .eq('blocker_id', blockerId)
-      .eq('blocked_id', blockedId)
-      .limit(1)
+    
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Blocking check timeout')), 5000)
+    )
+    
+    const { data, error } = await Promise.race([
+      supabase
+        .from('user_blocks')
+        .select('id')
+        .eq('blocker_id', blockerId)
+        .eq('blocked_id', blockedId)
+        .limit(1),
+      timeoutPromise
+    ]) as { data: any; error: any }
 
     const isBlocked = !error && data && data.length > 0
     console.log('Blocking check result:', { isBlocked, error })
@@ -139,18 +148,7 @@ export const deleteChatConversation = async (
 
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
-    // Delete all existing messages between these users
-    const { error: deleteMessagesError } = await supabase
-      .from('chat_messages')
-      .delete()
-      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
-
-    if (deleteMessagesError) {
-      console.error('Error deleting messages:', deleteMessagesError)
-      throw new Error(deleteMessagesError.message)
-    }
-
-    // Add a chat deletion record for this user
+    // Add a chat deletion record for this user (soft delete approach)
     const { error: insertRecordError } = await supabase
       .from('user_chat_deletions')
       .upsert({
@@ -164,7 +162,7 @@ export const deleteChatConversation = async (
       throw new Error(insertRecordError.message)
     }
 
-    console.log('Chat conversation completely deleted for user:', userId)
+    console.log('Chat conversation marked as deleted for user:', userId)
 
     return { success: true }
   })
@@ -230,14 +228,26 @@ export const isChatDeleted = async (
       return false
     }
 
-    const { data, error } = await supabase
-      .from('user_chat_deletions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('other_user_id', otherUserId)
-      .limit(1)
+    console.log('Checking if chat is deleted for user:', { userId, otherUserId })
+    
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Chat deletion check timeout')), 5000)
+    )
+    
+    const { data, error } = await Promise.race([
+      supabase
+        .from('user_chat_deletions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('other_user_id', otherUserId)
+        .limit(1),
+      timeoutPromise
+    ]) as { data: any; error: any }
 
-    return !error && data && data.length > 0
+    const isDeleted = !error && data && data.length > 0
+    console.log('Chat deletion check result:', { isDeleted, error })
+    return isDeleted
   } catch (error) {
     console.error('Error checking if chat is deleted:', error)
     return false

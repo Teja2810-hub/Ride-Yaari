@@ -39,7 +39,16 @@ export function useErrorHandler(): UseErrorHandlerReturn {
     try {
       setLoading(true)
       clearError()
-      const result = await asyncFn()
+      
+      // Add global timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Operation timeout - please try again')), 30000)
+      )
+      
+      const result = await Promise.race([
+        asyncFn(),
+        timeoutPromise
+      ]) as T
       return result
     } catch (error: any) {
       console.error('Async operation failed:', error)
@@ -47,7 +56,9 @@ export function useErrorHandler(): UseErrorHandlerReturn {
       // Handle different types of errors
       let errorMessage = 'An unexpected error occurred'
       
-      if (error?.message) {
+      if (error?.message?.includes('timeout')) {
+        errorMessage = 'The operation is taking too long. Please check your internet connection and try again.'
+      } else if (error?.message) {
         errorMessage = error.message
       } else if (typeof error === 'string') {
         errorMessage = error

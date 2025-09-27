@@ -100,34 +100,50 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
 
     setLoading(true)
     try {
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Conversations fetch timeout')), 10000)
+      )
+      
       // First get all messages
-      const { data: allMessages, error } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          sender:user_profiles!chat_messages_sender_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          ),
-          receiver:user_profiles!chat_messages_receiver_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          )
-        `)
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
+      const { data: allMessages, error } = await Promise.race([
+        supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:user_profiles!chat_messages_sender_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            ),
+            receiver:user_profiles!chat_messages_receiver_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            )
+          `)
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .order('created_at', { ascending: false }),
+        timeoutPromise
+      ]) as { data: any; error: any }
 
       if (!error && allMessages) {
         const data = allMessages
         console.log('Messages count:', data.length)
 
-        // Get user's chat deletions to filter out deleted chats
-        const { data: deletions } = await supabase
-          .from('user_chat_deletions')
-          .select('other_user_id, deleted_at')
-          .eq('user_id', user.id)
+        // Get user's chat deletions to filter out deleted chats with timeout
+        const { data: deletions } = await Promise.race([
+          supabase
+            .from('user_chat_deletions')
+            .select('other_user_id, deleted_at')
+            .eq('user_id', user.id),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Deletions fetch timeout')), 5000)
+          )
+        ]).catch(error => {
+          console.warn('Error fetching chat deletions, continuing without filter:', error)
+          return { data: [] }
+        }) as { data: any }
 
         const deletedChats = new Map(
           (deletions || []).map(d => [d.other_user_id, new Date(d.deleted_at)])
@@ -182,6 +198,8 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)
+      // Set empty conversations on error to prevent infinite loading
+      setConversations([])
     } finally {
       setLoading(false)
     }

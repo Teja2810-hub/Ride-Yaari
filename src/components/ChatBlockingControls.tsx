@@ -83,7 +83,16 @@ export default function ChatBlockingControls({
 
     await handleAsync(async () => {
       console.log('Attempting to delete chat between:', user.id, 'and', otherUserId)
-      const result = await deleteChatConversation(user.id, otherUserId)
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Chat deletion timeout')), 15000)
+      )
+      
+      const result = await Promise.race([
+        deleteChatConversation(user.id, otherUserId),
+        timeoutPromise
+      ]) as { success: boolean; error?: string }
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to delete chat')

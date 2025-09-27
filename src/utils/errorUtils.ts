@@ -337,15 +337,27 @@ export function validateConfirmationFlow(
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 1000,
+  timeoutMs: number = 30000
 ): Promise<T> {
   let lastError: any
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn()
+      // Add timeout to each retry attempt
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Operation timeout after ${timeoutMs}ms`)), timeoutMs)
+      )
+      
+      return await Promise.race([fn(), timeoutPromise]) as T
     } catch (error: any) {
       lastError = error
+      
+      // Don't retry on timeout errors
+      if (error?.message?.includes('timeout')) {
+        console.error('Operation timed out, not retrying:', error)
+        throw error
+      }
       
       // Don't retry on client errors (4xx) or specific business logic errors
       if (error?.status && error.status >= 400 && error.status < 500) {
