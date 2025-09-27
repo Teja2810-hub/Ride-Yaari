@@ -19,6 +19,12 @@ interface PlatformSelectorProps {
 export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations, isGuest = false }: PlatformSelectorProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
 
+  const handleStartChat = (userId: string, userName: string) => {
+    // Ensure we have a clean state before starting chat
+    if (onStartChat) {
+      onStartChat(userId, userName)
+    }
+  }
   return (
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -45,9 +51,9 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             </button>
             {!isGuest && (
               <>
-                <NotificationBadge onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
-                <MessagesNotification onStartChat={onStartChat} />
-                <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
+                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <MessagesNotification onStartChat={handleStartChat} />
+                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
                 <button
                   onClick={onProfile}
                   className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"

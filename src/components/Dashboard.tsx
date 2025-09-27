@@ -21,6 +21,12 @@ interface DashboardProps {
 export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
 
+  const handleStartChat = (userId: string, userName: string) => {
+    // Ensure we have a clean state before starting chat
+    if (onStartChat) {
+      onStartChat(userId, userName)
+    }
+  }
   return (
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -43,12 +49,12 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
               <span className="hidden sm:inline">Help</span>
             </button>
             {onStartChat && !isGuest && (
-              <MessagesNotification onStartChat={onStartChat} />
+              <MessagesNotification onStartChat={handleStartChat} />
             )}
             {!isGuest && (
               <>
-                <NotificationBadge onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
-                <ConfirmationsNotification onStartChat={onStartChat} onViewConfirmations={onViewConfirmations} />
+                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
                 <button
                   onClick={onProfile}
                   className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"

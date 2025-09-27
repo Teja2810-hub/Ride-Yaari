@@ -88,11 +88,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (user && otherUserId && otherUserId.trim()) {
       const controller = new AbortController()
       
+      // Add small delay to ensure previous component cleanup is complete
+      const initializeChat = async () => {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        if (controller.signal.aborted) return
+        
       fetchMessages(controller.signal)
       fetchConfirmationStatus()
       
-      // Subscribe to new messages
-      const channel = supabase
+        const channelName = `chat:${user.id}:${otherUserId}:${Date.now()}`
+        console.log('Creating new chat channel:', channelName)
+        
+        const channel = supabase
+          .channel(channelName)
         .channel(`chat:${user.id}:${otherUserId}`)
         .on(
           'postgres_changes',
@@ -131,11 +140,21 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           }
         )
         .subscribe()
+        return () => {
+          console.log('Cleaning up chat subscriptions for channel:', channelName)
+          supabase.removeChannel(channel)
+        }
+      }
+      
+      initializeChat().then(cleanup => {
+        if (cleanup && !controller.signal.aborted) {
+          controller.signal.addEventListener('abort', cleanup)
+        }
+      })
 
       return () => {
         console.log('Aborting requests and unsubscribing from chat subscriptions')
         controller.abort()
-        supabase.removeChannel(channel)
       }
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])

@@ -83,6 +83,7 @@ function AppContent() {
 
   const handleBackToDashboard = () => {
     setCurrentView('platform-selector')
+    // Reset all chat-related state to prevent stale state issues
     setChatUserId('')
     setChatUserName('')
     setSelectedRideForChat(null)
@@ -315,6 +316,7 @@ function AppContent() {
                   return (
                     <ErrorBoundary>
                       <Chat
+                        key={`chat-${chatUserId}-${Date.now()}`}
                         onBack={handleBackToDashboard}
                         otherUserId={chatUserId}
                         otherUserName={chatUserName}
