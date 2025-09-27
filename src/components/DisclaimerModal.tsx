@@ -160,6 +160,14 @@ export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, t
   
   // Check if disclaimer should be shown
   React.useEffect(() => {
+    // For chat disclaimers, we need the other user ID which we don't have here
+    // So we'll let the parent component handle the shouldShow logic
+    if (isOpen && type.includes('chat')) {
+      // For chat disclaimers, always show if the modal is opened
+      // The parent component should handle the shouldShow logic
+      return
+    }
+    
     if (isOpen && !popupManager.shouldShowDisclaimer(type, user?.id)) {
       // If disclaimer shouldn't be shown, auto-confirm
       onConfirm()
@@ -171,12 +179,18 @@ export default function DisclaimerModal({ isOpen, onClose, onConfirm, loading, t
 
   // Mark disclaimer as shown when user interacts with it
   const handleConfirm = () => {
-    popupManager.markDisclaimerShown(type, user?.id)
+    // For chat disclaimers, the parent component will handle marking as shown
+    if (!type.includes('chat')) {
+      popupManager.markDisclaimerShown(type, user?.id)
+    }
     onConfirm()
   }
 
   const handleClose = () => {
-    popupManager.markDisclaimerShown(type, user?.id)
+    // For chat disclaimers, the parent component will handle marking as shown
+    if (!type.includes('chat')) {
+      popupManager.markDisclaimerShown(type, user?.id)
+    }
     onClose()
   }
 

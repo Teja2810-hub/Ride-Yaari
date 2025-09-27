@@ -56,6 +56,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   })
 
+  // Track if initial data has been loaded to prevent infinite loading
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
+
   // Helper function to determine message type from content
   const getMessageTypeFromContent = (content: string): 'request' | 'offer' | 'accept' | 'reject' | 'cancel' | 'system' => {
     if (content.includes('requested to join') || content.includes('new request')) return 'request'
@@ -129,6 +132,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       checkBlockingStatus()
     }
   }, [user, otherUserId])
+
+  // Set initial data loaded flag when both messages and confirmation status are fetched
+  useEffect(() => {
+    if (!messagesLoading && !initialDataLoaded) {
+      setInitialDataLoaded(true)
+    }
+  }, [messagesLoading, initialDataLoaded])
 
   const checkBlockingStatus = async () => {
     if (!user || !otherUserId || !otherUserId.trim()) return
@@ -284,7 +294,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
 
-    await handleAsync(async () => {
+    try {
+      setMessagesLoading(true)
       let query = supabase
         .from('chat_messages')
         .select(`
@@ -309,7 +320,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       const { data, error } = await query
 
       console.log('Messages fetch result:', { data: data?.length, error })
-      if (!error && data) {
+      if (error) {
+        console.error('Error fetching messages:', error)
+        setMessages([])
+      } else if (data) {
         // Filter out expired messages
         const filteredMessages = data.filter(message => {
           // Don't show expired messages
@@ -340,9 +354,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           console.log('Chat was deleted and no new messages - starting fresh conversation')
         }
       }
-      
+    } catch (error) {
+      console.error('Unexpected error in fetchMessages:', error)
+      setMessages([])
+    } finally {
       setMessagesLoading(false)
-    })
+    }
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -377,7 +394,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
     
     // Check if disclaimer should be shown
-    if (popupManager.shouldShowDisclaimer('passenger-request', user.id)) {
+    if (popupManager.shouldShowDisclaimer('passenger-request', user.id, otherUserId)) {
       showDisclaimer('passenger-request')
     } else {
       // Auto-proceed if disclaimer was already shown
@@ -389,7 +406,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
 
     hideDisclaimer()
-    popupManager.markDisclaimerShown('passenger-request', user.id)
+    popupManager.markDisclaimerShown('passenger-request', user.id, otherUserId)
 
     await handleAsync(async () => {
       const isOwner = isCurrentUserOwnerOfPreselected()
@@ -429,7 +446,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const handleOwnerAcceptRequest = () => {
     if (!user) return
     
-    if (popupManager.shouldShowDisclaimer('owner-accept', user.id)) {
+    if (popupManager.shouldShowDisclaimer('owner-accept', user.id, otherUserId)) {
       showDisclaimer('owner-accept')
     } else {
       handleConfirmOwnerAcceptRequest()
@@ -445,14 +462,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
-    popupManager.markDisclaimerShown('owner-accept', user.id)
+    popupManager.markDisclaimerShown('owner-accept', user.id, otherUserId)
     await acceptRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleOwnerRejectRequest = () => {
     if (!user) return
     
-    if (popupManager.shouldShowDisclaimer('owner-reject', user.id)) {
+    if (popupManager.shouldShowDisclaimer('owner-reject', user.id, otherUserId)) {
       showDisclaimer('owner-reject')
     } else {
       handleConfirmOwnerRejectRequest()
@@ -468,14 +485,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
-    popupManager.markDisclaimerShown('owner-reject', user.id)
+    popupManager.markDisclaimerShown('owner-reject', user.id, otherUserId)
     await rejectRequest(currentConfirmation.id, user.id, currentConfirmation.passenger_id)
   }
 
   const handleCancelConfirmedRide = () => {
     if (!user) return
     
-    if (popupManager.shouldShowDisclaimer('cancel-confirmed', user.id)) {
+    if (popupManager.shouldShowDisclaimer('cancel-confirmed', user.id, otherUserId)) {
       showDisclaimer('cancel-confirmed')
     } else {
       handleConfirmCancelConfirmedRide()
@@ -491,7 +508,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     hideDisclaimer()
-    popupManager.markDisclaimerShown('cancel-confirmed', user.id)
+    popupManager.markDisclaimerShown('cancel-confirmed', user.id, otherUserId)
     
     // Immediately update local state to hide cancel button
     setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
@@ -725,7 +742,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
-  if (messagesLoading) {
+  // Show loading only if we haven't loaded initial data yet
+  if (messagesLoading && !initialDataLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading conversation..." />

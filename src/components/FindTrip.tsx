@@ -169,7 +169,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     setSelectedChatTrip(trip)
     
     // Check if disclaimer should be shown
-    if (popupManager.shouldShowDisclaimer('chat-trip', user?.id)) {
+    if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
       // Auto-proceed if disclaimer was already shown
@@ -179,7 +179,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
-    popupManager.markDisclaimerShown('chat-trip', user?.id)
+    popupManager.markDisclaimerShown('chat-trip', user?.id, selectedChatUser.userId)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
   }
 

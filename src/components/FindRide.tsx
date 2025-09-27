@@ -539,7 +539,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     setSelectedChatRide(ride)
     
     // Check if disclaimer should be shown
-    if (popupManager.shouldShowDisclaimer('chat-ride', user?.id)) {
+    if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
       // Auto-proceed if disclaimer was already shown
@@ -549,7 +549,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
-    popupManager.markDisclaimerShown('chat-ride', user?.id)
+    popupManager.markDisclaimerShown('chat-ride', user?.id, selectedChatUser.userId)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined, undefined)
   }
 
