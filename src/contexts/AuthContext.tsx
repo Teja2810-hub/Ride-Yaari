@@ -398,6 +398,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const verifyPasswordReset = async (email: string, token: string, newPassword: string) => {
+    try {
+      // Verify the OTP token for password reset
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'recovery'
+      })
+      
+      if (verifyError) throw verifyError
+      
+      // Update the user's password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+      
+      if (updateError) throw updateError
+      return { error: null }
+    } catch (error: any) {
+      return { error }
+    }
+  }
+
   const value = {
     user,
     userProfile,
