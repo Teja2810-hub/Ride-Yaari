@@ -376,27 +376,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const verifyPasswordReset = async (accessToken: string, refreshToken: string, newPassword: string) => {
-    try {
-      // Set the session with the tokens from the password reset link
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      })
-      
-      if (sessionError) throw sessionError
-      
-      // Update the user's password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      })
-      
-      if (updateError) throw updateError
-      return { error: null }
-    } catch (error: any) {
-      return { error }
-    }
-  }
 
   const verifyPasswordReset = async (email: string, token: string, newPassword: string) => {
     try {
