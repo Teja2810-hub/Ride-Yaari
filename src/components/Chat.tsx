@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2 } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock, AlertTriangle, MoreVertical, Shield, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
@@ -38,6 +38,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [chatDeleted, setChatDeleted] = useState(false)
   const [expiredMessageIds, setExpiredMessageIds] = useState<Set<string>>(new Set())
   const [showStartNewChatModal, setShowStartNewChatModal] = useState(false)
+  const [chatGuidelineShown, setChatGuidelineShown] = useState(false)
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -88,6 +89,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (user && otherUserId && otherUserId.trim()) {
       fetchMessages()
       fetchConfirmationStatus()
+      
+      // Check if chat guideline was already shown for this user pair
+      const guidelineKey = `chat-guideline-${user.id}-${otherUserId}`
+      const wasShown = localStorage.getItem(guidelineKey)
+      setChatGuidelineShown(!!wasShown)
       
       // Subscribe to new messages
       const subscription = supabase
@@ -295,21 +301,29 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
-        // Filter out expired messages
+        // Filter out expired messages and auto-expire system messages
         const filteredMessages = data.filter(message => {
           // Don't show expired messages
           if (expiredMessageIds.has(message.id)) {
             return false
           }
           
-          // Auto-expire reject/cancel system messages after 10 minutes
+          // Auto-expire accept/reject system messages immediately when chat is opened
           if (message.message_type === 'system') {
+            const messageContent = message.message_content.toLowerCase()
+            if (messageContent.includes('accepted') || messageContent.includes('approved') || 
+                messageContent.includes('declined') || messageContent.includes('rejected')) {
+              // Mark as expired immediately
+              setExpiredMessageIds(prev => new Set([...prev, message.id]))
+              return false
+            }
+            
+            // Auto-expire other system messages after 10 minutes
             const messageTime = new Date(message.created_at)
             const now = new Date()
             const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
             
-            const messageContent = message.message_content.toLowerCase()
-            if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
+            if (messageContent.includes('cancelled') && minutesSinceMessage >= 10) {
               setExpiredMessageIds(prev => new Set([...prev, message.id]))
               return false
             }
@@ -477,6 +491,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     hideDisclaimer()
     popupManager.markDisclaimerShown('cancel-confirmed', user.id)
+    
+    // Immediately update local state to hide the cancel button
+    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
+    
     const isOwner = isCurrentUserOwnerOfConfirmation()
     await cancelConfirmation(
       currentConfirmation.id,
