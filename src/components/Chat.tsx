@@ -32,7 +32,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [cancellingRequest, setCancellingRequest] = useState(false)
   const [currentConfirmation, setCurrentConfirmation] = useState<RideConfirmation | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { error: chatError, handleAsync, clearError } = useErrorHandler()
+  const { error: chatError, isLoading: chatLoading, handleAsync, clearError } = useErrorHandler()
   const [showChatOptions, setShowChatOptions] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
   const [chatDeleted, setChatDeleted] = useState(false)
@@ -86,6 +86,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
+      setMessagesLoading(true) // Reset loading state when chat opens
       fetchMessages()
       fetchConfirmationStatus()
       
@@ -221,7 +222,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const fetchConfirmationStatus = async () => {
     if (!user || !otherUserId || !otherUserId.trim() || (!preSelectedRide && !preSelectedTrip)) return
     
-    await handleAsync(async () => {
+    try {
       // Dynamically construct the select statement based on ride or trip
       let selectStatement = `
         *,
@@ -275,7 +276,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       } else {
         setCurrentConfirmation(null)
       }
-    })
+    } catch (error) {
+      console.error('Error fetching confirmation status:', error)
+      setCurrentConfirmation(null)
+    }
   }
 
   useEffect(() => {
@@ -291,17 +295,17 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
     
-    // First check if this chat has been deleted by the current user
-    const { data: chatDeletionData } = await supabase
-      .from('user_chat_deletions')
-      .select('deleted_at')
-      .eq('user_id', user.id)
-      .eq('other_user_id', otherUserId)
-      .limit(1)
-    
-    const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
+    try {
+      // First check if this chat has been deleted by the current user
+      const { data: chatDeletionData } = await supabase
+        .from('user_chat_deletions')
+        .select('deleted_at')
+        .eq('user_id', user.id)
+        .eq('other_user_id', otherUserId)
+        .limit(1)
+      
+      const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
 
-    await handleAsync(async () => {
       let query = supabase
         .from('chat_messages')
         .select(`
@@ -358,8 +362,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         }
       }
       
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+      setMessages([])
+    } finally {
       setMessagesLoading(false)
-    })
+    }
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -368,7 +376,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     setSending(true)
 
-    await handleAsync(async () => {
+    try {
       console.log('Sending message from:', user.id, 'to:', otherUserId)
 
       const { error } = await supabase
@@ -385,9 +393,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       setNewMessage('')
       fetchMessages()
-    }).finally(() => {
+    } catch (error) {
+      console.error('Error sending message:', error)
+    } finally {
       setSending(false)
-    })
+    }
   }
 
   const handlePassengerRequestConfirmation = () => {
@@ -408,7 +418,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     hideDisclaimer()
     popupManager.markDisclaimerShown('passenger-request', user.id)
 
-    await handleAsync(async () => {
+    try {
       const isOwner = isCurrentUserOwnerOfPreselected()
       let rideId = null
       let tripId = null
@@ -440,7 +450,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       fetchMessages()
       fetchConfirmationStatus()
-    })
+    } catch (error) {
+      console.error('Error confirming passenger request:', error)
+    }
   }
 
   const handleOwnerAcceptRequest = () => {
@@ -531,7 +543,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const handleRequestAgain = async () => {
     if (!user || !currentConfirmation) return
     
-    await handleAsync(async () => {
+    try {
       await requestAgain(
         currentConfirmation.id,
         user.id,
@@ -539,7 +551,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         preSelectedRide,
         preSelectedTrip
       )
-    })
+    } catch (error) {
+      console.error('Error requesting again:', error)
+    }
   }
 
   const handlePassengerCancel = async (confirmationId: string) => {
@@ -550,7 +564,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     // Immediately update local state to hide the button and show request again option
     setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' as const } : null)
 
-    await handleAsync(async () => {
+    try {
       const { error } = await supabase
         .from('ride_confirmations')
         .update({
@@ -580,9 +594,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       // Refresh confirmation status and messages
       await fetchConfirmationStatus()
       await fetchMessages()
-    }).finally(() => {
+    } catch (error) {
+      console.error('Error cancelling passenger request:', error)
+    } finally {
       setCancellingRequest(false)
-    })
+    }
   }
 
   const getConfirmationButtonText = () => {
@@ -750,7 +766,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   if (messagesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading conversation..." />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading conversation...</p>
+        </div>
       </div>
     )
   }
