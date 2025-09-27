@@ -86,12 +86,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
-      fetchMessages()
+      const controller = new AbortController()
+      
+      fetchMessages(controller.signal)
       fetchConfirmationStatus()
       
       // Subscribe to new messages
-      const subscription = supabase
-        .channel('chat_messages')
+      const channel = supabase
+        .channel(`chat:${user.id}:${otherUserId}`)
         .on(
           'postgres_changes',
           {
@@ -104,7 +106,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             console.log('New message received via subscription:', payload)
             // Add small delay to ensure message is fully processed
             setTimeout(() => {
-              fetchMessages()
+              if (!controller.signal.aborted) {
+                fetchMessages(controller.signal)
+              }
             }, 500)
           }
         )
@@ -119,16 +123,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             console.log('Confirmation update received via subscription')
             // Add small delay to ensure updates are fully processed
             setTimeout(() => {
-              fetchConfirmationStatus()
-              fetchMessages()
+              if (!controller.signal.aborted) {
+                fetchConfirmationStatus()
+                fetchMessages(controller.signal)
+              }
             }, 500)
           }
         )
         .subscribe()
 
       return () => {
-        console.log('Unsubscribing from chat subscriptions')
-        subscription.unsubscribe()
+        console.log('Aborting requests and unsubscribing from chat subscriptions')
+        controller.abort()
+        supabase.removeChannel(channel)
       }
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
@@ -297,7 +304,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (signal?: AbortSignal) => {
     if (!user || !otherUserId || !otherUserId.trim()) return
 
     console.log('Fetching messages between:', user.id, 'and', otherUserId)
@@ -356,10 +363,21 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         query = query.gte('created_at', chatDeletedAt.toISOString())
       }
       
+      // Add abort signal to the query if provided
+      if (signal) {
+        query = query.abortSignal(signal)
+      }
+      
       const { data, error } = await Promise.race([
         query,
         timeoutPromise
       ]) as { data: any; error: any }
+
+      // Check if the request was aborted
+      if (error && error.name === 'AbortError') {
+        console.log('Fetch messages request was aborted')
+        return
+      }
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
