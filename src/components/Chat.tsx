@@ -168,6 +168,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       })
     }
   }, [messages])
+
+  // Auto-expire approval/rejection messages immediately when chat opens
+  useEffect(() => {
+    if (messages.length > 0) {
+      const approvalMessages = messages.filter(message => {
+        const content = message.message_content.toLowerCase()
+        return message.message_type === 'system' && 
+               (content.includes('request approved') || content.includes('request was approved') ||
+                content.includes('request declined') || content.includes('request was declined'))
+      })
+      
+      // Immediately expire these messages
+      approvalMessages.forEach(message => {
+        setExpiredMessageIds(prev => new Set([...prev, message.id]))
+      })
+    }
+  }, [messages])
   const handleChatBlocked = () => {
     setIsBlocked(true)
     setShowChatOptions(false)
@@ -493,10 +510,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     hideDisclaimer()
     popupManager.markDisclaimerShown('cancel-confirmed', user.id)
     
-    // Immediately update local state to hide cancel button
-    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
-    
+    // Immediately update local state to hide cancel button and show appropriate UI
     const isOwner = isCurrentUserOwnerOfConfirmation()
+    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' as const } : null)
+    
     await cancelConfirmation(
       currentConfirmation.id,
       user.id,
@@ -504,6 +521,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       preSelectedRide,
       preSelectedTrip
     )
+    
+    // Force a refresh of the confirmation status after cancellation
+    setTimeout(() => {
+      fetchConfirmationStatus()
+    }, 1000)
   }
 
   const handleRequestAgain = async () => {
@@ -525,8 +547,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     setCancellingRequest(true)
     
-    // Immediately update local state to hide the button
-    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
+    // Immediately update local state to hide the button and show request again option
+    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' as const } : null)
 
     await handleAsync(async () => {
       const { error } = await supabase
@@ -612,7 +634,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     const status = currentConfirmation.status
-    if (status === 'rejected') return true // Show "Request Again" button
+    if (status === 'rejected') return false // Don't show main button for rejected, use dedicated request again button
     if (status === 'pending') return false // Hide when pending (handled by dedicated UI)
     if (status === 'accepted') return false // Use cancel button instead
     
@@ -933,7 +955,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   <div>
                     <h4 className="font-semibold text-blue-900">Action Required</h4>
                     <p className="text-sm text-blue-800">
-                      Passenger {currentConfirmation.user_profiles?.full_name || 'Unknown'} is requesting, you need to approve.
+                      {currentConfirmation.user_profiles?.full_name || 'Passenger'} wants to join your ride.
                     </p>
                   </div>
                 </div>
@@ -970,9 +992,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   <Check size={16} className="text-green-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-green-900">Request Approved!</h4>
+                  <h4 className="font-semibold text-green-900">Ride Confirmed!</h4>
                   <p className="text-sm text-green-800">
-                    Your request was approved! You are confirmed for this ride.
+                    You are confirmed for this ride. Coordinate pickup details now.
                   </p>
                 </div>
               </div>
@@ -993,25 +1015,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   <h4 className="font-semibold text-red-900">Request Declined</h4>
                   <p className="text-sm text-red-800">
                     Your request was declined.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Passenger Cancelled Message */}
-          {currentConfirmation && 
-           currentConfirmation.status === 'rejected' && 
-           isCurrentUserPassengerOfConfirmation() && (
-            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle size={16} className="text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-orange-900">Ride Cancelled</h4>
-                  <p className="text-sm text-orange-800">
-                    The ride was cancelled by the driver.
                   </p>
                 </div>
               </div>
