@@ -130,6 +130,24 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }, [user, otherUserId])
 
+  const fetchOtherUserProfile = async () => {
+    if (!otherUserId || !otherUserId.trim()) return
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', otherUserId)
+        .single()
+
+      if (!error && data) {
+        setOtherUserProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching other user profile:', error)
+    }
+  }
+
   const checkBlockingStatus = async () => {
     if (!user || !otherUserId || !otherUserId.trim()) return
 
