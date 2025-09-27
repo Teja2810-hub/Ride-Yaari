@@ -29,7 +29,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [searched, setSearched] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
@@ -171,10 +170,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     onStartChat(userId, userName, undefined, trip)
   }
 
-  const handleConfirmChat = () => {
-    setShowDisclaimer(false)
-    // Additional confirmation logic can be added here if needed
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
