@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, X } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, X } from 'lucide-react'
 import { popupManager } from '../utils/popupManager'
 import { useAuth } from '../contexts/AuthContext'
 
