@@ -215,6 +215,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Trip</h1>
             <p className="text-gray-600">Search for travelers on your needed route</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
+              <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
+              <ul className="text-left space-y-1 text-blue-800 text-sm">
+                <li>• Search by <strong>departure airport</strong> to find trips leaving from your airport</li>
+                <li>• Search by <strong>destination airport</strong> to find trips going to your airport</li>
+                <li>• Use <strong>both airports</strong> for specific route matches</li>
+                <li>• Leave both fields empty to see all available trips</li>
+              </ul>
+            </div>
             {effectiveIsGuest && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
@@ -306,30 +315,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
               </div>
             )}
 
-            {/* Smart Search Tips */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-3">💡 Smart Search Tips</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
-                <div>
-                  <h5 className="font-semibold mb-2">Search Strategy:</h5>
-                  <ul className="space-y-1">
-                    <li>• Leave fields empty for broader results</li>
-                    <li>• Search by month to find flexible dates</li>
-                    <li>• Try nearby airports for more options</li>
-                    <li>• Check different date ranges</li>
-                  </ul>
-                </div>
-                <div>
-                  <h5 className="font-semibold mb-2">Best Practices:</h5>
-                  <ul className="space-y-1">
-                    <li>• Contact travelers early for better rates</li>
-                    <li>• Be flexible with timing when possible</li>
-                    <li>• Read trip details carefully</li>
-                    <li>• Communicate clearly about your needs</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
 
             {/* Sorting and Filters */}
             <div>
