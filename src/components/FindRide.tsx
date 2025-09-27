@@ -530,16 +530,23 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   }
 
   const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
-    if (effectiveIsGuest) {
-      // For guests, show auth prompt
-      alert('Please sign up to contact drivers')
-      return
-    }
+    setSelectedChatUser({ userId, userName })
+    setSelectedChatRide(ride)
     
-    // For authenticated users, start chat directly
-    onStartChat(userId, userName, ride, undefined)
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('chat-ride', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmChat()
+    }
   }
 
+  const handleConfirmChat = () => {
+    setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-ride', user?.id)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined, undefined)
+  }
 
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
@@ -1140,7 +1147,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                               <span>Start Chat</span>
                             </button>
                             <p className="text-xs text-gray-500 text-center">
-                              Chat to discuss details, then request in confirmations
+                              Chat first, then request confirmation
                             </p>
                           </div>
                         )}

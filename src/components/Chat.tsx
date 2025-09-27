@@ -713,8 +713,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowCancelButton = () => {
-    // Cancel button should NOT show in chat - only in confirmation tab
-    return false
+    // Only show if we have a confirmation, it's accepted, user is involved, and we have preselected ride/trip
+    return currentConfirmation && 
+           currentConfirmation.status === 'accepted' && 
+           (isCurrentUserOwnerOfConfirmation() || isCurrentUserPassengerOfConfirmation()) &&
+           (preSelectedRide || preSelectedTrip)
   }
 
   const shouldShowMainConfirmationButton = () => {
@@ -724,7 +727,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
     
     const status = currentConfirmation.status
-    if (status === 'rejected') return false // Don't show in chat - handle in confirmation tab
+    if (status === 'rejected') return true // Show "Request Again" button
     if (status === 'pending') return false // Hide when pending (handled by dedicated UI)
     if (status === 'accepted') return false // Use cancel button instead
     
@@ -732,8 +735,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowRequestAgainButton = () => {
-    // Request again should be handled in confirmation tab, not in chat
-    return false
+    // Only show if we have a confirmation, it's rejected, user is passenger, and we have preselected ride/trip
+    return currentConfirmation && 
+           currentConfirmation.status === 'rejected' && 
+           isCurrentUserPassengerOfConfirmation() &&
+           (preSelectedRide || preSelectedTrip)
   }
 
   const getDisclaimerContent = (type: string) => {
@@ -1184,6 +1190,17 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   </button>
                 )}
 
+                {/* Cancel button for confirmed rides */}
+                {shouldShowCancelButton() && (
+                  <button
+                    onClick={handleCancelConfirmedRide}
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
+                  >
+                    <AlertTriangle size={16} />
+                    <span>Cancel Ride</span>
+                  </button>
+                )}
 
               </div>
             </div>

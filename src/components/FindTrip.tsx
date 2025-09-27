@@ -163,16 +163,23 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   }
 
   const handleChatClick = (userId: string, userName: string, trip: Trip) => {
-    if (effectiveIsGuest) {
-      // For guests, show auth prompt
-      alert('Please sign up to contact travelers')
-      return
-    }
+    setSelectedChatUser({ userId, userName })
+    setSelectedChatTrip(trip)
     
-    // For authenticated users, start chat directly
-    onStartChat(userId, userName, undefined, trip)
+    // Check if disclaimer should be shown
+    if (popupManager.shouldShowDisclaimer('chat-trip', user?.id)) {
+      setShowDisclaimer(true)
+    } else {
+      // Auto-proceed if disclaimer was already shown
+      handleConfirmChat()
+    }
   }
 
+  const handleConfirmChat = () => {
+    setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-trip', user?.id)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -534,7 +541,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               <span>Start Chat</span>
                             </button>
                             <p className="text-xs text-gray-500 text-center">
-                              Chat to discuss details, then request in confirmations
+                              Chat first, then request confirmation
                             </p>
                           </div>
                         )}
