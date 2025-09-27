@@ -121,6 +121,10 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         .eq('is_closed', false)
         .gte('travel_date', now)
 
+      // Exclude user's own trips if not a guest
+      if (!effectiveIsGuest && user) {
+        query = query.neq('user_id', user.id)
+      }
 
       // Apply sorting
       switch (sortBy) {
@@ -343,6 +347,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                         <ul className="text-xs space-y-1">
                           <li>• Only shows open trips</li>
                           <li>• Future travel dates only</li>
+                          <li>• Excludes your own trips</li>
                         </ul>
                       </div>
                     </div>
@@ -500,7 +505,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                       </div>
 
                       <div className="ml-6">
-                        {trip.user_id === user?.id ? (
+                        {!isGuest && trip.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Trip</span>
@@ -518,7 +523,20 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               Sign up required to chat
                             </p>
                           </div>
-                        ) : (
+                        ) : !effectiveIsGuest ? (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Sign up required to chat
+                            </p>
+                          </div>
+                        ) : !effectiveIsGuest ? (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
@@ -530,6 +548,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             <p className="text-xs text-gray-500 text-center">
                               Chat first, then request confirmation
                             </p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              <MessageCircle size={20} />
+                              <span>Contact Traveler</span>
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">Sign up required to chat</p>
                           </div>
                         )}
                       </div>

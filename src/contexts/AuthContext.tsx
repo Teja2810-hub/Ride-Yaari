@@ -18,8 +18,6 @@ interface AuthContextType {
   sendMagicLinkOtp: (email: string) => Promise<{ error: any }>
   verifyMagicLinkOtp: (email: string, token: string) => Promise<{ data: any, error: any }>
   signInWithGoogle: () => Promise<{ error: any }>
-  sendPasswordReset: (email: string) => Promise<{ error: any }>
-  verifyPasswordReset: (password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
 }
 
@@ -358,31 +356,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const sendPasswordReset = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      })
-      
-      if (error) throw error
-      return { error: null }
-    } catch (error: any) {
-      return { error }
-    }
-  }
-
-  const verifyPasswordReset = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      })
-      
-      if (error) throw error
-      return { error: null }
-    } catch (error: any) {
-      return { error }
-    }
-  }
   const signOut = async () => {
     setIsGuest(false)
     await supabase.auth.signOut()
