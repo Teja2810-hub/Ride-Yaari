@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle, Check, X, Clock, AlertTriangle, MoreVertical, Shield, Trash2 } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
@@ -129,24 +129,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       checkBlockingStatus()
     }
   }, [user, otherUserId])
-
-  const fetchOtherUserProfile = async () => {
-    if (!otherUserId || !otherUserId.trim()) return
-
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', otherUserId)
-        .single()
-
-      if (!error && data) {
-        setOtherUserProfile(data)
-      }
-    } catch (error) {
-      console.error('Error fetching other user profile:', error)
-    }
-  }
 
   const checkBlockingStatus = async () => {
     if (!user || !otherUserId || !otherUserId.trim()) return

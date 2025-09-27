@@ -5,6 +5,7 @@ import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
 import NotificationBadge from './NotificationBadge'
+import ReviewForm from './ReviewForm'
 
 interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
