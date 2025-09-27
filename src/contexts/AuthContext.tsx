@@ -375,6 +375,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sendMagicLinkOtp,
     verifyMagicLinkOtp,
     signInWithGoogle,
+    sendPasswordReset,
+    verifyPasswordReset,
     signOut,
   }
 
