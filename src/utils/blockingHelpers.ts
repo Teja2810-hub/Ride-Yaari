@@ -148,14 +148,22 @@ export const deleteChatConversation = async (
 
     console.log('Deleting chat conversation for user:', { userId, otherUserId })
     
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Chat deletion timeout')), 10000)
+    )
+    
     // Add a chat deletion record for this user (soft delete approach)
-    const { error: insertRecordError } = await supabase
-      .from('user_chat_deletions')
-      .upsert({
-        user_id: userId,
-        other_user_id: otherUserId,
-        deleted_at: new Date().toISOString()
-      })
+    const { error: insertRecordError } = await Promise.race([
+      supabase
+        .from('user_chat_deletions')
+        .upsert({
+          user_id: userId,
+          other_user_id: otherUserId,
+          deleted_at: new Date().toISOString()
+        }),
+      timeoutPromise
+    ]) as { error: any }
 
     if (insertRecordError) {
       console.error('Error creating chat deletion record:', insertRecordError)
@@ -178,11 +186,19 @@ export const clearChatDeletion = async (
   return retryWithBackoff(async () => {
     console.log('Clearing chat deletion for user:', { userId, otherUserId })
     
-    const { error } = await supabase
-      .from('user_chat_deletions')
-      .delete()
-      .eq('user_id', userId)
-      .eq('other_user_id', otherUserId)
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Clear deletion timeout')), 10000)
+    )
+    
+    const { error } = await Promise.race([
+      supabase
+        .from('user_chat_deletions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('other_user_id', otherUserId),
+      timeoutPromise
+    ]) as { error: any }
 
     if (error) {
       throw new Error(error.message)

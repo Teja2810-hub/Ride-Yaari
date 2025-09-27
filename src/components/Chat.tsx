@@ -102,7 +102,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           },
           (payload) => {
             console.log('New message received via subscription:', payload)
-            fetchMessages()
+            // Add small delay to ensure message is fully processed
+            setTimeout(() => {
+              fetchMessages()
+            }, 500)
           }
         )
         .on(
@@ -114,8 +117,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           },
           () => {
             console.log('Confirmation update received via subscription')
-            fetchConfirmationStatus()
-            fetchMessages()
+            // Add small delay to ensure updates are fully processed
+            setTimeout(() => {
+              fetchConfirmationStatus()
+              fetchMessages()
+            }, 500)
           }
         )
         .subscribe()
@@ -178,10 +184,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const handleChatDeleted = () => {
-    // Set state and navigate back to dashboard
-    console.log('Chat deleted, navigating back')
+    console.log('Chat deleted, cleaning up and navigating back')
+    
+    // Clear all chat state
+    setMessages([])
+    setCurrentConfirmation(null)
+    setExpiredMessageIds(new Set())
+    setNewMessage('')
+    
+    // Set deletion state
     setChatDeleted(true)
     setShowChatOptions(false)
+    
+    // Navigate back after state cleanup
     onBack()
   }
 
@@ -290,21 +305,34 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setMessagesLoading(true)
     
     await handleAsync(async () => {
-      // First check if this chat has been deleted by the current user
-      const { data: chatDeletionData, error: deletionError } = await supabase
-        .from('user_chat_deletions')
-        .select('deleted_at')
-        .eq('user_id', user.id)
-        .eq('other_user_id', otherUserId)
-        .limit(1)
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Messages fetch timeout')), 15000)
+      )
       
-      if (deletionError) {
-        console.error('Error checking chat deletion status:', deletionError)
+      // Check if this chat has been deleted by the current user
+      let chatDeletedAt: Date | null = null
+      try {
+        const { data: chatDeletionData, error: deletionError } = await Promise.race([
+          supabase
+            .from('user_chat_deletions')
+            .select('deleted_at')
+            .eq('user_id', user.id)
+            .eq('other_user_id', otherUserId)
+            .limit(1),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Chat deletion check timeout')), 5000)
+          )
+        ]) as { data: any; error: any }
+        
+        if (!deletionError && chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at) {
+          chatDeletedAt = new Date(chatDeletionData[0].deleted_at)
+          console.log('Chat was deleted at:', chatDeletedAt.toISOString())
+        }
+      } catch (deletionCheckError) {
+        console.warn('Error checking chat deletion status, continuing without filter:', deletionCheckError)
         // Continue without deletion filter if there's an error
       }
-      
-      const chatDeletedAt = chatDeletionData && chatDeletionData.length > 0 && chatDeletionData[0].deleted_at ? new Date(chatDeletionData[0].deleted_at) : null
-      console.log('Chat deletion check result:', { chatDeletedAt, deletionError })
 
       let query = supabase
         .from('chat_messages')
@@ -328,40 +356,59 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         query = query.gte('created_at', chatDeletedAt.toISOString())
       }
       
-      const { data, error } = await query
+      const { data, error } = await Promise.race([
+        query,
+        timeoutPromise
+      ]) as { data: any; error: any }
 
       console.log('Messages fetch result:', { data: data?.length, error })
       if (!error && data) {
-        // Filter out expired messages
+        // Filter out expired messages with better error handling
         const filteredMessages = data.filter(message => {
-          // Don't show expired messages
-          if (expiredMessageIds.has(message.id)) {
-            return false
-          }
-          
-          // Auto-expire reject/cancel system messages after 10 minutes
-          if (message.message_type === 'system') {
-            const messageTime = new Date(message.created_at)
-            const now = new Date()
-            const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
-            
-            const messageContent = message.message_content.toLowerCase()
-            if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
-              setExpiredMessageIds(prev => new Set([...prev, message.id]))
+          try {
+            // Don't show expired messages
+            if (expiredMessageIds.has(message.id)) {
               return false
             }
+            
+            // Auto-expire reject/cancel system messages after 10 minutes
+            if (message.message_type === 'system') {
+              const messageTime = new Date(message.created_at)
+              const now = new Date()
+              const minutesSinceMessage = (now.getTime() - messageTime.getTime()) / (1000 * 60)
+              
+              const messageContent = message.message_content.toLowerCase()
+              if ((messageContent.includes('declined') || messageContent.includes('cancelled')) && minutesSinceMessage >= 10) {
+                setExpiredMessageIds(prev => new Set([...prev, message.id]))
+                return false
+              }
+            }
+            
+            return true
+          } catch (filterError) {
+            console.warn('Error filtering message:', message.id, filterError)
+            return true // Include message if filtering fails
           }
-          
-          return true
         })
         
         console.log('Filtered messages count:', filteredMessages.length)
         setMessages(filteredMessages)
         
-        // If chat was deleted and no new messages exist, we're starting fresh
-        if (chatDeletedAt && filteredMessages.length === 0) {
-          console.log('Chat was deleted and no new messages - starting fresh conversation')
+        // Handle fresh conversation after deletion
+        if (chatDeletedAt) {
+          if (filteredMessages.length === 0) {
+            console.log('Chat was deleted and no new messages - starting fresh conversation')
+            // Clear any existing state that might interfere
+            setCurrentConfirmation(null)
+            setExpiredMessageIds(new Set())
+          } else {
+            console.log(`Chat was deleted but found ${filteredMessages.length} new messages since deletion`)
+          }
         }
+      } else if (error) {
+        console.error('Error fetching messages:', error)
+        // Set empty messages array on error to prevent infinite loading
+        setMessages([])
       }
     })
     
@@ -718,7 +765,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   // Mark messages as read when opening chat
   useEffect(() => {
     const markMessagesAsRead = async () => {
-      if (user && otherUserId && otherUserId.trim() && !isBlocked && !chatDeleted) {
+      if (user && otherUserId && otherUserId.trim() && !isBlocked && !chatDeleted && messages.length > 0) {
         console.log('Marking messages as read for chat between:', user.id, 'and', otherUserId)
         
         try {
@@ -745,7 +792,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
 
     markMessagesAsRead()
-  }, [user, otherUserId, isBlocked, chatDeleted])
+  }, [user, otherUserId, isBlocked, chatDeleted, messages.length])
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -774,15 +821,25 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" text="Loading conversation..." />
+          <p className="text-sm text-gray-500 mt-2">
+            {chatDeleted ? 'Starting fresh conversation...' : 'Loading chat history...'}
+          </p>
           <button
             onClick={() => {
               console.log('User clicked skip loading')
               setMessagesLoading(false)
-              setMessages([])
+              // If chat was deleted, start fresh; otherwise show empty state
+              if (chatDeleted) {
+                setMessages([])
+                setCurrentConfirmation(null)
+                setExpiredMessageIds(new Set())
+              } else {
+                setMessages([])
+              }
             }}
             className="mt-4 text-blue-600 hover:text-blue-700 font-medium text-sm"
           >
-            Skip loading (if taking too long)
+            {chatDeleted ? 'Start Fresh Conversation' : 'Skip loading (if taking too long)'}
           </button>
         </div>
       </div>
@@ -877,7 +934,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
               <div className="flex items-center justify-center h-64 sm:h-96">
                 <div className="text-center">
                   <MessageCircle size={32} className="sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                  <p className="text-sm sm:text-base text-gray-600">No messages yet. Start the conversation!</p>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    {chatDeleted ? 'Fresh conversation started. Say hello!' : 'No messages yet. Start the conversation!'}
+                  </p>
                 </div>
               </div>
             ) : (
