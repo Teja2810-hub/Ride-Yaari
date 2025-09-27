@@ -22,6 +22,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [resendCooldown, setResendCooldown] = useState(0)
   
   const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, signInWithGoogle, setGuestMode } = useAuth()
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetToken, setResetToken] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Cooldown timer effect
   React.useEffect(() => {
@@ -41,6 +47,55 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const handleContinueAsGuest = () => {
     setGuestMode(true)
     if (onClose) onClose()
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+      
+      if (error) throw error
+      
+      setSuccess('Password reset link sent to your email!')
+      startResendCooldown()
+    } catch (error: any) {
+      console.error('Password reset error:', error)
+      if (error?.status === 504) {
+        setError('Connection to server timed out. Please check your internet connection or try again later.')
+      } else if (error?.status === 429) {
+        setError('Too many requests. Please wait before trying again.')
+      } else {
+        setError(error?.message || 'Failed to send password reset link. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // This would typically be handled by Supabase's built-in password reset flow
+      // For now, we'll show a message that the feature is coming soon
+      setError('Password reset functionality is coming soon. Please contact support for assistance.')
+    } catch (error: any) {
+      setError(error?.message || 'Failed to reset password. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGoogleSignIn = async () => {
@@ -208,7 +263,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setCurrentStep('signin')
   }
 
-  if (currentStep === 'forgot-password') {
+  if (showForgotPassword) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
@@ -228,6 +283,11 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </div>
           )}
 
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+              {success}
+            </div>
+          )}
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
               {success}
@@ -254,16 +314,16 @@ export default function AuthForm({ onClose }: AuthFormProps) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || resendCooldown > 0}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Sending Reset Link...' : 'Send Reset Link'}
+              {loading ? 'Sending Reset Link...' : resendCooldown > 0 ? `Wait ${resendCooldown}s` : 'Send Reset Link'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => setCurrentStep('signin')}
+              onClick={() => setShowForgotPassword(false)}
               className="text-gray-600 hover:text-gray-700 font-medium"
             >
               Back to Sign In

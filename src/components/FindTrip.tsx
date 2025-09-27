@@ -122,9 +122,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         .gte('travel_date', now)
 
       // Exclude user's own trips if not a guest
-      if (!effectiveIsGuest && user) {
-        query = query.neq('user_id', user.id)
-      }
+      // Note: Removed exclusion of user's own trips to allow them to see their own trips in search results
 
       // Apply sorting
       switch (sortBy) {
@@ -307,6 +305,31 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                 <p className="text-sm text-gray-500 mt-1">Search for all trips in the selected month</p>
               </div>
             )}
+
+            {/* Smart Search Tips */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-3">💡 Smart Search Tips</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+                <div>
+                  <h5 className="font-semibold mb-2">Search Strategy:</h5>
+                  <ul className="space-y-1">
+                    <li>• Leave fields empty for broader results</li>
+                    <li>• Search by month to find flexible dates</li>
+                    <li>• Try nearby airports for more options</li>
+                    <li>• Check different date ranges</li>
+                  </ul>
+                </div>
+                <div>
+                  <h5 className="font-semibold mb-2">Best Practices:</h5>
+                  <ul className="space-y-1">
+                    <li>• Contact travelers early for better rates</li>
+                    <li>• Be flexible with timing when possible</li>
+                    <li>• Read trip details carefully</li>
+                    <li>• Communicate clearly about your needs</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
 
             {/* Sorting and Filters */}
             <div>
@@ -505,7 +528,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                       </div>
 
                       <div className="ml-6">
-                        {!isGuest && trip.user_id === user?.id ? (
+                        {trip.user_id === user?.id ? (
                           <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                             <AlertTriangle size={20} />
                             <span>Your Trip</span>
@@ -523,20 +546,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               Sign up required to chat
                             </p>
                           </div>
-                        ) : !effectiveIsGuest ? (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Contact Traveler</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Sign up required to chat
-                            </p>
-                          </div>
-                        ) : !effectiveIsGuest ? (
+                        ) : (
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
@@ -548,17 +558,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             <p className="text-xs text-gray-500 text-center">
                               Chat first, then request confirmation
                             </p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Contact Traveler</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">Sign up required to chat</p>
                           </div>
                         )}
                       </div>
