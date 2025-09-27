@@ -153,21 +153,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setExpiredMessageIds(prev => new Set([...prev, messageId]))
   }
 
-  // Auto-expire accept/reject messages immediately when chat opens
-  useEffect(() => {
-    if (messages.length > 0) {
-      const messagesToExpire = messages.filter(message => {
-        const content = message.message_content.toLowerCase()
-        return message.message_type === 'system' && 
-               (content.includes('accepted') || content.includes('approved') || 
-                content.includes('declined') || content.includes('rejected'))
-      })
-      
-      messagesToExpire.forEach(message => {
-        setExpiredMessageIds(prev => new Set([...prev, message.id]))
-      })
-    }
-  }, [messages])
   const handleChatBlocked = () => {
     setIsBlocked(true)
     setShowChatOptions(false)
@@ -492,10 +477,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     hideDisclaimer()
     popupManager.markDisclaimerShown('cancel-confirmed', user.id)
-    
-    // Immediately update local state to hide cancel button
-    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
-    
     const isOwner = isCurrentUserOwnerOfConfirmation()
     await cancelConfirmation(
       currentConfirmation.id,
@@ -620,10 +601,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }
 
   const shouldShowRequestAgainButton = () => {
-    // Show "Request Again" button if:
-    // 1. We have a confirmation that's rejected
-    // 2. Current user is the passenger
-    // 3. We have a preselected ride/trip
+    // Only show if we have a confirmation, it's rejected, user is passenger, and we have preselected ride/trip
     return currentConfirmation && 
            currentConfirmation.status === 'rejected' && 
            isCurrentUserPassengerOfConfirmation() &&
@@ -1050,17 +1028,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   </button>
                 )}
 
-                {/* Request Again button for rejected confirmations */}
-                {shouldShowRequestAgainButton() && (
-                  <button
-                    onClick={handleRequestAgain}
-                    disabled={confirmationLoading}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
-                  >
-                    <Check size={16} />
-                    <span>Request Again</span>
-                  </button>
-                )}
               </div>
             </div>
           )}
