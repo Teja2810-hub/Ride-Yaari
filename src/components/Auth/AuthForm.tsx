@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { User, Mail, Lock, Eye, EyeOff, Send, UserCheck, Chromium as Chrome } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../utils/supabase'
 import { getDefaultAvatarUrl } from '../../utils/avatarHelpers'
 
 interface AuthFormProps {
