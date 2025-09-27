@@ -38,13 +38,6 @@ export default function ConfirmationExpiryBanner({ onRefresh }: ConfirmationExpi
     }
   }, [user])
 
-  // Auto-cleanup on component mount if there are expired confirmations
-  useEffect(() => {
-    if (user && stats.expired > 0 && autoCleanupEnabled) {
-      performAutoCleanup()
-    }
-  }, [user, stats.expired, autoCleanupEnabled])
-
   const performAutoCleanup = async () => {
     if (!user || isLoading) return
 

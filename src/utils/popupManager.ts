@@ -69,18 +69,8 @@ class PopupManager {
   /**
    * Check if disclaimer popup should be shown
    */
-  shouldShowDisclaimer(type: string, userId?: string, otherUserId?: string): boolean {
+  shouldShowDisclaimer(type: string, userId?: string): boolean {
     const state = this.getPopupState(userId)
-    
-    // For chat disclaimers, check if shown for this specific user pair
-    if (type.includes('chat') && userId && otherUserId) {
-      const pairKey = `chat-guideline-${userId}-${otherUserId}`
-      const wasShownForPair = localStorage.getItem(pairKey)
-      if (wasShownForPair) {
-        return false
-      }
-    }
-    
     const today = new Date().toDateString()
     
     // Show once per day or once per session for new sessions
@@ -98,15 +88,8 @@ class PopupManager {
   /**
    * Mark disclaimer as shown
    */
-  markDisclaimerShown(type: string, userId?: string, otherUserId?: string): void {
+  markDisclaimerShown(type: string, userId?: string): void {
     const state = this.getPopupState(userId)
-    
-    // For chat disclaimers, mark as shown for this specific user pair
-    if (type.includes('chat') && userId && otherUserId) {
-      const pairKey = `chat-guideline-${userId}-${otherUserId}`
-      localStorage.setItem(pairKey, 'true')
-    }
-    
     state.disclaimerShown = true
     state.lastShownDate = new Date().toDateString()
     state.sessionId = this.sessionId
