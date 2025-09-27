@@ -7,7 +7,7 @@ interface AuthFormProps {
   onClose?: () => void
 }
 
-type AuthStep = 'signin' | 'signup' | 'signup-otp-verification' | 'magic-link-otp-verification' | 'forgot-password' | 'reset-password'
+type AuthStep = 'signin' | 'signup' | 'signup-otp-verification' | 'magic-link-otp-verification'
 
 export default function AuthForm({ onClose }: AuthFormProps) {
   const [currentStep, setCurrentStep] = useState<AuthStep>('signin')
@@ -15,18 +15,13 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [otpToken, setOtpToken] = useState('')
-  const [resetToken, setResetToken] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
   
-  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, signInWithGoogle, setGuestMode, sendPasswordReset, verifyPasswordReset } = useAuth()
+  const { signIn, sendSignUpOtp, verifySignUpOtp, sendMagicLinkOtp, verifyMagicLinkOtp, signInWithGoogle, setGuestMode } = useAuth()
 
   // Cooldown timer effect
   React.useEffect(() => {
@@ -46,72 +41,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
   const handleContinueAsGuest = () => {
     setGuestMode(true)
     if (onClose) onClose()
-  }
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email) {
-      setError('Please enter your email address')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { error } = await sendPasswordReset(email)
-      if (error) throw error
-      
-      setSuccess('Password reset email sent! Please check your inbox.')
-      setCurrentStep('reset-password')
-      startResendCooldown()
-    } catch (error: any) {
-      console.error('Password reset error:', error)
-      if (error?.status === 504) {
-        setError('Connection to server timed out. Please check your internet connection or try again later.')
-      } else if (error?.status === 429) {
-        setError('Too many requests. Please wait before trying again.')
-      } else {
-        setError(error?.message || 'Failed to send password reset email. Please try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { error } = await verifyPasswordReset(resetToken, newPassword)
-      if (error) throw error
-      
-      setSuccess('Password reset successfully! You can now sign in with your new password.')
-      setTimeout(() => {
-        setCurrentStep('signin')
-        setResetToken('')
-        setNewPassword('')
-        setConfirmPassword('')
-        setError(null)
-        setSuccess(null)
-      }, 2000)
-    } catch (error: any) {
-      console.error('Password reset verification error:', error)
-      if (error?.status === 504) {
-        setError('Connection to server timed out. Please check your internet connection or try again later.')
-      } else {
-        setError(error?.message || 'Invalid reset code or expired link. Please try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
   }
 
   const handleGoogleSignIn = async () => {
@@ -274,9 +203,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setPassword('')
     setFullName('')
     setOtpToken('')
-    setResetToken('')
-    setNewPassword('')
-    setConfirmPassword('')
     setError(null)
     setSuccess(null)
     setCurrentStep('signin')
@@ -954,15 +880,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => setCurrentStep('forgot-password')}
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-              >
-                Forgot your password?
               </button>
             </div>
           </div>
