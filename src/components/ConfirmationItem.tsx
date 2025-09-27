@@ -642,6 +642,18 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
               </div>
             )}
 
+            {/* Accepted status actions - Cancel button for passengers */}
+            {confirmation.status === 'accepted' && isCurrentUserPassenger && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={isLoading}
+                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+              >
+                <AlertTriangle size={16} />
+                <span>Cancel Ride</span>
+              </button>
+            )}
+
             {/* Rejected status actions for owners */}
             {confirmation.status === 'rejected' && isCurrentUserOwner && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
               <button
