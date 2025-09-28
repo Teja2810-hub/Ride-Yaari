@@ -99,6 +99,17 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
         const { createRideNotification } = await import('../utils/rideRequestHelpers')
         
         try {
+          console.log('Creating driver notification with data:', {
+            user_id: user.id,
+            notification_type: 'driver_post',
+            departure_location: fromLocation.address,
+            destination_location: toLocation.address,
+            date_type: notificationDateType,
+            specific_date: notificationDateType === 'specific_date' ? notificationSpecificDate : undefined,
+            multiple_dates: notificationDateType === 'multiple_dates' ? notificationMultipleDates.filter(d => d) : undefined,
+            notification_month: notificationDateType === 'month' ? notificationMonth : undefined
+          })
+          
           const notificationData = {
             user_id: user.id,
             notification_type: 'driver_post' as const,
@@ -116,8 +127,15 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             is_active: true
           }
 
-          await createRideNotification(notificationData)
-          console.log('Driver notification preference created successfully')
+          const notificationResult = await createRideNotification(notificationData)
+          console.log('Driver notification creation result:', notificationResult)
+          
+          if (!notificationResult.success) {
+            console.error('Failed to create driver notification:', notificationResult.error)
+            // Don't fail the ride creation, but log the error
+          } else {
+            console.log('Driver notification created successfully with ID:', notificationResult.notificationId)
+          }
         } catch (notificationError) {
           console.error('Error creating driver notification:', notificationError)
           // Don't fail the ride creation if notification setup fails
@@ -144,6 +162,10 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       setPrice('')
       setCurrency('USD')
       setNegotiable(false)
+      setEnableNotifications(false)
+      setNotificationSpecificDate('')
+      setNotificationMultipleDates([''])
+      setNotificationMonth('')
     } catch (error: any) {
       console.error('Error posting ride:', error)
       setError(error.message)
@@ -293,6 +315,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             </p>
 
             {/* Intermediate Stops */}
+                      required
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -348,6 +371,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                   min={getTomorrowDateTime()}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                   required
+                          required={index === 0}
                 />
               </div>
             </div>
@@ -602,13 +626,14 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
 
             <button
               type="submit"
-              disabled={loading || (!effectiveIsGuest && (!fromLocation || !toLocation || !departureDateTime || !price)) || 
+              disabled={loading || (!effectiveIsGuest && (!fromLocation || !toLocation || !departureDateTime)) || 
                        (enableNotifications && (
                          (notificationDateType === 'specific_date' && !notificationSpecificDate) ||
                          (notificationDateType === 'multiple_dates' && !notificationMultipleDates.some(d => d)) ||
                          (notificationDateType === 'month' && !notificationMonth)
                        ))}
               className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      required
                 isGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                   : 'bg-green-600 hover:bg-green-700 text-white'

@@ -180,6 +180,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       setJoinedRides(joinedRidesData || [])
       
       console.log('User data fetch completed successfully')
+      
+      // If we're on the notification-management tab, also refresh notifications
+      if (activeTab === 'notification-management') {
+        console.log('Refreshing notification management data...')
+        // Trigger a refresh of the notification management component
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('refreshNotifications'))
+        }, 100)
+      }
     } catch (error: any) {
       console.error('Error fetching user data:', error)
       setError(error.message)

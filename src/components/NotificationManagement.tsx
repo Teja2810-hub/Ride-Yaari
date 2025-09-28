@@ -38,12 +38,26 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   useEffect(() => {
     if (user) {
       fetchNotifications()
+      
+      // Listen for refresh events from other components
+      const handleRefresh = () => {
+        console.log('NotificationManagement: Received refresh event')
+        fetchNotifications()
+      }
+      
+      window.addEventListener('refreshNotifications', handleRefresh)
+      
+      return () => {
+        window.removeEventListener('refreshNotifications', handleRefresh)
+      }
     }
   }, [user])
 
   const fetchNotifications = async () => {
     if (!user) return
 
+    console.log('NotificationManagement: Fetching notifications for user:', user.id)
+    
     await handleAsync(async () => {
       const { data, error } = await supabase
         .from('ride_notifications')
@@ -51,8 +65,12 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('NotificationManagement: Error fetching notifications:', error)
+        throw error
+      }
 
+      console.log('NotificationManagement: Fetched notifications:', data?.length || 0, 'notifications')
       setNotifications(data || [])
     })
   }

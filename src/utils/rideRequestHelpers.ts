@@ -55,6 +55,8 @@ export const createRideNotification = async (
   notificationData: Omit<RideNotification, 'id' | 'created_at' | 'updated_at'>
 ): Promise<{ success: boolean; notificationId?: string; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('createRideNotification called with data:', notificationData)
+    
     // Calculate expiry date based on notification type
     let expiresAt: string | null = null
     
@@ -78,16 +80,27 @@ export const createRideNotification = async (
       expiresAt = expiry.toISOString()
     }
 
+    console.log('Calculated expiry date:', expiresAt)
+    
+    const insertData = {
+      ...notificationData,
+      expires_at: expiresAt
+    }
+    
+    console.log('Inserting notification data:', insertData)
+    
     const { data, error } = await supabase
       .from('ride_notifications')
-      .insert({
-        ...notificationData,
-        expires_at: expiresAt
-      })
+      .insert(insertData)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error creating notification:', error)
+      throw error
+    }
+    
+    console.log('Notification created successfully:', data)
 
     return { success: true, notificationId: data.id }
   })
