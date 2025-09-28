@@ -366,7 +366,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                   onChange={(e) => setDepartureDateTime(e.target.value)}
                   min={getTomorrowDateTime()}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  required
                           required={index === 0}
                 />
               </div>
@@ -388,7 +387,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                     placeholder="0.00"
                     min="0"
-                    step="0.01"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Leave empty if offering a free ride</p>
