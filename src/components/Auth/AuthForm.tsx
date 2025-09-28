@@ -165,6 +165,19 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setError(null)
 
     try {
+      // First check if user exists in our database
+      const { data: userExists, error: checkError } = await supabase
+        .rpc('get_user_id_by_email', { email_param: email })
+
+      if (checkError) {
+        console.error('Error checking user existence:', checkError)
+        throw new Error('Failed to verify email address')
+      }
+
+      if (!userExists) {
+        throw new Error('No account found with this email address. Please create an account first.')
+      }
+
       const { error } = await sendPasswordReset(email)
       
       if (error) throw error
