@@ -383,18 +383,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendPasswordReset = async (email: string) => {
     try {
+      // First check if user exists in our database
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', (await supabase.rpc('get_user_id_by_email', { email_param: email })))
+        .single()
+      
+      // If no profile found, check auth.users table directly
+      if (profileError && profileError.code === 'PGRST116') {
+        // Try to get user from auth system
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+        const userExists = authUsers?.users?.some(user => user.email === email)
+        
+        if (!userExists) {
+          throw new Error('No account found with this email address. Please create an account first.')
+        }
+      }
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
       })
       
       if (error) {
-        // Check if it's a user not found error
-        if (error.message?.includes('Unable to validate email address') || 
-            error.message?.includes('User not found') ||
-            error.message?.includes('Invalid email') ||
-            error.message?.includes('For security purposes')) {
-          throw new Error('No account found with this email address. Please create an account first.')
-        }
         throw error
       }
       return { error: null }
