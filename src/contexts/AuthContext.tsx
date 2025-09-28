@@ -299,27 +299,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
-      // First check if user exists
-      const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email)
-      
-      // If we can't check (no admin access), try a different approach
-      if (checkError) {
-        // Try to sign in with a dummy password to check if user exists
-        const { error: testError } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: 'dummy-password-for-testing-user-existence'
-        })
-        
-        // If error is "Invalid login credentials", user doesn't exist
-        if (testError?.message?.includes('Invalid login credentials') || 
-            testError?.message?.includes('Email not confirmed') ||
-            testError?.message?.includes('User not found')) {
-          throw new Error('No account found with this email address. Please sign up first.')
-        }
-      } else if (!existingUser?.user) {
-        throw new Error('No account found with this email address. Please sign up first.')
-      }
-      
       try {
         const { error } = await supabase.auth.signInWithOtp({
           email: email,
@@ -386,27 +365,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendPasswordReset = async (email: string) => {
     try {
-      // First check if user exists
-      const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email)
-      
-      // If we can't check (no admin access), try a different approach
-      if (checkError) {
-        // Try to sign in with a dummy password to check if user exists
-        const { error: testError } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: 'dummy-password-for-testing-user-existence'
-        })
-        
-        // If error is "Invalid login credentials", user doesn't exist
-        if (testError?.message?.includes('Invalid login credentials') || 
-            testError?.message?.includes('Email not confirmed') ||
-            testError?.message?.includes('User not found')) {
-          throw new Error('No account found with this email address. Please sign up first.')
-        }
-      } else if (!existingUser?.user) {
-        throw new Error('No account found with this email address. Please sign up first.')
-      }
-      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
       })
