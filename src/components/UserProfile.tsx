@@ -19,6 +19,7 @@ import JoinedRidesView from './JoinedRidesView'
 import TripCategorySelector from './TripCategorySelector'
 import RideCategorySelector from './RideCategorySelector'
 import SystemHealthDashboard from './SystemHealthDashboard'
+import NotificationManagement from './NotificationManagement'
 import { getCurrencySymbol } from '../utils/currencies'
 
 interface UserProfileProps {
@@ -29,7 +30,7 @@ interface UserProfileProps {
   initialTab?: string
 }
 
-type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications' | 'blocked' | 'closure-history'
+type ProfileTab = 'overview' | 'trips' | 'rides' | 'confirmations' | 'test' | 'notifications' | 'notification-management' | 'blocked' | 'closure-history'
 type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
@@ -263,6 +264,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'blocked', label: 'Blocked Users', icon: <Shield size={16} /> },
     { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
+    { id: 'notification-management', label: 'Manage Alerts', icon: <Settings size={16} /> },
     { id: 'test', label: 'System Health', icon: <Settings size={16} /> },
     { id: 'reviews', label: 'Submit Review', icon: <Star size={16} /> }
   ]
@@ -439,6 +441,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <Bell size={16} />
                       <span>Notifications</span>
                     </button>
+                    <button
+                      onClick={() => setActiveTab('notification-management')}
+                      className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      <Settings size={16} />
+                      <span>Manage Alerts</span>
+                    </button>
                   </div>
                   
                   {/* Support Developer Section */}
@@ -572,6 +581,18 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </p>
                 </div>
                 <NotificationSettings />
+              </div>
+            )}
+
+            {activeTab === 'notification-management' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage Ride Alerts</h2>
+                  <p className="text-gray-600">
+                    View and manage your active ride notification preferences. Delete notifications to stop receiving alerts.
+                  </p>
+                </div>
+                <NotificationManagement />
               </div>
             )}
 
