@@ -76,6 +76,9 @@ export const canRequestAgain = async (
 export const requestAgain = async (
   confirmationId: string,
   userId: string,
+  rideOwnerId: string,
+  ride?: CarRide,
+  trip?: Trip,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
@@ -109,10 +112,9 @@ export const requestAgain = async (
     }
 
     // Check if the ride/trip is still in the future
-    const ride = confirmation.car_rides
-    const trip = confirmation.trips
-    const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
-    
+    const confirmationRide = confirmation.car_rides
+    const confirmationTrip = confirmation.trips
+    const departureTime = confirmationRide ? new Date(confirmationRide.departure_date_time) : new Date(confirmationTrip?.travel_date || '')
     if (departureTime <= new Date()) {
       return { success: false, error: 'Cannot request again for past rides/trips' }
     }
@@ -142,14 +144,44 @@ export const requestAgain = async (
       return { success: false, error: 'Failed to update confirmation status' }
     }
 
-    // Send enhanced system message to the ride owner
-    const ownerId = confirmation.ride_owner_id
+    // Get passenger name for system message
+    const passengerName = await getUserDisplayName(userId)
+    
+    // Send system message to ride owner
+    const rideDetails = ride 
+      ? `car ride from ${ride.from_location} to ${ride.to_location}`
+      : trip 
+        ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
+        : confirmationRide 
+          ? `car ride from ${confirmationRide.from_location} to ${confirmationRide.to_location}`
+          : confirmationTrip 
+            ? `airport trip from ${confirmationTrip.leaving_airport} to ${confirmationTrip.destination_airport}`
+            : 'ride'
+
+    await supabase
+      .from('chat_messages')
+      .insert({
+        sender_id: userId,
+        receiver_id: rideOwnerId,
+        message_content: `🔄 ${passengerName} has re-requested to join your ${rideDetails}${reason ? `. Additional message: ${reason}` : ''}. Please review and respond.`,
+        message_type: 'system',
+        is_read: false
+      })
+
+    // Also send enhanced system message for notifications
     await notificationService.sendEnhancedSystemMessage(
       'request',
-      'owner',
+      'passenger',
       userId,
-      ownerId,
-      ride,
+      rideOwnerId,
+      ride || confirmationRide,
+      trip || confirmationTrip,
+      `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
+    )
+
+    return { success: true }
+  })
+}
       trip,
       `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
     )

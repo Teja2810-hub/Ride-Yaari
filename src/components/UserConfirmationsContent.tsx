@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -671,6 +671,20 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
           {expandedSections.rejected && (
             <div className="mb-8">
+              {/* Info Banner for Rejected Confirmations */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <RefreshCw size={16} className="text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">Request Again Options</h4>
+                    <p className="text-sm text-blue-800">
+                      For rejected requests, you can use "Request Again" to send a new request after the cooldown period (30 minutes). 
+                      You can also use "Undo Rejection" within 24 hours if the rejection was accidental.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Car Rides - Rejected */}
               {categorized.rejected.carRides.length > 0 && (
                 <div className="mb-8">

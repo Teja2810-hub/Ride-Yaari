@@ -210,6 +210,7 @@ export default function RequestAgainModal({
             <li>• Make sure your travel plans haven't changed</li>
             <li>• Be prepared to provide additional information if needed</li>
             <li>• Respect the owner's decision if rejected again</li>
+            <li>• Wait for the 30-minute cooldown period between requests</li>
           </ul>
         </div>
 

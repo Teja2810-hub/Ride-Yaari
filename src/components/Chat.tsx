@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2 } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
@@ -723,6 +723,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
            (preSelectedRide || preSelectedTrip)
   }
 
+  const handleRequestAgain = async () => {
+    if (!user || !currentConfirmation) return
+    
+    await handleAsync(async () => {
+      await requestAgain(
+        currentConfirmation.id,
+        user.id,
+        currentConfirmation.ride_owner_id,
+        preSelectedRide,
+        preSelectedTrip
+      )
+    })
+  }
+
   const getDisclaimerContent = (type: string) => {
     const rideDetails = getRideOrTripDetails(preSelectedRide, preSelectedTrip)
     
@@ -1169,6 +1183,18 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   >
                     <Check size={16} />
                     <span>{getConfirmationButtonText()}</span>
+                  </button>
+                )}
+
+                {/* Request Again button for rejected confirmations */}
+                {shouldShowRequestAgainButton() && (
+                  <button
+                    onClick={handleRequestAgain}
+                    disabled={confirmationLoading}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
+                  >
+                    <RefreshCw size={16} />
+                    <span>Request Again</span>
                   </button>
                 )}
 

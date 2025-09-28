@@ -109,19 +109,15 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
     setShowRequestAgainModal(false)
 
-    try {
-      const result = await requestAgain(confirmation.id, user.id, reason)
-      
-      if (!result.success) {
-        alert(result.error || 'Failed to send request again')
-        return
-      }
-
-      onUpdate()
-    } catch (error: any) {
-      console.error('Error requesting again:', error)
-      alert('Failed to send request. Please try again.')
-    }
+    await handleAsync(async () => {
+      await requestAgain(
+        confirmation.id,
+        user.id,
+        confirmation.ride_owner_id,
+        confirmation.car_rides,
+        confirmation.trips
+      )
+    })
   }
 
   const handlePassengerCancel = async () => {
