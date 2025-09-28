@@ -639,8 +639,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     
     setCancellingRequest(true)
     
-    // Immediately update local state to hide the button
-    setCurrentConfirmation(prev => prev ? { ...prev, status: 'rejected' } : null)
+    // Immediately update local state to reflect cancellation
+    setCurrentConfirmation(prev => prev ? { 
+      ...prev, 
+      status: 'rejected' as const,
+      confirmed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } : null)
 
     await handleAsync(async () => {
       const { error } = await supabase
@@ -1037,6 +1042,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           {currentConfirmation && 
            currentConfirmation.status === 'pending' && 
            isCurrentUserPassengerOfConfirmation() && 
+           !cancellingRequest &&
            (preSelectedRide || preSelectedTrip) && (
             <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
