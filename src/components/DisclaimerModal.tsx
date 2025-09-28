@@ -128,11 +128,11 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
           'This will send a new request to join this ride',
           'The ride owner will be notified of your request',
           'Make sure you still want to join this ride',
-          'The other party can request again if the ride becomes available',
-          'Consider discussing the reason in chat first',
-          'This action can be reversed within 24 hours if accidental'
+          'Consider discussing any changes in chat first',
+          'Respect the owner\'s decision if rejected again',
+          'There is a 30-minute cooldown between requests'
         ],
-        explanation: 'You are cancelling the confirmed ride. The other party will be notified and can request again.'
+        explanation: 'You are requesting to join this ride again after it was previously rejected. Make sure you have addressed any previous concerns.'
       }
     case 'reverse-action':
       return {

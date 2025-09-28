@@ -673,7 +673,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     } else if (status === 'accepted') {
       return 'Ride Confirmed ✓'
     } else if (status === 'rejected') {
-      return 'Request Ride Again'
+      return 'Request Declined'
     }
 
     return 'Request Ride Confirmation'
