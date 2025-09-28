@@ -1,421 +1,264 @@
-import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X } from 'lucide-react'
+import React from 'react'
+import { Car, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../utils/supabase'
-import LocationAutocomplete from './LocationAutocomplete'
-import DisclaimerModal from './DisclaimerModal'
-import { currencies, getCurrencySymbol } from '../utils/currencies'
-import { popupManager } from '../utils/popupManager'
+import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
+import MessagesNotification from './MessagesNotification'
+import ReviewDisplay from './ReviewDisplay'
+import ConfirmationsNotification from './ConfirmationsNotification'
+import NotificationBadge from './NotificationBadge'
 
-interface LocationData {
-  address: string
-  latitude: number | null
-  longitude: number | null
-}
-
-interface PostRideProps {
+interface CarDashboardProps {
+  onPostRide: () => void
+  onFindRide: () => void
+  onRequestRide: () => void
+  onProfile: () => void
   onBack: () => void
+  onStartChat?: (userId: string, userName: string) => void
+  onViewConfirmations: () => void
   isGuest?: boolean
 }
 
-export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
-  const { user, setGuestMode } = useAuth()
-  const effectiveIsGuest = isGuest || !user
-  const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
-  const [toLocation, setToLocation] = useState<LocationData | null>(null)
-  const [intermediateStops, setIntermediateStops] = useState<LocationData[]>([])
-  const [departureDateTime, setDepartureDateTime] = useState('')
-  const [price, setPrice] = useState('')
-  const [currency, setCurrency] = useState('USD')
-  const [negotiable, setNegotiable] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
+  const { userProfile, signOut, setGuestMode } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Check if user is a guest
-    if (isGuest) {
-      setShowAuthPrompt(true)
-      return
-    }
-    
-    // Check if disclaimer should be shown
-    if (popupManager.shouldShowDisclaimer('ride', user?.id)) {
-      setShowDisclaimer(true)
-    } else {
-      // Auto-proceed if disclaimer was already shown
-      handleConfirmPost()
+  const handleStartChat = (userId: string, userName: string) => {
+    // Ensure we have a clean state before starting chat
+    if (onStartChat) {
+      onStartChat(userId, userName)
     }
   }
-
-  const handleConfirmPost = async () => {
-    if (!user || !fromLocation || !toLocation) return
-    
-    setLoading(true)
-    setError('')
-    setShowDisclaimer(false)
-    
-    // Mark disclaimer as shown
-    popupManager.markDisclaimerShown('ride', user.id)
-
-    try {
-      console.log('Posting ride with locations:', { fromLocation, toLocation, intermediateStops })
-      
-      const { error } = await supabase
-        .from('car_rides')
-        .insert({
-          user_id: user.id,
-          from_location: fromLocation.address,
-          to_location: toLocation.address,
-          from_latitude: fromLocation.latitude,
-          from_longitude: fromLocation.longitude,
-          to_latitude: toLocation.latitude,
-          to_longitude: toLocation.longitude,
-          departure_date_time: new Date(departureDateTime).toISOString(),
-          price: parseFloat(price),
-          currency: currency,
-          negotiable: negotiable,
-          intermediate_stops: intermediateStops.map(stop => ({
-            address: stop.address,
-            latitude: stop.latitude,
-            longitude: stop.longitude
-          }))
-        })
-
-      if (error) throw error
-
-      // Notify matching passengers about the new ride
-      const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
-      
-      try {
-        const notificationResult = await notifyMatchingPassengers(data.id)
-        console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
-      } catch (notificationError) {
-        console.error('Error notifying matching passengers:', notificationError)
-        // Don't fail the ride creation if notifications fail
-      }
-
-      setSuccess(true)
-      // Reset form
-      setFromLocation(null)
-      setToLocation(null)
-      setIntermediateStops([])
-      setDepartureDateTime('')
-      setPrice('')
-      setCurrency('USD')
-      setNegotiable(false)
-    } catch (error: any) {
-      console.error('Error posting ride:', error)
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addIntermediateStop = () => {
-    if (intermediateStops.length < 3) { // Limit to 3 intermediate stops
-      setIntermediateStops([...intermediateStops, { address: '', latitude: null, longitude: null }])
-    }
-  }
-
-  const removeIntermediateStop = (index: number) => {
-    setIntermediateStops(intermediateStops.filter((_, i) => i !== index))
-  }
-
-  const updateIntermediateStop = (index: number, location: LocationData | null) => {
-    if (location) {
-      const newStops = [...intermediateStops]
-      newStops[index] = location
-      setIntermediateStops(newStops)
-    }
-  }
-
-  const getTomorrowDateTime = () => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(9, 0, 0, 0) // Default to 9 AM
-    return tomorrow.toISOString().slice(0, 16) // Format for datetime-local input
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Send size={32} className="text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Ride Posted Successfully!</h2>
-          <p className="text-gray-600 mb-8">
-            Your ride has been added to our platform. Other travelers can now find and contact you for carpooling.
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => setSuccess(false)}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
-            >
-              Post Another Ride
-            </button>
+  return (
+    <div className="min-h-screen bg-neutral-bg travel-bg">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
+          <div></div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
               onClick={onBack}
-              className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 text-green-500 hover:text-green-600 font-medium transition-colors text-sm rounded-xl"
             >
-              Back to Dashboard
+              <ArrowLeft size={18} />
+              <span>Back</span>
             </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-green-50/90 to-emerald-100/90 travel-bg p-4">
-      <div className="container mx-auto max-w-2xl">
-        <div className="mb-6">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-          >
-            <ArrowLeft size={20} />
-            {loading ? 'Posting Ride...' : effectiveIsGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Ride</h1>
-            <p className="text-gray-600">Share your car ride to help others save money and reduce emissions</p>
-            {isGuest && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  <strong>Browsing as Guest:</strong> You can fill out the form, but you'll need to sign up to post your ride.
-                </p>
-              </div>
+            {onStartChat && !isGuest && (
+              <MessagesNotification onStartChat={handleStartChat} />
             )}
-          </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <LocationAutocomplete
-              value={fromLocation}
-              onChange={setFromLocation}
-              placeholder="Enter departure location..."
-              label="From Location"
-              required
-            />
-
-
-            <LocationAutocomplete
-              value={toLocation}
-              onChange={setToLocation}
-              placeholder="Enter city, neighborhood, or landmark (not exact address)"
-              label="To Location"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1 mb-4">
-              For better discoverability, use a city, neighborhood, or landmark as your destination. If your ride is within a city, you can provide an exact location. Broader locations help more people find your ride!
-            </p>
-
-            {/* Intermediate Stops */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Intermediate Stops (Optional)
-                </label>
-                {intermediateStops.length < 3 && (
-                  <button
-                    type="button"
-                    onClick={addIntermediateStop}
-                    className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm font-medium"
-                  >
-                    <Plus size={16} />
-                    <span>Add Stop</span>
-                  </button>
-                )}
-              </div>
-              
-              {intermediateStops.map((stop, index) => (
-                <div key={index} className="flex items-end space-x-2 mb-3">
-                  <div className="flex-1">
-                    <LocationAutocomplete
-                      value={stop}
-                      onChange={(location) => updateIntermediateStop(index, location)}
-                      placeholder={`Stop ${index + 1} location...`}
-                      label=""
+            {!isGuest && (
+              <>
+                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <button
+                  onClick={onProfile}
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
+                >
+                  <User size={16} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Profile</span>
+                </button>
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
+                </div>
+                {userProfile?.profile_image_url && (
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
+                    <img
+                      src={userProfile.profile_image_url}
+                      alt={userProfile.full_name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeIntermediateStop(index)}
-                    className="flex items-center justify-center w-10 h-10 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-              
-              {intermediateStops.length === 0 && (
-                <p className="text-sm text-gray-500">Add stops along your route to attract more passengers</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Departure Date & Time <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="datetime-local"
-                  value={departureDateTime}
-                  onChange={(e) => setDepartureDateTime(e.target.value)}
-                  min={getTomorrowDateTime()}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price per Passenger <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-gray-400 font-medium">
-                    {getCurrencySymbol(currency)}
-                  </span>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency
-                </label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
                 >
-                  {currencies.map((curr) => (
-                    <option key={curr.code} value={curr.code}>
-                      {curr.symbol} {curr.code} - {curr.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 mb-6">
-              <input
-                type="checkbox"
-                id="negotiable"
-                checked={negotiable}
-                onChange={(e) => setNegotiable(e.target.checked)}
-                className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
-              />
-              <label htmlFor="negotiable" className="text-sm font-medium text-gray-700">
-                Price is negotiable
-              </label>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-semibold text-green-900 mb-2">💡 Tips for a Great Ride Post</h3>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>• Set a fair price that covers gas and wear-and-tear</li>
-                <li>• Be specific about pickup and drop-off locations</li>
-                <li>• Add intermediate stops to attract more passengers</li>
-                <li>• Post your ride at least a day in advance</li>
-                <li>• Be responsive to passenger messages</li>
-              </ul>
-            </div>
-
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Your ride will be visible to users searching your route</li>
-                <li>• Interested passengers can contact you through our secure chat</li>
-                <li>• You can discuss pickup details and payment privately</li>
-                <li>• All communication stays within the platform for safety</li>
-              </ul>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || (!effectiveIsGuest && (!fromLocation || !toLocation || !departureDateTime || !price))}
-              className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                isGuest 
-                  ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              {loading ? 'Posting Ride...' : isGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
-            </button>
-          </form>
-        </div>
-        
-        <DisclaimerModal
-          isOpen={showDisclaimer}
-          onClose={() => setShowDisclaimer(false)}
-          onConfirm={handleConfirmPost}
-          loading={loading}
-          type="ride"
-        />
-      </div>
-    </div>
-
-      {/* Auth Prompt Modal */}
-      {showAuthPrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User size={32} className="text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up to Post Ride</h2>
-              <p className="text-gray-600">
-                To post your ride and connect with passengers, please create an account or sign in.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setShowAuthPrompt(false)
-                  setGuestMode(false)
-                }}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
-              >
-                Sign Up / Sign In
-              </button>
-              <button
-                onClick={() => setShowAuthPrompt(false)}
-                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                Continue as Guest
-              </button>
-            </div>
+                  <LogOut size={16} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </>
+            )}
+            {isGuest && (
+              <>
+                <button
+                  onClick={() => {
+                    setGuestMode(false)
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
+                >
+                  <User size={18} />
+                  <span>Sign Up</span>
+                </button>
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
-    </>
+
+        <div className="max-w-full sm:max-w-xl md:max-w-4xl mx-auto">
+          {/* Expiry Banner */}
+          {!isGuest && <ConfirmationExpiryBanner onRefresh={() => {
+            // Trigger a refresh of any confirmation-related data
+            console.log('CarDashboard: Confirmation expiry triggered refresh')
+          }} />}
+
+          <div className="text-center mb-8 sm:mb-12">
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
+                <Car size={20} className="sm:w-6 sm:h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Car Rides</h1>
+                <p className="text-sm sm:text-base text-gray-600">Share rides, save money, help the environment</p>
+              </div>
+            </div>
+
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 px-2">
+              What would you like to do today?
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 px-2">
+              Offer a ride or find someone to share the journey with
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 px-2">
+            {/* Request a Ride Card */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onRequestRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Let drivers in your area know you need a ride and get notified when matching rides are posted
+                </p>
+                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
+                  Request Your Ride
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Post a Ride Card */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onPostRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <PlusCircle size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Post a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Share your car ride with other travelers to split costs and reduce environmental impact
+                </p>
+                <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700 text-sm sm:text-base">
+                  Offer Your Ride
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4 sm:gap-8 px-2 mt-4 sm:mt-8">
+            {/* Post a Ride Card */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onPostRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <PlusCircle size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Post a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Share your car ride with other travelers to split costs and reduce environmental impact
+                </p>
+                <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700 text-sm sm:text-base">
+                  Offer Your Ride
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Find a Ride Card */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onFindRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Search size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Find a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Search for available rides in your area and connect with drivers for affordable travel
+                </p>
+                <div className="inline-flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700 text-sm sm:text-base">
+                  Find Available Rides
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 sm:mt-16 bg-white rounded-2xl shadow-lg p-4 sm:p-8 mx-2">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">How Car Rides Work</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">1</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Request a Ride</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Let drivers know you need a ride with your preferred route and timing</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">2</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Post Your Ride</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Offer your ride to help others and split costs</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">3</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Connect</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Use our secure chat to discuss pickup points and payment details</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">4</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Travel Together</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Meet at the agreed location and enjoy cost-effective, eco-friendly travel</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="mt-8 sm:mt-16 px-2">
+            <ReviewDisplay title="Car Rides Reviews" maxReviews={5} />
+          </div>
+
+        </div>
+      </div>
+    </div>
   )
 }
