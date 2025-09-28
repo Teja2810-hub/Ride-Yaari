@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X, Bell, Search } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import LocationAutocomplete from './LocationAutocomplete'
