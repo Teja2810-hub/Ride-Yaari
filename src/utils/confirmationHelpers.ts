@@ -184,7 +184,6 @@ export const requestAgain = async (
 }
       trip,
       `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
-    )
 
     return { success: true }
   })
