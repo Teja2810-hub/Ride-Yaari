@@ -186,7 +186,7 @@ export const requestAgain = async (
       `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
 
     return { success: true }
-  )
+  
 }
 
 /**
