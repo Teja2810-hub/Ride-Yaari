@@ -4,6 +4,7 @@ import { Trip, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
@@ -27,27 +28,6 @@ export default function TripCategorySelector({
   const [expandedOfferedTrip, setExpandedOfferedTrip] = useState<string | null>(null)
   const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined'>('overview')
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
 
   const isExpiredOrExpiringSoon = (trip: Trip): boolean => {
     const now = new Date()
@@ -246,7 +226,7 @@ export default function TripCategorySelector({
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
                           <p className="text-gray-600">
-                            {formatDate(trip.travel_date)}
+                            {formatDateSafe(trip.travel_date)}
                             {trip.departure_time && ` at ${trip.departure_time}`}
                           </p>
                         </div>
@@ -317,11 +297,11 @@ export default function TripCategorySelector({
                               <p className="text-gray-600 mb-1">Travel Date</p>
                               <div className="font-medium text-gray-900 flex items-center">
                                 <Calendar size={14} className="mr-1 text-gray-400" />
-                                {formatDate(trip.travel_date)}
+                                {formatDateSafe(trip.travel_date)}
                               </div>
                               {trip.landing_date && trip.landing_date !== trip.travel_date && (
                                 <div className="text-gray-600 mt-1">
-                                  Landing: {formatDate(trip.landing_date)}
+                                  Landing: {formatDateSafe(trip.landing_date)}
                                 </div>
                               )}
                             </div>
@@ -419,7 +399,7 @@ export default function TripCategorySelector({
                                   </p>
                                   {trip.closed_at && (
                                     <p className="text-xs text-red-700 mt-1">
-                                      Closed on {formatDateTime(trip.closed_at)}
+                                      Closed on {formatDateTimeSafe(trip.closed_at)}
                                     </p>
                                   )}
                                 </div>
@@ -439,7 +419,7 @@ export default function TripCategorySelector({
                                     This trip has passed its travel date and is no longer active.
                                   </p>
                                   <p className="text-xs text-gray-600 mt-1">
-                                    Travel date was {formatDate(trip.travel_date)}
+                                    Travel date was {formatDateSafe(trip.travel_date)}
                                   </p>
                                 </div>
                               </div>
@@ -515,7 +495,7 @@ export default function TripCategorySelector({
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
                           <p className="text-gray-600">
-                            {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
+                            {formatDateSafe(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
                           </p>
                         </div>
                       </div>
@@ -579,11 +559,11 @@ export default function TripCategorySelector({
                               <p className="text-gray-600 mb-1">Travel Date</p>
                               <div className="font-medium text-gray-900 flex items-center">
                                 <Calendar size={14} className="mr-1 text-gray-400" />
-                                {formatDate(trip.travel_date)}
+                                {formatDateSafe(trip.travel_date)}
                               </div>
                               {trip.landing_date && trip.landing_date !== trip.travel_date && (
                                 <div className="text-gray-600 mt-1">
-                                  Landing: {formatDate(trip.landing_date)}
+                                  Landing: {formatDateSafe(trip.landing_date)}
                                 </div>
                               )}
                             </div>
@@ -613,7 +593,7 @@ export default function TripCategorySelector({
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                                <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                                <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
                               </div>
                             </div>
                             
@@ -630,17 +610,13 @@ export default function TripCategorySelector({
                                   <p className="text-sm font-medium text-gray-900">
                                     Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
                                   </p>
-                                  <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                                  <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                                 </div>
                               </div>
                             )}
                           </div>
                         </div>
 
-                            onUpdate={() => {
-                              console.log('TripClosureControls onUpdate called for trip:', trip.id)
-                              onRefresh()
-                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {

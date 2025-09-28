@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation, CarRide, Trip } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface RideHistoryModalProps {
   isOpen: boolean
@@ -91,27 +92,6 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
   }
 
   const getStatusColor = (status: string) => {
@@ -314,7 +294,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                           {confirmation.user_profiles.full_name}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Member since {formatDate(confirmation.user_profiles.created_at)}
+                          Member since {formatDateSafe(confirmation.user_profiles.created_at)}
                         </p>
                       </div>
                     </div>
@@ -337,7 +317,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                          <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
                         </div>
                       </div>
                       
@@ -354,7 +334,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                             <p className="text-sm font-medium text-gray-900">
                               Request {confirmation.status === 'accepted' ? 'Accepted' : 'Rejected'}
                             </p>
-                            <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                            <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                           </div>
                         </div>
                       )}
@@ -366,7 +346,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">Last Updated</p>
-                            <p className="text-xs text-gray-600">{formatDateTime(confirmation.updated_at)}</p>
+                            <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.updated_at)}</p>
                           </div>
                         </div>
                       )}
@@ -417,7 +397,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                   <p className="text-gray-600 mb-1">Departure</p>
                   <div className="font-medium text-gray-900 flex items-center">
                     <Clock size={14} className="mr-1 text-gray-400" />
-                    {formatDateTime(ride.departure_date_time)}
+                    {formatDateTimeSafe(ride.departure_date_time)}
                   </div>
                 </div>
                 <div>
@@ -446,7 +426,7 @@ export default function RideHistoryModal({ isOpen, onClose, ride, trip, onStartC
                   <p className="text-gray-600 mb-1">Travel Date</p>
                   <div className="font-medium text-gray-900 flex items-center">
                     <Calendar size={14} className="mr-1 text-gray-400" />
-                    {formatDate(trip.travel_date)}
+                    {formatDateSafe(trip.travel_date)}
                   </div>
                 </div>
                 <div>

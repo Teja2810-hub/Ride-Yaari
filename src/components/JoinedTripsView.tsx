@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ArrowLeft, Plane, User, Calendar, Clock, MapPin, MessageCircle, Check, X, AlertTriangle, Filter, Search, Globe } from 'lucide-react'
 import { RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface JoinedTripsViewProps {
   joinedTrips: RideConfirmation[]
@@ -18,27 +19,6 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -313,11 +293,11 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
                       <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                       <div className="font-medium text-gray-900 flex items-center">
                         <Calendar size={14} className="mr-1 text-gray-400" />
-                        {formatDate(trip.travel_date)}
+                        {formatDateSafe(trip.travel_date)}
                       </div>
                       {trip.landing_date && trip.landing_date !== trip.travel_date && (
                         <div className="text-sm text-gray-600 mt-1">
-                          Landing: {formatDate(trip.landing_date)}
+                          Landing: {formatDateSafe(trip.landing_date)}
                         </div>
                       )}
                     </div>
@@ -347,7 +327,7 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                        <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                        <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
                       </div>
                     </div>
                     
@@ -364,7 +344,7 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
                           <p className="text-sm font-medium text-gray-900">
                             Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
                           </p>
-                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                          <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                         </div>
                       </div>
                     )}
