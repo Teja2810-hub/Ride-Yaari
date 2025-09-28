@@ -143,14 +143,17 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       }
 
       // Notify matching passengers about the new ride
-      const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
-      
-      try {
-        const notificationResult = await notifyMatchingPassengers(data[0].id)
-        console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
-      } catch (notificationError) {
-        console.error('Error notifying matching passengers:', notificationError)
-        // Don't fail the ride creation if notifications fail
+      // Notify matching passengers about the new ride
+      if (data && data.length > 0) {
+        const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
+        
+        try {
+          const notificationResult = await notifyMatchingPassengers(data[0].id)
+          console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
+        } catch (notificationError) {
+          console.error('Error notifying matching passengers:', notificationError)
+          // Don't fail the ride creation if notifications fail
+        }
       }
 
       setSuccess(true)
