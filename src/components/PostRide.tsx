@@ -637,7 +637,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                 isGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                   : 'bg-green-600 hover:bg-green-700 text-white'
-              }
+                }
             >
               {loading ? 'Posting Ride...' : isGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
             </button>
