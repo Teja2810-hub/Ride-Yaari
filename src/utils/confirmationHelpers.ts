@@ -184,9 +184,11 @@ export const requestAgain = async (
 }
       trip,
       `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
+    )
 
     return { success: true }
-
+  })
+}
 /**
  * Handle reversal of accidental cancellations/rejections
  */
