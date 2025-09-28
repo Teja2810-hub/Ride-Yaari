@@ -132,17 +132,22 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           
           if (!notificationResult.success) {
             console.error('Failed to create driver notification:', notificationResult.error)
-            // Don't fail the ride creation, but log the error
+              // Show warning but don't fail the ride creation
+              console.warn('Ride posted successfully but notification setup failed:', notificationResult.error)
           } else {
             console.log('Driver notification created successfully with ID:', notificationResult.notificationId)
+              // Trigger a refresh of notification management if user is on that page
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('refreshNotifications'))
+                window.dispatchEvent(new CustomEvent('ridePosted'))
+              }, 1000)
           }
         } catch (notificationError) {
           console.error('Error creating driver notification:', notificationError)
-          // Don't fail the ride creation if notification setup fails
+          console.warn('Ride posted successfully but notification setup failed:', notificationError)
         }
       }
 
-      // Notify matching passengers about the new ride
       // Notify matching passengers about the new ride
       if (data && data.length > 0) {
         const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')

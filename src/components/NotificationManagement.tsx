@@ -47,8 +47,19 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
       
       window.addEventListener('refreshNotifications', handleRefresh)
       
+      // Also listen for ride posting events
+      const handleRidePosted = () => {
+        console.log('NotificationManagement: Ride posted, refreshing notifications')
+        setTimeout(() => {
+          fetchNotifications()
+        }, 2000) // Wait 2 seconds for database consistency
+      }
+      
+      window.addEventListener('ridePosted', handleRidePosted)
+      
       return () => {
         window.removeEventListener('refreshNotifications', handleRefresh)
+        window.removeEventListener('ridePosted', handleRidePosted)
       }
     }
   }, [user])

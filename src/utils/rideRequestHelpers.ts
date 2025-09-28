@@ -57,6 +57,24 @@ export const createRideNotification = async (
   return retryWithBackoff(async () => {
     console.log('createRideNotification called with data:', notificationData)
     
+    // Validate required fields
+    if (!notificationData.user_id || !notificationData.departure_location || !notificationData.destination_location) {
+      throw new Error('Missing required notification data')
+    }
+
+    // Validate date type specific fields
+    if (notificationData.date_type === 'specific_date' && !notificationData.specific_date) {
+      throw new Error('Specific date is required when date_type is specific_date')
+    }
+
+    if (notificationData.date_type === 'multiple_dates' && (!notificationData.multiple_dates || notificationData.multiple_dates.length === 0)) {
+      throw new Error('Multiple dates are required when date_type is multiple_dates')
+    }
+
+    if (notificationData.date_type === 'month' && !notificationData.notification_month) {
+      throw new Error('Notification month is required when date_type is month')
+    }
+
     // Calculate expiry date based on notification type
     let expiresAt: string | null = null
     
@@ -97,7 +115,7 @@ export const createRideNotification = async (
 
     if (error) {
       console.error('Database error creating notification:', error)
-      throw error
+      throw new Error(`Failed to create notification: ${error.message}`)
     }
     
     console.log('Notification created successfully:', data)
