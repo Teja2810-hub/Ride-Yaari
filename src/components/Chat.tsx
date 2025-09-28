@@ -25,6 +25,7 @@ interface ChatProps {
 
 export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip }: ChatProps) {
   const { user } = useAuth()
+  const [otherUserProfile, setOtherUserProfile] = useState<any>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [messagesLoading, setMessagesLoading] = useState(true)
@@ -86,6 +87,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
+      fetchOtherUserProfile()
       const controller = new AbortController()
       
       // Add small delay to ensure previous component cleanup is complete
@@ -157,6 +159,24 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }
     }
   }, [user, otherUserId, preSelectedRide, preSelectedTrip])
+
+  const fetchOtherUserProfile = async () => {
+    if (!otherUserId || !otherUserId.trim()) return
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, profile_image_url')
+        .eq('id', otherUserId)
+        .single()
+
+      if (!error && data) {
+        setOtherUserProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching other user profile:', error)
+    }
+  }
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
