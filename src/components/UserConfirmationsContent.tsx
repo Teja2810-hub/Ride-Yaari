@@ -38,6 +38,48 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [successMessage, setSuccessMessage] = useState('')
 
 
+  // Define filteredAndSortedConfirmations function before using it in useMemo hooks
+  const filteredAndSortedConfirmations = () => {
+    let filtered = confirmations.filter(confirmation => {
+      // Search filter
+      const searchMatch = confirmation.user_profiles.full_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+      
+      // Status filter
+      const statusMatch = statusFilter === 'all' || confirmation.status === statusFilter
+      
+      // Type filter
+      let typeMatch = true
+      if (typeFilter === 'car') {
+        typeMatch = !!confirmation.ride_id
+      } else if (typeFilter === 'airport') {
+        typeMatch = !!confirmation.trip_id
+      }
+      
+      return searchMatch && statusMatch && typeMatch
+    })
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case 'date-desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case 'status':
+          const statusOrder = { 'pending': 0, 'accepted': 1, 'rejected': 2 }
+          const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
+          if (statusDiff !== 0) return statusDiff
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }
+
   // Derived state calculations - must be done after all hooks but before any returns
   const categorized = React.useMemo(() => {
     const filtered = filteredAndSortedConfirmations()
@@ -378,47 +420,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       ...prev,
       [section]: !prev[section]
     }))
-  }
-
-  const filteredAndSortedConfirmations = () => {
-    let filtered = confirmations.filter(confirmation => {
-      // Search filter
-      const searchMatch = confirmation.user_profiles.full_name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-      
-      // Status filter
-      const statusMatch = statusFilter === 'all' || confirmation.status === statusFilter
-      
-      // Type filter
-      let typeMatch = true
-      if (typeFilter === 'car') {
-        typeMatch = !!confirmation.ride_id
-      } else if (typeFilter === 'airport') {
-        typeMatch = !!confirmation.trip_id
-      }
-      
-      return searchMatch && statusMatch && typeMatch
-    })
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date-asc':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'date-desc':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'status':
-          const statusOrder = { 'pending': 0, 'accepted': 1, 'rejected': 2 }
-          const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
-          if (statusDiff !== 0) return statusDiff
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        default:
-          return 0
-      }
-    })
-
-    return filtered
   }
 
   if (isLoading) {
