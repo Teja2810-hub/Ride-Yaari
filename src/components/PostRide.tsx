@@ -311,7 +311,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             </p>
 
             {/* Intermediate Stops */}
-                      required
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -366,7 +365,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                   onChange={(e) => setDepartureDateTime(e.target.value)}
                   min={getTomorrowDateTime()}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                          required={index === 0}
+                  required
                 />
               </div>
             </div>
