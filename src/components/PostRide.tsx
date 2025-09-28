@@ -148,102 +148,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
         }
       }
 
-      // Notify matching passengers about the new ride
-      if (data && data.length > 0) {
-        const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
-        
-        try {
-          const notificationResult = await notifyMatchingPassengers(data[0].id)
-          console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
-        } catch (notificationError) {
-          console.error('Error notifying matching passengers:', notificationError)
-          // Don't fail the ride creation if notifications fail
-        }
-      }
-
-      setSuccess(true)
-      // Reset form
-      setFromLocation(null)
-      setToLocation(null)
-      setIntermediateStops([])
-      setDepartureDateTime('')
-      setPrice('')
-      setCurrency('USD')
-      setNegotiable(false)
-    } catch (error: any) {
-      console.error('Error posting ride:', error)
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addNotificationDate = () => {
-    if (notificationMultipleDates.length < 5) {
-      setNotificationMultipleDates([...notificationMultipleDates, ''])
-    }
-  }
-
-  const removeNotificationDate = (index: number) => {
-    setNotificationMultipleDates(notificationMultipleDates.filter((_, i) => i !== index))
-  }
-
-  const updateNotificationDate = (index: number, date: string) => {
-    const newDates = [...notificationMultipleDates]
-    newDates[index] = date
-    setNotificationMultipleDates(newDates)
-  }
-
-  const addIntermediateStop = () => {
-    if (intermediateStops.length < 3) { // Limit to 3 intermediate stops
-      setIntermediateStops([...intermediateStops, { address: '', latitude: null, longitude: null }])
-    }
-  }
-
-  const removeIntermediateStop = (index: number) => {
-    setIntermediateStops(intermediateStops.filter((_, i) => i !== index))
-  }
-
-  const updateIntermediateStop = (index: number, location: LocationData | null) => {
-    if (location) {
-      const newStops = [...intermediateStops]
-      newStops[index] = location
-      setIntermediateStops(newStops)
-    }
-  }
-
-  const getTomorrowDateTime = () => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(9, 0, 0, 0) // Default to 9 AM
-    return tomorrow.toISOString().slice(0, 16) // Format for datetime-local input
-  }
-
-  const getTomorrowDate = () => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    return tomorrow.toISOString().split('T')[0]
-  }
-
-  const getTodayMonth = () => {
-    return new Date().toISOString().slice(0, 7)
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Send size={32} className="text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Ride Posted Successfully!</h2>
-          <p className="text-gray-600 mb-8">
-            Your ride has been added to our platform. Other travelers can now find and contact you for carpooling.
-            {enableNotifications && (
               <span className="block mt-2 text-sm text-blue-600">
-                ✅ Notifications enabled for passenger requests in your area
-              </span>
-            )}
           </p>
           <div className="space-y-3">
             <button
@@ -430,175 +335,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
               </label>
             </div>
 
-            {/* Driver Notification Preferences */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <Bell size={20} className="text-blue-600" />
-                <h3 className="font-semibold text-blue-900">Get Notified of Passenger Requests</h3>
-              </div>
-              
-              <div className="flex items-center space-x-2 mb-4">
-                <input
-                  type="checkbox"
-                  id="enableNotifications"
-                  checked={enableNotifications}
-                  onChange={(e) => setEnableNotifications(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <label htmlFor="enableNotifications" className="text-sm font-medium text-gray-700">
-                  Notify me when passengers request rides matching this route
-                </label>
-              </div>
-
-              {enableNotifications && (
-                <div className="space-y-4 bg-white rounded-lg p-4 border border-blue-200">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Search Radius for Notifications
-                    </label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                      <select
-                        value={notificationRadius}
-                        onChange={(e) => setNotificationRadius(parseInt(e.target.value))}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      >
-                        <option value={5}>5 miles</option>
-                        <option value={10}>10 miles</option>
-                        <option value={15}>15 miles</option>
-                        <option value={20}>20 miles (Recommended)</option>
-                        <option value={25}>25 miles</option>
-                        <option value={50}>50 miles</option>
-                        <option value={100}>100 miles</option>
-                      </select>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Recommended: 20+ miles to receive more passenger requests
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Notification timing
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="notificationDateType"
-                          value="specific_date"
-                          checked={notificationDateType === 'specific_date'}
-                          onChange={(e) => setNotificationDateType(e.target.value as any)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-gray-700">Specific Date</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="notificationDateType"
-                          value="multiple_dates"
-                          checked={notificationDateType === 'multiple_dates'}
-                          onChange={(e) => setNotificationDateType(e.target.value as any)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-gray-700">Multiple Dates</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="notificationDateType"
-                          value="month"
-                          checked={notificationDateType === 'month'}
-                          onChange={(e) => setNotificationDateType(e.target.value as any)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-gray-700">Entire Month</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Notification Date Selection */}
-                  {notificationDateType === 'specific_date' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notification Date
-                      </label>
-                      <input
-                        type="date"
-                        value={notificationSpecificDate}
-                        onChange={(e) => setNotificationSpecificDate(e.target.value)}
-                        min={getTomorrowDate()}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  {notificationDateType === 'multiple_dates' && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Notification Dates
-                        </label>
-                        {notificationMultipleDates.length < 5 && (
-                          <button
-                            type="button"
-                            onClick={addNotificationDate}
-                            className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
-                            <Plus size={16} />
-                            <span>Add Date</span>
-                          </button>
-                        )}
-                      </div>
-                      
-                      {notificationMultipleDates.map((date, index) => (
-                        <div key={index} className="flex items-center space-x-2 mb-2">
-                          <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => updateNotificationDate(index, e.target.value)}
-                            min={getTomorrowDate()}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          />
-                          {notificationMultipleDates.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeNotificationDate(index)}
-                              className="flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {notificationDateType === 'month' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notification Month
-                      </label>
-                      <input
-                        type="month"
-                        value={notificationMonth}
-                        onChange={(e) => setNotificationMonth(e.target.value)}
-                        min={getTodayMonth()}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      />
-                    </div>
-                  )}
-
-                  <div className="bg-blue-100 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">
-                      <strong>💡 How it works:</strong> When passengers request rides matching your route and timing, 
-                      you'll receive notifications. You can manage these notifications in your profile settings.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h3 className="font-semibold text-green-900 mb-2">💡 Tips for a Great Ride Post</h3>
@@ -608,7 +344,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                 <li>• Add intermediate stops to attract more passengers</li>
                 <li>• Post your ride at least a day in advance</li>
                 <li>• Be responsive to passenger messages</li>
-                <li>• Enable notifications to catch passenger requests in your area</li>
               </ul>
             </div>
 
@@ -619,20 +354,12 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                 <li>• Interested passengers can contact you through our secure chat</li>
                 <li>• You can discuss pickup details and payment privately</li>
                 <li>• All communication stays within the platform for safety</li>
-                {enableNotifications && (
-                  <li>• You'll receive notifications when passengers request rides in your area</li>
-                )}
               </ul>
             </div>
 
             <button
               type="submit"
-              disabled={loading || (!effectiveIsGuest && (!fromLocation || !toLocation || !departureDateTime)) || 
-                       (enableNotifications && (
-                         (notificationDateType === 'specific_date' && !notificationSpecificDate) ||
-                         (notificationDateType === 'multiple_dates' && !notificationMultipleDates.some(d => d)) ||
-                         (notificationDateType === 'month' && !notificationMonth)
-                       ))}
+              disabled={loading || (!effectiveIsGuest && (!fromLocation || !toLocation || !departureDateTime))}
               className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 isGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
