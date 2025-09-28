@@ -629,11 +629,10 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                          (notificationDateType === 'month' && !notificationMonth)
                        ))}
               className={`w-full py-3 px-4 rounded-lg font-medium focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      required
                 isGuest 
                   ? 'bg-orange-600 hover:bg-orange-700 text-white' 
                   : 'bg-green-600 hover:bg-green-700 text-white'
-              }
+              }`}
             >
               {loading ? 'Posting Ride...' : isGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
             </button>
