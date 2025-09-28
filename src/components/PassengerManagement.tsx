@@ -6,6 +6,7 @@ import { RideConfirmation, CarRide, Trip } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import { notificationService } from '../utils/notificationService'
 import { getUserDisplayName } from '../utils/messageTemplates'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface PassengerManagementProps {
   ride?: CarRide
@@ -317,25 +318,6 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
     }
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -509,7 +491,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
                         {confirmation.user_profiles.gender && (
                           <span className="capitalize">{confirmation.user_profiles.gender}</span>
                         )}
-                        <span>Member since {formatDate(confirmation.user_profiles.created_at)}</span>
+                        <span>Member since {formatDateSafe(confirmation.user_profiles.created_at)}</span>
                       </div>
                     </div>
                   </div>
@@ -527,14 +509,14 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600 mb-1">Request Submitted</p>
-                      <p className="font-medium text-gray-900">{formatDateTime(confirmation.created_at)}</p>
+                      <p className="font-medium text-gray-900">{formatDateTimeSafe(confirmation.created_at)}</p>
                     </div>
                     {confirmation.confirmed_at && (
                       <div>
                         <p className="text-gray-600 mb-1">
                           {confirmation.status === 'accepted' ? 'Accepted' : 'Rejected'} On
                         </p>
-                        <p className="font-medium text-gray-900">{formatDateTime(confirmation.confirmed_at)}</p>
+                        <p className="font-medium text-gray-900">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                       </div>
                     )}
                   </div>

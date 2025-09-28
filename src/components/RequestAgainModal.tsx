@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { RefreshCw, X, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle } from 'lucide-react'
 import { canRequestAgain } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
+import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface RequestAgainModalProps {
   isOpen: boolean
@@ -65,15 +66,7 @@ export default function RequestAgainModal({
       return {
         type: 'car ride',
         route: `${ride.from_location} → ${ride.to_location}`,
-        timing: new Date(ride.departure_date_time).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }),
+        timing: formatDateTimeSafe(ride.departure_date_time),
         icon: <Car size={20} className="text-green-600" />
       }
     }
@@ -82,12 +75,7 @@ export default function RequestAgainModal({
       return {
         type: 'airport trip',
         route: `${trip.leaving_airport} → ${trip.destination_airport}`,
-        timing: new Date(trip.travel_date).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
+        timing: formatDateTimeSafe(trip.travel_date),
         icon: <Plane size={20} className="text-blue-600" />
       }
     }

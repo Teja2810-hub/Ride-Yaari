@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { X, Car, Plane, Calendar, MapPin, Clock } from 'lucide-react'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface RideConfirmationModalProps {
   isOpen: boolean
@@ -23,27 +24,6 @@ export default function RideConfirmationModal({
 
   const handleConfirm = () => {
     onConfirm()
-  }
-
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
   }
 
   const selectedRide = preSelectedRide
@@ -93,7 +73,7 @@ export default function RideConfirmationModal({
                     <p className="text-sm text-gray-600 mb-1">Departure</p>
                     <div className="font-medium text-gray-900 flex items-center">
                       <Clock size={14} className="mr-1 text-gray-400" />
-                      {formatDateTime(selectedRide.departure_date_time)}
+                      {formatDateTimeSafe(selectedRide.departure_date_time)}
                     </div>
                   </div>
                 </div>
@@ -133,7 +113,7 @@ export default function RideConfirmationModal({
                     <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                     <div className="font-medium text-gray-900 flex items-center">
                       <Calendar size={14} className="mr-1 text-gray-400" />
-                      {formatDate(selectedTrip.travel_date)}
+                      {formatDateSafe(selectedTrip.travel_date)}
                     </div>
                   </div>
                 </div>

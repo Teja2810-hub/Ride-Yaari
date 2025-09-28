@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
 import NotificationBadge from './NotificationBadge'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ConfirmationsNotificationProps {
   onStartChat: (userId: string, userName: string) => void
@@ -115,26 +116,6 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
     }
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   return (
     <div className="relative">
@@ -241,7 +222,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Clock size={12} />
-                                <span>{formatDateTime(ride.departure_date_time)}</span>
+                                <span>{formatDateTimeSafe(ride.departure_date_time)}</span>
                               </div>
                             </div>
                           )}
@@ -258,7 +239,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Calendar size={12} />
-                                <span>{formatDate(trip.travel_date)}</span>
+                                <span>{formatDateSafe(trip.travel_date)}</span>
                               </div>
                             </div>
                           )}

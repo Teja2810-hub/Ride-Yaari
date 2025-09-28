@@ -3,6 +3,7 @@ import { Calendar, Clock, User, Filter, Search, Download, Eye } from 'lucide-rea
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
+import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ConfirmationHistoryViewProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
@@ -178,17 +179,6 @@ export default function ConfirmationHistoryView({ onStartChat }: ConfirmationHis
 
     const csvContent = [
       Object.keys(csvData[0] || {}).join(','),
-      ...csvData.map(row => Object.values(row).join(','))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `rideyaari-confirmations-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
 
   if (loading) {
     return (
@@ -432,12 +422,12 @@ export default function ConfirmationHistoryView({ onStartChat }: ConfirmationHis
                         </div>
                         <div>
                           <p className="text-gray-600">Requested</p>
-                          <p className="font-medium text-gray-900">{formatDateTime(confirmation.created_at)}</p>
+                          <p className="font-medium text-gray-900">{formatDateTimeSafe(confirmation.created_at)}</p>
                         </div>
                         {confirmation.confirmed_at && (
                           <div>
                             <p className="text-gray-600">{confirmation.status === 'accepted' ? 'Accepted' : 'Rejected'}</p>
-                            <p className="font-medium text-gray-900">{formatDateTime(confirmation.confirmed_at)}</p>
+                            <p className="font-medium text-gray-900">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                           </div>
                         )}
                       </div>

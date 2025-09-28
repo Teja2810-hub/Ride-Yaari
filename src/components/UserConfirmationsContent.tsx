@@ -10,6 +10,7 @@ import { reverseAction } from '../utils/confirmationHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface UserConfirmationsContentProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
@@ -300,17 +301,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       
       // Log status distribution for debugging
       if (data) {
-        const statusCounts = data.reduce((acc, conf) => {
-          acc[conf.status] = (acc[conf.status] || 0) + 1
-          return acc
-        }, {} as Record<string, number>)
-        console.log('UserConfirmationsContent: Status distribution:', statusCounts)
-      }
-      
-      setConfirmations(data || [])
-      checkForRecentActions()
-    })
-  }
 
   const handleReverseAction = async (confirmationId: string, reason?: string) => {
     if (!user) return

@@ -14,6 +14,7 @@ import LoadingSpinner from './LoadingSpinner'
 import { Trash2 } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { getRideOrTripDetails, getUserDisplayName } from '../utils/messageTemplates'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ConfirmationItemProps {
   confirmation: RideConfirmation
@@ -240,27 +241,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
     setShowConfirmModal({ show: true, type, title, message })
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
   const getDisclaimerContent = (type: string) => {
     const rideDetails = getRideOrTripDetails(ride, trip)
     
@@ -433,7 +413,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 <p className="text-sm text-gray-600 mb-1">Departure</p>
                 <div className="font-medium text-gray-900 flex items-center">
                   <Clock size={14} className="mr-1 text-gray-400" />
-                  {formatDateTime(ride.departure_date_time)}
+                  {formatDateTimeSafe(ride.departure_date_time)}
                 </div>
               </div>
             </div>
@@ -475,11 +455,11 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                 <div className="font-medium text-gray-900 flex items-center">
                   <Calendar size={14} className="mr-1 text-gray-400" />
-                  {formatDate(trip.travel_date)}
+                  {formatDateSafe(trip.travel_date)}
                 </div>
                 {trip.landing_date && trip.landing_date !== trip.travel_date && (
                   <div className="text-sm text-gray-600 mt-1">
-                    Landing: {formatDate(trip.landing_date)}
+                    Landing: {formatDateSafe(trip.landing_date)}
                   </div>
                 )}
               </div>
@@ -514,7 +494,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">Request Submitted</p>
-                  <p className="text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                  <p className="text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
                 </div>
               </div>
               
@@ -531,7 +511,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                     <p className="font-medium text-gray-900">
                       Request {confirmation.status === 'accepted' ? 'Accepted' : 'Rejected'}
                     </p>
-                    <p className="text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                    <p className="text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
                   </div>
                 </div>
               )}
@@ -543,7 +523,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Status Updated</p>
-                    <p className="text-gray-600">{formatDateTime(confirmation.updated_at)}</p>
+                    <p className="text-gray-600">{formatDateTimeSafe(confirmation.updated_at)}</p>
                   </div>
                 </div>
               )}
@@ -720,8 +700,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 }</p>
                 <p><strong>Timing:</strong> {
                   ride 
-                    ? formatDateTime(ride.departure_date_time)
-                    : formatDate(trip?.travel_date || '')
+                    ? formatDateTimeSafe(ride.departure_date_time)
+                    : formatDateSafe(trip?.travel_date || '')
                 }</p>
               </div>
             </div>

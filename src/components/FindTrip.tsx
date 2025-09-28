@@ -7,6 +7,7 @@ import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
+import { formatDateSafe } from '../utils/dateHelpers'
 
 interface FindTripProps {
   onBack: () => void
@@ -181,14 +182,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0]
@@ -481,11 +474,11 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                             <div className="font-semibold text-gray-900">
-                              {formatDate(trip.travel_date)}
+                              {formatDateSafe(trip.travel_date)}
                             </div>
                             {trip.landing_date && trip.landing_date !== trip.travel_date && (
                               <div className="text-sm text-gray-600 mt-1">
-                                Landing: {formatDate(trip.landing_date)}
+                                Landing: {formatDateSafe(trip.landing_date)}
                               </div>
                             )}
                           </div>

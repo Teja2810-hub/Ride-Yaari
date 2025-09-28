@@ -5,6 +5,7 @@ import { closeTrip, closeRide, reopenTrip, reopenRide } from '../utils/tripClosu
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import { CarRide, Trip } from '../types'
 import ErrorMessage from './ErrorMessage'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface TripClosureControlsProps {
   ride?: CarRide
@@ -78,26 +79,6 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
     })
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   if (!isOwner) return null
 
@@ -184,8 +165,8 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
                 }</p>
                 <p><strong>Timing:</strong> {
                   ride 
-                    ? formatDateTime(ride.departure_date_time)
-                    : formatDate(trip?.travel_date || '')
+                    ? formatDateTimeSafe(ride.departure_date_time)
+                    : formatDateSafe(trip?.travel_date || '')
                 }</p>
               </div>
             </div>

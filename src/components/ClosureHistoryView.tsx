@@ -7,6 +7,7 @@ import { getCurrencySymbol } from '../utils/currencies'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ClosureHistoryViewProps {
   onBack: () => void
@@ -41,26 +42,6 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
     })
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   const getFilteredAndSortedItems = () => {
     let items: Array<{ type: 'trip' | 'ride'; data: Trip | CarRide }> = []
@@ -380,11 +361,11 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                         <div className="font-medium text-gray-900 flex items-center">
                           <Calendar size={14} className="mr-1 text-gray-400" />
-                          {formatDate(trip.travel_date)}
+                          {formatDateSafe(trip.travel_date)}
                         </div>
                         {trip.landing_date && trip.landing_date !== trip.travel_date && (
                           <div className="text-sm text-gray-600 mt-1">
-                            Landing: {formatDate(trip.landing_date)}
+                            Landing: {formatDateSafe(trip.landing_date)}
                           </div>
                         )}
                       </div>
@@ -411,7 +392,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         <p className="text-sm text-gray-600 mb-1">Departure</p>
                         <div className="font-medium text-gray-900 flex items-center">
                           <Clock size={14} className="mr-1 text-gray-400" />
-                          {formatDateTime(ride.departure_date_time)}
+                          {formatDateTimeSafe(ride.departure_date_time)}
                         </div>
                       </div>
                     </div>
@@ -444,7 +425,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         <div>
                           <p className="text-red-700 mb-1">Closed On</p>
                           <p className="font-medium text-red-900">
-                            {data.closed_at ? formatDateTime(data.closed_at) : 'Unknown'}
+                            {data.closed_at ? formatDateTimeSafe(data.closed_at) : 'Unknown'}
                           </p>
                         </div>
                         <div>
@@ -483,7 +464,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                           <p className="text-sm font-medium text-gray-900">
                             {isTrip ? 'Trip' : 'Ride'} Closed
                           </p>
-                          <p className="text-xs text-gray-600">{formatDateTime(data.closed_at)}</p>
+                          <p className="text-xs text-gray-600">{formatDateTimeSafe(data.closed_at)}</p>
                         </div>
                       </div>
                     )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Star, MessageSquare, Calendar } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { Review } from '../types'
+import { formatDateShort } from '../utils/dateHelpers'
 
 interface ReviewDisplayProps {
   title?: string
@@ -33,14 +34,6 @@ export default function ReviewDisplay({ title = "What Our Users Say", maxReviews
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
   }
 
   const renderStars = (rating: number) => {
@@ -124,7 +117,7 @@ export default function ReviewDisplay({ title = "What Our Users Say", maxReviews
                     {renderStars(review.rating)}
                     <span className="text-sm text-text-secondary flex items-center">
                       <Calendar size={12} className="mr-1" />
-                      {formatDate(review.created_at)}
+                      {formatDateShort(review.created_at)}
                     </span>
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { getBlockedUsers, unblockUser, BlockedUser } from '../utils/blockingHelp
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface BlockedUsersViewProps {
   onBack: () => void
@@ -66,16 +67,6 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
     setShowUnblockModal({ show: true, userId: blockedUserId, userName })
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
 
   const filteredUsers = blockedUsers.filter(user =>
     user.user_profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -205,7 +196,7 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
                       {blockedUser.reason && (
                         <div className="flex items-center space-x-1">
                           <AlertTriangle size={12} />
-                          <span>Reason: {blockedUser.reason}</span>
+                          <span>Blocked {formatDateTimeSafe(blockedUser.created_at)}</span>
                         </div>
                       )}
                     </div>
