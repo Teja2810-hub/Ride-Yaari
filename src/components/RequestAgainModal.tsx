@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { RefreshCw, X, Clock, AlertTriangle, Car, Plane, MessageCircle } from 'lucide-react'
+import { RefreshCw, X, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle } from 'lucide-react'
 import { canRequestAgain } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
 
