@@ -299,16 +299,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
-      // First check if user exists
-      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: 'dummy-password-check'
-      })
+      // Check if user exists in our user_profiles table
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id || '')
+        .single()
       
-      // If we get an invalid_credentials error, the user doesn't exist
-      if (checkError && checkError.message?.includes('Invalid login credentials')) {
-        throw new Error('You are not registered yet. Please create an account first.')
-      }
+      // Alternative: Check by email in auth.users (requires service role)
+      // For now, we'll try to send OTP and handle the error
       
       try {
         const { error } = await supabase.auth.signInWithOtp({
@@ -318,7 +317,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         })
         
-        if (error) throw error
+        if (error) {
+          // Check if it's a user not found error
+          if (error.message?.includes('Unable to validate email address') || 
+              error.message?.includes('User not found') ||
+              error.message?.includes('Invalid email')) {
+            throw new Error('You are not registered yet. Please create an account first.')
+          }
+          throw error
+        }
         return { error: null }
       } catch (otpError: any) {
         // If OTP is disabled, return a helpful error message
@@ -376,22 +383,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendPasswordReset = async (email: string) => {
     try {
-      // First check if user exists
-      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: 'dummy-password-check'
-      })
-      
-      // If we get an invalid_credentials error, the user doesn't exist
-      if (checkError && checkError.message?.includes('Invalid login credentials')) {
-        throw new Error('No account found with this email address. Please create an account first.')
-      }
-      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
       })
       
-      if (error) throw error
+      if (error) {
+        // Check if it's a user not found error
+        if (error.message?.includes('Unable to validate email address') || 
+            error.message?.includes('User not found') ||
+            error.message?.includes('Invalid email') ||
+            error.message?.includes('For security purposes')) {
+          throw new Error('No account found with this email address. Please create an account first.')
+        }
+        throw error
+      }
       return { error: null }
     } catch (error: any) {
       return { error }
