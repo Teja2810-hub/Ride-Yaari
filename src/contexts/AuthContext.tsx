@@ -299,6 +299,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
+      // First check if user exists
+      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: 'dummy-password-check'
+      })
+      
+      // If we get an invalid_credentials error, the user doesn't exist
+      if (checkError && checkError.message?.includes('Invalid login credentials')) {
+        throw new Error('You are not registered yet. Please create an account first.')
+      }
+      
       try {
         const { error } = await supabase.auth.signInWithOtp({
           email: email,
@@ -365,6 +376,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendPasswordReset = async (email: string) => {
     try {
+      // First check if user exists
+      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: 'dummy-password-check'
+      })
+      
+      // If we get an invalid_credentials error, the user doesn't exist
+      if (checkError && checkError.message?.includes('Invalid login credentials')) {
+        throw new Error('No account found with this email address. Please create an account first.')
+      }
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
       })
