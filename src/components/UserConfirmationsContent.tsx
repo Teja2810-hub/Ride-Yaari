@@ -37,87 +37,87 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [cancellingConfirmationId, setCancellingConfirmationId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
 
+
   useEffect(() => {
-    if (user) {
-      fetchConfirmations()
-      
-      // Subscribe to confirmation changes
-      const subscription = supabase
-        .channel('user_confirmations')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'ride_confirmations',
-            filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
-          },
-          () => {
-            console.log('UserConfirmationsContent: Confirmation change detected, refreshing...')
+    if (!user) return
+
+    fetchConfirmations()
+    
+    // Subscribe to confirmation changes
+    const subscription = supabase
+      .channel('user_confirmations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ride_confirmations',
+          filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
+        },
+        () => {
+          console.log('UserConfirmationsContent: Confirmation change detected, refreshing...')
+          fetchConfirmations()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ride_confirmations',
+          filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
+        },
+        (payload) => {
+          console.log('UserConfirmationsContent: Confirmation UPDATE detected:', payload)
+          
+          // Handle different status change scenarios
+          const oldStatus = payload.old.status
+          const newStatus = payload.new.status
+          
+          // Check if status changed from rejected to pending (re-request)
+          if (oldStatus === 'rejected' && newStatus === 'pending') {
+            console.log('UserConfirmationsContent: Re-request detected, refreshing immediately')
+            setSuccessMessage('Request sent again successfully! It will appear in the pending section.')
+            setTimeout(() => setSuccessMessage(''), 5000)
+            // Add small delay to ensure database consistency
+            setTimeout(() => {
+              fetchConfirmations()
+              checkForRecentActions()
+            }, 500)
+          }
+          // Check if status changed from accepted to rejected (cancellation)
+          else if (oldStatus === 'accepted' && newStatus === 'rejected') {
+            console.log('UserConfirmationsContent: Cancellation detected, refreshing and checking for reversal alerts')
+            setSuccessMessage('Ride cancelled successfully. You can reverse this action within 24 hours if it was accidental.')
+            setTimeout(() => setSuccessMessage(''), 8000)
+            // Add delay to ensure database consistency
+            setTimeout(() => {
+              fetchConfirmations()
+              checkForRecentActions()
+            }, 500)
+          }
+          // Check if status changed from rejected to accepted (reversal)
+          else if (oldStatus === 'rejected' && newStatus === 'accepted') {
+            console.log('UserConfirmationsContent: Reversal detected, refreshing immediately')
+            setSuccessMessage('Action reversed successfully! The confirmation has been restored.')
+            setTimeout(() => setSuccessMessage(''), 5000)
+            // Add delay to ensure database consistency
+            setTimeout(() => {
+              fetchConfirmations()
+              checkForRecentActions()
+            }, 500)
+          } else {
+            // Handle other status changes
             fetchConfirmations()
           }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'ride_confirmations',
-            filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
-          },
-          (payload) => {
-            console.log('UserConfirmationsContent: Confirmation UPDATE detected:', payload)
-            
-            // Handle different status change scenarios
-            const oldStatus = payload.old.status
-            const newStatus = payload.new.status
-            
-            // Check if status changed from rejected to pending (re-request)
-            if (oldStatus === 'rejected' && newStatus === 'pending') {
-              console.log('UserConfirmationsContent: Re-request detected, refreshing immediately')
-              setSuccessMessage('Request sent again successfully! It will appear in the pending section.')
-              setTimeout(() => setSuccessMessage(''), 5000)
-              // Add small delay to ensure database consistency
-              setTimeout(() => {
-                fetchConfirmations()
-                checkForRecentActions()
-              }, 500)
-            }
-            // Check if status changed from accepted to rejected (cancellation)
-            else if (oldStatus === 'accepted' && newStatus === 'rejected') {
-              console.log('UserConfirmationsContent: Cancellation detected, refreshing and checking for reversal alerts')
-              setSuccessMessage('Ride cancelled successfully. You can reverse this action within 24 hours if it was accidental.')
-              setTimeout(() => setSuccessMessage(''), 8000)
-              // Add delay to ensure database consistency
-              setTimeout(() => {
-                fetchConfirmations()
-                checkForRecentActions()
-              }, 500)
-            }
-            // Check if status changed from rejected to accepted (reversal)
-            else if (oldStatus === 'rejected' && newStatus === 'accepted') {
-              console.log('UserConfirmationsContent: Reversal detected, refreshing immediately')
-              setSuccessMessage('Action reversed successfully! The confirmation has been restored.')
-              setTimeout(() => setSuccessMessage(''), 5000)
-              // Add delay to ensure database consistency
-              setTimeout(() => {
-                fetchConfirmations()
-                checkForRecentActions()
-              }, 500)
-            } else {
-              // Handle other status changes
-              fetchConfirmations()
-            }
-          }
-        )
-        .subscribe()
+        }
+      )
+      .subscribe()
 
-      return () => {
-        subscription.unsubscribe()
-      }
+    return () => {
+      subscription.unsubscribe()
     }
   }, [user])
-
   const checkForRecentActions = () => {
     console.log('UserConfirmationsContent: Checking for recent actions')
     const now = new Date()
