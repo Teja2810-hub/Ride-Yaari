@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Edit, X, MapPin, Calendar, Clock, Search, Plus, Save } from 'lucide-react'
+import { CreditCard as Edit, X, MapPin, Calendar, Clock, Search, Plus, Save } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification } from '../types'
