@@ -620,19 +620,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     )
   }
 
-  const handleRequestAgain = async () => {
-    if (!user || !currentConfirmation) return
-    
-    await handleAsync(async () => {
-      await requestAgain(
-        currentConfirmation.id,
-        user.id,
-        currentConfirmation.ride_owner_id,
-        preSelectedRide,
-        preSelectedTrip
-      )
-    })
-  }
+  // ...existing code...
 
   const handlePassengerCancel = async (confirmationId: string) => {
     if (!user || !currentConfirmation) return
