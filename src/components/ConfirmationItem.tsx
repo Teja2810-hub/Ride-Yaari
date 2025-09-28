@@ -52,6 +52,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   // Check reversal eligibility and request-again eligibility on mount
   React.useEffect(() => {
+    console.log('ConfirmationItem: Checking eligibility for confirmation:', confirmation.id, 'status:', confirmation.status)
     checkReversalEligibility()
     checkRequestAgainEligibility()
   }, [confirmation])
@@ -59,7 +60,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const checkReversalEligibility = async () => {
     if (confirmation.status === 'rejected') {
       try {
+        console.log('ConfirmationItem: Checking reversal eligibility')
         const eligibility = await getReversalEligibility(confirmation.id, user?.id || '')
+        console.log('ConfirmationItem: Reversal eligibility result:', eligibility)
         setCanReverse(eligibility.canReverse)
         setReversalTimeRemaining(eligibility.timeRemaining || null)
       } catch (error) {
@@ -71,15 +74,20 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const checkRequestAgainEligibility = async () => {
     if (confirmation.status === 'rejected') {
       try {
+        console.log('ConfirmationItem: Checking request again eligibility')
         const eligibility = await canRequestAgain(
           user?.id || '',
           confirmation.ride_id || undefined,
           confirmation.trip_id || undefined
         )
+        console.log('ConfirmationItem: Request again eligibility result:', eligibility)
         setCanRequestAgainState(eligibility.canRequest)
         setRequestCooldownTime(eligibility.lastRejection || null)
       } catch (error) {
         console.error('Error checking request again eligibility:', error)
+        // Set safe defaults on error
+        setCanRequestAgainState(false)
+        setRequestCooldownTime(null)
       }
     }
   }
@@ -107,9 +115,11 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const handleRequestAgainAction = async (reason?: string) => {
     if (!user) return
 
+    console.log('ConfirmationItem: handleRequestAgainAction called', { confirmationId: confirmation.id, reason })
     setShowRequestAgainModal(false)
 
     await handleAsync(async () => {
+      console.log('ConfirmationItem: Calling requestAgain from confirmationHelpers')
       await requestAgain(
         confirmation.id,
         user.id,
@@ -117,6 +127,12 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         confirmation.car_rides,
         confirmation.trips
       )
+      console.log('ConfirmationItem: requestAgain completed, triggering onUpdate')
+      
+      // Add small delay before triggering update to ensure database consistency
+      setTimeout(() => {
+        onUpdate()
+      }, 500)
     })
   }
 
@@ -632,9 +648,34 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                   </button>
                 )}
                 {!canRequestAgainState && requestCooldownTime && (
+                  (() => {
+                    const minutesRemaining = Math.ceil(30 - (new Date().getTime() - requestCooldownTime.getTime()) / (1000 * 60))
+                    return minutesRemaining > 0 ? (
+                      <div className="flex items-center space-x-2 bg-yellow-100 text-yellow-800 px-3 py-2 rounded-lg text-xs">
+                        <Clock size={16} />
+                        <span>Cooldown Active ({minutesRemaining} min left)</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          checkRequestAgainEligibility()
+                          if (canRequestAgainState) {
+                            setShowRequestAgainModal(true)
+                          }
+                        }}
+                        disabled={isLoading}
+                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
+                      >
+                        <RefreshCw size={16} />
+                        <span>Request Again</span>
+                      </button>
+                    )
+                  })()
+                )}
+                {!canRequestAgainState && !requestCooldownTime && (
                   <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs">
-                    <Clock size={16} />
-                    <span>Cooldown active</span>
+                    <AlertTriangle size={16} />
+                    <span>Cannot Request</span>
                   </div>
                 )}
               </div>

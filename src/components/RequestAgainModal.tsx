@@ -37,18 +37,23 @@ export default function RequestAgainModal({
 
   const checkEligibility = async () => {
     try {
+      console.log('RequestAgainModal: Checking eligibility for confirmation:', confirmation.id)
       const result = await canRequestAgain(
         userId,
         confirmation.ride_id || undefined,
         confirmation.trip_id || undefined
       )
+      console.log('RequestAgainModal: Eligibility result:', result)
       setEligibility(result)
     } catch (error) {
       console.error('Error checking request eligibility:', error)
+      // Set default eligibility on error to prevent blocking UI
+      setEligibility({ canRequest: false, reason: 'Error checking eligibility' })
     }
   }
 
   const handleConfirm = () => {
+    console.log('RequestAgainModal: Confirming request again with reason:', reason)
     onConfirm(reason.trim() || undefined)
   }
 

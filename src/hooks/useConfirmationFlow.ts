@@ -355,6 +355,34 @@ export function useConfirmationFlow({
     trip?: Trip
   ) => {
     return handleAsync(async () => {
+      console.log('useConfirmationFlow: requestAgain called', { confirmationId, userId, rideOwnerId })
+      
+      // First verify the confirmation exists and is rejected
+      const { data: existingConfirmation, error: fetchError } = await supabase
+        .from('ride_confirmations')
+        .select('*')
+        .eq('id', confirmationId)
+        .eq('passenger_id', userId)
+        .eq('status', 'rejected')
+        .single()
+
+      if (fetchError || !existingConfirmation) {
+        throw new Error('Confirmation not found or not eligible for re-request')
+      }
+
+      // Check cooldown eligibility
+      const { canRequestAgain, canRequest, reason } = await import('../utils/confirmationHelpers').then(module => 
+        module.canRequestAgain(
+          userId,
+          existingConfirmation.ride_id || undefined,
+          existingConfirmation.trip_id || undefined
+        )
+      )
+
+      if (!canRequest) {
+        throw new Error(reason || 'Cannot request again at this time')
+      }
+
       // Update confirmation status back to pending
       const { error } = await supabase
         .from('ride_confirmations')
@@ -364,6 +392,8 @@ export function useConfirmationFlow({
           updated_at: new Date().toISOString()
         })
         .eq('id', confirmationId)
+        .eq('passenger_id', userId) // Additional security check
+        .eq('status', 'rejected') // Only update if still rejected
 
       if (error) throw error
 
@@ -379,7 +409,7 @@ export function useConfirmationFlow({
       // Send comprehensive notification to ride owner about re-request
       await notificationService.sendComprehensiveNotification(
         'request',
-        'owner',
+        'passenger', // This should be 'passenger' since we're notifying the owner about a passenger's request
         userId,
         rideOwnerId,
         ride,
@@ -404,6 +434,7 @@ export function useConfirmationFlow({
           is_read: false
         })
 
+      console.log('useConfirmationFlow: requestAgain completed successfully')
       if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Request sent again successfully!')
     })

@@ -51,6 +51,14 @@ export class NotificationService {
     additionalContext?: string
   ): Promise<void> {
     try {
+      console.log('NotificationService: sendEnhancedSystemMessage called', {
+        action,
+        userRole,
+        senderId: senderId.slice(0, 8),
+        receiverId: receiverId.slice(0, 8),
+        additionalContext
+      })
+      
       const template = getSystemMessageTemplate(action, userRole, ride, trip)
       
       // Enhanced message with ride details and context
@@ -59,6 +67,7 @@ export class NotificationService {
         enhancedMessage += `\n\n📝 Additional Details: ${additionalContext}`
       }
 
+      console.log('NotificationService: Inserting system message')
       const { error } = await supabase
         .from('chat_messages')
         .insert({
@@ -73,6 +82,8 @@ export class NotificationService {
         console.error('Error sending enhanced system message:', error)
         throw error
       }
+
+      console.log('NotificationService: System message sent successfully')
 
       // Queue browser notification
       await this.queueBrowserNotification({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
+import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp, RefreshCw, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -35,6 +35,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     rejected: false
   })
   const [cancellingConfirmationId, setCancellingConfirmationId] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -56,6 +57,31 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             fetchConfirmations()
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'ride_confirmations',
+            filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
+          },
+          (payload) => {
+            console.log('UserConfirmationsContent: Confirmation UPDATE detected:', payload)
+            // Check if status changed from rejected to pending (re-request)
+            if (payload.old.status === 'rejected' && payload.new.status === 'pending') {
+              console.log('UserConfirmationsContent: Re-request detected, refreshing immediately')
+              setSuccessMessage('Request sent again successfully! It will appear in the pending section.')
+              setTimeout(() => setSuccessMessage(''), 5000)
+              // Add small delay to ensure database consistency
+              setTimeout(() => {
+                fetchConfirmations()
+                checkForRecentActions()
+              }, 500)
+            } else {
+              fetchConfirmations()
+            }
+          }
+        )
         .subscribe()
 
       return () => {
@@ -65,6 +91,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   }, [user])
 
   const checkForRecentActions = () => {
+    console.log('UserConfirmationsContent: Checking for recent actions')
     const now = new Date()
     const recentlyRejected = confirmations.filter(confirmation => {
       if (confirmation.status !== 'rejected') return false
@@ -73,9 +100,20 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
       
       // Show alert for actions within the last 24 hours
-      return hoursSinceUpdate <= 24
+      const isRecent = hoursSinceUpdate <= 24
+      
+      if (isRecent) {
+        console.log('UserConfirmationsContent: Found recent rejection:', {
+          id: confirmation.id.slice(0, 8),
+          hoursSinceUpdate,
+          updatedAt: updatedAt.toISOString()
+        })
+      }
+      
+      return isRecent
     })
     
+    console.log('UserConfirmationsContent: Recent actions found:', recentlyRejected.length)
     setRecentActions(recentlyRejected)
   }
 
@@ -126,6 +164,16 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       if (error) throw error
 
       console.log('UserConfirmationsContent: Fetched confirmations:', data?.length || 0)
+      
+      // Log status distribution for debugging
+      if (data) {
+        const statusCounts = data.reduce((acc, conf) => {
+          acc[conf.status] = (acc[conf.status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>)
+        console.log('UserConfirmationsContent: Status distribution:', statusCounts)
+      }
+      
       setConfirmations(data || [])
       checkForRecentActions()
     })
@@ -284,9 +332,21 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
   const categorizeConfirmations = () => {
     const filtered = filteredAndSortedConfirmations()
+    
+    console.log('UserConfirmationsContent: Categorizing confirmations', {
+      total: filtered.length,
+      statuses: filtered.map(c => ({ id: c.id.slice(0, 8), status: c.status }))
+    })
+    
     const pending = filtered.filter(c => c.status === 'pending')
     const accepted = filtered.filter(c => c.status === 'accepted')
     const rejected = filtered.filter(c => c.status === 'rejected')
+
+    console.log('UserConfirmationsContent: Categorization result', {
+      pending: pending.length,
+      accepted: accepted.length,
+      rejected: rejected.length
+    })
 
     return {
       pending: {
@@ -341,6 +401,15 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const categorized = categorizeConfirmations()
   const stats = getFilterStats()
   const hasAnyConfirmations = confirmations.length > 0
+  
+  // Auto-expand pending section when there are new pending confirmations
+  React.useEffect(() => {
+    const pendingCount = categorized.pending.carRides.length + categorized.pending.airportTrips.length
+    if (pendingCount > 0 && !expandedSections.pending) {
+      console.log('UserConfirmationsContent: Auto-expanding pending section due to new confirmations')
+      setExpandedSections(prev => ({ ...prev, pending: true }))
+    }
+  }, [categorized.pending.carRides.length, categorized.pending.airportTrips.length])
 
   if (!hasAnyConfirmations) {
     return (
@@ -373,6 +442,21 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
               onDismiss={() => handleDismissAlert(confirmation.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle size={20} className="text-green-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-green-900">Success!</h4>
+              <p className="text-sm text-green-800">{successMessage}</p>
+            </div>
+          </div>
         </div>
       )}
 

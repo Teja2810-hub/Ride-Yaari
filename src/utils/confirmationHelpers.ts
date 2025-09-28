@@ -13,6 +13,8 @@ export const canRequestAgain = async (
   tripId?: string
 ): Promise<{ canRequest: boolean; reason?: string; lastRejection?: Date; cooldownMinutes?: number }> => {
   return retryWithBackoff(async () => {
+    console.log('canRequestAgain called:', { userId, rideId, tripId })
+    
     let query = supabase
       .from('ride_confirmations')
       .select('*')
@@ -32,18 +34,24 @@ export const canRequestAgain = async (
       throw error
     }
 
+    console.log('canRequestAgain: Found confirmations:', confirmations?.length || 0)
+
     if (!confirmations || confirmations.length === 0) {
+      console.log('canRequestAgain: No existing confirmations, can request')
       return { canRequest: true }
     }
 
     const latestConfirmation = confirmations[0]
+    console.log('canRequestAgain: Latest confirmation status:', latestConfirmation.status)
     
     // If there's a pending or accepted confirmation, can't request again
     if (latestConfirmation.status === 'pending') {
+      console.log('canRequestAgain: Already has pending request')
       return { canRequest: false, reason: 'You already have a pending request for this ride' }
     }
     
     if (latestConfirmation.status === 'accepted') {
+      console.log('canRequestAgain: Already confirmed for this ride')
       return { canRequest: false, reason: 'You are already confirmed for this ride' }
     }
 
@@ -53,8 +61,15 @@ export const canRequestAgain = async (
       const minutesSinceRejection = (new Date().getTime() - lastRejection.getTime()) / (1000 * 60)
       const cooldownMinutes = 30
       
+      console.log('canRequestAgain: Checking cooldown', { 
+        lastRejection: lastRejection.toISOString(), 
+        minutesSinceRejection, 
+        cooldownMinutes 
+      })
+      
       if (minutesSinceRejection < cooldownMinutes) {
         const remainingMinutes = Math.ceil(cooldownMinutes - minutesSinceRejection)
+        console.log('canRequestAgain: Still in cooldown period, remaining minutes:', remainingMinutes)
         return { 
           canRequest: false, 
           reason: `Please wait ${remainingMinutes} more minutes before requesting again`,
@@ -63,9 +78,11 @@ export const canRequestAgain = async (
         }
       }
       
+      console.log('canRequestAgain: Cooldown period passed, can request again')
       return { canRequest: true, lastRejection }
     }
 
+    console.log('canRequestAgain: Default case, can request')
     return { canRequest: true }
   })
 }
@@ -82,6 +99,8 @@ export const requestAgain = async (
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('requestAgain called:', { confirmationId, userId, rideOwnerId, reason })
+    
     // First, verify the confirmation exists and is rejected
     const { data: confirmation, error: fetchError } = await supabase
       .from('ride_confirmations')
@@ -108,14 +127,25 @@ export const requestAgain = async (
       .single()
 
     if (fetchError || !confirmation) {
+      console.log('requestAgain: Confirmation not found or not eligible', { fetchError, confirmation })
       return { success: false, error: 'Confirmation not found or not eligible for re-request' }
     }
+
+    console.log('requestAgain: Found confirmation:', confirmation.id)
 
     // Check if the ride/trip is still in the future
     const confirmationRide = confirmation.car_rides
     const confirmationTrip = confirmation.trips
     const departureTime = confirmationRide ? new Date(confirmationRide.departure_date_time) : new Date(confirmationTrip?.travel_date || '')
+    
+    console.log('requestAgain: Checking departure time', { 
+      departureTime: departureTime.toISOString(), 
+      now: new Date().toISOString(),
+      isPast: departureTime <= new Date()
+    })
+    
     if (departureTime <= new Date()) {
+      console.log('requestAgain: Cannot request for past rides/trips')
       return { success: false, error: 'Cannot request again for past rides/trips' }
     }
 
@@ -126,11 +156,15 @@ export const requestAgain = async (
       confirmation.trip_id || undefined
     )
     
+    console.log('requestAgain: Cooldown eligibility check result:', eligibility)
+    
     if (!eligibility.canRequest) {
+      console.log('requestAgain: Not eligible due to cooldown')
       return { success: false, error: eligibility.reason || 'Cannot request again at this time' }
     }
 
     // Update the confirmation status back to pending
+    console.log('requestAgain: Updating confirmation status to pending')
     const { error: updateError } = await supabase
       .from('ride_confirmations')
       .update({
@@ -139,10 +173,15 @@ export const requestAgain = async (
         updated_at: new Date().toISOString()
       })
       .eq('id', confirmationId)
+      .eq('passenger_id', userId) // Additional security check
+      .eq('status', 'rejected') // Only update if still rejected
 
     if (updateError) {
+      console.error('requestAgain: Error updating confirmation status:', updateError)
       return { success: false, error: 'Failed to update confirmation status' }
     }
+
+    console.log('requestAgain: Confirmation status updated successfully')
 
     // Get passenger name for system message
     const passengerName = await getUserDisplayName(userId)
@@ -158,6 +197,7 @@ export const requestAgain = async (
             ? `airport trip from ${confirmationTrip.leaving_airport} to ${confirmationTrip.destination_airport}`
             : 'ride'
 
+    console.log('requestAgain: Sending system message to ride owner')
     await supabase
       .from('chat_messages')
       .insert({
@@ -169,6 +209,7 @@ export const requestAgain = async (
       })
 
     // Also send enhanced system message for notifications
+    console.log('requestAgain: Sending enhanced system message for notifications')
     await notificationService.sendEnhancedSystemMessage(
       'request',
       'passenger',
@@ -179,6 +220,7 @@ export const requestAgain = async (
       `Re-request after rejection${reason ? `. Reason: ${reason}` : ''}`
     )
 
+    console.log('requestAgain: All operations completed successfully')
     return { success: true }
   })
 }
