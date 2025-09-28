@@ -38,6 +38,64 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [successMessage, setSuccessMessage] = useState('')
 
 
+  // Derived state calculations - must be done after all hooks but before any returns
+  const categorized = React.useMemo(() => {
+    const filtered = filteredAndSortedConfirmations()
+    
+    console.log('UserConfirmationsContent: Categorizing confirmations', {
+      total: filtered.length,
+      statuses: filtered.map(c => ({ id: c.id.slice(0, 8), status: c.status }))
+    })
+    
+    const pending = filtered.filter(c => c.status === 'pending')
+    const accepted = filtered.filter(c => c.status === 'accepted')
+    const rejected = filtered.filter(c => c.status === 'rejected')
+
+    console.log('UserConfirmationsContent: Categorization result', {
+      pending: pending.length,
+      accepted: accepted.length,
+      rejected: rejected.length
+    })
+
+    return {
+      pending: {
+        carRides: pending.filter(c => c.ride_id),
+        airportTrips: pending.filter(c => c.trip_id)
+      },
+      accepted: {
+        carRides: accepted.filter(c => c.ride_id),
+        airportTrips: accepted.filter(c => c.trip_id)
+      },
+      rejected: {
+        carRides: rejected.filter(c => c.ride_id),
+        airportTrips: rejected.filter(c => c.trip_id)
+      }
+    }
+  }, [confirmations, searchTerm, statusFilter, typeFilter, sortBy])
+
+  const stats = React.useMemo(() => {
+    const filtered = filteredAndSortedConfirmations()
+    const total = filtered.length
+    const pending = filtered.filter(c => c.status === 'pending').length
+    const accepted = filtered.filter(c => c.status === 'accepted').length
+    const rejected = filtered.filter(c => c.status === 'rejected').length
+    const carRides = filtered.filter(c => c.ride_id).length
+    const airportTrips = filtered.filter(c => c.trip_id).length
+
+    return { total, pending, accepted, rejected, carRides, airportTrips }
+  }, [confirmations, searchTerm, statusFilter, typeFilter, sortBy])
+
+  const hasAnyConfirmations = confirmations.length > 0
+
+  // Auto-expand pending section when there are new pending confirmations
+  React.useEffect(() => {
+    const pendingCount = categorized.pending.carRides.length + categorized.pending.airportTrips.length
+    if (pendingCount > 0 && !expandedSections.pending) {
+      console.log('UserConfirmationsContent: Auto-expanding pending section due to new confirmations')
+      setExpandedSections(prev => ({ ...prev, pending: true }))
+    }
+  }, [categorized.pending.carRides.length, categorized.pending.airportTrips.length, expandedSections.pending])
+
   useEffect(() => {
     if (user) {
       fetchConfirmations()
@@ -363,52 +421,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     return filtered
   }
 
-  const categorizeConfirmations = () => {
-    const filtered = filteredAndSortedConfirmations()
-    
-    console.log('UserConfirmationsContent: Categorizing confirmations', {
-      total: filtered.length,
-      statuses: filtered.map(c => ({ id: c.id.slice(0, 8), status: c.status }))
-    })
-    
-    const pending = filtered.filter(c => c.status === 'pending')
-    const accepted = filtered.filter(c => c.status === 'accepted')
-    const rejected = filtered.filter(c => c.status === 'rejected')
-
-    console.log('UserConfirmationsContent: Categorization result', {
-      pending: pending.length,
-      accepted: accepted.length,
-      rejected: rejected.length
-    })
-
-    return {
-      pending: {
-        carRides: pending.filter(c => c.ride_id),
-        airportTrips: pending.filter(c => c.trip_id)
-      },
-      accepted: {
-        carRides: accepted.filter(c => c.ride_id),
-        airportTrips: accepted.filter(c => c.trip_id)
-      },
-      rejected: {
-        carRides: rejected.filter(c => c.ride_id),
-        airportTrips: rejected.filter(c => c.trip_id)
-      }
-    }
-  }
-
-  const getFilterStats = () => {
-    const filtered = filteredAndSortedConfirmations()
-    const total = filtered.length
-    const pending = filtered.filter(c => c.status === 'pending').length
-    const accepted = filtered.filter(c => c.status === 'accepted').length
-    const rejected = filtered.filter(c => c.status === 'rejected').length
-    const carRides = filtered.filter(c => c.ride_id).length
-    const airportTrips = filtered.filter(c => c.trip_id).length
-
-    return { total, pending, accepted, rejected, carRides, airportTrips }
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -430,19 +442,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       />
     )
   }
-
-  const categorized = categorizeConfirmations()
-  const stats = getFilterStats()
-  const hasAnyConfirmations = confirmations.length > 0
-  
-  // Auto-expand pending section when there are new pending confirmations
-  React.useEffect(() => {
-    const pendingCount = categorized.pending.carRides.length + categorized.pending.airportTrips.length
-    if (pendingCount > 0 && !expandedSections.pending) {
-      console.log('UserConfirmationsContent: Auto-expanding pending section due to new confirmations')
-      setExpandedSections(prev => ({ ...prev, pending: true }))
-    }
-  }, [categorized.pending.carRides.length, categorized.pending.airportTrips.length])
 
   if (!hasAnyConfirmations) {
     return (
