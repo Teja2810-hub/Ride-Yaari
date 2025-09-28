@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, Filter, RefreshCw, AlertTriangle, CheckCircle, X } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification } from '../types'
