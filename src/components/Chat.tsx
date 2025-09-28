@@ -102,7 +102,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         
         const channel = supabase
           .channel(channelName)
-        .channel(`chat:${user.id}:${otherUserId}`)
         .on(
           'postgres_changes',
           {
