@@ -227,6 +227,10 @@ export default function SystemHealthDashboard() {
 
   const tabs = [
     { id: 'health', label: 'System Health', icon: <Activity size={16} /> },
+    { id: 'errors', label: 'Error Reports', icon: <Bug size={16} /> },
+    { id: 'webhooks', label: 'Webhook Setup', icon: <Settings size={16} /> },
+    { id: 'errors', label: 'Error Reports', icon: <AlertTriangle size={16} /> },
+    { id: 'webhooks', label: 'Webhook Setup', icon: <Settings size={16} /> },
     { id: 'testing', label: 'Error Testing', icon: <Play size={16} /> }
   ]
 
