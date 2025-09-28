@@ -84,6 +84,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
   const fetchConfirmations = async () => {
     if (!user || (!ride && !trip)) return
 
+    console.log('PassengerManagement: Fetching confirmations for:', { rideId: ride?.id, tripId: trip?.id, userId: user.id })
     setLoading(true)
     setError('')
 
@@ -112,6 +113,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
       if (error) throw error
 
+      console.log('PassengerManagement: Fetched confirmations:', data?.length || 0)
       setConfirmations(data || [])
     } catch (error: any) {
       console.error('Error fetching confirmations:', error)
@@ -189,6 +191,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       const userRole = showConfirmModal.type === 'cancel' ? 'owner' : 'owner'
       const action = showConfirmModal.type === 'cancel' ? 'cancel' : showConfirmModal.type
       
+      console.log('PassengerManagement: Sending enhanced system message:', { action, userRole, confirmationId: showConfirmModal.confirmation.id })
       await sendEnhancedSystemMessage(
         action as 'accept' | 'reject' | 'cancel',
         userRole,
@@ -197,6 +200,7 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
         showConfirmModal.confirmation
       )
 
+      console.log('PassengerManagement: Action completed, refreshing data')
       fetchConfirmations()
       if (onUpdate) onUpdate()
     } catch (error: any) {

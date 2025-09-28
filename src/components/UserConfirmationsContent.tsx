@@ -52,6 +52,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             filter: `or(ride_owner_id.eq.${user.id},passenger_id.eq.${user.id})`,
           },
           () => {
+            console.log('UserConfirmationsContent: Confirmation change detected, refreshing...')
             fetchConfirmations()
           }
         )
@@ -64,6 +65,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   }, [user])
 
   const checkForRecentActions = () => {
+    console.log('UserConfirmationsContent: Checking for recent actions...')
     const now = new Date()
     const recentlyRejected = confirmations.filter(confirmation => {
       if (confirmation.status !== 'rejected') return false
@@ -75,12 +77,15 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       return hoursSinceUpdate <= 24
     })
     
+    console.log('UserConfirmationsContent: Recent actions found:', recentlyRejected.length)
     setRecentActions(recentlyRejected)
   }
 
   const fetchConfirmations = async () => {
     if (!user) return
 
+    console.log('UserConfirmationsContent: Fetching confirmations for user:', user.id)
+    
     await handleAsync(async () => {
       const { data, error } = await supabase
         .from('ride_confirmations')
@@ -122,6 +127,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
       if (error) throw error
 
+      console.log('UserConfirmationsContent: Fetched confirmations:', data?.length || 0)
       setConfirmations(data || [])
       checkForRecentActions()
     })
@@ -153,6 +159,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const handleCancelRequest = async (confirmationId: string) => {
     if (!user) return
 
+    console.log('UserConfirmationsContent: Cancelling request:', confirmationId)
     setCancellingConfirmationId(confirmationId)
     
     // Immediately update the local state to reflect the cancellation
@@ -223,6 +230,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
           })
       }
 
+      console.log('UserConfirmationsContent: Request cancellation completed')
       // Refresh confirmations to get the latest data from server
       fetchConfirmations()
     }).finally(() => {

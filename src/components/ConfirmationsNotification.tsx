@@ -45,8 +45,9 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
             filter: `ride_owner_id=eq.${user.id}`,
           },
           (payload) => {
-            // Check if status was updated from pending
-            if (payload.old.status === 'pending' && payload.new.status !== 'pending') {
+            console.log('ConfirmationsNotification: Confirmation update received:', payload)
+            // Check if status was updated from pending or if any status change occurred
+            if (payload.old.status !== payload.new.status) {
               fetchPendingConfirmations()
             }
           }
@@ -62,6 +63,8 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
   const fetchPendingConfirmations = async () => {
     if (!user) return
 
+    console.log('ConfirmationsNotification: Fetching pending confirmations for user:', user.id)
+    
     try {
       const { data, error } = await supabase
         .from('ride_confirmations')
@@ -94,8 +97,11 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
         .order('created_at', { ascending: false })
 
       if (!error && data) {
+        console.log('ConfirmationsNotification: Found pending confirmations:', data.length)
         setConfirmations(data)
         setPendingCount(data.length)
+      } else if (error) {
+        console.error('ConfirmationsNotification: Error fetching confirmations:', error)
       }
     } catch (error) {
       console.error('Error fetching pending confirmations:', error)

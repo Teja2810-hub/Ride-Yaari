@@ -4,6 +4,7 @@ import { notificationService } from '../utils/notificationService'
 import { CarRide, Trip } from '../types'
 import { useErrorHandler } from './useErrorHandler'
 import { getUserDisplayName } from '../utils/messageTemplates'
+import { getRideOrTripDetails } from '../utils/messageTemplates'
 
 interface ConfirmationState {
   showDisclaimer: boolean
@@ -416,6 +417,8 @@ export function useConfirmationFlow({
     trip?: Trip
   ) => {
     return handleAsync(async () => {
+      console.log('cancelPassengerRequest called:', { confirmationId, passengerId, rideOwnerId })
+      
       // Update confirmation status to rejected (cancelled by passenger)
       const { error } = await supabase
         .from('ride_confirmations')
@@ -454,7 +457,9 @@ export function useConfirmationFlow({
           is_read: false
         })
 
-      // Trigger immediate update
+      console.log('Passenger cancellation completed, triggering updates')
+      
+      // Trigger immediate updates
       if (onUpdate) onUpdate()
       if (onSuccess) onSuccess('Request cancelled successfully!')
     })

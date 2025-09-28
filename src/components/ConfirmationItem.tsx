@@ -127,6 +127,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const handlePassengerCancel = async () => {
     if (!user) return
 
+    console.log('ConfirmationItem: Passenger cancelling request:', confirmation.id)
     setShowCancelModal(false)
     setLoading(true)
     
@@ -161,6 +162,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
           is_read: false
         })
 
+      console.log('ConfirmationItem: Passenger cancellation completed')
       onUpdate()
     }).finally(() => {
       setLoading(false)

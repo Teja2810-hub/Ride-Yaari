@@ -647,37 +647,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       updated_at: new Date().toISOString()
     } : null)
 
-    await handleAsync(async () => {
-      const { error } = await supabase
-        .from('ride_confirmations')
-        .update({
-          status: 'rejected',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', confirmationId)
-
-      if (error) throw error
-
-      // Send system message to ride owner
-      const ride = preSelectedRide
-      const trip = preSelectedTrip
-      const rideDetails = getRideOrTripDetails(ride, trip)
-      const userName = await getUserDisplayName(user.id)
-      await supabase
-        .from('chat_messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: currentConfirmation.ride_owner_id,
-          message_content: `🚫 ${userName} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
-          message_type: 'system',
-          is_read: false
-        })
-
-      // Refresh confirmation status and messages
-      await fetchConfirmationStatus()
-      await fetchMessages()
-    }).finally(() => {
+    // Use the centralized cancelPassengerRequest function from the hook
+    await cancelPassengerRequest(
+      confirmationId,
+      user.id,
+      currentConfirmation.ride_owner_id,
+      preSelectedRide,
+      preSelectedTrip
+    ).finally(() => {
       setCancellingRequest(false)
     })
   }
