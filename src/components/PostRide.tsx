@@ -82,7 +82,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
           departure_date_time: new Date(departureDateTime).toISOString(),
-          price: price ? parseFloat(price) : null, // allow null for free ride
+          price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
           intermediate_stops: intermediateStops.map(stop => ({
