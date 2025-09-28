@@ -118,3 +118,58 @@ export interface RideConfirmation {
   car_rides?: CarRide
   trips?: Trip
 }
+
+export interface RideRequest {
+  id: string
+  passenger_id: string
+  departure_location: string
+  departure_latitude?: number
+  departure_longitude?: number
+  destination_location: string
+  destination_latitude?: number
+  destination_longitude?: number
+  search_radius_miles: number
+  request_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  request_month?: string
+  departure_time_preference?: string
+  max_price?: number
+  currency: string
+  additional_notes?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles?: UserProfile
+}
+
+export interface RideNotification {
+  id: string
+  user_id: string
+  notification_type: 'passenger_request' | 'driver_post'
+  departure_location: string
+  departure_latitude?: number
+  departure_longitude?: number
+  destination_location: string
+  destination_latitude?: number
+  destination_longitude?: number
+  search_radius_miles: number
+  date_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  notification_month?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationMatch {
+  id: string
+  notification_id: string
+  matched_item_id: string
+  matched_item_type: 'ride_post' | 'ride_request'
+  notified_user_id: string
+  created_at: string
+}
