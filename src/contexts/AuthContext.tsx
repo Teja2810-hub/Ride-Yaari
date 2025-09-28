@@ -330,7 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (otpError: any) {
         // If OTP is disabled, return a helpful error message
         if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('Signups not allowed for otp')) {
-          throw new Error('Magic link sign-in is currently unavailable. Please use email and password to sign in.')
+          throw new Error('OTP sign-in is currently unavailable. Please use email and password to sign in.')
         } else {
           throw otpError
         }
