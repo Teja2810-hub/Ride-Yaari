@@ -7,6 +7,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
 import NotificationEditModal from './NotificationEditModal'
+import { formatDateWithWeekday } from '../utils/dateHelpers'
 
 interface NotificationManagementProps {
   onBack?: () => void
@@ -81,14 +82,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
     })
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
@@ -147,7 +140,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const getDateTypeDisplay = (notification: RideNotification) => {
     switch (notification.date_type) {
       case 'specific_date':
-        return notification.specific_date ? `📅 ${formatDate(notification.specific_date)}` : 'Specific date'
+        return notification.specific_date ? `📅 ${formatDateWithWeekday(notification.specific_date)}` : 'Specific date'
       case 'multiple_dates':
         return notification.multiple_dates && notification.multiple_dates.length > 0
           ? `📅 ${notification.multiple_dates.length} selected dates`
@@ -453,7 +446,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                       <div className="flex flex-wrap gap-2">
                         {notification.multiple_dates.map((date, index) => (
                           <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {formatDate(date)}
+                            {formatDateWithWeekday(date)}
                           </span>
                         ))}
                       </div>

@@ -21,6 +21,7 @@ import RideCategorySelector from './RideCategorySelector'
 import SystemHealthDashboard from './SystemHealthDashboard'
 import NotificationManagement from './NotificationManagement'
 import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface UserProfileProps {
   onBack: () => void
@@ -225,26 +226,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setShowDeleteModal({ show: true, type, id, name })
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
   const handleViewRideHistory = (ride: CarRide) => {
     setSelectedRide(ride)

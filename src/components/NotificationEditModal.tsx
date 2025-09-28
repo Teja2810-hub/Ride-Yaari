@@ -7,6 +7,7 @@ import LocationAutocomplete from './LocationAutocomplete'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import { formatDateWithWeekday } from '../utils/dateHelpers'
 
 interface LocationData {
   address: string
@@ -396,7 +397,7 @@ export default function NotificationEditModal({
                     <li>• Route: {notification.departure_location} → {notification.destination_location}</li>
                     <li>• Radius: {notification.search_radius_miles} miles</li>
                     <li>• Date: {notification.date_type === 'specific_date' && notification.specific_date 
-                      ? new Date(notification.specific_date).toLocaleDateString()
+                      ? formatDateWithWeekday(notification.specific_date)
                       : notification.date_type === 'month' && notification.notification_month
                         ? notification.notification_month
                         : notification.date_type === 'multiple_dates' && notification.multiple_dates
@@ -411,7 +412,7 @@ export default function NotificationEditModal({
                     <li>• Route: {departureLocation?.address || 'Not set'} → {destinationLocation?.address || 'Not set'}</li>
                     <li>• Radius: {searchRadius} miles</li>
                     <li>• Date: {dateType === 'specific_date' && specificDate 
-                      ? new Date(specificDate).toLocaleDateString()
+                      ? formatDateWithWeekday(specificDate)
                       : dateType === 'month' && notificationMonth
                         ? notificationMonth
                         : dateType === 'multiple_dates' && multipleDates.some(d => d)
