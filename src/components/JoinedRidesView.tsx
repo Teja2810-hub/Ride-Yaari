@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Car, User, Calendar, Clock, MapPin, MessageCircle, Check, X, AlertTriangle, Filter, Search, Navigation } from 'lucide-react'
+import { ArrowLeft, Car, User, Calendar, Clock, MapPin, MessageCircle, Check, X, TriangleAlert as AlertTriangle, ListFilter as Filter, Search, Navigation } from 'lucide-react'
 import { RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
-import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface JoinedRidesViewProps {
   joinedRides: RideConfirmation[]
@@ -19,6 +18,18 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  const formatDateTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -277,7 +288,7 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                       <p className="text-sm text-gray-600 mb-1">Departure</p>
                       <div className="font-medium text-gray-900 flex items-center">
                         <Clock size={14} className="mr-1 text-gray-400" />
-                        {formatDateTimeSafe(ride.departure_date_time)}
+                        {formatDateTime(ride.departure_date_time)}
                       </div>
                     </div>
                   </div>
@@ -318,7 +329,7 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                        <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
+                        <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
                       </div>
                     </div>
                     
@@ -335,7 +346,7 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                           <p className="text-sm font-medium text-gray-900">
                             Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
                           </p>
-                          <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
+                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
                         </div>
                       </div>
                     )}

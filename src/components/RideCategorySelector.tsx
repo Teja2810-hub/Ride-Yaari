@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
-import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, Edit, Trash2, AlertTriangle, History, Navigation, Lock, CheckCircle, XCircle } from 'lucide-react'
+import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle } from 'lucide-react'
 import { CarRide, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
-import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface RideCategorySelectorProps {
   offeredRides: CarRide[]
@@ -28,6 +27,18 @@ export default function RideCategorySelector({
   const [expandedOfferedRide, setExpandedOfferedRide] = useState<string | null>(null)
   const [expandedJoinedRide, setExpandedJoinedRide] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined'>('overview')
+
+  const formatDateTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
 
   const isExpiredOrExpiringSoon = (ride: CarRide): boolean => {
     const now = new Date()
@@ -226,7 +237,7 @@ export default function RideCategorySelector({
                             {ride.from_location} → {ride.to_location}
                           </h3>
                           <p className="text-gray-600">
-                            {formatDateTimeSafe(ride.departure_date_time)}
+                            {formatDateTime(ride.departure_date_time)}
                           </p>
                         </div>
                       </div>
@@ -278,7 +289,7 @@ export default function RideCategorySelector({
                               <p className="text-gray-600 mb-1">Departure</p>
                               <div className="font-medium text-gray-900 flex items-center">
                                 <Clock size={14} className="mr-1 text-gray-400" />
-                                {formatDateTimeSafe(ride.departure_date_time)}
+                                {formatDateTime(ride.departure_date_time)}
                               </div>
                             </div>
                           </div>
@@ -385,7 +396,7 @@ export default function RideCategorySelector({
                                   </p>
                                   {ride.closed_at && (
                                     <p className="text-xs text-red-700 mt-1">
-                                      Closed on {formatDateTimeSafe(ride.closed_at)}
+                                      Closed on {formatDateTime(ride.closed_at)}
                                     </p>
                                   )}
                                 </div>
@@ -405,7 +416,7 @@ export default function RideCategorySelector({
                                     This ride has passed its departure time and is no longer active.
                                   </p>
                                   <p className="text-xs text-gray-600 mt-1">
-                                    Departure was {formatDateTimeSafe(ride.departure_date_time)}
+                                    Departure was {formatDateTime(ride.departure_date_time)}
                                   </p>
                                 </div>
                               </div>
@@ -482,7 +493,7 @@ export default function RideCategorySelector({
                             {ride.from_location} → {ride.to_location}
                           </h3>
                           <p className="text-gray-600">
-                            {formatDateTimeSafe(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
+                            {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
                           </p>
                         </div>
                       </div>
@@ -530,7 +541,7 @@ export default function RideCategorySelector({
                               <p className="text-gray-600 mb-1">Departure</p>
                               <div className="font-medium text-gray-900 flex items-center">
                                 <Clock size={14} className="mr-1 text-gray-400" />
-                                {formatDateTimeSafe(ride.departure_date_time)}
+                                {formatDateTime(ride.departure_date_time)}
                               </div>
                             </div>
                           </div>
@@ -571,7 +582,7 @@ export default function RideCategorySelector({
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                                <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.created_at)}</p>
+                                <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
                               </div>
                             </div>
                             
@@ -588,13 +599,17 @@ export default function RideCategorySelector({
                                   <p className="text-sm font-medium text-gray-900">
                                     Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
                                   </p>
-                                  <p className="text-xs text-gray-600">{formatDateTimeSafe(confirmation.confirmed_at)}</p>
+                                  <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
                                 </div>
                               </div>
                             )}
                           </div>
                         </div>
 
+                            onUpdate={() => {
+                              console.log('TripClosureControls onUpdate called for ride:', ride.id)
+                              onRefresh()
+                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Lock, Unlock, AlertTriangle, X, Calendar, Clock } from 'lucide-react'
+import { Lock, Clock as Unlock, TriangleAlert as AlertTriangle, X, Calendar, Clock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { closeTrip, closeRide, reopenTrip, reopenRide } from '../utils/tripClosureHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, Clock, Car, Plane, MapPin, Lock, Search, Filter, RefreshCw, AlertTriangle, Archive } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Car, Plane, MapPin, Lock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, Archive } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getClosureHistory } from '../utils/tripClosureHelpers'
 import { CarRide, Trip } from '../types'

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, AlertTriangle, RefreshCw, Trash2, CheckCircle, X, Calendar, Filter } from 'lucide-react'
+import { Clock, TriangleAlert as AlertTriangle, RefreshCw, Trash2, CircleCheck as CheckCircle, X, Calendar, ListFilter as Filter } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { checkConfirmationExpiry, autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
-import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ExpiryManagementPanelProps {
   onRefresh?: () => void
@@ -179,6 +178,27 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
     } else {
       return `${wholeHours}h ${minutes}m`
     }
+  }
+
+  const formatDateTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   const getFilteredData = () => {
@@ -428,7 +448,7 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Departure</p>
                           <p className="font-medium text-gray-900">
-                            {formatDateTimeSafe(ride.departure_date_time)}
+                            {formatDateTime(ride.departure_date_time)}
                           </p>
                         </div>
                         <div>
@@ -449,7 +469,7 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Travel Date</p>
                           <p className="font-medium text-gray-900">
-                            {formatDateSafe(trip.travel_date)}
+                            {formatDate(trip.travel_date)}
                           </p>
                         </div>
                         <div>
@@ -464,14 +484,14 @@ export default function ExpiryManagementPanel({ onRefresh }: ExpiryManagementPan
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-gray-600 mb-1">Request Created</p>
-                            <p className="font-medium text-gray-900">{formatDateTimeSafe(confirmation.created_at)}</p>
+                            <p className="font-medium text-gray-900">{formatDateTime(confirmation.created_at)}</p>
                           </div>
                           <div>
                             <p className="text-gray-600 mb-1">
                               {isExpired ? 'Expired At' : 'Expires At'}
                             </p>
                             <p className={`font-medium ${isExpired ? 'text-red-600' : 'text-yellow-600'}`}>
-                              {formatDateTimeSafe(expiryDate.toISOString())}
+                              {formatDateTime(expiryDate.toISOString())}
                             </p>
                           </div>
                         </div>

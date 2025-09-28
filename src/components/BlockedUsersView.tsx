@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Shield, User, Trash2, MessageCircle, AlertTriangle, Search, Calendar, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Shield, User, Trash2, MessageCircle, TriangleAlert as AlertTriangle, Search, Calendar, CircleCheck as CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getBlockedUsers, unblockUser, BlockedUser } from '../utils/blockingHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
