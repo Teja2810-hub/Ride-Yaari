@@ -967,10 +967,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
               <span className="hidden sm:inline">Back</span>
             </button>
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 text-white rounded-full">
-                <span className="font-semibold text-xs sm:text-sm">
-                  {otherUserName.charAt(0).toUpperCase()}
-                </span>
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 text-white rounded-full overflow-hidden">
+                {otherUserProfile?.profile_image_url ? (
+                  <img
+                    src={otherUserProfile.profile_image_url}
+                    alt={otherUserName}
+                    className="w-full h-full object-cover"
+                    onError={e => { e.currentTarget.style.display = 'none' }}
+                  />
+                ) : (
+                  <span className="font-semibold text-xs sm:text-sm">
+                    {otherUserName.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate max-w-32 sm:max-w-none">{otherUserName}</h2>
