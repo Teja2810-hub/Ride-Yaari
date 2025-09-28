@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, Edit, Plus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification } from '../types'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
+import NotificationEditModal from './NotificationEditModal'
 
 interface NotificationManagementProps {
   onBack?: () => void
@@ -25,6 +26,10 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState<{
+    show: boolean
+    notification: RideNotification | null
+  }>({ show: false, notification: null })
+  const [showEditModal, setShowEditModal] = useState<{
     show: boolean
     notification: RideNotification | null
   }>({ show: false, notification: null })
@@ -142,13 +147,13 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const getDateTypeDisplay = (notification: RideNotification) => {
     switch (notification.date_type) {
       case 'specific_date':
-        return notification.specific_date ? formatDate(notification.specific_date) : 'Specific date'
+        return notification.specific_date ? `📅 ${formatDate(notification.specific_date)}` : 'Specific date'
       case 'multiple_dates':
         return notification.multiple_dates && notification.multiple_dates.length > 0
-          ? `${notification.multiple_dates.length} dates`
+          ? `📅 ${notification.multiple_dates.length} selected dates`
           : 'Multiple dates'
       case 'month':
-        return notification.notification_month || 'Month'
+        return notification.notification_month ? `📅 ${notification.notification_month}` : 'Month'
       default:
         return 'Unknown'
     }
@@ -239,6 +244,17 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
           </div>
         </div>
       )}
+
+      {/* Edit Modal */}
+      <NotificationEditModal
+        isOpen={showEditModal.show}
+        onClose={() => setShowEditModal({ show: false, notification: null })}
+        notification={showEditModal.notification}
+        onUpdate={() => {
+          fetchNotifications()
+          setShowEditModal({ show: false, notification: null })
+        }}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -463,23 +479,35 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                     ID: {notification.id.slice(0, 8)}...
                   </div>
                   
-                  <button
-                    onClick={() => setShowDeleteModal({ show: true, notification })}
-                    disabled={deletingId === notification.id}
-                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                  >
-                    {deletingId === notification.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Deleting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 size={16} />
-                        <span>Delete</span>
-                      </>
+                  <div className="flex items-center space-x-3">
+                    {expiryStatus.status !== 'expired' && (
+                      <button
+                        onClick={() => setShowEditModal({ show: true, notification })}
+                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      >
+                        <Edit size={16} />
+                        <span>Edit</span>
+                      </button>
                     )}
-                  </button>
+                    
+                    <button
+                      onClick={() => setShowDeleteModal({ show: true, notification })}
+                      disabled={deletingId === notification.id}
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                    >
+                      {deletingId === notification.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={16} />
+                          <span>Delete</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )
