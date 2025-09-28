@@ -39,9 +39,13 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
 
 
   useEffect(() => {
-    if (!user) return
+    if (user) {
+      fetchConfirmations()
+    }
+  }, [user])
 
-    fetchConfirmations()
+  useEffect(() => {
+    if (!user) return
     
     // Subscribe to confirmation changes
     const subscription = supabase
@@ -118,6 +122,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       subscription.unsubscribe()
     }
   }, [user])
+
   const checkForRecentActions = () => {
     console.log('UserConfirmationsContent: Checking for recent actions')
     const now = new Date()
