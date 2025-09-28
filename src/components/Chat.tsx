@@ -620,7 +620,61 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     )
   }
 
-  // ...existing code...
+  const cancelPassengerRequest = async (
+    confirmationId: string,
+    passengerId: string,
+    rideOwnerId: string,
+    ride?: CarRide,
+    trip?: Trip
+  ) => {
+    return handleAsync(async () => {
+      console.log('cancelPassengerRequest called:', { confirmationId, passengerId, rideOwnerId })
+      
+      // Update confirmation status to rejected (cancelled by passenger)
+      const { error } = await supabase
+        .from('ride_confirmations')
+        .update({
+          status: 'rejected',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', confirmationId)
+
+      if (error) throw error
+
+      // Get passenger name for notifications
+      const { data: passengerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', passengerId)
+        .single()
+
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(passengerId)
+
+      // Send system chat message to ride owner
+      const rideDetails = ride 
+        ? `car ride from ${ride.from_location} to ${ride.to_location}`
+        : trip 
+          ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
+          : 'ride'
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: passengerId,
+          receiver_id: rideOwnerId,
+          message_content: `🚫 ${passengerName} has cancelled their request for the ${rideDetails}. Your ${ride ? 'ride' : 'trip'} is now available for new requests.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      console.log('Passenger cancellation completed, triggering updates')
+      
+      // Trigger immediate updates
+      fetchMessages()
+      fetchConfirmationStatus()
+    })
+  }
 
   const handlePassengerCancel = async (confirmationId: string) => {
     if (!user || !currentConfirmation) return

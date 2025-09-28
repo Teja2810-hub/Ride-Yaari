@@ -232,8 +232,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         message = `Are you sure you want to reject ${passengerName}'s request for this ${rideType}?`
         break
       case 'cancel':
-        title = 'Cancel Ride'
-        message = `Are you sure you want to cancel this confirmed ${rideType}?`
+        title = 'Cancel Confirmed Ride'
+        message = `Are you sure you want to cancel this confirmed ${rideType} with ${passengerName}?`
         break
     }
     
@@ -819,6 +819,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                     <li>• Cancel the confirmed ride arrangement</li>
                     <li>• Notify the other party immediately</li>
                     <li>• This may affect your reputation</li>
+                    <li>• You can reverse this action within 24 hours if accidental</li>
                   </>
                 )}
               </ul>
