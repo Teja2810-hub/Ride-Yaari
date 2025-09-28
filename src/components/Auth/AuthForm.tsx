@@ -107,9 +107,9 @@ export default function AuthForm({ onClose }: AuthFormProps) {
       if (error?.status === 504) {
         setError('Connection to server timed out. Please check your internet connection or try again later.')
       } else if (error?.status === 429) {
-        setError('Too many requests. Please wait before trying again.')
+        setError('Too many requests. Please wait 60 seconds before trying again.')
       } else {
-        setError(error?.message || 'Failed to send magic link. Please try again.')
+        setError(error?.message || 'Failed to send OTP. Please try again.')
       }
     } finally {
       setLoading(false)
@@ -663,7 +663,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             </div>
             <h2 className="text-xl font-bold text-gray-900">Verify Your Email</h2>
             <p className="text-sm text-gray-600 mt-2">
-              We've sent a verification code to <strong>{email}</strong>
+              We've sent a one-time code to <strong>{email}</strong>
             </p>
           </div>
 
@@ -717,7 +717,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                   startResendCooldown()
                 } catch (error: any) {
                   if (error?.status === 429) {
-                    setError('Too many requests. Please wait before trying again.')
+                    setError('Too many requests. Please wait 60 seconds before trying again.')
                   } else {
                     setError(error?.message || 'Failed to resend code.')
                   }
@@ -1028,16 +1028,16 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 const { error } = await sendMagicLinkOtp(email)
                 if (error) throw error
                 setCurrentStep('magic-link-otp-verification')
-                setSuccess('Magic link code sent to your email!')
+                setSuccess('OTP sent to your email!')
                 startResendCooldown()
               } catch (error: any) {
-                console.error('Magic link error:', error)
+                console.error('OTP error:', error)
                 if (error?.status === 504) {
                   setError('Connection to server timed out. Please check your internet connection or try again later.')
                 } else if (error?.status === 429) {
                   setError('Too many requests. Please wait before trying again.')
                 } else {
-                  setError(error?.message || 'Magic link is currently unavailable. Please use email and password to sign in.')
+                  setError(error?.message || 'OTP verification is currently unavailable. Please use email and password to sign in.')
                 }
               } finally {
                 setLoading(false)
@@ -1046,10 +1046,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             disabled={loading || !email}
             className="w-full border border-blue-600 text-blue-600 py-2 px-4 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Sending...' : 'Sign In with Magic Link'}
+            {loading ? 'Sending...' : 'Sign In with OTP'}
           </button>
           <p className="text-xs text-gray-500 mt-1 text-center">
-            Enter your email above, then click to receive a magic link
+            Enter your email above, then click to receive a one-time code
           </p>
         </div>
 
