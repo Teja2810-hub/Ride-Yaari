@@ -88,6 +88,17 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
 
       if (error) throw error
 
+      // Notify matching passengers about the new ride
+      const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
+      
+      try {
+        const notificationResult = await notifyMatchingPassengers(data.id)
+        console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
+      } catch (notificationError) {
+        console.error('Error notifying matching passengers:', notificationError)
+        // Don't fail the ride creation if notifications fail
+      }
+
       setSuccess(true)
       // Reset form
       setFromLocation(null)

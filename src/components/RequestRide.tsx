@@ -81,6 +81,22 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
         throw new Error(result.error || 'Failed to create ride request')
       }
 
+      // Notify matching drivers about the request
+      const { notifyMatchingDrivers, processDriverNotifications } = await import('../utils/rideNotificationService')
+      
+      try {
+        // Find and notify drivers with matching posted rides
+        const matchingResult = await notifyMatchingDrivers(result.requestId!)
+        console.log('Matching drivers notified:', matchingResult.notifiedDrivers)
+        
+        // Process driver notification preferences
+        const notificationResult = await processDriverNotifications(result.requestId!)
+        console.log('Driver notifications processed:', notificationResult.notifiedDrivers)
+      } catch (notificationError) {
+        console.error('Error processing notifications:', notificationError)
+        // Don't fail the request creation if notifications fail
+      }
+
       // Create notification preference if enabled
       if (enableNotifications) {
         const notificationData = {
