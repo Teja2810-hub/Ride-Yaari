@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Check, X, MessageCircle, AlertTriangle, Clock, User, Search, Filter } from 'lucide-react'
+import { Users, Check, X, MessageCircle, TriangleAlert as AlertTriangle, Clock, User, Search, ListFilter as Filter } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation, CarRide, Trip } from '../types'

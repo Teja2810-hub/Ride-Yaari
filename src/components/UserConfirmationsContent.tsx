@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, AlertTriangle, Car, Plane, Filter, Search, Calendar, SortAsc, SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -65,7 +65,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   }, [user])
 
   const checkForRecentActions = () => {
-    console.log('UserConfirmationsContent: Checking for recent actions...')
     const now = new Date()
     const recentlyRejected = confirmations.filter(confirmation => {
       if (confirmation.status !== 'rejected') return false
@@ -77,7 +76,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       return hoursSinceUpdate <= 24
     })
     
-    console.log('UserConfirmationsContent: Recent actions found:', recentlyRejected.length)
     setRecentActions(recentlyRejected)
   }
 
@@ -159,7 +157,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const handleCancelRequest = async (confirmationId: string) => {
     if (!user) return
 
-    console.log('UserConfirmationsContent: Cancelling request:', confirmationId)
     setCancellingConfirmationId(confirmationId)
     
     // Immediately update the local state to reflect the cancellation
@@ -230,7 +227,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
           })
       }
 
-      console.log('UserConfirmationsContent: Request cancellation completed')
       // Refresh confirmations to get the latest data from server
       fetchConfirmations()
     }).finally(() => {
