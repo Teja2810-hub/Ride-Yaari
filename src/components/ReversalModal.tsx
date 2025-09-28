@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { RotateCcw, X, Clock, AlertTriangle, Car, Plane, MessageCircle, CheckCircle } from 'lucide-react'
+import { RotateCcw, X, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, CircleCheck as CheckCircle } from 'lucide-react'
 import { getReversalEligibility } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp, RefreshCw, CheckCircle } from 'lucide-react'
+import { Check, Clock, X, TriangleAlert as AlertTriangle, Car, Plane, ListFilter as Filter, Search, Calendar, Import as SortAsc, Dessert as SortDesc, ChevronDown, ChevronUp, RefreshCw, CircleCheck as CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -121,7 +121,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const checkForRecentActions = () => {
     console.log('UserConfirmationsContent: Checking for recent actions')
     const now = new Date()
-    const recentlyActioned = confirmations.filter(confirmation => {
+    const recentlyRejected = confirmations.filter(confirmation => {
       if (confirmation.status !== 'rejected') return false
       
       const updatedAt = new Date(confirmation.updated_at)
@@ -131,20 +131,18 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       const isRecent = hoursSinceUpdate <= 24
       
       if (isRecent) {
-        console.log('UserConfirmationsContent: Found recent action (rejection/cancellation):', {
+        console.log('UserConfirmationsContent: Found recent rejection:', {
           id: confirmation.id.slice(0, 8),
           hoursSinceUpdate,
-          updatedAt: updatedAt.toISOString(),
-          isOwner: confirmation.ride_owner_id === user?.id,
-          isPassenger: confirmation.passenger_id === user?.id
+          updatedAt: updatedAt.toISOString()
         })
       }
       
       return isRecent
     })
     
-    console.log('UserConfirmationsContent: Recent actions found:', recentlyActioned.length)
-    setRecentActions(recentlyActioned)
+    console.log('UserConfirmationsContent: Recent actions found:', recentlyRejected.length)
+    setRecentActions(recentlyRejected)
   }
 
   const fetchConfirmations = async () => {
