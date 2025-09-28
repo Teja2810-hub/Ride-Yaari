@@ -289,6 +289,9 @@ export default function AuthForm({ onClose }: AuthFormProps) {
     setPassword('')
     setFullName('')
     setOtpToken('')
+    setResetToken('')
+    setNewPassword('')
+    setConfirmPassword('')
     setError(null)
     setSuccess(null)
     setCurrentStep('signin')
@@ -502,6 +505,8 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               <button
                 onClick={() => {
                   setCurrentStep('signin')
+                  setError(null)
+                  setSuccess(null)
                   setResetToken('')
                   setNewPassword('')
                   setConfirmPassword('')
@@ -597,6 +602,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
               onClick={async () => {
                 setLoading(true)
                 setError(null)
+                setError(null)
                 try {
                   const { error } = await sendSignUpOtp(email, password, fullName)
                   if (error) throw error
@@ -625,25 +631,6 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 Back to Sign In
               </button>
             </div>
-          </div>
-
-          <div className="mt-6 border-t border-gray-200 pt-6">
-            <button
-              onClick={handleContinueAsGuest}
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              <UserCheck size={20} />
-              <span>Continue as Guest</span>
-            </button>
-            <p className="text-xs text-gray-500 mt-1 text-center">
-              Browse and search rides without creating an account
-            </p>
-          </div>
-
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               ×
             </button>
@@ -709,6 +696,7 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             <button
               onClick={async () => {
                 setLoading(true)
+                setError(null)
                 setError(null)
                 try {
                   const { error } = await sendMagicLinkOtp(email)
@@ -858,12 +846,18 @@ export default function AuthForm({ onClose }: AuthFormProps) {
             >
               <Chrome size={20} />
               <span>{loading ? 'Signing In...' : 'Continue with Google'}</span>
+                setError(null)
             </button>
           </div>
 
           <div className="mt-6 text-center">
             <button
               onClick={() => setCurrentStep('signin')}
+              onClick={() => {
+                setCurrentStep('signin')
+                setError(null)
+                setSuccess(null)
+              }}
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
               Already have an account? Sign in
@@ -892,7 +886,12 @@ export default function AuthForm({ onClose }: AuthFormProps) {
           <div className="mt-4 text-center">
             <button
               onClick={() => {
-                if (!email) {
+              onClick={() => {
+                setCurrentStep('signup')
+                setError(null)
+                setSuccess(null)
+              }}
+                    setError(error?.message || 'Failed to send OTP. Please try again.')
                   setError('Please enter your email address first')
                   return
                 }

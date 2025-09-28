@@ -299,43 +299,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
-      // Check if user exists in our user_profiles table
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id || '')
-        .single()
+      // Check if user exists by email
+      const userId = await supabase.rpc('get_user_id_by_email', { email_param: email })
       
-      // Alternative: Check by email in auth.users (requires service role)
-      // For now, we'll try to send OTP and handle the error
-      
-      try {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: email,
-          options: {
-            shouldCreateUser: false
-          }
-        })
-        
-        if (error) {
-          // Check if it's a user not found error
-          if (error.message?.includes('Unable to validate email address') || 
-              error.message?.includes('User not found') ||
-              error.message?.includes('Invalid email')) {
-            throw new Error('You are not registered yet. Please create an account first.')
-          }
-          throw error
-        }
-        return { error: null }
-      } catch (otpError: any) {
-        // If OTP is disabled, return a helpful error message
-        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('Signups not allowed for otp')) {
-          throw new Error('OTP sign-in is currently unavailable. Please use email and password to sign in.')
-        } else {
-          throw otpError
-        }
+      if (!userId) {
+        throw new Error('No account found with this email address. Please create an account first.')
       }
       
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false
+        }
+      })
+      
+      if (error) throw error
+      return { error: null }
     } catch (error: any) {
       return { error }
     }
