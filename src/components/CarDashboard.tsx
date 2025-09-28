@@ -126,28 +126,8 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 px-2">
-            {/* Request a Ride Card */}
-            <div
-              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
-              onClick={onRequestRide}
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Ride</h3>
-                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
-                  Let drivers in your area know you need a ride and get notified when matching rides are posted
-                </p>
-                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
-                  Request Your Ride
-                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Post a Ride Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {/* Post a Ride Card - FIRST */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
               onClick={onPostRide}
@@ -167,7 +147,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               </div>
             </div>
 
-            {/* Find a Ride Card */}
+            {/* Find a Ride Card - SECOND */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
               onClick={onFindRide}
@@ -182,6 +162,26 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                 </p>
                 <div className="inline-flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700 text-sm sm:text-base">
                   Find Available Rides
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Request a Ride Card - THIRD */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onRequestRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Let drivers in your area know you need a ride and get notified when matching rides are posted
+                </p>
+                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
+                  Request Your Ride
                   <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
                 </div>
               </div>

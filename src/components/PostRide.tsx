@@ -82,7 +82,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
           departure_date_time: new Date(departureDateTime).toISOString(),
-          price: parseFloat(price),
+          price: price ? parseFloat(price) : null, // allow null for free ride
           currency: currency,
           negotiable: negotiable,
           intermediate_stops: intermediateStops.map(stop => ({
@@ -355,7 +355,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price per Passenger <span className="text-red-500">*</span>
+                  Price per Passenger <span className="text-gray-400">(Optional)</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-3 text-gray-400 font-medium">
@@ -369,9 +369,9 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                     placeholder="0.00"
                     min="0"
                     step="0.01"
-                    required
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">Leave empty if offering a free ride</p>
               </div>
 
               <div>
