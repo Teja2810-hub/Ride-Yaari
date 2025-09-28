@@ -15,6 +15,7 @@ import HelpPage from './components/HelpPage'
 import Chat from './components/Chat'
 import EditTrip from './components/EditTrip'
 import EditRide from './components/EditRide'
+import RequestRide from './components/RequestRide'
 import Footer from './components/Footer'
 import HowItWorksPage from './components/HowItWorksPage'
 import ReviewsPage from './components/ReviewsPage'
@@ -28,7 +29,7 @@ import { User } from 'lucide-react'
 import { popupManager } from './utils/popupManager'
 import { setupGlobalErrorHandling } from './utils/errorReporting'
 
-type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
+type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'request-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
 function AppContent() {
   const { user, loading, isGuest, setGuestMode } = useAuth()
@@ -230,6 +231,7 @@ function AppContent() {
                       <CarDashboard
                         onPostRide={() => setCurrentView('post-ride')}
                         onFindRide={() => setCurrentView('find-ride')}
+                        onRequestRide={() => setCurrentView('request-ride')}
                         onProfile={() => setCurrentView('profile')}
                         onBack={() => setCurrentView('platform-selector')}
                         onStartChat={handleStartChat}
@@ -266,6 +268,15 @@ function AppContent() {
                       <FindRide 
                         onBack={handleBackToCarDashboard} 
                         onStartChat={handleStartChat}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'request-ride':
+                  return (
+                    <ErrorBoundary>
+                      <RequestRide 
+                        onBack={handleBackToCarDashboard} 
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Car, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft } from 'lucide-react'
+import { Car, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
@@ -10,6 +10,7 @@ import NotificationBadge from './NotificationBadge'
 interface CarDashboardProps {
   onPostRide: () => void
   onFindRide: () => void
+  onRequestRide: () => void
   onProfile: () => void
   onBack: () => void
   onStartChat?: (userId: string, userName: string) => void
@@ -17,7 +18,7 @@ interface CarDashboardProps {
   isGuest?: boolean
 }
 
-export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
+export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
 
   const handleStartChat = (userId: string, userName: string) => {
@@ -126,6 +127,26 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 px-2">
+            {/* Request a Ride Card */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onRequestRide}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Ride</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Let drivers in your area know you need a ride and get notified when matching rides are posted
+                </p>
+                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
+                  Send Ride Request
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
             {/* Post a Ride Card */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
@@ -169,20 +190,29 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
 
           <div className="mt-8 sm:mt-16 bg-white rounded-2xl shadow-lg p-4 sm:p-8 mx-2">
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">How Car Rides Work</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               <div className="text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">1</span>
                   </div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Post or Search</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">Offer your ride or search for available rides on your route</p>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Request or Search</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Request a ride or search for available rides on your route</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">2</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Post Your Ride</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Offer your ride to help others and split costs</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">3</span>
                   </div>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Connect</h4>
@@ -191,7 +221,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onProfile, onBack
               <div className="text-center">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">3</span>
+                    <span className="text-white font-bold text-xs sm:text-sm">4</span>
                   </div>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Travel Together</h4>
