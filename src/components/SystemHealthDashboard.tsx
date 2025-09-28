@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, Database, Wifi, Shield, Clock, TrendingUp, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, RefreshCw, Bug, Settings, Play, X } from 'lucide-react'
+import { Activity, Database, Wifi, Shield, Clock, TrendingUp, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, RefreshCw } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useErrorHandler } from '../hooks/useErrorHandler'
@@ -228,8 +228,6 @@ export default function SystemHealthDashboard() {
   const tabs = [
     { id: 'health', label: 'System Health', icon: <Activity size={16} /> },
     { id: 'errors', label: 'Error Reports', icon: <Bug size={16} /> },
-    { id: 'webhooks', label: 'Webhook Setup', icon: <Settings size={16} /> },
-    { id: 'errors', label: 'Error Reports', icon: <AlertTriangle size={16} /> },
     { id: 'webhooks', label: 'Webhook Setup', icon: <Settings size={16} /> },
     { id: 'testing', label: 'Error Testing', icon: <Play size={16} /> }
   ]
