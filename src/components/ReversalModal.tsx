@@ -255,9 +255,13 @@ export default function ReversalModal({
             <div>
               <h4 className="font-semibold text-yellow-900 mb-1">Important Notice</h4>
               <p className="text-sm text-yellow-800">
-                Reversing this {getReversalTypeText()} will restore the original arrangement. 
-                Make sure you're ready to proceed with the ride as originally planned. 
-                The other party will be notified immediately.
+                Reversing this {getReversalTypeText()} will restore the original ride arrangement. 
+                Make sure you're ready to proceed with the {ride ? 'ride' : 'trip'} as originally planned. 
+                The other party will be notified immediately and may have already made alternative plans.
+                {eligibility.reversalType === 'cancellation' 
+                  ? ' Consider apologizing for the inconvenience caused by the cancellation.'
+                  : ' Consider explaining why you changed your mind about the rejection.'
+                }
               </p>
             </div>
           </div>

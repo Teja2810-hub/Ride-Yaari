@@ -113,13 +113,15 @@ const getDisclaimerContent = (type: string): DisclaimerContent => {
       return {
         title: 'Cancel Confirmed Ride',
         points: [
-          'This will cancel the confirmed ride arrangement',
+          'This will cancel the confirmed ride arrangement with the passenger',
           'The other party will be notified immediately',
-          'This may affect your reputation on the platform',
-          'Consider discussing the reason in chat first',
-          'This should only be done if absolutely necessary'
+          'This action may affect your reputation on the platform',
+          'The passenger will be disappointed and may leave negative feedback',
+          'Consider discussing the reason in chat before cancelling',
+          'You can reverse this action within 24 hours if it was accidental',
+          'This should only be done if absolutely necessary (emergency, illness, etc.)'
         ],
-        explanation: 'You are cancelling a confirmed ride. This should only be done if absolutely necessary.'
+        explanation: 'You are cancelling the confirmed ride. This will disappoint the passenger and should only be done in unavoidable circumstances. You have 24 hours to reverse this action if it was accidental.'
       }
     case 'request-ride-again':
       return {

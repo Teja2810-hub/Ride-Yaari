@@ -233,10 +233,15 @@ export const reverseAction = async (
   reason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   return retryWithBackoff(async () => {
+    console.log('reverseAction: Starting reversal process', { confirmationId, userId, reason })
+    
     // Check eligibility first
     const eligibility = await getReversalEligibility(confirmationId, userId)
     
+    console.log('reverseAction: Eligibility check result:', eligibility)
+    
     if (!eligibility.canReverse) {
+      console.log('reverseAction: Not eligible for reversal:', eligibility.reason)
       return { success: false, error: eligibility.reason || 'Cannot reverse this action' }
     }
 
@@ -245,6 +250,9 @@ export const reverseAction = async (
       .from('ride_confirmations')
       .select(`
         *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          full_name
+        ),
         car_rides!ride_confirmations_ride_id_fkey (
           id,
           from_location,
@@ -264,10 +272,19 @@ export const reverseAction = async (
       .single()
 
     if (fetchError || !confirmation) {
+      console.log('reverseAction: Failed to fetch confirmation:', fetchError)
       return { success: false, error: 'Confirmation not found' }
     }
 
+    console.log('reverseAction: Found confirmation for reversal:', {
+      id: confirmation.id.slice(0, 8),
+      status: confirmation.status,
+      rideOwnerId: confirmation.ride_owner_id.slice(0, 8),
+      passengerId: confirmation.passenger_id.slice(0, 8)
+    })
+
     // Restore the confirmation to accepted status
+    console.log('reverseAction: Updating confirmation status to accepted')
     const { error: updateError } = await supabase
       .from('ride_confirmations')
       .update({
@@ -276,27 +293,69 @@ export const reverseAction = async (
         updated_at: new Date().toISOString()
       })
       .eq('id', confirmationId)
+      .eq('status', 'rejected') // Additional safety check
 
     if (updateError) {
+      console.error('reverseAction: Failed to update confirmation status:', updateError)
       return { success: false, error: 'Failed to reverse action' }
     }
+
+    console.log('reverseAction: Confirmation status updated successfully')
 
     // Determine user roles and send appropriate message
     const isOwner = confirmation.ride_owner_id === userId
     const receiverId = isOwner ? confirmation.passenger_id : confirmation.ride_owner_id
-    const userRole = isOwner ? 'owner' : 'passenger'
-    const oppositeRole = isOwner ? 'passenger' : 'owner'
+    const senderRole = isOwner ? 'owner' : 'passenger'
+    const receiverRole = isOwner ? 'passenger' : 'owner'
     
-    await notificationService.sendEnhancedSystemMessage(
-      'accept',
-      oppositeRole,
-      userId,
-      receiverId,
-      confirmation.car_rides,
-      confirmation.trips,
-      `Action reversed${reason ? `. Reason: ${reason}` : ''}`
-    )
+    // Get user names for the system message
+    const senderName = await getUserDisplayName(userId)
+    const passengerName = confirmation.user_profiles?.full_name || await getUserDisplayName(confirmation.passenger_id)
+    
+    // Send enhanced system message about the reversal
+    console.log('reverseAction: Sending system message about reversal')
+    const ride = confirmation.car_rides
+    const trip = confirmation.trips
+    const rideDetails = ride 
+      ? `car ride from ${ride.from_location} to ${ride.to_location}`
+      : trip 
+        ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
+        : 'ride'
+    
+    const reversalMessage = eligibility.reversalType === 'cancellation'
+      ? `🔄 ${senderName} has reversed their cancellation of the ${rideDetails}. The ride is confirmed again and you can proceed with the original arrangements.${reason ? ` Reason: ${reason}` : ''}`
+      : `🔄 ${senderName} has reversed their rejection and accepted your request for the ${rideDetails}. You are now confirmed for this ride!${reason ? ` Message: ${reason}` : ''}`
+    
+    await supabase
+      .from('chat_messages')
+      .insert({
+        sender_id: userId,
+        receiver_id: receiverId,
+        message_content: reversalMessage,
+        message_type: 'system',
+        is_read: false
+      })
+    
+    console.log('reverseAction: System message sent successfully')
+    
+    // Send notification to the other party
+    try {
+      await notificationService.sendEnhancedSystemMessage(
+        'accept',
+        receiverRole,
+        userId,
+        receiverId,
+        ride,
+        trip,
+        `Action reversed${reason ? `. Reason: ${reason}` : ''}`
+      )
+      console.log('reverseAction: Enhanced notification sent successfully')
+    } catch (notificationError) {
+      console.warn('reverseAction: Failed to send enhanced notification:', notificationError)
+      // Don't fail the reversal if notification fails
+    }
 
+    console.log('reverseAction: Reversal completed successfully')
     return { success: true }
   })
 }
@@ -314,10 +373,15 @@ export const getReversalEligibility = async (
   reversalType?: 'cancellation' | 'rejection'
 }> => {
   return retryWithBackoff(async () => {
+    console.log('getReversalEligibility: Checking eligibility for confirmation:', confirmationId, 'user:', userId)
+    
     const { data: confirmation, error } = await supabase
       .from('ride_confirmations')
       .select(`
         *,
+        user_profiles!ride_confirmations_passenger_id_fkey (
+          full_name
+        ),
         car_rides!ride_confirmations_ride_id_fkey (
           departure_date_time
         ),
@@ -329,19 +393,32 @@ export const getReversalEligibility = async (
       .single()
 
     if (error || !confirmation) {
+      console.log('getReversalEligibility: Confirmation not found:', error)
       return { canReverse: false, reason: 'Confirmation not found' }
     }
+
+    console.log('getReversalEligibility: Found confirmation:', {
+      id: confirmation.id.slice(0, 8),
+      status: confirmation.status,
+      rideOwnerId: confirmation.ride_owner_id.slice(0, 8),
+      passengerId: confirmation.passenger_id.slice(0, 8),
+      updatedAt: confirmation.updated_at
+    })
 
     // Check user permission
     const isOwner = confirmation.ride_owner_id === userId
     const isPassenger = confirmation.passenger_id === userId
 
+    console.log('getReversalEligibility: User role check:', { isOwner, isPassenger })
+
     if (!isOwner && !isPassenger) {
+      console.log('getReversalEligibility: User not involved in confirmation')
       return { canReverse: false, reason: 'You do not have permission to reverse this action' }
     }
 
     // Check if confirmation is in a reversible state
     if (confirmation.status !== 'rejected') {
+      console.log('getReversalEligibility: Confirmation not rejected, status:', confirmation.status)
       return { canReverse: false, reason: 'Only rejected confirmations can be reversed' }
     }
 
@@ -350,7 +427,15 @@ export const getReversalEligibility = async (
     const now = new Date()
     const hoursSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
 
+    console.log('getReversalEligibility: Time check:', {
+      updatedAt: updatedAt.toISOString(),
+      now: now.toISOString(),
+      hoursSinceUpdate,
+      timeLimit: 24
+    })
+
     if (hoursSinceUpdate > 24) {
+      console.log('getReversalEligibility: Reversal period expired')
       return { canReverse: false, reason: 'Reversal period has expired (24 hours)' }
     }
 
@@ -359,12 +444,35 @@ export const getReversalEligibility = async (
     const trip = confirmation.trips
     const departureTime = ride ? new Date(ride.departure_date_time) : new Date(trip?.travel_date || '')
     
+    console.log('getReversalEligibility: Future check:', {
+      departureTime: departureTime.toISOString(),
+      now: now.toISOString(),
+      isPast: departureTime <= now
+    })
+
     if (departureTime <= new Date()) {
+      console.log('getReversalEligibility: Cannot reverse for past rides/trips')
       return { canReverse: false, reason: 'Cannot reverse for past rides/trips' }
     }
 
     const timeRemaining = 24 - hoursSinceUpdate
-    const reversalType = isOwner ? 'rejection' : 'cancellation'
+    
+    // Determine reversal type based on who is requesting and their role
+    // If the owner is requesting reversal, they likely rejected a passenger request
+    // If the passenger is requesting reversal, they likely cancelled their own confirmed ride
+    // However, we need to check the confirmation history to be more accurate
+    
+    // For now, use a simple heuristic:
+    // - If user is owner and confirmation was recently updated, it's likely a rejection
+    // - If user is passenger and confirmation was recently updated, it's likely a cancellation
+    const reversalType: 'cancellation' | 'rejection' = isPassenger ? 'cancellation' : 'rejection'
+    
+    console.log('getReversalEligibility: Eligibility result:', {
+      canReverse: true,
+      timeRemaining,
+      reversalType,
+      hoursSinceUpdate
+    })
 
     return {
       canReverse: true,

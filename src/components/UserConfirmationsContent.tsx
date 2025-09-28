@@ -67,8 +67,13 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
           },
           (payload) => {
             console.log('UserConfirmationsContent: Confirmation UPDATE detected:', payload)
+            
+            // Handle different status change scenarios
+            const oldStatus = payload.old.status
+            const newStatus = payload.new.status
+            
             // Check if status changed from rejected to pending (re-request)
-            if (payload.old.status === 'rejected' && payload.new.status === 'pending') {
+            if (oldStatus === 'rejected' && newStatus === 'pending') {
               console.log('UserConfirmationsContent: Re-request detected, refreshing immediately')
               setSuccessMessage('Request sent again successfully! It will appear in the pending section.')
               setTimeout(() => setSuccessMessage(''), 5000)
@@ -77,7 +82,30 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
                 fetchConfirmations()
                 checkForRecentActions()
               }, 500)
+            }
+            // Check if status changed from accepted to rejected (cancellation)
+            else if (oldStatus === 'accepted' && newStatus === 'rejected') {
+              console.log('UserConfirmationsContent: Cancellation detected, refreshing and checking for reversal alerts')
+              setSuccessMessage('Ride cancelled successfully. You can reverse this action within 24 hours if it was accidental.')
+              setTimeout(() => setSuccessMessage(''), 8000)
+              // Add delay to ensure database consistency
+              setTimeout(() => {
+                fetchConfirmations()
+                checkForRecentActions()
+              }, 500)
+            }
+            // Check if status changed from rejected to accepted (reversal)
+            else if (oldStatus === 'rejected' && newStatus === 'accepted') {
+              console.log('UserConfirmationsContent: Reversal detected, refreshing immediately')
+              setSuccessMessage('Action reversed successfully! The confirmation has been restored.')
+              setTimeout(() => setSuccessMessage(''), 5000)
+              // Add delay to ensure database consistency
+              setTimeout(() => {
+                fetchConfirmations()
+                checkForRecentActions()
+              }, 500)
             } else {
+              // Handle other status changes
               fetchConfirmations()
             }
           }
@@ -93,7 +121,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const checkForRecentActions = () => {
     console.log('UserConfirmationsContent: Checking for recent actions')
     const now = new Date()
-    const recentlyRejected = confirmations.filter(confirmation => {
+    const recentlyActioned = confirmations.filter(confirmation => {
       if (confirmation.status !== 'rejected') return false
       
       const updatedAt = new Date(confirmation.updated_at)
@@ -103,18 +131,20 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       const isRecent = hoursSinceUpdate <= 24
       
       if (isRecent) {
-        console.log('UserConfirmationsContent: Found recent rejection:', {
+        console.log('UserConfirmationsContent: Found recent action (rejection/cancellation):', {
           id: confirmation.id.slice(0, 8),
           hoursSinceUpdate,
-          updatedAt: updatedAt.toISOString()
+          updatedAt: updatedAt.toISOString(),
+          isOwner: confirmation.ride_owner_id === user?.id,
+          isPassenger: confirmation.passenger_id === user?.id
         })
       }
       
       return isRecent
     })
     
-    console.log('UserConfirmationsContent: Recent actions found:', recentlyRejected.length)
-    setRecentActions(recentlyRejected)
+    console.log('UserConfirmationsContent: Recent actions found:', recentlyActioned.length)
+    setRecentActions(recentlyActioned)
   }
 
   const fetchConfirmations = async () => {

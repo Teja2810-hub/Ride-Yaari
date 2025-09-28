@@ -53,42 +53,42 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   // Check reversal eligibility and request-again eligibility on mount
   React.useEffect(() => {
     console.log('ConfirmationItem: Checking eligibility for confirmation:', confirmation.id, 'status:', confirmation.status)
-    checkReversalEligibility()
-    checkRequestAgainEligibility()
+    if (confirmation.status === 'rejected') {
+      checkReversalEligibility()
+      checkRequestAgainEligibility()
+    }
   }, [confirmation])
 
   const checkReversalEligibility = async () => {
-    if (confirmation.status === 'rejected') {
-      try {
-        console.log('ConfirmationItem: Checking reversal eligibility')
-        const eligibility = await getReversalEligibility(confirmation.id, user?.id || '')
-        console.log('ConfirmationItem: Reversal eligibility result:', eligibility)
-        setCanReverse(eligibility.canReverse)
-        setReversalTimeRemaining(eligibility.timeRemaining || null)
-      } catch (error) {
-        console.error('Error checking reversal eligibility:', error)
-      }
+    try {
+      console.log('ConfirmationItem: Checking reversal eligibility')
+      const eligibility = await getReversalEligibility(confirmation.id, user?.id || '')
+      console.log('ConfirmationItem: Reversal eligibility result:', eligibility)
+      setCanReverse(eligibility.canReverse)
+      setReversalTimeRemaining(eligibility.timeRemaining || null)
+    } catch (error) {
+      console.error('Error checking reversal eligibility:', error)
+      setCanReverse(false)
+      setReversalTimeRemaining(null)
     }
   }
 
   const checkRequestAgainEligibility = async () => {
-    if (confirmation.status === 'rejected') {
-      try {
-        console.log('ConfirmationItem: Checking request again eligibility')
-        const eligibility = await canRequestAgain(
-          user?.id || '',
-          confirmation.ride_id || undefined,
-          confirmation.trip_id || undefined
-        )
-        console.log('ConfirmationItem: Request again eligibility result:', eligibility)
-        setCanRequestAgainState(eligibility.canRequest)
-        setRequestCooldownTime(eligibility.lastRejection || null)
-      } catch (error) {
-        console.error('Error checking request again eligibility:', error)
-        // Set safe defaults on error
-        setCanRequestAgainState(false)
-        setRequestCooldownTime(null)
-      }
+    try {
+      console.log('ConfirmationItem: Checking request again eligibility')
+      const eligibility = await canRequestAgain(
+        user?.id || '',
+        confirmation.ride_id || undefined,
+        confirmation.trip_id || undefined
+      )
+      console.log('ConfirmationItem: Request again eligibility result:', eligibility)
+      setCanRequestAgainState(eligibility.canRequest)
+      setRequestCooldownTime(eligibility.lastRejection || null)
+    } catch (error) {
+      console.error('Error checking request again eligibility:', error)
+      // Set safe defaults on error
+      setCanRequestAgainState(false)
+      setRequestCooldownTime(null)
     }
   }
 

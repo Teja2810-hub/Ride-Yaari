@@ -88,6 +88,28 @@ export default function AccidentalActionAlert({
     }
   }
 
+  const getActionDescription = () => {
+    switch (eligibility.reversalType) {
+      case 'cancellation':
+        return 'cancelled a confirmed ride'
+      case 'rejection':
+        return 'rejected a ride request'
+      default:
+        return 'took an action'
+    }
+  }
+
+  const getReversalDescription = () => {
+    switch (eligibility.reversalType) {
+      case 'cancellation':
+        return 'This will restore the confirmed ride and notify the other party that you want to proceed with the original arrangement.'
+      case 'rejection':
+        return 'This will restore the confirmation and notify the other party that you have changed your mind.'
+      default:
+        return 'This will restore the confirmation and notify the other party.'
+    }
+  }
+
   const getRideOrTripText = () => {
     const ride = confirmation.car_rides
     const trip = confirmation.trips
@@ -120,9 +142,15 @@ export default function AccidentalActionAlert({
             </h3>
             
             <p className="text-sm text-orange-800 mb-3">
-              You recently {eligibility.reversalType === 'rejection' ? 'rejected' : 'cancelled'} the {getRideOrTripText()}. 
+              You recently {getActionDescription()} for the {getRideOrTripText()}. 
               If this was accidental, you can reverse it within <strong>{timeLeft}</strong>.
             </p>
+
+            <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-3">
+              <p className="text-xs text-orange-900">
+                <strong>What reversing will do:</strong> {getReversalDescription()}
+              </p>
+            </div>
 
             <div className="flex items-center space-x-4">
               <button
@@ -130,7 +158,7 @@ export default function AccidentalActionAlert({
                 className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors text-sm"
               >
                 <RotateCcw size={14} />
-                <span>Undo {getActionText()}</span>
+                <span>Reverse {getActionText()}</span>
               </button>
               
               <button
