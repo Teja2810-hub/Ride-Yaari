@@ -604,7 +604,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     Test the confirmation flow and system functionality to ensure everything is working correctly.
                   </p>
                 </div>
-                <TestConfirmationFlow />
+                <SystemHealthDashboard />
               </div>
             )}
 

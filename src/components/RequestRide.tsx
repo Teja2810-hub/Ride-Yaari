@@ -99,12 +99,15 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
 
       // Create notification preference if enabled
       if (enableNotifications) {
+        const { createRideNotification } = await import('../utils/rideRequestHelpers')
+        
+        try {
         const notificationData = {
           user_id: user.id,
           notification_type: 'passenger_request' as const,
           departure_location: departureLocation.address,
           departure_latitude: departureLocation.latitude,
-          departure_longitude: destinationLocation.longitude,
+            departure_longitude: departureLocation.longitude,
           destination_location: destinationLocation.address,
           destination_latitude: destinationLocation.latitude,
           destination_longitude: destinationLocation.longitude,
@@ -117,6 +120,11 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
         }
 
         await createRideNotification(notificationData)
+          console.log('Passenger notification preference created successfully')
+        } catch (notificationError) {
+          console.error('Error creating passenger notification:', notificationError)
+          // Don't fail the request creation if notification setup fails
+        }
       }
 
       setSuccess(true)
