@@ -160,7 +160,7 @@ export default function RequestAgainModal({
               <RefreshCw size={16} className="sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">Request Again</h2>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Cannot Request Again</h2>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -229,19 +229,18 @@ export default function RequestAgainModal({
                 rows={2}
                 maxLength={200}
               />
-            <X size={18} className="sm:w-5 sm:h-5" />
+              <div className="text-xs text-gray-500 mt-1">
                 {reason.length}/200 characters
               </div>
             </div>
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Clock size={24} className="sm:w-8 sm:h-8 text-yellow-600" />
+          )}
+        </div>
 
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Request Not Available</h3>
-          <p className="text-sm sm:text-base text-gray-600 mb-4">
+        {/* Guidelines */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-start space-x-3">
             <AlertTriangle size={14} className="text-yellow-600 mt-0.5" />
             <div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4">
               <p className="text-xs sm:text-sm text-yellow-800">
                 Please be respectful when requesting again.
               </p>
@@ -250,7 +249,7 @@ export default function RequestAgainModal({
         </div>
 
         {/* Action Buttons */}
-          className="w-full bg-gray-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors text-sm sm:text-base"
+        <div className="flex space-x-3">
           <button
             onClick={onClose}
             className="flex-1 border border-gray-300 text-gray-700 py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base"
