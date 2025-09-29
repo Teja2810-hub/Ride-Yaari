@@ -34,6 +34,13 @@ class PopupManager {
     return userId ? `${this.storageKey}-${userId}` : `${this.storageKey}-guest`
   }
 
+  private getChatInteractionKey(userId?: string, otherUserId?: string): string {
+    if (!userId || !otherUserId) return ''
+    // Create a consistent key regardless of user order
+    const sortedIds = [userId, otherUserId].sort()
+    return `rideyaari-chat-interaction-${sortedIds[0]}-${sortedIds[1]}`
+  }
+
   private getPopupState(userId?: string): PopupState {
     try {
       const stored = localStorage.getItem(this.getStorageKey(userId))
@@ -69,7 +76,16 @@ class PopupManager {
   /**
    * Check if disclaimer popup should be shown
    */
-  shouldShowDisclaimer(type: string, userId?: string): boolean {
+  shouldShowDisclaimer(type: string, userId?: string, otherUserId?: string): boolean {
+    // For chat disclaimers, check if users have interacted before
+    if ((type === 'chat-trip' || type === 'chat-ride') && userId && otherUserId) {
+      const interactionKey = this.getChatInteractionKey(userId, otherUserId)
+      const hasInteracted = localStorage.getItem(interactionKey)
+      if (hasInteracted) {
+        return false // Don't show disclaimer if they've interacted before
+      }
+    }
+
     const state = this.getPopupState(userId)
     const today = new Date().toDateString()
     
@@ -88,7 +104,13 @@ class PopupManager {
   /**
    * Mark disclaimer as shown
    */
-  markDisclaimerShown(type: string, userId?: string): void {
+  markDisclaimerShown(type: string, userId?: string, otherUserId?: string): void {
+    // For chat disclaimers, mark interaction between users
+    if ((type === 'chat-trip' || type === 'chat-ride') && userId && otherUserId) {
+      const interactionKey = this.getChatInteractionKey(userId, otherUserId)
+      localStorage.setItem(interactionKey, 'true')
+    }
+
     const state = this.getPopupState(userId)
     state.disclaimerShown = true
     state.lastShownDate = new Date().toDateString()
