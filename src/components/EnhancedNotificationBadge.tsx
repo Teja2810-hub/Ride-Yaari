@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, X, Check, Clock, AlertTriangle, Car, Plane, MessageCircle, Filter, BookMarked as MarkAsRead, Zap } from 'lucide-react'
+import { Bell, X, Check, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, ListFilter as Filter, BookMarked as MarkAsRead, Zap } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { notificationService, NotificationStats } from '../utils/notificationService'
