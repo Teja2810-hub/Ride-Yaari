@@ -172,17 +172,12 @@ export const sendRideRequestNotification = async (
       ? ` at ${request.departure_time_preference}`
       : ''
 
-    const priceInfo = request.max_price 
-      ? `up to ${request.currency} ${request.max_price}`
-      : 'any price'
-
     const notificationMessage = `🚗 **Ride Request Nearby!**
 
 👤 **Passenger:** ${passengerName}
 📍 **Route:** ${request.departure_location} → ${request.destination_location}
 📅 **When:** ${dateInfo}${timeInfo}
 📏 **Distance:** ~${Math.round(departureDistance)}mi from your departure, ~${Math.round(destinationDistance)}mi from your destination
-💰 **Budget:** ${priceInfo}
 🔍 **Search Radius:** ${request.search_radius_miles} miles
 
 ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}**Your Matching Ride:**
@@ -396,7 +391,6 @@ export const sendMatchingRideNotification = async (
 **Your Request:**
 📍 ${request.departure_location} → ${request.destination_location}
 🔍 Search radius: ${request.search_radius_miles} miles
-${request.max_price ? `💰 Budget: up to ${request.currency} ${request.max_price}` : ''}
 
 💡 **Action:** Contact ${driverName} to request this ride!`
 
@@ -593,10 +587,6 @@ export const sendDriverNotificationAlert = async (
       ? ` at ${request.departure_time_preference}`
       : ''
 
-    const priceInfo = request.max_price 
-      ? `up to ${request.currency} ${request.max_price}`
-      : 'any price'
-
     const notificationMessage = `🔔 **Ride Request Alert!**
 
 You have a notification set up for this route and a passenger is looking for a ride!
@@ -605,7 +595,6 @@ You have a notification set up for this route and a passenger is looking for a r
 📍 **Route:** ${request.departure_location} → ${request.destination_location}
 📅 **When:** ${dateInfo}${timeInfo}
 📏 **Distance:** ~${Math.round(departureDistance)}mi from your notification area
-💰 **Budget:** ${priceInfo}
 🔍 **Search Radius:** ${request.search_radius_miles} miles
 
 ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this ride, post a matching ride or contact ${passengerName} directly!
