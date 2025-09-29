@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: null }
       } catch (otpError: any) {
         // If OTP is disabled, fall back to direct signup
-        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('First time Signups not allowed for otp, please register your account')) {
+        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('sign ups are not allowed for otp')) {
           console.log('OTP disabled, falling back to direct signup')
           
           // Clear any stored signup data since we're doing direct signup
