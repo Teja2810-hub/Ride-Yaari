@@ -136,11 +136,16 @@ export const sendTripRequestNotification = async (
       ? ` at ${request.departure_time_preference}`
       : ''
 
+    const priceInfo = request.max_price 
+      ? `up to ${request.currency} ${request.max_price}`
+      : 'any price'
+
     const notificationMessage = `✈️ **Trip Assistance Request!**
 
 👤 **Passenger:** ${passengerName}
 📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
 📅 **When:** ${dateInfo}${timeInfo}
+💰 **Budget:** ${priceInfo}
 
 ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}**Your Matching Trip:**
 ✈️ ${trip.leaving_airport} → ${trip.destination_airport}
@@ -310,6 +315,7 @@ ${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${t
 
 **Your Request:**
 📍 ${request.departure_airport} → ${request.destination_airport}
+${request.max_price ? `💰 Budget: up to ${request.currency} ${request.max_price}` : ''}
 ${request.additional_notes ? `📝 Notes: ${request.additional_notes}` : ''}
 
 💡 **Action:** Contact ${travelerName} to request assistance on this trip!`
@@ -473,6 +479,10 @@ export const sendTravelerNotificationAlert = async (
       ? ` at ${request.departure_time_preference}`
       : ''
 
+    const priceInfo = request.max_price 
+      ? `up to ${request.currency} ${request.max_price}`
+      : 'any price'
+
     const notificationMessage = `🔔 **Trip Request Alert!**
 
 You have a notification set up for this route and a passenger is looking for assistance!
@@ -480,6 +490,7 @@ You have a notification set up for this route and a passenger is looking for ass
 👤 **Passenger:** ${passengerName}
 📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
 📅 **When:** ${dateInfo}${timeInfo}
+💰 **Budget:** ${priceInfo}
 
 ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this assistance, post a matching trip or contact ${passengerName} directly!
 
