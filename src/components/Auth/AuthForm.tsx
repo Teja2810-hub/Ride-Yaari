@@ -146,6 +146,8 @@ export default function AuthForm({ onClose }: AuthFormProps) {
         setError('Connection to server timed out. Please check your internet connection or try again later.')
       } else if (error?.status === 429) {
         setError('Too many requests. Please wait before trying again.')
+      } else if (error?.message?.includes('otp_disabled') || error?.message?.includes('sign ups are not allowed for otp')) {
+        setError('First time Signups not allowed for otp, please register your account')
       } else {
         setError(error?.message || 'Failed to create account. Please try again.')
       }
@@ -611,6 +613,10 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 } catch (error: any) {
                   if (error?.status === 429) {
                     setError('Too many requests. Please wait before trying again.')
+                  } else if (error?.message?.includes('otp_disabled') || error?.message?.includes('sign ups are not allowed for otp')) {
+                    setError('First time Signups not allowed for otp, please register your account')
+                  } else if (error?.message?.includes('otp_disabled') || error?.message?.includes('sign ups are not allowed for otp')) {
+                    setError('First time Signups not allowed for otp, please register your account')
                   } else {
                     setError(error?.message || 'Failed to resend code.')
                   }
@@ -725,6 +731,8 @@ export default function AuthForm({ onClose }: AuthFormProps) {
                 } catch (error: any) {
                   if (error?.status === 429) {
                     setError('Too many requests. Please wait 60 seconds before trying again.')
+                  } else if (error?.message?.includes('otp_disabled') || error?.message?.includes('sign ups are not allowed for otp')) {
+                    setError('First time Signups not allowed for otp, please register your account')
                   } else {
                     setError(error?.message || 'Failed to resend code.')
                   }
