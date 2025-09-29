@@ -134,42 +134,9 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 px-2">
-            {/* Request a Trip Card - FIRST */}
-            <div
-              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
-              onClick={onRequestTrip}
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Trip</h3>
-                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
-                  Let travelers know you need assistance on their route and get notified when matching trips are posted
-                </p>
-                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
-                  <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
-                    Package delivery requests
-                  </p>
-                  <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
-                    Travel assistance needs
-                  </p>
-                  <p className="flex items-center justify-center">
-                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
-                    Companionship requests
-                  </p>
-                </div>
-                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
-                  Request Assistance
-                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Post a Trip Card */}
+          {/* Three-column layout for airport trips */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 px-2">
+            {/* Post a Trip Card - FIRST */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
               onClick={onPostTrip}
@@ -203,7 +170,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
               </div>
             </div>
 
-            {/* Find a Trip Card - THIRD */}
+            {/* Find a Trip Card - SECOND */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
               onClick={onFindTrip}
@@ -232,6 +199,40 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                 </div>
                 <div className="inline-flex items-center text-indigo-600 font-semibold group-hover:text-indigo-700 text-sm sm:text-base">
                   Discover Travelers
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Request a Trip Card - THIRD */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onRequestTrip}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Trip</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Let travelers know you need assistance on their route and get notified when matching trips are posted
+                </p>
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Package delivery requests
+                  </p>
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Travel assistance needs
+                  </p>
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Companionship requests
+                  </p>
+                </div>
+                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
+                  Request Assistance
                   <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
                 </div>
               </div>
