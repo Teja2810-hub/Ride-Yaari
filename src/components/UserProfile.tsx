@@ -620,7 +620,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     View and manage your active ride notification preferences. Delete notifications to stop receiving alerts.
                   </p>
                 </div>
-                <NotificationManagement />
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  <div className="text-center py-8">
+                    <Settings size={32} className="text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Notification Management</h3>
+                    <p className="text-gray-600">
+                      Notification management is being updated. Please check back later.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 

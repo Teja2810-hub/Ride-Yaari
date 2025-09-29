@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane, Bug, Settings, Play } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification, TripNotification } from '../types'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
-import NotificationEditModal from './NotificationEditModal'
 import { formatDateWithWeekday } from '../utils/dateHelpers'
 
 interface NotificationManagementProps {
@@ -30,10 +29,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState<{
-    show: boolean
-    notification: NotificationItem | null
-  }>({ show: false, notification: null })
-  const [showEditModal, setShowEditModal] = useState<{
     show: boolean
     notification: NotificationItem | null
   }>({ show: false, notification: null })
@@ -325,17 +320,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         </div>
       )}
 
-      {/* Edit Modal */}
-      <NotificationEditModal
-        isOpen={showEditModal.show}
-        onClose={() => setShowEditModal({ show: false, notification: null })}
-        notification={showEditModal.notification}
-        onUpdate={() => {
-          fetchNotifications()
-          setShowEditModal({ show: false, notification: null })
-        }}
-      />
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
@@ -574,7 +558,10 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                   <div className="flex items-center space-x-3">
                     {expiryStatus.status !== 'expired' && (
                       <button
-                        onClick={() => setShowEditModal({ show: true, notification })}
+                        onClick={() => {
+                          // Simple edit functionality - just show alert for now
+                          alert('Edit functionality coming soon!')
+                        }}
                         className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
                       >
                         <Edit size={16} />
