@@ -11,7 +11,7 @@ interface UserConfirmationsContentProps {
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
 }
 
-type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected'
+type StatusFilter = 'pending' | 'accepted' | 'rejected'
 type SortOption = 'date-desc' | 'date-asc' | 'status'
 
 export default function UserConfirmationsContent({ onStartChat }: UserConfirmationsContentProps) {
@@ -19,7 +19,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
   const [confirmations, setConfirmations] = useState<RideConfirmation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [activeTab, setActiveTab] = useState<StatusFilter>('pending')
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
@@ -108,21 +108,19 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     }
   }
 
-  const filteredAndSortedConfirmations = () => {
-    let filtered = confirmations.filter(confirmation => {
-      // Status filter
-      const statusMatch = statusFilter === 'all' || confirmation.status === statusFilter
+  const getFilteredConfirmations = (status: StatusFilter) => {
+    let filtered = confirmations.filter(confirmation => confirmation.status === status)
 
-      // Search filter
-      const searchMatch = searchTerm === '' || 
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(confirmation =>
         confirmation.user_profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (confirmation.car_rides?.from_location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (confirmation.car_rides?.to_location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (confirmation.trips?.leaving_airport || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (confirmation.trips?.destination_airport || '').toLowerCase().includes(searchTerm.toLowerCase())
-
-      return statusMatch && searchMatch
-    })
+      )
+    }
 
     // Apply sorting
     filtered.sort((a, b) => {
@@ -153,32 +151,6 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     return { total, pending, accepted, rejected }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'accepted':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock size={14} className="text-yellow-600" />
-      case 'accepted':
-        return <Check size={14} className="text-green-600" />
-      case 'rejected':
-        return <X size={14} className="text-red-600" />
-      default:
-        return <AlertTriangle size={14} className="text-gray-600" />
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -205,35 +177,48 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
     )
   }
 
-  const filteredConfirmations = filteredAndSortedConfirmations()
   const stats = getStats()
+  const filteredConfirmations = getFilteredConfirmations(activeTab)
 
   return (
     <div>
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total</div>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-4 text-center">
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div 
+          onClick={() => setActiveTab('pending')}
+          className={`rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            activeTab === 'pending' ? 'bg-yellow-100 border-2 border-yellow-500' : 'bg-yellow-50 border border-yellow-200 hover:bg-yellow-100'
+          }`}
+        >
           <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          <div className="text-sm text-gray-600">Pending</div>
+          <div className="text-sm text-yellow-800">Pending</div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 text-center">
+        <div 
+          onClick={() => setActiveTab('accepted')}
+          className={`rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            activeTab === 'accepted' ? 'bg-green-100 border-2 border-green-500' : 'bg-green-50 border border-green-200 hover:bg-green-100'
+          }`}
+        >
           <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
-          <div className="text-sm text-gray-600">Accepted</div>
+          <div className="text-sm text-green-800">Accepted</div>
         </div>
-        <div className="bg-red-50 rounded-lg p-4 text-center">
+        <div 
+          onClick={() => setActiveTab('rejected')}
+          className={`rounded-lg p-4 text-center cursor-pointer transition-colors ${
+            activeTab === 'rejected' ? 'bg-red-100 border-2 border-red-500' : 'bg-red-50 border border-red-200 hover:bg-red-100'
+          }`}
+        >
           <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-          <div className="text-sm text-gray-600">Rejected</div>
+          <div className="text-sm text-red-800">Rejected</div>
         </div>
       </div>
 
       {/* Search and Filter Controls */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Filter & Search</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">
+            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Confirmations ({filteredConfirmations.length})
+          </h3>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -257,34 +242,18 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
               />
             </div>
 
-            {/* Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                >
-                  <option value="date-desc">Newest First</option>
-                  <option value="date-asc">Oldest First</option>
-                  <option value="status">By Status</option>
-                </select>
-              </div>
+            {/* Sort */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              >
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="status">By Status</option>
+              </select>
             </div>
           </div>
         )}
@@ -297,12 +266,12 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             <MessageCircle size={32} className="text-gray-400" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {confirmations.length === 0 ? 'No Confirmations Yet' : 'No Matching Confirmations'}
+            No {activeTab} Confirmations
           </h3>
           <p className="text-gray-600">
-            {confirmations.length === 0 
-              ? 'Confirmations will appear here when you request rides or receive requests.'
-              : 'Try adjusting your search or filter criteria.'
+            {searchTerm 
+              ? 'No confirmations match your search criteria.'
+              : `You don't have any ${activeTab} confirmations yet.`
             }
           </p>
         </div>

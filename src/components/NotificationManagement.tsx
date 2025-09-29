@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane, Bug, Settings, Play } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification, TripNotification } from '../types'
@@ -65,8 +65,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const fetchNotifications = async () => {
     if (!user) return
 
-    console.log('NotificationManagement: Fetching notifications for user:', user.id)
-    
     await handleAsync(async () => {
       // Fetch ride notifications
       const { data: rideData, error: rideError } = await supabase
@@ -92,7 +90,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         throw tripError
       }
 
-      console.log('NotificationManagement: Fetched notifications:', (rideData?.length || 0) + (tripData?.length || 0), 'total')
       setRideNotifications(rideData || [])
       setTripNotifications(tripData || [])
     })
@@ -123,9 +120,9 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
       
       setSuccessMessage('Notification deleted successfully!')
       setTimeout(() => setSuccessMessage(''), 3000)
-    }).finally(() => {
-      setDeletingId(null)
     })
+    
+    setDeletingId(null)
   }
 
 
@@ -142,7 +139,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   }
 
   const getExpiryStatus = (notification: RideNotification) => {
-    if (!notification.expires_at) return { status: 'no-expiry', text: 'No expiry', color: 'text-gray-600' }
+    if (!notification.expires_at) return { status: 'no-expiry', text: 'Active', color: 'text-green-600' }
     
     const expiryDate = new Date(notification.expires_at)
     const now = new Date()
@@ -323,7 +320,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <Bell size={24} className="text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
         </div>
         <div className="flex items-center space-x-3">
@@ -559,7 +555,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                     {expiryStatus.status !== 'expired' && (
                       <button
                         onClick={() => {
-                          // Simple edit functionality - just show alert for now
                           alert('Edit functionality coming soon!')
                         }}
                         className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
