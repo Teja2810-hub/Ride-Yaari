@@ -330,10 +330,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
+                  disabled={loading}
                   className={`flex items-center space-x-2 px-6 py-4 font-medium text-sm whitespace-nowrap transition-colors ${
                     activeTab === tab.id
                       ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
+                      : loading ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {tab.icon}
@@ -348,6 +349,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                 {error}
+              </div>
+            )}
+
+            {loading && (
+              <div className="mb-6">
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+                  <span className="text-gray-600">Loading...</span>
+                </div>
               </div>
             )}
 
@@ -391,6 +401,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     <button
                       onClick={() => setShowProfileEdit(true)}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
                     >
                       <UserCog size={16} />
@@ -398,6 +409,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('trips')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
                       <Plane size={16} />
@@ -405,6 +417,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('rides')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-green-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                     >
                       <Car size={16} />
@@ -412,6 +425,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('confirmations')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                     >
                       <MessageCircle size={16} />
@@ -419,6 +433,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('blocked')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
                     >
                       <Shield size={16} />
@@ -426,6 +441,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('notifications')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                     >
                       <Bell size={16} />
@@ -433,6 +449,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     </button>
                     <button
                       onClick={() => setActiveTab('notification-management')}
+                      disabled={loading}
                       className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                     >
                       <Settings size={16} />
@@ -495,6 +512,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             )}
 
             {activeTab === 'trips' && (
+              !loading ? (
               <TripCategorySelector
                 offeredTrips={trips}
                 joinedTrips={joinedTrips}
@@ -508,9 +526,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 onViewTripHistory={handleViewTripHistory}
                 onRefresh={fetchUserData}
               />
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+                  <span className="text-gray-600">Loading trips...</span>
+                </div>
+              )
             )}
 
             {activeTab === 'rides' && (
+              !loading ? (
               <RideCategorySelector
                 offeredRides={rides}
                 joinedRides={joinedRides}
@@ -524,9 +549,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 onViewRideHistory={handleViewRideHistory}
                 onRefresh={fetchUserData}
               />
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+                  <span className="text-gray-600">Loading rides...</span>
+                </div>
+              )
             )}
 
             {activeTab === 'confirmations' && (
+              !loading ? (
               <div>
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Ride Confirmations</h2>
@@ -536,6 +568,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 </div>
                 <UserConfirmationsContent onStartChat={onStartChat} />
               </div>
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+                  <span className="text-gray-600">Loading confirmations...</span>
+                </div>
+              )
             )}
 
             {activeTab === 'blocked' && (
