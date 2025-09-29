@@ -68,9 +68,6 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
         specific_date: requestType === 'specific_date' ? specificDate : undefined,
         multiple_dates: requestType === 'multiple_dates' ? multipleDates.filter(d => d) : undefined,
         request_month: requestType === 'month' ? requestMonth : undefined,
-        departure_time_preference: departureTimePreference || undefined,
-        max_price: maxPrice ? parseFloat(maxPrice) : undefined,
-        currency: currency,
         additional_notes: additionalNotes || undefined,
         is_active: true
       }
@@ -235,61 +232,6 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
               )}
             </div>
 
-            {error && (
-              <ErrorMessage
-                message={error}
-                onDismiss={clearError}
-                className="mb-6"
-              />
-            )}
-
-            {isLoading && (
-              <div className="mb-6">
-                <LoadingSpinner text="Sending ride request..." />
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Location Fields */}
-              <LocationAutocomplete
-                value={departureLocation}
-                onChange={setDepartureLocation}
-                placeholder="Enter pickup location..."
-                label="Pickup Location"
-                required
-              />
-
-              <LocationAutocomplete
-                value={destinationLocation}
-                onChange={setDestinationLocation}
-                placeholder="Enter destination..."
-                label="Destination"
-                required
-              />
-
-              {/* Search Radius */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Radius
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <select
-                    value={searchRadius}
-                    onChange={(e) => setSearchRadius(parseInt(e.target.value))}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  >
-                    <option value={5}>5 miles</option>
-                    <option value={10}>10 miles</option>
-                    <option value={15}>15 miles</option>
-                    <option value={25}>25 miles (Recommended)</option>
-                    <option value={50}>50 miles</option>
-                    <option value={100}>100 miles</option>
-                  </select>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Drivers within this radius will be notified of your request
-                </p>
               </div>
 
               {/* Request Type */}
