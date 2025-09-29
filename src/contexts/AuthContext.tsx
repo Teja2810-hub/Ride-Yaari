@@ -187,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             otpError.message?.includes('sign ups are not allowed for otp') ||
             otpError.message?.includes('Signups not allowed for otp') ||
             otpError.message?.includes('Signups not allowed for otp')) {
-          throw new Error('First time Signups not allowed for otp, please register your account')
+          throw new Error('Looks Like this is your first time!  please register your account by clicking on sign up!')
         }
         
         // If it's another OTP error but not the signup restriction, fall back to direct signup
@@ -328,7 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error?.message?.includes('Signups not allowed for otp') || 
           error?.message?.includes('sign ups are not allowed for otp') ||
           error?.message?.includes('otp_disabled')) {
-        throw new Error('First time Signups not allowed for otp, please register your account')
+        throw new Error('Looks Like this is your first time!  please register your account by clicking on sign up!')
       }
       
       // Check if user exists by email for other errors
