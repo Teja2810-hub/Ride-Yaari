@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plane, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Circle as HelpCircle, MessageCircle } from 'lucide-react'
+import { Plane, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Circle as HelpCircle, MessageCircle, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
@@ -10,6 +10,7 @@ import NotificationBadge from './NotificationBadge'
 interface DashboardProps {
   onPostTrip: () => void
   onFindTrip: () => void
+  onRequestTrip: () => void
   onProfile: () => void
   onBack: () => void
   onHelp: () => void
@@ -18,7 +19,7 @@ interface DashboardProps {
   isGuest?: boolean
 }
 
-export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
+export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
 
   const handleStartChat = (userId: string, userName: string) => {
@@ -134,6 +135,40 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 px-2">
+            {/* Request a Trip Card - FIRST */}
+            <div
+              className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
+              onClick={onRequestTrip}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Send size={28} className="sm:w-9 sm:h-9 text-white" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Request a Trip</h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
+                  Let travelers know you need assistance on their route and get notified when matching trips are posted
+                </p>
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Package delivery requests
+                  </p>
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Travel assistance needs
+                  </p>
+                  <p className="flex items-center justify-center">
+                    <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+                    Companionship requests
+                  </p>
+                </div>
+                <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 text-sm sm:text-base">
+                  Request Assistance
+                  <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </div>
+
             {/* Post a Trip Card */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
@@ -168,7 +203,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
               </div>
             </div>
 
-            {/* Find a Trip Card */}
+            {/* Find a Trip Card - THIRD */}
             <div
               className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
               onClick={onFindTrip}
@@ -205,20 +240,29 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
 
           <div className="mt-8 sm:mt-16 bg-white rounded-2xl shadow-lg p-4 sm:p-8 mx-2">
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">How Airport Trips Work</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               <div className="text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">1</span>
                   </div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Share or Search</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">Post your flight details or search for travelers on your needed route</p>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Request Assistance</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Let travelers know you need help with your preferred route and timing</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">2</span>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Post Your Trip</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Post your flight details or search for travelers on your needed route</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">3</span>
                   </div>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Connect</h4>
@@ -227,7 +271,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onProfile, onBack, o
               <div className="text-center">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">3</span>
+                    <span className="text-white font-bold text-xs sm:text-sm">4</span>
                   </div>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Complete</h4>

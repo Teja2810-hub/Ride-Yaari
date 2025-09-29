@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard'
 import CarDashboard from './components/CarDashboard'
 import PostTrip from './components/PostTrip'
 import FindTrip from './components/FindTrip'
+import RequestTrip from './components/RequestTrip'
 import PostRide from './components/PostRide'
 import FindRide from './components/FindRide'
 import UserProfile from './components/UserProfile'
@@ -29,7 +30,7 @@ import { User } from 'lucide-react'
 import { popupManager } from './utils/popupManager'
 import { setupGlobalErrorHandling } from './utils/errorReporting'
 
-type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'post-ride' | 'find-ride' | 'request-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
+type AppView = 'platform-selector' | 'airport-dashboard' | 'car-dashboard' | 'post-trip' | 'find-trip' | 'request-trip' | 'post-ride' | 'find-ride' | 'request-ride' | 'profile' | 'help' | 'chat' | 'edit-trip' | 'edit-ride' | 'how-it-works' | 'reviews' | 'privacy-policy' | 'terms-of-service'
 
 function AppContent() {
   const { user, loading, isGuest, setGuestMode } = useAuth()
@@ -216,6 +217,7 @@ function AppContent() {
                       <Dashboard
                         onPostTrip={() => setCurrentView('post-trip')}
                         onFindTrip={() => setCurrentView('find-trip')}
+                        onRequestTrip={() => setCurrentView('request-trip')}
                         onProfile={() => setCurrentView('profile')}
                         onBack={() => setCurrentView('platform-selector')}
                         onHelp={() => setCurrentView('help')}
@@ -252,6 +254,15 @@ function AppContent() {
                       <FindTrip 
                         onBack={handleBackToAirportDashboard} 
                         onStartChat={handleStartChat}
+                        isGuest={isGuest}
+                      />
+                    </ErrorBoundary>
+                  )
+                case 'request-trip':
+                  return (
+                    <ErrorBoundary>
+                      <RequestTrip 
+                        onBack={handleBackToAirportDashboard} 
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>
