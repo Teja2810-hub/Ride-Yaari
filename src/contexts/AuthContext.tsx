@@ -152,6 +152,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Try OTP first, fallback to direct signup if OTP is disabled
       try {
+        // First check if user already exists
+        const existingUserId = await supabase.rpc('get_user_id_by_email', { email_param: email })
+        
+        if (existingUserId) {
+          throw new Error('An account with this email already exists. Please sign in instead.')
+        }
+
         // Store signup data temporarily in localStorage for OTP verification
         const signupData = {
           email,
@@ -175,8 +182,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error
         return { error: null }
       } catch (otpError: any) {
-        // If OTP is disabled, fall back to direct signup
-        if (otpError.message?.includes('otp_disabled') || otpError.message?.includes('sign ups are not allowed for otp')) {
+        // Check for first-time signup with OTP disabled
+        if (otpError.message?.includes('otp_disabled') || 
+            otpError.message?.includes('sign ups are not allowed for otp') ||
+            otpError.message?.includes('Signups not allowed for otp')) {
+          throw new Error('First time Signups not allowed for otp, please register your account')
+        }
+        
+        // If it's another OTP error but not the signup restriction, fall back to direct signup
+        if (otpError.message?.includes('otp') && !otpError.message?.includes('account with this email already exists')) {
           console.log('OTP disabled, falling back to direct signup')
           
           // Clear any stored signup data since we're doing direct signup
