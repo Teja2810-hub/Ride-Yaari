@@ -314,13 +314,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLinkOtp = async (email: string) => {
     try {
-      // Check if user exists by email
-      const userId = await supabase.rpc('get_user_id_by_email', { email_param: email })
-      
-      if (!userId) {
-        throw new Error('No account found with this email address. Please create an account first.')
-      }
-      
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
@@ -331,6 +324,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error
       return { error: null }
     } catch (error: any) {
+      // Handle the specific "Signups not allowed for otp" error
+      if (error?.message?.includes('Signups not allowed for otp') || 
+          error?.message?.includes('sign ups are not allowed for otp') ||
+          error?.message?.includes('otp_disabled')) {
+        throw new Error('First time Signups not allowed for otp, please register your account')
+      }
+      
+      // Check if user exists by email for other errors
+      try {
+        const userId = await supabase.rpc('get_user_id_by_email', { email_param: email })
+        if (!userId) {
+          throw new Error('No account found with this email address. Please create an account first.')
+        }
+      } catch (checkError) {
+        // If we can't check user existence, return the original error
+        console.error('Error checking user existence:', checkError)
+      }
+      
       return { error }
     }
   }
