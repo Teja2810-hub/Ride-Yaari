@@ -56,6 +56,9 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
         specific_date: requestType === 'specific_date' ? specificDate : undefined,
         multiple_dates: requestType === 'multiple_dates' ? multipleDates.filter(d => d) : undefined,
         request_month: requestType === 'month' ? requestMonth : undefined,
+        departure_time_preference: departureTimePreference || undefined,
+        max_price: maxPrice ? parseFloat(maxPrice) : undefined,
+        currency: currency,
         additional_notes: additionalNotes || undefined,
         is_active: true
       }
@@ -213,6 +216,61 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
               )}
             </div>
 
+            {error && (
+              <ErrorMessage
+                message={error}
+                onDismiss={clearError}
+                className="mb-6"
+              />
+            )}
+
+            {isLoading && (
+              <div className="mb-6">
+                <LoadingSpinner text="Sending trip request..." />
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Airport Fields */}
+              <AirportAutocomplete
+                value={departureAirport}
+                onChange={setDepartureAirport}
+                placeholder="Search departure airport..."
+                label="Departure Airport"
+                required
+              />
+
+              <AirportAutocomplete
+                value={destinationAirport}
+                onChange={setDestinationAirport}
+                placeholder="Search destination airport..."
+                label="Destination Airport"
+                required
+              />
+
+              {/* Request Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  When do you need the trip assistance?
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requestType"
+                      value="specific_date"
+                      checked={requestType === 'specific_date'}
+                      onChange={(e) => setRequestType(e.target.value as RequestType)}
+                      className="mr-3"
+                    />
+                    <span className="text-sm text-gray-700">Specific Date</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requestType"
+                      value="multiple_dates"
+                      checked={requestType === 'multiple_dates'}
                       onChange={(e) => setRequestType(e.target.value as RequestType)}
                       className="mr-3"
                     />
