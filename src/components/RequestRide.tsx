@@ -99,24 +99,24 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
         const { createRideNotification } = await import('../utils/rideRequestHelpers')
         
         try {
-          const notificationData = {
-            user_id: user.id,
-            notification_type: 'passenger_request' as const,
-            departure_location: departureLocation.address,
-            departure_latitude: departureLocation.latitude,
+        const notificationData = {
+          user_id: user.id,
+          notification_type: 'passenger_request' as const,
+          departure_location: departureLocation.address,
+          departure_latitude: departureLocation.latitude,
             departure_longitude: departureLocation.longitude,
-            destination_location: destinationLocation.address,
-            destination_latitude: destinationLocation.latitude,
-            destination_longitude: destinationLocation.longitude,
-            search_radius_miles: searchRadius,
-            date_type: notificationDateType,
-            specific_date: notificationDateType === 'specific_date' ? notificationSpecificDate : undefined,
-            multiple_dates: notificationDateType === 'multiple_dates' ? notificationMultipleDates.filter(d => d) : undefined,
-            notification_month: notificationDateType === 'month' ? notificationMonth : undefined,
-            is_active: true
-          }
+          destination_location: destinationLocation.address,
+          destination_latitude: destinationLocation.latitude,
+          destination_longitude: destinationLocation.longitude,
+          search_radius_miles: searchRadius,
+          date_type: notificationDateType,
+          specific_date: notificationDateType === 'specific_date' ? notificationSpecificDate : undefined,
+          multiple_dates: notificationDateType === 'multiple_dates' ? notificationMultipleDates.filter(d => d) : undefined,
+          notification_month: notificationDateType === 'month' ? notificationMonth : undefined,
+          is_active: true
+        }
 
-          await createRideNotification(notificationData)
+        await createRideNotification(notificationData)
           console.log('Passenger notification preference created successfully')
         } catch (notificationError) {
           console.error('Error creating passenger notification:', notificationError)
@@ -232,61 +232,6 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
               )}
             </div>
 
-            {error && (
-              <ErrorMessage
-                message={error}
-                onRetry={clearError}
-                onDismiss={clearError}
-                className="mb-6"
-              />
-            )}
-
-            {isLoading && (
-              <div className="mb-6">
-                <LoadingSpinner text="Sending request..." />
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <LocationAutocomplete
-                value={departureLocation}
-                onChange={setDepartureLocation}
-                placeholder="Enter departure location..."
-                label="From Location"
-                required
-              />
-
-              <LocationAutocomplete
-                value={destinationLocation}
-                onChange={setDestinationLocation}
-                placeholder="Enter destination location..."
-                label="To Location"
-                required
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Radius
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <input
-                    type="range"
-                    min="5"
-                    max="100"
-                    value={searchRadius}
-                    onChange={(e) => setSearchRadius(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm text-gray-600 mt-1">
-                    <span>5 miles</span>
-                    <span className="font-medium">{searchRadius} miles</span>
-                    <span>100 miles</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Larger radius = more potential matches
-                </p>
               </div>
 
               {/* Request Type */}
