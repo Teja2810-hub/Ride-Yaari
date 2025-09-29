@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Clock, DollarSign, Send, Bell, Search, User, Plane } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, DollarSign, Send, Bell, Search, User, Plane, Plus, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import AirportAutocomplete from './AirportAutocomplete'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
@@ -213,6 +213,61 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
               )}
             </div>
 
+            {error && (
+              <ErrorMessage
+                message={error}
+                onRetry={clearError}
+                onDismiss={clearError}
+                className="mb-6"
+              />
+            )}
+
+            {isLoading && (
+              <div className="mb-6">
+                <LoadingSpinner text="Sending request..." />
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <AirportAutocomplete
+                value={departureAirport}
+                onChange={setDepartureAirport}
+                placeholder="Search for departure airport..."
+                label="Departure Airport"
+                required
+              />
+
+              <AirportAutocomplete
+                value={destinationAirport}
+                onChange={setDestinationAirport}
+                placeholder="Search for destination airport..."
+                label="Destination Airport"
+                required
+              />
+
+              {/* Request Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  When do you need the trip?
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requestType"
+                      value="specific_date"
+                      checked={requestType === 'specific_date'}
+                      onChange={(e) => setRequestType(e.target.value as RequestType)}
+                      className="mr-3"
+                    />
+                    <span className="text-sm text-gray-700">Specific Date</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="requestType"
+                      value="multiple_dates"
+                      checked={requestType === 'multiple_dates'}
                       onChange={(e) => setRequestType(e.target.value as RequestType)}
                       className="mr-3"
                     />
@@ -264,7 +319,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
                         onClick={addMultipleDate}
                         className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        <span>+</span>
+                        <Plus size={16} />
                         <span>Add Date</span>
                       </button>
                     )}
@@ -289,7 +344,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
                           onClick={() => removeMultipleDate(index)}
                           className="flex items-center justify-center w-10 h-10 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                         >
-                          ×
+                          <X size={16} />
                         </button>
                       )}
                     </div>
@@ -479,7 +534,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
                               onClick={addNotificationDate}
                               className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
-                              <span>+</span>
+                              <Plus size={16} />
                               <span>Add Date</span>
                             </button>
                           )}
@@ -500,7 +555,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
                                 onClick={() => removeNotificationDate(index)}
                                 className="flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               >
-                                ×
+                                <X size={14} />
                               </button>
                             )}
                           </div>
