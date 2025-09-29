@@ -173,3 +173,48 @@ export interface NotificationMatch {
   notified_user_id: string
   created_at: string
 }
+
+export interface TripRequest {
+  id: string
+  passenger_id: string
+  departure_airport: string
+  destination_airport: string
+  request_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  request_month?: string
+  departure_time_preference?: string
+  max_price?: number
+  currency: string
+  additional_notes?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles?: UserProfile
+}
+
+export interface TripNotification {
+  id: string
+  user_id: string
+  notification_type: 'passenger_request' | 'traveler_post'
+  departure_airport: string
+  destination_airport: string
+  date_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  notification_month?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TripNotificationMatch {
+  id: string
+  notification_id: string
+  matched_item_id: string
+  matched_item_type: 'trip_post' | 'trip_request'
+  notified_user_id: string
+  created_at: string
+}
