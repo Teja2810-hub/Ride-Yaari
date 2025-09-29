@@ -327,7 +327,7 @@ function AppContent() {
                   return (
                     <ErrorBoundary>
                       <Chat
-                        key={`chat-${chatUserId}-${Date.now()}`}
+                        key={`chat-${chatUserId}`}
                         onBack={handleBackToDashboard}
                         otherUserId={chatUserId}
                         otherUserName={chatUserName}
