@@ -519,6 +519,183 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 }
 
 /**
+ * Find matching travelers for a trip request and send notifications
+ */
+export const notifyMatchingTravelers = async (requestId: string): Promise<{
+  success: boolean
+  notifiedTravelers: number
+  error?: string
+}> => {
+  return retryWithBackoff(async () => {
+    console.log('Finding matching travelers for request:', requestId)
+    
+    // Get the trip request details
+    const { data: request, error: requestError } = await supabase
+      .from('trip_requests')
+      .select(`
+        *,
+        user_profiles!trip_requests_passenger_id_fkey (
+          full_name
+        )
+      `)
+      .eq('id', requestId)
+      .single()
+
+    if (requestError || !request) {
+      throw new Error('Trip request not found')
+    }
+
+    console.log('Found trip request:', {
+      id: request.id,
+      passenger: request.user_profiles?.full_name,
+      route: `${request.departure_airport} → ${request.destination_airport}`
+    })
+
+    // Find matching trips
+    const { data: trips, error: tripsError } = await supabase
+      .from('trips')
+      .select(`
+        *,
+        user_profiles!trips_user_id_fkey (
+          id,
+          full_name
+        )
+      `)
+      .eq('is_closed', false)
+      .gte('travel_date', new Date().toISOString().split('T')[0]) // Only future trips
+      .eq('leaving_airport', request.departure_airport)
+      .eq('destination_airport', request.destination_airport)
+
+    if (tripsError) {
+      throw new Error(tripsError.message)
+    }
+
+    console.log('Found trips to check:', trips?.length || 0)
+
+    const matchingTrips: Trip[] = []
+
+    // Check each trip for date matching
+    for (const trip of trips || []) {
+      // Skip if it's the passenger's own trip
+      if (trip.user_id === request.passenger_id) continue
+
+      // Check date matching
+      const tripDate = new Date(trip.travel_date)
+      let dateMatches = false
+
+      if (request.request_type === 'specific_date' && request.specific_date) {
+        dateMatches = tripDate.toDateString() === new Date(request.specific_date).toDateString()
+      } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+        dateMatches = request.multiple_dates.some(date => 
+          tripDate.toDateString() === new Date(date).toDateString()
+        )
+      } else if (request.request_type === 'month' && request.request_month) {
+        const tripMonth = `${tripDate.getFullYear()}-${String(tripDate.getMonth() + 1).padStart(2, '0')}`
+        dateMatches = tripMonth === request.request_month
+      }
+
+      if (dateMatches) {
+        matchingTrips.push(trip)
+      }
+    }
+
+    console.log('Found matching trips:', matchingTrips.length)
+
+    // Send notifications to matching travelers
+    let notifiedTravelers = 0
+    for (const trip of matchingTrips) {
+      try {
+        await sendTripRequestNotification(
+          trip.user_id,
+          request,
+          trip
+        )
+        notifiedTravelers++
+      } catch (error) {
+        console.error('Error notifying traveler:', trip.user_id, error)
+      }
+    }
+
+    console.log('Notified travelers:', notifiedTravelers)
+
+    return {
+      success: true,
+      notifiedTravelers
+    }
+  })
+}
+
+/**
+ * Send notification to a traveler about a trip request
+ */
+export const sendTripRequestNotification = async (
+  travelerId: string,
+  request: TripRequest & { user_profiles?: { full_name: string } },
+  trip: Trip
+): Promise<void> => {
+  try {
+    const passengerName = request.user_profiles?.full_name || await getUserDisplayName(request.passenger_id)
+    
+    const dateInfo = request.request_type === 'specific_date' 
+      ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}`
+      : request.request_type === 'month'
+        ? `in ${request.request_month}`
+        : 'on multiple dates'
+
+    const timeInfo = request.departure_time_preference 
+      ? ` at ${request.departure_time_preference}`
+      : ''
+
+    const priceInfo = request.max_price 
+      ? `up to ${request.currency} ${request.max_price}`
+      : 'any price'
+
+    const notificationMessage = `✈️ **Trip Assistance Request!**
+
+👤 **Passenger:** ${passengerName}
+📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
+📅 **When:** ${dateInfo}${timeInfo}
+💰 **Budget:** ${priceInfo}
+
+${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}**Your Matching Trip:**
+✈️ ${trip.leaving_airport} → ${trip.destination_airport}
+📅 ${new Date(trip.travel_date).toLocaleDateString('en-US', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+})}${trip.departure_time ? ` at ${trip.departure_time}` : ''}
+${trip.price ? `💰 ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 Free assistance'}
+
+💡 **Action:** Contact ${passengerName} if you can provide this assistance!`
+
+    // Send system message to traveler
+    const { error } = await supabase
+      .from('chat_messages')
+      .insert({
+        sender_id: '00000000-0000-0000-0000-000000000000', // System user
+        receiver_id: travelerId,
+        message_content: notificationMessage,
+        message_type: 'system',
+        is_read: false
+      })
+
+    if (error) {
+      throw error
+    }
+
+    console.log(`Trip request notification sent to traveler ${travelerId}`)
+  } catch (error) {
+    console.error('Error sending trip request notification:', error)
+    throw error
+  }
+}
+/**
  * Auto-expire old trip requests and notifications
  */
 export const cleanupExpiredTripNotifications = async (): Promise<{

@@ -242,12 +242,14 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         return (notification as RideNotification).notification_type === filterType || 
                (notification as TripNotification).notification_type === filterType
       }
-      
-      // Search filter
-      const searchMatch = searchTerm === '' || getLocationDisplay(notification).toLowerCase().includes(searchTerm.toLowerCase())
-      
-      return searchMatch
     })
+    
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(notification => 
+        getLocationDisplay(notification).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
 
     // Apply sorting
     filtered.sort((a, b) => {

@@ -82,6 +82,18 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
 
       if (error) throw error
 
+      if (data && data.length > 0) {
+        const { notifyMatchingPassengers } = await import('../utils/tripNotificationService')
+        
+        try {
+          const notificationResult = await notifyMatchingPassengers(data[0].id)
+          console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
+        } catch (notificationError) {
+          console.error('Error notifying matching passengers:', notificationError)
+          // Don't fail the trip creation if notifications fail
+        }
+      }
+
       setSuccess(true)
       // Reset form
       setLeavingAirport('')
