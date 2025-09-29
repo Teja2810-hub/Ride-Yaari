@@ -213,17 +213,23 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
-    // Mark messages as read first
-    const { error } = await supabase
-      .from('chat_messages')
-      .update({ is_read: true })
-      .eq('sender_id', userId)
-      .eq('receiver_id', user?.id)
+    try {
+      // Mark messages as read first
+      await supabase
+        .from('chat_messages')
+        .update({ is_read: true })
+        .eq('sender_id', userId)
+        .eq('receiver_id', user?.id)
 
-    if (!error) {
-      // Re-fetch counts and conversations to ensure accuracy
-      await fetchUnreadCount()
-      await fetchConversations()
+      // Update local state immediately
+      setUnreadCount(0)
+      setConversations(prev => prev.map(conv => 
+        conv.other_user_id === userId 
+          ? { ...conv, unread_count: 0 }
+          : conv
+      ))
+    } catch (error) {
+      console.error('Error marking messages as read:', error)
     }
 
     setShowDropdown(false)
