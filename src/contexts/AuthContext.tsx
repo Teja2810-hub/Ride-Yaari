@@ -185,6 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check for first-time signup with OTP disabled
         if (otpError.message?.includes('otp_disabled') || 
             otpError.message?.includes('sign ups are not allowed for otp') ||
+            otpError.message?.includes('Signups not allowed for otp') ||
             otpError.message?.includes('Signups not allowed for otp')) {
           throw new Error('First time Signups not allowed for otp, please register your account')
         }
