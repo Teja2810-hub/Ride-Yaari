@@ -152,30 +152,30 @@ export default function RequestAgainModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <RefreshCw size={20} className="text-blue-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <RefreshCw size={16} className="sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Request Again</h2>
-          </div>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Request Again</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Cannot Request Again</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X size={20} />
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Ride Details */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-center space-x-3 mb-3">
             {rideDetails.icon}
-            <h3 className="font-semibold text-gray-900 capitalize">{rideDetails.type}</h3>
+            <h3 className="font-semibold text-gray-900 capitalize text-sm sm:text-base">{rideDetails.type}</h3>
           </div>
-          <div className="space-y-2 text-sm text-gray-700">
+          <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
             <p><strong>Route:</strong> {rideDetails.route}</p>
             <p><strong>Timing:</strong> {rideDetails.timing}</p>
           </div>
@@ -183,39 +183,36 @@ export default function RequestAgainModal({
 
         {/* Previous Rejection Info */}
         {eligibility.lastRejection && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
             <div className="flex items-center space-x-2 mb-2">
-              <X size={16} className="text-red-600" />
-              <h4 className="font-semibold text-red-900">Previous Rejection</h4>
+              <X size={14} className="text-red-600" />
+              <h4 className="font-semibold text-red-900 text-sm sm:text-base">Previous Rejection</h4>
             </div>
-            <p className="text-sm text-red-800">
+            <p className="text-xs sm:text-sm text-red-800">
               Your last request was rejected {formatLastRejection(eligibility.lastRejection)}.
             </p>
           </div>
         )}
 
         {/* Guidelines */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-blue-900 mb-3">Before Requesting Again:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+          <h4 className="font-semibold text-blue-900 mb-2 sm:mb-3 text-sm sm:text-base">Before Requesting Again:</h4>
+          <ul className="text-xs sm:text-sm text-blue-800 space-y-1">
             <li>• Consider why your previous request was rejected</li>
             <li>• Chat with the ride owner to discuss any concerns</li>
             <li>• Make sure your travel plans haven't changed</li>
-            <li>• Be prepared to provide additional information if needed</li>
-            <li>• Respect the owner's decision if rejected again</li>
-            <li>• Wait for the 30-minute cooldown period between requests</li>
           </ul>
         </div>
 
         {/* Optional Reason Field */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">
               Additional Message (Optional)
             </label>
             <button
               onClick={() => setShowReasonField(!showReasonField)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium"
             >
               {showReasonField ? 'Hide' : 'Add Message'}
             </button>
@@ -223,57 +220,56 @@ export default function RequestAgainModal({
           
           {showReasonField && (
             <div className="relative">
-              <MessageCircle className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MessageCircle className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Explain why you'd like to request again or address any previous concerns..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-                rows={3}
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none text-sm"
+                rows={2}
                 maxLength={200}
               />
-              <div className="text-xs text-gray-500 mt-1">
+            <X size={18} className="sm:w-5 sm:h-5" />
                 {reason.length}/200 characters
               </div>
             </div>
-          )}
-        </div>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock size={24} className="sm:w-8 sm:h-8 text-yellow-600" />
 
-        {/* Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Request Not Available</h3>
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
           <div className="flex items-start space-x-3">
-            <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
+            <AlertTriangle size={14} className="text-yellow-600 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-yellow-900 mb-1">Important Notice</h4>
-              <p className="text-sm text-yellow-800">
-                Sending multiple requests without addressing the owner's concerns may be considered spam. 
-                Please be respectful and considerate when requesting again.
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4">
+              <p className="text-xs sm:text-sm text-yellow-800">
+                Please be respectful when requesting again.
               </p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
+          className="w-full bg-gray-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors text-sm sm:text-base"
           <button
             onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 border border-gray-300 text-gray-700 py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm sm:text-base"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {loading ? (
               <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
                 <span>Sending...</span>
               </div>
             ) : (
               <div className="flex items-center justify-center space-x-2">
-                <RefreshCw size={16} />
+                <RefreshCw size={14} className="sm:w-4 sm:h-4" />
                 <span>Send Request</span>
               </div>
             )}
