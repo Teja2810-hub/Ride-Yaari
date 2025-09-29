@@ -602,7 +602,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             )}
 
             {/* Accepted status actions */}
-            {confirmation.status === 'accepted' && (
+            {confirmation.status === 'accepted' && !isExpired && (
               <button
                 onClick={() => showConfirmationModal('cancel')}
                 disabled={isLoading}
@@ -614,7 +614,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             )}
 
             {/* Rejected status actions */}
-            {confirmation.status === 'rejected' && isCurrentUserPassenger && (
+            {confirmation.status === 'rejected' && isCurrentUserPassenger && !isExpired && (
               <div className="flex items-center space-x-2">
                 {!isExpired && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
                   <button
@@ -626,7 +626,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                     <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>
                   </button>
                 )}
-                {!isExpired && canRequestAgainState && (
+                {canRequestAgainState && (
                   <button
                     onClick={() => setShowRequestAgainModal(true)}
                     disabled={isLoading}
@@ -636,7 +636,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                     <span>Request Again</span>
                   </button>
                 )}
-                {!isExpired && !canRequestAgainState && requestCooldownTime && (
+                {!canRequestAgainState && requestCooldownTime && (
                   (() => {
                     const minutesRemaining = Math.ceil(30 - (new Date().getTime() - requestCooldownTime.getTime()) / (1000 * 60))
                     return minutesRemaining > 0 ? (
@@ -661,23 +661,17 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                     )
                   })()
                 )}
-                {!isExpired && !canRequestAgainState && !requestCooldownTime && (
+                {!canRequestAgainState && !requestCooldownTime && (
                   <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs">
                     <AlertTriangle size={16} />
                     <span>Cannot Request</span>
-                  </div>
-                )}
-                {isExpired && (
-                  <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs">
-                    <AlertTriangle size={16} />
-                    <span>Expired</span>
                   </div>
                 )}
               </div>
             )}
 
             {/* Rejected status actions for owners */}
-            {confirmation.status === 'rejected' && isCurrentUserOwner && !isExpired && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
+            {confirmation.status === 'rejected' && isCurrentUserOwner && canReverse && reversalTimeRemaining && reversalTimeRemaining > 0 && (
               <button
                 onClick={() => setShowReversalModal(true)}
                 disabled={isLoading}
@@ -686,6 +680,14 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 <RotateCcw size={16} />
                 <span>Undo Rejection ({Math.ceil(reversalTimeRemaining)}h left)</span>
               </button>
+            )}
+
+            {/* Show expired status */}
+            {isExpired && (
+              <div className="flex items-center space-x-2 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs">
+                <AlertTriangle size={16} />
+                <span>Expired</span>
+              </div>
             )}
           </div>
         </div>

@@ -328,18 +328,16 @@ export default function EnhancedNotificationBadge({
 
     try {
       // Mark all unread messages as read
-      // Mark all unread messages as read
       await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
 
-      // Clear local notifications state immediately
-      setNotifications([])
-      
-      // Refresh stats and notifications
-      await Promise.all([fetchStats(), fetchNotifications()])
+      // Clear local notifications state and refresh
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      await fetchStats()
+      await fetchNotifications()
     } catch (error) {
       console.error('Error marking notifications as read:', error)
     }
