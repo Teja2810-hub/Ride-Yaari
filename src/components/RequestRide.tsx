@@ -32,8 +32,6 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
   const [requestMonth, setRequestMonth] = useState('')
   const [departureTimePreference, setDepartureTimePreference] = useState('')
   const [searchRadius, setSearchRadius] = useState(25)
-  const [maxPrice, setMaxPrice] = useState('')
-  const [currency, setCurrency] = useState('USD')
   const [additionalNotes, setAdditionalNotes] = useState('')
   const [enableNotifications, setEnableNotifications] = useState(false)
   const [notificationDateType, setNotificationDateType] = useState<'specific_date' | 'multiple_dates' | 'month'>('specific_date')
@@ -270,19 +268,22 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <input
-                    type="range"
-                    min="5"
-                    max="100"
+                  <select
                     value={searchRadius}
                     onChange={(e) => setSearchRadius(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm text-gray-600 mt-1">
-                    <span>5 miles</span>
-                    <span className="font-medium">{searchRadius} miles</span>
-                    <span>100 miles</span>
-                  </div>
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  >
+                    <option value={5}>5 miles</option>
+                    <option value={10}>10 miles</option>
+                    <option value={15}>15 miles</option>
+                    <option value={20}>20 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={30}>30 miles</option>
+                    <option value={40}>40 miles</option>
+                    <option value={50}>50 miles</option>
+                    <option value={75}>75 miles</option>
+                    <option value={100}>100 miles</option>
+                  </select>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
                   Larger radius = more potential matches
@@ -416,58 +417,19 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
               )}
 
               {/* Optional Preferences */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Time (Optional)
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <input
-                      type="time"
-                      value={departureTimePreference}
-                      onChange={(e) => setDepartureTimePreference(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Maximum Price
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400 font-medium">
-                      {getCurrencySymbol(currency)}
-                    </span>
-                    <input
-                      type="number"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                      placeholder="Any price"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency
+                  Preferred Time (Optional)
                 </label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                >
-                  {currencies.map((curr) => (
-                    <option key={curr.code} value={curr.code}>
-                      {curr.symbol} {curr.code} - {curr.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="time"
+                    value={departureTimePreference}
+                    onChange={(e) => setDepartureTimePreference(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  />
+                </div>
               </div>
 
               <div>

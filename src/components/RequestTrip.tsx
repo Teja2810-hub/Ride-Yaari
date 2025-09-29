@@ -25,8 +25,6 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
   const [multipleDates, setMultipleDates] = useState<string[]>([''])
   const [requestMonth, setRequestMonth] = useState('')
   const [departureTimePreference, setDepartureTimePreference] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [currency, setCurrency] = useState('USD')
   const [additionalNotes, setAdditionalNotes] = useState('')
   const [enableNotifications, setEnableNotifications] = useState(false)
   const [notificationDateType, setNotificationDateType] = useState<'specific_date' | 'multiple_dates' | 'month'>('specific_date')
@@ -372,58 +370,19 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
               )}
 
               {/* Optional Preferences */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Time (Optional)
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <input
-                      type="time"
-                      value={departureTimePreference}
-                      onChange={(e) => setDepartureTimePreference(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Maximum Service Fee
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400 font-medium">
-                      {getCurrencySymbol(currency)}
-                    </span>
-                    <input
-                      type="number"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      placeholder="Any price"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency
+                  Preferred Time (Optional)
                 </label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                >
-                  {currencies.map((curr) => (
-                    <option key={curr.code} value={curr.code}>
-                      {curr.symbol} {curr.code} - {curr.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="time"
+                    value={departureTimePreference}
+                    onChange={(e) => setDepartureTimePreference(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
               </div>
 
               <div>
