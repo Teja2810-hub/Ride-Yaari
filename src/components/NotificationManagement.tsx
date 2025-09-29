@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { RideNotification } from '../types'
+import { RideNotification, TripNotification } from '../types'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
@@ -13,13 +13,16 @@ interface NotificationManagementProps {
   onBack?: () => void
 }
 
-type FilterType = 'all' | 'passenger_request' | 'driver_post'
+type FilterType = 'all' | 'rides' | 'trips' | 'passenger_request' | 'driver_post' | 'passenger_trip_request' | 'traveler_post'
 type SortOption = 'date-desc' | 'date-asc' | 'expiry-asc' | 'expiry-desc'
+
+type NotificationItem = (RideNotification & { type: 'ride' }) | (TripNotification & { type: 'trip' })
 
 export default function NotificationManagement({ onBack }: NotificationManagementProps) {
   const { user } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
-  const [notifications, setNotifications] = useState<RideNotification[]>([])
+  const [rideNotifications, setRideNotifications] = useState<RideNotification[]>([])
+  const [tripNotifications, setTripNotifications] = useState<TripNotification[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
@@ -28,11 +31,11 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const [successMessage, setSuccessMessage] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState<{
     show: boolean
-    notification: RideNotification | null
+    notification: NotificationItem | null
   }>({ show: false, notification: null })
   const [showEditModal, setShowEditModal] = useState<{
     show: boolean
-    notification: RideNotification | null
+    notification: NotificationItem | null
   }>({ show: false, notification: null })
 
   useEffect(() => {
@@ -70,31 +73,46 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
     console.log('NotificationManagement: Fetching notifications for user:', user.id)
     
     await handleAsync(async () => {
-      const { data, error } = await supabase
+      // Fetch ride notifications
+      const { data: rideData, error: rideError } = await supabase
         .from('ride_notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('NotificationManagement: Error fetching notifications:', error)
-        throw error
+      if (rideError) {
+        console.error('NotificationManagement: Error fetching ride notifications:', rideError)
+        throw rideError
       }
 
-      console.log('NotificationManagement: Fetched notifications:', data?.length || 0, 'notifications')
-      setNotifications(data || [])
+      // Fetch trip notifications
+      const { data: tripData, error: tripError } = await supabase
+        .from('trip_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (tripError) {
+        console.error('NotificationManagement: Error fetching trip notifications:', tripError)
+        throw tripError
+      }
+
+      console.log('NotificationManagement: Fetched notifications:', (rideData?.length || 0) + (tripData?.length || 0), 'total')
+      setRideNotifications(rideData || [])
+      setTripNotifications(tripData || [])
     })
   }
 
-  const handleDeleteNotification = async (notificationId: string) => {
+  const handleDeleteNotification = async (notificationId: string, notificationType: 'ride' | 'trip') => {
     if (!user) return
 
     setShowDeleteModal({ show: false, notification: null })
     setDeletingId(notificationId)
 
     await handleAsync(async () => {
+      const tableName = notificationType === 'ride' ? 'ride_notifications' : 'trip_notifications'
       const { error } = await supabase
-        .from('ride_notifications')
+        .from(tableName)
         .delete()
         .eq('id', notificationId)
         .eq('user_id', user.id)
@@ -102,7 +120,11 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
       if (error) throw error
 
       // Remove from local state
-      setNotifications(prev => prev.filter(n => n.id !== notificationId))
+      if (notificationType === 'ride') {
+        setRideNotifications(prev => prev.filter(n => n.id !== notificationId))
+      } else {
+        setTripNotifications(prev => prev.filter(n => n.id !== notificationId))
+      }
       
       setSuccessMessage('Notification deleted successfully!')
       setTimeout(() => setSuccessMessage(''), 3000)
@@ -150,6 +172,10 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         return 'Passenger Request Alert'
       case 'driver_post':
         return 'Driver Post Alert'
+      case 'passenger_trip_request':
+        return 'Trip Request Alert'
+      case 'traveler_post':
+        return 'Traveler Post Alert'
       default:
         return 'Unknown'
     }
@@ -161,12 +187,16 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         return 'bg-blue-100 text-blue-800 border-blue-200'
       case 'driver_post':
         return 'bg-green-100 text-green-800 border-green-200'
+      case 'passenger_trip_request':
+        return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'traveler_post':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
-  const getDateTypeDisplay = (notification: RideNotification) => {
+  const getDateTypeDisplay = (notification: NotificationItem) => {
     switch (notification.date_type) {
       case 'specific_date':
         return notification.specific_date ? `📅 ${formatDateWithWeekday(notification.specific_date)}` : 'Specific date'
@@ -175,23 +205,48 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
           ? `📅 ${notification.multiple_dates.length} selected dates`
           : 'Multiple dates'
       case 'month':
-        return notification.notification_month ? `📅 ${notification.notification_month}` : 'Month'
+        return (notification as RideNotification).notification_month ? `📅 ${(notification as RideNotification).notification_month}` : 'Month'
       default:
         return 'Unknown'
     }
   }
 
+  const getLocationDisplay = (notification: NotificationItem) => {
+    if ('departure_location' in notification) {
+      // Ride notification
+      return `${notification.departure_location} → ${notification.destination_location}`
+    } else {
+      // Trip notification
+      return `${(notification as TripNotification).departure_airport} → ${(notification as TripNotification).destination_airport}`
+    }
+  }
+
+  const getAllNotifications = (): NotificationItem[] => {
+    const rideItems: NotificationItem[] = rideNotifications.map(n => ({ ...n, type: 'ride' as const }))
+    const tripItems: NotificationItem[] = tripNotifications.map(n => ({ ...n, type: 'trip' as const }))
+    return [...rideItems, ...tripItems]
+  }
+
   const filteredAndSortedNotifications = () => {
-    let filtered = notifications.filter(notification => {
+    const allNotifications = getAllNotifications()
+    
+    let filtered = allNotifications.filter(notification => {
       // Type filter
-      const typeMatch = filterType === 'all' || notification.notification_type === filterType
+      if (filterType === 'all') {
+        return true
+      } else if (filterType === 'rides') {
+        return notification.type === 'ride'
+      } else if (filterType === 'trips') {
+        return notification.type === 'trip'
+      } else {
+        return (notification as RideNotification).notification_type === filterType || 
+               (notification as TripNotification).notification_type === filterType
+      }
       
       // Search filter
-      const searchMatch = searchTerm === '' || 
-        notification.departure_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        notification.destination_location.toLowerCase().includes(searchTerm.toLowerCase())
+      const searchMatch = searchTerm === '' || getLocationDisplay(notification).toLowerCase().includes(searchTerm.toLowerCase())
       
-      return typeMatch && searchMatch
+      return searchMatch
     })
 
     // Apply sorting
@@ -220,20 +275,21 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   }
 
   const getStats = () => {
-    const total = notifications.length
-    const active = notifications.filter(n => n.is_active).length
-    const passengerRequests = notifications.filter(n => n.notification_type === 'passenger_request').length
-    const driverPosts = notifications.filter(n => n.notification_type === 'driver_post').length
-    const expiringSoon = notifications.filter(n => {
+    const allNotifications = getAllNotifications()
+    const total = allNotifications.length
+    const active = allNotifications.filter(n => n.is_active).length
+    const rideNotifs = rideNotifications.length
+    const tripNotifs = tripNotifications.length
+    const expiringSoon = allNotifications.filter(n => {
       if (!n.expires_at) return false
       const hoursUntilExpiry = (new Date(n.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60)
       return hoursUntilExpiry <= 24 && hoursUntilExpiry > 0
     }).length
 
-    return { total, active, passengerRequests, driverPosts, expiringSoon }
+    return { total, active, rideNotifs, tripNotifs, expiringSoon }
   }
 
-  if (isLoading && notifications.length === 0) {
+  if (isLoading && rideNotifications.length === 0 && tripNotifications.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner size="lg" text="Loading notifications..." />
@@ -293,12 +349,12 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <span className="text-gray-600">{filteredNotifications.length} of {notifications.length} notifications</span>
+          <span className="text-gray-600">{filteredNotifications.length} of {stats.total} notifications</span>
         </div>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         <div className="bg-gray-50 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
           <div className="text-sm text-gray-600">Total</div>
@@ -308,12 +364,16 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
           <div className="text-sm text-gray-600">Active</div>
         </div>
         <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.passengerRequests}</div>
-          <div className="text-sm text-gray-600">Passenger Alerts</div>
+          <div className="text-2xl font-bold text-blue-600">{stats.rideNotifs}</div>
+          <div className="text-sm text-gray-600">Car Rides</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">{stats.driverPosts}</div>
-          <div className="text-sm text-gray-600">Driver Alerts</div>
+          <div className="text-2xl font-bold text-purple-600">{stats.tripNotifs}</div>
+          <div className="text-sm text-gray-600">Airport Trips</div>
+        </div>
+        <div className="bg-indigo-50 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-indigo-600">{rideNotifications.filter(n => n.notification_type === 'passenger_request').length}</div>
+          <div className="text-sm text-gray-600">Passenger Alerts</div>
         </div>
         <div className="bg-orange-50 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</div>
@@ -358,8 +418,12 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
                   <option value="all">All Types</option>
-                  <option value="passenger_request">Passenger Request Alerts</option>
-                  <option value="driver_post">Driver Post Alerts</option>
+                  <option value="rides">Car Ride Alerts</option>
+                  <option value="trips">Airport Trip Alerts</option>
+                  <option value="passenger_request">Car Passenger Alerts</option>
+                  <option value="driver_post">Car Driver Alerts</option>
+                  <option value="passenger_trip_request">Trip Passenger Alerts</option>
+                  <option value="traveler_post">Traveler Post Alerts</option>
                 </select>
               </div>
 
@@ -388,10 +452,10 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
             <Bell size={32} className="text-gray-400" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {notifications.length === 0 ? 'No Notifications Set Up' : 'No Matching Notifications'}
+            {stats.total === 0 ? 'No Notifications Set Up' : 'No Matching Notifications'}
           </h3>
           <p className="text-gray-600">
-            {notifications.length === 0 
+            {stats.total === 0 
               ? 'You haven\'t set up any ride notifications yet. Create notifications when posting rides or requesting rides.'
               : 'Try adjusting your search or filter criteria.'
             }
@@ -410,11 +474,15 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Bell size={24} className="text-blue-600" />
+                      {notification.type === 'ride' ? (
+                        <Car size={24} className="text-green-600" />
+                      ) : (
+                        <Plane size={24} className="text-blue-600" />
+                      )}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">
-                        {getNotificationTypeLabel(notification.notification_type)}
+                        {getNotificationTypeLabel((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}
                       </h3>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <span>Created {formatDateTime(notification.created_at)}</span>
@@ -424,9 +492,9 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                   </div>
                   
                   <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor(notification.notification_type)}`}>
-                      <span>{notification.notification_type === 'passenger_request' ? '🚗' : '📢'}</span>
-                      <span>{notification.notification_type === 'passenger_request' ? 'Request Alert' : 'Post Alert'}</span>
+                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
+                      <span>{notification.type === 'ride' ? '🚗' : '✈️'}</span>
+                      <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
                     </div>
                     
                     {notification.is_active ? (
@@ -450,7 +518,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                       <p className="text-sm text-gray-600 mb-1">Route</p>
                       <div className="font-medium text-gray-900 flex items-center">
                         <MapPin size={14} className="mr-1 text-gray-400" />
-                        {notification.departure_location} → {notification.destination_location}
+                        {getLocationDisplay(notification)}
                       </div>
                     </div>
                     <div>
@@ -463,7 +531,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Search Radius</p>
                       <div className="font-medium text-gray-900">
-                        {notification.search_radius_miles} miles
+                        {notification.type === 'ride' ? (notification as RideNotification).search_radius_miles + ' miles' : 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -539,24 +607,24 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
 
       {/* Information Panel */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-4">📋 About Ride Notifications</h3>
+        <h3 className="font-semibold text-blue-900 mb-4">📋 About Travel Notifications</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-semibold text-blue-900 mb-2">🚗 Passenger Request Alerts</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">🚗 Car Ride Alerts</h4>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• Get notified when drivers post rides matching your route</li>
-              <li>• Set up when requesting a ride</li>
+              <li>• Get notified when passengers request rides in your area</li>
               <li>• Automatically expire after your selected date/month</li>
               <li>• Can be deleted anytime to stop notifications</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-blue-900 mb-2">📢 Driver Post Alerts</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">✈️ Airport Trip Alerts</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Get notified when passengers request rides in your area</li>
-              <li>• Set up when posting a ride</li>
+              <li>• Get notified when travelers post trips matching your route</li>
+              <li>• Get notified when passengers request trip assistance</li>
               <li>• Choose specific dates or entire months</li>
-              <li>• Manage search radius for better targeting</li>
+              <li>• Airport-to-airport matching for precise results</li>
             </ul>
           </div>
         </div>
@@ -586,10 +654,12 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-gray-900 mb-2">Notification Details:</h4>
               <div className="text-sm text-gray-700 space-y-1">
-                <p><strong>Type:</strong> {getNotificationTypeLabel(showDeleteModal.notification.notification_type)}</p>
-                <p><strong>Route:</strong> {showDeleteModal.notification.departure_location} → {showDeleteModal.notification.destination_location}</p>
+                <p><strong>Type:</strong> {getNotificationTypeLabel((showDeleteModal.notification as RideNotification).notification_type || (showDeleteModal.notification as TripNotification).notification_type)}</p>
+                <p><strong>Route:</strong> {getLocationDisplay(showDeleteModal.notification)}</p>
                 <p><strong>Date:</strong> {getDateTypeDisplay(showDeleteModal.notification)}</p>
-                <p><strong>Radius:</strong> {showDeleteModal.notification.search_radius_miles} miles</p>
+                {showDeleteModal.notification.type === 'ride' && (
+                  <p><strong>Radius:</strong> {(showDeleteModal.notification as RideNotification).search_radius_miles} miles</p>
+                )}
               </div>
             </div>
             
@@ -616,7 +686,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                 Cancel
               </button>
               <button
-                onClick={() => handleDeleteNotification(showDeleteModal.notification!.id)}
+                onClick={() => handleDeleteNotification(showDeleteModal.notification!.id, showDeleteModal.notification!.type)}
                 disabled={isLoading}
                 className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
