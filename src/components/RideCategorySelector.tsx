@@ -684,13 +684,6 @@ export default function RideCategorySelector({
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setActiveSection('overview')}
-              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-            >
-              <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
-            </button>
             <h2 className="text-2xl font-bold text-gray-900">Your Ride Requests</h2>
           </div>
           <span className="text-gray-600">{requestedRides.length} request{requestedRides.length !== 1 ? 's' : ''}</span>

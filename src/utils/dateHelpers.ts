@@ -35,8 +35,13 @@ export const formatDateShort = (dateString: string): string => {
   if (!dateString) return ''
   
   try {
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = new Date(year, month - 1, day)
+    // Handle both date strings and ISO datetime strings
+    const date = new Date(dateString)
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return dateString
+    }
     
     return date.toLocaleDateString('en-US', {
       year: 'numeric',

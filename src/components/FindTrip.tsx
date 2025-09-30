@@ -162,7 +162,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       const requests = await getDisplayTripRequests(
         departureAirport,
         destinationAirport,
-        travelDate,
+        travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
         travelMonth,
         searchByMonth,
         user?.id

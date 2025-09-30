@@ -37,6 +37,12 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
   }>({ show: false, request: null })
   const [editFormData, setEditFormData] = useState<any>({})
 
+  const [expandedRequest, setExpandedRequest] = useState<string | null>(null)
+
+  const toggleRequest = (requestId: string) => {
+    setExpandedRequest(expandedRequest === requestId ? null : requestId)
+  }
+
   useEffect(() => {
     if (user) {
       fetchRequests()
@@ -250,50 +256,37 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
 
   return (
     <div>
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={() => {
-            clearError()
-            fetchRequests()
-          }}
-          onDismiss={clearError}
-          className="mb-6"
-        />
-      )}
+      <div className="space-y-6">
+        {error && (
+          <ErrorMessage
+            message={error}
+            onRetry={() => {
+              clearError()
+              fetchRequests()
+            }}
+            onDismiss={clearError}
+            className="mb-6"
+          />
+        )}
 
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <CheckCircle size={20} className="text-green-600" />
-            <p className="text-green-800">{successMessage}</p>
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <CheckCircle size={20} className="text-green-600" />
+              <p className="text-green-800">{successMessage}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span>Back</span>
-          </button>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            {type === 'ride' ? (
-              <Car size={24} className="text-green-600" />
-            ) : (
-              <Plane size={24} className="text-blue-600" />
-            )}
             <h2 className="text-2xl font-bold text-gray-900">
               {type === 'ride' ? 'Ride' : 'Trip'} Requests
             </h2>
           </div>
+          <span className="text-gray-600">{filteredRequests.length} of {requests.length} requests</span>
         </div>
-        <span className="text-gray-600">{filteredRequests.length} of {requests.length} requests</span>
-      </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -396,142 +389,169 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
           {filteredRequests.map((request) => {
             const status = getRequestStatus(request)
             const isRideRequest = 'departure_location' in request
+            const isExpanded = expandedRequest === request.id
             
             return (
-              <div
+              <div 
                 key={request.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      type === 'ride' ? 'bg-green-100' : 'bg-blue-100'
-                    }`}>
-                      {type === 'ride' ? (
-                        <Car size={24} className="text-green-600" />
-                      ) : (
-                        <Plane size={24} className="text-blue-600" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {getLocationDisplay(request)}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>Created {formatDateTimeSafe(request.created_at)}</span>
-                        <span>{getDateDisplay(request)}</span>
+                {/* Request Header - Always Visible */}
+                <div 
+                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => toggleRequest(request.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        type === 'ride' ? 'bg-green-100' : 'bg-blue-100'
+                      }`}>
+                        {type === 'ride' ? (
+                          <Car size={24} className="text-green-600" />
+                        ) : (
+                          <Plane size={24} className="text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {getLocationDisplay(request)}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>Created {formatDateTimeSafe(request.created_at)}</span>
+                          <span>{getDateDisplay(request)}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
-                      <span>{status.label}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Request Details */}
-                <div className={`rounded-lg p-4 mb-4 ${
-                  type === 'ride' ? 'bg-green-50' : 'bg-blue-50'
-                }`}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Route</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <MapPin size={14} className="mr-1 text-gray-400" />
-                        {getLocationDisplay(request)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Date Preference</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <Calendar size={14} className="mr-1 text-gray-400" />
-                        {getDateDisplay(request)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {type === 'ride' ? 'Search Radius' : 'Request Type'}
-                      </p>
-                      <div className="font-medium text-gray-900">
-                        {isRideRequest 
-                          ? `${(request as RideRequest).search_radius_miles} miles`
-                          : request.request_type.replace('_', ' ')
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  {request.additional_notes && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-1">Additional Notes</p>
-                      <p className="text-sm text-gray-900">{request.additional_notes}</p>
-                    </div>
-                  )}
-
-                  {request.expires_at && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <Clock size={14} className="text-gray-400" />
-                        <span className="text-gray-600">Expires:</span>
-                        <span className="font-medium text-gray-900">
-                          {formatDateTimeSafe(request.expires_at)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    ID: {request.id.slice(0, 8)}...
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() => toggleRequestStatus(request.id, request.is_active)}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-                        request.is_active
-                          ? 'bg-gray-600 hover:bg-gray-700 text-white'
-                          : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
-                    >
-                      {request.is_active ? <Lock size={16} /> : <Unlock size={16} />}
-                      <span>{request.is_active ? 'Deactivate' : 'Activate'}</span>
-                    </button>
                     
-                    <button
-                      onClick={() => {
-                        setEditFormData(request)
-                        setShowEditModal({ show: true, request })
-                      }}
-                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                    >
-                      <Edit size={16} />
-                      <span>Edit</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => setShowDeleteModal({ show: true, request })}
-                      disabled={deletingId === request.id}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                    >
-                      {deletingId === request.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Deleting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 size={16} />
-                          <span>Delete</span>
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
+                        <span>{status.label}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {isExpanded ? 'Hide Details' : 'Show Details'}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 bg-gray-50">
+                    <div className="p-6 space-y-6">
+                      {/* Request Details */}
+                      <div className={`rounded-lg p-4 ${
+                        type === 'ride' ? 'bg-green-50' : 'bg-blue-50'
+                      }`}>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Route</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <MapPin size={14} className="mr-1 text-gray-400" />
+                              {getLocationDisplay(request)}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Date Preference</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <Calendar size={14} className="mr-1 text-gray-400" />
+                              {request.request_type === 'multiple_dates' && request.multiple_dates && request.multiple_dates.length > 0 ? (
+                                <div className="space-y-1">
+                                  {request.multiple_dates.map((date, index) => (
+                                    <div key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block mr-1 mb-1">
+                                      {formatDateSafe(date)}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                getDateDisplay(request)
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              {type === 'ride' ? 'Search Radius' : 'Request Type'}
+                            </p>
+                            <div className="font-medium text-gray-900">
+                              {isRideRequest 
+                                ? `${(request as RideRequest).search_radius_miles} miles`
+                                : request.request_type.replace('_', ' ')
+                              }
+                            </div>
+                          </div>
+                        </div>
+
+                        {request.additional_notes && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-600 mb-1">Additional Notes</p>
+                            <p className="text-sm text-gray-900">{request.additional_notes}</p>
+                          </div>
+                        )}
+
+                        {request.expires_at && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="flex items-center space-x-2 text-sm">
+                              <Clock size={14} className="text-gray-400" />
+                              <span className="text-gray-600">Expires:</span>
+                              <span className="font-medium text-gray-900">
+                                {formatDateTimeSafe(request.expires_at)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-500">
+                          ID: {request.id.slice(0, 8)}...
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => toggleRequestStatus(request.id, request.is_active)}
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                              request.is_active
+                                ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                                : 'bg-green-600 hover:bg-green-700 text-white'
+                            }`}
+                          >
+                            {request.is_active ? <Lock size={16} /> : <Unlock size={16} />}
+                            <span>{request.is_active ? 'Deactivate' : 'Activate'}</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              setEditFormData(request)
+                              setShowEditModal({ show: true, request })
+                            }}
+                            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                          >
+                            <Edit size={16} />
+                            <span>Edit</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setShowDeleteModal({ show: true, request })}
+                            disabled={deletingId === request.id}
+                            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                          >
+                            {deletingId === request.id ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Deleting...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

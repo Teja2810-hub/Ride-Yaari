@@ -715,13 +715,6 @@ export default function TripCategorySelector({
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setActiveSection('overview')}
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
-            </button>
             <h2 className="text-2xl font-bold text-gray-900">Your Trip Requests</h2>
           </div>
           <span className="text-gray-600">{requestedTrips.length} request{requestedTrips.length !== 1 ? 's' : ''}</span>
