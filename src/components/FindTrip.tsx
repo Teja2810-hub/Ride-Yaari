@@ -363,7 +363,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                         <ul className="text-xs space-y-1">
                           <li>• Only shows open trips</li>
                           <li>• Future travel dates only</li>
-                          <li>• Excludes your own trips</li>
                         </ul>
                       </div>
                     </div>
@@ -538,12 +537,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
 
                           <div className="ml-6">
-                            {trip.user_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
-                                <span>Your Trip</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
@@ -687,12 +681,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
 
                           <div className="ml-6">
-                            {request.passenger_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
-                                <span>Your Request</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}

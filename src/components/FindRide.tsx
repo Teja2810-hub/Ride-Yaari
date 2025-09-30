@@ -321,7 +321,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         <ul className="text-xs space-y-1">
                           <li>• Only shows open rides</li>
                           <li>• Future departure times only</li>
-                          <li>• Excludes your own rides</li>
                         </ul>
                       </div>
                     </div>
@@ -467,12 +466,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
 
                           <div className="ml-6">
-                            {ride.user_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
-                                <span>Your Ride</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
@@ -620,12 +614,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
 
                           <div className="ml-6">
-                            {request.passenger_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
-                                <span>Your Request</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown')}
