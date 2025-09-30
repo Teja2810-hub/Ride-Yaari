@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, HelpCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
@@ -10,6 +10,7 @@ import { haversineDistance } from '../utils/distance'
 import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
+import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface LocationData {
   address: string
@@ -534,6 +535,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       console.log('Rides:', filteredRides.map(r => `${r.from_location} → ${r.to_location}`))
 
       setRides(filteredRides)
+
+      // Also fetch matching ride requests
+      const requests = await getDisplayRideRequests(
+        fromLocation?.address,
+        toLocation?.address,
+        departureDate,
+        departureMonth,
+        searchByMonth,
+        user?.id
+      )
+      setRideRequests(requests)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)
@@ -1363,24 +1375,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {rides.map((ride) => (
-                  <div
-                    key={ride.id}
-                    className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4 mb-4">
-                          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
-                            {ride.user_profiles?.profile_image_url ? (
-                              <img
-                                src={ride.user_profiles.profile_image_url}
-                                alt={ride.user_profiles.full_name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none'
-                                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-green-100"><svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
               <div className="space-y-4">
                 {/* Legacy content removed */}
               </div>
