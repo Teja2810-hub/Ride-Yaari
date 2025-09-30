@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { Trip } from '../types'
+import { Trip, TripRequest } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
+import { getDisplayTripRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 import { formatDateSafe } from '../utils/dateHelpers'
 
 interface FindTripProps {
@@ -26,6 +27,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [travelMonth, setTravelMonth] = useState('')
   const [searchByMonth, setSearchByMonth] = useState(false)
   const [trips, setTrips] = useState<Trip[]>([])
+  const [tripRequests, setTripRequests] = useState<TripRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
@@ -33,6 +35,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
+  const [activeTab, setActiveTab] = useState<'trips' | 'requests'>('trips')
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
@@ -154,10 +157,22 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       if (error) throw error
 
       setTrips(data || [])
+
+      // Also fetch matching trip requests
+      const requests = await getDisplayTripRequests(
+        departureAirport,
+        destinationAirport,
+        travelDate,
+        travelMonth,
+        searchByMonth,
+        user?.id
+      )
+      setTripRequests(requests)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)
-      setTrips([]) // Set empty array on error
+      setTrips([])
+      setTripRequests([])
     } finally {
       setLoading(false)
     }
@@ -370,6 +385,354 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         {/* Search Results */}
         {searched && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* Tab Navigation */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('trips')}
+                  className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'trips'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Available Trips ({trips.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'requests'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Trip Requests ({tripRequests.length})
+                </button>
+              </div>
+              <span className="text-gray-600">
+                {activeTab === 'trips' ? trips.length : tripRequests.length} {activeTab === 'trips' ? 'trip' : 'request'}{(activeTab === 'trips' ? trips.length : tripRequests.length) !== 1 ? 's' : ''} found
+              </span>
+            </div>
+
+            {/* Available Trips Tab */}
+            {activeTab === 'trips' && (
+              <>
+                {trips.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Plane size={32} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips found</h3>
+                    <p className="text-gray-600 mb-6">
+                      Try adjusting your search criteria or check the "Trip Requests" tab to see if anyone is looking for assistance on your route
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('requests')}
+                      className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      View Trip Requests ({tripRequests.length})
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {trips.map((trip) => (
+                      <div
+                        key={trip.id}
+                        className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                                {trip.user_profiles?.profile_image_url ? (
+                                  <img
+                                    src={trip.user_profiles.profile_image_url}
+                                    alt={trip.user_profiles.full_name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                      e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-blue-100"><svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
+                                    }}
+                                  />
+                                ) : (
+                                  <User size={24} className="text-blue-600" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {trip.user_profiles?.full_name || 'Traveler'}
+                                </h3>
+                                <p className="text-gray-600">Traveler</p>
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900">
+                                  {trip.leaving_airport}
+                                </div>
+                                {trip.departure_time && (
+                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                    <Clock size={12} className="mr-1" />
+                                    {trip.departure_time}
+                                    {trip.departure_timezone && (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({trip.departure_timezone})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Destination</p>
+                                <div className="font-semibold text-gray-900">
+                                  {trip.destination_airport}
+                                </div>
+                                {trip.landing_time && (
+                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                    <Clock size={12} className="mr-1" />
+                                    {trip.landing_time}
+                                    {trip.landing_timezone && (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({trip.landing_timezone})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Travel Date</p>
+                                <div className="font-semibold text-gray-900">
+                                  {formatDateSafe(trip.travel_date)}
+                                </div>
+                                {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                                  <div className="text-sm text-gray-600 mt-1">
+                                    Landing: {formatDateSafe(trip.landing_date)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {trip.price && (
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="flex items-center space-x-4">
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-1">Service Price</p>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-semibold text-green-600 flex items-center">
+                                        {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                      </span>
+                                      {trip.negotiable && (
+                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                          Negotiable
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="ml-6">
+                            {trip.user_id === user?.id ? (
+                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
+                                <AlertTriangle size={20} />
+                                <span>Your Trip</span>
+                              </div>
+                            ) : effectiveIsGuest ? (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Contact Traveler</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Sign up required to chat
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Start Chat</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Chat first, then request confirmation
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Trip Requests Tab */}
+            {activeTab === 'requests' && (
+              <>
+                {tripRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Send size={32} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No trip requests found</h3>
+                    <p className="text-gray-600 mb-6">
+                      No one is currently requesting assistance on this route. Check the "Available Trips" tab for posted trips.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('trips')}
+                      className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      View Available Trips ({trips.length})
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-purple-900 mb-2">💡 About Trip Requests</h4>
+                      <p className="text-sm text-purple-800">
+                        These are passengers looking for assistance on routes similar to your search. 
+                        Contact them if you're traveling and can provide help!
+                      </p>
+                    </div>
+                    
+                    {tripRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="border border-purple-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-purple-50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+                                {request.user_profiles?.profile_image_url ? (
+                                  <img
+                                    src={request.user_profiles.profile_image_url}
+                                    alt={request.user_profiles.full_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-white font-semibold">
+                                    {(request.user_profiles?.full_name || 'P').charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {request.user_profiles?.full_name || 'Passenger'}
+                                </h3>
+                                <p className="text-purple-600 font-medium">Looking for assistance</p>
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900">
+                                  {request.departure_airport}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900">
+                                  {request.destination_airport}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">When</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <Calendar size={14} className="mr-1 text-gray-400" />
+                                  {formatRequestDateDisplay(request)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {request.additional_notes && (
+                              <div className="mt-4 pt-4 border-t border-purple-200">
+                                <p className="text-sm text-gray-600 mb-1">What they need</p>
+                                <p className="text-gray-900">{request.additional_notes}</p>
+                              </div>
+                            )}
+
+                            <div className="mt-4 pt-4 border-t border-purple-200">
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                {request.departure_time_preference && (
+                                  <div className="flex items-center space-x-1">
+                                    <Clock size={12} />
+                                    <span>Preferred time: {request.departure_time_preference}</span>
+                                  </div>
+                                )}
+                                {request.max_price && (
+                                  <div className="flex items-center space-x-1">
+                                    <DollarSign size={12} />
+                                    <span>Max budget: {getCurrencySymbol(request.currency || 'USD')}{request.max_price}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="ml-6">
+                            {request.passenger_id === user?.id ? (
+                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
+                                <AlertTriangle size={20} />
+                                <span>Your Request</span>
+                              </div>
+                            ) : effectiveIsGuest ? (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Contact Passenger</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Sign up required to chat
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Offer Assistance</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Chat to discuss details
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Legacy trips display - remove this section */}
+        {searched && false && (
+          <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 Search Results
@@ -403,145 +766,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
               </div>
             ) : (
               <div className="space-y-4">
-                {trips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4 mb-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-                            {trip.user_profiles?.profile_image_url ? (
-                              <img
-                                src={trip.user_profiles.profile_image_url}
-                                alt={trip.user_profiles.full_name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none'
-                                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-blue-100"><svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
-                                }}
-                              />
-                            ) : (
-                              <User size={24} className="text-blue-600" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900">
-                              {trip.user_profiles?.full_name || 'Traveler'}
-                            </h3>
-                            <p className="text-gray-600">Traveler</p>
-                          </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">Departure</p>
-                            <div className="font-semibold text-gray-900">
-                              {trip.leaving_airport}
-                            </div>
-                            {trip.departure_time && (
-                              <div className="text-sm text-gray-600 flex items-center mt-1">
-                                <Clock size={12} className="mr-1" />
-                                {trip.departure_time}
-                                {trip.departure_timezone && (
-                                  <span className="text-xs text-gray-500 ml-1">
-                                    ({trip.departure_timezone})
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">Destination</p>
-                            <div className="font-semibold text-gray-900">
-                              {trip.destination_airport}
-                            </div>
-                            {trip.landing_time && (
-                              <div className="text-sm text-gray-600 flex items-center mt-1">
-                                <Clock size={12} className="mr-1" />
-                                {trip.landing_time}
-                                {trip.landing_timezone && (
-                                  <span className="text-xs text-gray-500 ml-1">
-                                    ({trip.landing_timezone})
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                            <div className="font-semibold text-gray-900">
-                              {formatDateSafe(trip.travel_date)}
-                            </div>
-                            {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                              <div className="text-sm text-gray-600 mt-1">
-                                Landing: {formatDateSafe(trip.landing_date)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {trip.price && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <div className="flex items-center space-x-4">
-                              <div>
-                                <p className="text-sm text-gray-600 mb-1">Service Price</p>
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-semibold text-green-600 flex items-center">
-                                    {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                                  </span>
-                                  {trip.negotiable && (
-                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                      Negotiable
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="ml-6">
-                        {trip.user_id === user?.id ? (
-                          <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                            <AlertTriangle size={20} />
-                            <span>Your Trip</span>
-                          </div>
-                        ) : effectiveIsGuest ? (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Contact Traveler</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Sign up required to chat
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                              className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Start Chat</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Chat first, then request confirmation
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {/* Legacy content removed */}
               </div>
             )}
           </div>

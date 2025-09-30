@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Search, MessageCircle, User, Car, DollarSign, Clock, TriangleAlert as AlertTriangle, Circle as HelpCircle, Calendar, MapPin, Navigation, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { CarRide } from '../types'
+import { CarRide, RideRequest } from '../types'
 import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { haversineDistance } from '../utils/distance'
 import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
 import { popupManager } from '../utils/popupManager'
+import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 
 interface LocationData {
   address: string
@@ -40,6 +41,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [departureMonth, setDepartureMonth] = useState('')
   const [searchByMonth, setSearchByMonth] = useState(false)
   const [rides, setRides] = useState<CarRide[]>([])
+  const [rideRequests, setRideRequests] = useState<RideRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
@@ -52,6 +54,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [customRadius, setCustomRadius] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
+  const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
@@ -89,6 +92,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
       console.log('Auto search results:', data?.length || 0, 'rides')
       setRides(data || [])
+
+      // Also fetch matching ride requests
+      const requests = await getDisplayRideRequests(
+        departureLocation,
+        destinationLocation,
+        travelDate,
+        travelMonth,
+        searchByMonth,
+        user?.id
+      )
+      setRideRequests(requests)
       setSearched(true)
     } catch (error) {
       console.error('Auto search error:', error)
@@ -524,6 +538,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     } catch (error) {
       console.error('Search error:', error)
       setRides([]) // Set empty array on error
+      setRideRequests([])
     } finally {
       setLoading(false)
     }
@@ -991,6 +1006,328 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         {/* Search Results */}
         {searched && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* Tab Navigation */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('rides')}
+                  className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'rides'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Available Rides ({rides.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'requests'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Ride Requests ({rideRequests.length})
+                </button>
+              </div>
+              <span className="text-gray-600">
+                {activeTab === 'rides' ? rides.length : rideRequests.length} {activeTab === 'rides' ? 'ride' : 'request'}{(activeTab === 'rides' ? rides.length : rideRequests.length) !== 1 ? 's' : ''} found
+              </span>
+            </div>
+
+            {/* Available Rides Tab */}
+            {activeTab === 'rides' && (
+              <>
+                {rides.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Car size={32} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides found</h3>
+                    <p className="text-gray-600 mb-6">
+                      Try adjusting your search criteria or check the "Ride Requests" tab to see if anyone is looking for rides on your route
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('requests')}
+                      className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      View Ride Requests ({rideRequests.length})
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {rides.map((ride) => (
+                      <div
+                        key={ride.id}
+                        className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
+                                {ride.user_profiles?.profile_image_url ? (
+                                  <img
+                                    src={ride.user_profiles.profile_image_url}
+                                    alt={ride.user_profiles.full_name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                      e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-green-100"><svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
+                                    }}
+                                  />
+                                ) : (
+                                  <User size={24} className="text-green-600" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {ride.user_profiles?.full_name || 'Driver'}
+                                </h3>
+                                <p className="text-gray-600">Driver</p>
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                  {ride.from_location}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                  {ride.to_location}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">Departure</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <Clock size={14} className="mr-1 text-gray-400" />
+                                  {formatDateTimeSafe(ride.departure_date_time)}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <div className="flex items-center space-x-4">
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-semibold text-green-600 flex items-center">
+                                      {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                                    </span>
+                                    {ride.negotiable && (
+                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        Negotiable
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="ml-6">
+                            {ride.user_id === user?.id ? (
+                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
+                                <AlertTriangle size={20} />
+                                <span>Your Ride</span>
+                              </div>
+                            ) : effectiveIsGuest ? (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
+                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Contact Driver</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Sign up required to chat
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Driver', ride)}
+                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Start Chat</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Chat first, then request confirmation
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Ride Requests Tab */}
+            {activeTab === 'requests' && (
+              <>
+                {rideRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Send size={32} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No ride requests found</h3>
+                    <p className="text-gray-600 mb-6">
+                      No one is currently requesting rides on this route. Check the "Available Rides" tab for posted rides.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('rides')}
+                      className="text-green-600 hover:text-green-700 font-medium transition-colors"
+                    >
+                      View Available Rides ({rides.length})
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-blue-900 mb-2">💡 About Ride Requests</h4>
+                      <p className="text-sm text-blue-800">
+                        These are passengers looking for rides on routes similar to your search. 
+                        Contact them if you're planning to drive and can offer a ride!
+                      </p>
+                    </div>
+                    
+                    {rideRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-blue-50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                                {request.user_profiles?.profile_image_url ? (
+                                  <img
+                                    src={request.user_profiles.profile_image_url}
+                                    alt={request.user_profiles.full_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-white font-semibold">
+                                    {(request.user_profiles?.full_name || 'P').charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {request.user_profiles?.full_name || 'Passenger'}
+                                </h3>
+                                <p className="text-blue-600 font-medium">Looking for a ride</p>
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                  {request.departure_location}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                  {request.destination_location}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm text-gray-600 mb-1">When</p>
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <Calendar size={14} className="mr-1 text-gray-400" />
+                                  {formatRequestDateDisplay(request)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {request.additional_notes && (
+                              <div className="mt-4 pt-4 border-t border-blue-200">
+                                <p className="text-sm text-gray-600 mb-1">Additional Notes</p>
+                                <p className="text-gray-900">{request.additional_notes}</p>
+                              </div>
+                            )}
+
+                            <div className="mt-4 pt-4 border-t border-blue-200">
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <div className="flex items-center space-x-1">
+                                  <Search size={12} />
+                                  <span>Search radius: {request.search_radius_miles} miles</span>
+                                </div>
+                                {request.departure_time_preference && (
+                                  <div className="flex items-center space-x-1">
+                                    <Clock size={12} />
+                                    <span>Preferred time: {request.departure_time_preference}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="ml-6">
+                            {request.passenger_id === user?.id ? (
+                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
+                                <AlertTriangle size={20} />
+                                <span>Your Request</span>
+                              </div>
+                            ) : effectiveIsGuest ? (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Contact Passenger</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Sign up required to chat
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-2">
+                                <button
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                >
+                                  <MessageCircle size={20} />
+                                  <span>Offer Ride</span>
+                                </button>
+                                <p className="text-xs text-gray-500 text-center">
+                                  Chat to discuss details
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Legacy rides display - remove this section */}
+        {searched && false && (
+          <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 Search Results
@@ -1044,117 +1381,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 onError={(e) => {
                                   e.currentTarget.style.display = 'none'
                                   e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-green-100"><svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
-                                }}
-                              />
-                            ) : (
-                              <User size={24} className="text-green-600" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900">
-                              {ride.user_profiles?.full_name || 'Driver'}
-                            </h3>
-                            <p className="text-gray-600">Driver</p>
-                          </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">From</p>
-                            <div className="font-semibold text-gray-900 flex items-center">
-                              <MapPin size={14} className="mr-1 text-gray-400" />
-                              {ride.from_location}
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">To</p>
-                            <div className="font-semibold text-gray-900 flex items-center">
-                              <MapPin size={14} className="mr-1 text-gray-400" />
-                              {ride.to_location}
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">Departure</p>
-                            <div className="font-semibold text-gray-900 flex items-center">
-                              <Clock size={14} className="mr-1 text-gray-400" />
-                              {formatDateTime(ride.departure_date_time)}
-                            </div>
-                          </div>
-                        </div>
-
-                        {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {ride.intermediate_stops.map((stop, index) => (
-                                <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
-                                  <Navigation size={10} className="mr-1" />
-                                  {stop.address}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <div className="flex items-center space-x-4">
-                            <div>
-                              <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-semibold text-green-600 flex items-center">
-                                  <DollarSign size={14} className="mr-1" />
-                                  {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
-                                </span>
-                                {ride.negotiable && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                    {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ml-6">
-                        {!isGuest && ride.user_id === user?.id ? (
-                          <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                            <AlertTriangle size={20} />
-                            <span>Your Ride</span>
-                          </div>
-                        ) : effectiveIsGuest ? (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
-                              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Contact Driver</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Sign up required to chat
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Driver', ride)}
-                              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                            >
-                              <MessageCircle size={20} />
-                              <span>Start Chat</span>
-                            </button>
-                            <p className="text-xs text-gray-500 text-center">
-                              Chat first, then request confirmation
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-4">
+                {/* Legacy content removed */}
               </div>
             )}
           </div>

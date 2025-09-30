@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { retryWithBackoff } from './errorUtils'
 import { RideRequest, TripRequest } from '../types'
+import { formatDateSafe } from './dateHelpers'
 
 /**
  * Get ride requests that match search criteria for display in FindRide
@@ -104,6 +105,136 @@ export const getMatchingTripRequests = async (
 
     return data || []
   })
+}
+
+/**
+ * Get ride requests for display in FindRide component
+ */
+export const getDisplayRideRequests = async (
+  departureLocation?: string,
+  destinationLocation?: string,
+  travelDate?: string,
+  travelMonth?: string,
+  searchByMonth: boolean = false,
+  excludeUserId?: string
+): Promise<RideRequest[]> => {
+  return retryWithBackoff(async () => {
+    let query = supabase
+      .from('ride_requests')
+      .select(`
+        *,
+        user_profiles!ride_requests_passenger_id_fkey (
+          id,
+          full_name,
+          profile_image_url
+        )
+      `)
+      .eq('is_active', true)
+
+    // Exclude specific user if provided
+    if (excludeUserId) {
+      query = query.neq('passenger_id', excludeUserId)
+    }
+
+    // Filter by location if provided (flexible matching)
+    if (departureLocation) {
+      query = query.or(`departure_location.ilike.%${departureLocation}%,departure_location.ilike.%${departureLocation.split(',')[0]}%`)
+    }
+    if (destinationLocation) {
+      query = query.or(`destination_location.ilike.%${destinationLocation}%,destination_location.ilike.%${destinationLocation.split(',')[0]}%`)
+    }
+
+    // Filter by date
+    if (searchByMonth && travelMonth) {
+      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{${travelMonth}-01}`)
+    } else if (!searchByMonth && travelDate) {
+      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{${travelDate}}`)
+    }
+
+    // Only show future requests
+    const today = new Date().toISOString().split('T')[0]
+    query = query.or(`specific_date.gte.${today},expires_at.gte.${new Date().toISOString()}`)
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return data || []
+  })
+}
+
+/**
+ * Get trip requests for display in FindTrip component
+ */
+export const getDisplayTripRequests = async (
+  departureAirport?: string,
+  destinationAirport?: string,
+  travelDate?: string,
+  travelMonth?: string,
+  searchByMonth: boolean = false,
+  excludeUserId?: string
+): Promise<TripRequest[]> => {
+  return retryWithBackoff(async () => {
+    let query = supabase
+      .from('trip_requests')
+      .select(`
+        *,
+        user_profiles!trip_requests_passenger_id_fkey (
+          id,
+          full_name,
+          profile_image_url
+        )
+      `)
+      .eq('is_active', true)
+
+    // Exclude specific user if provided
+    if (excludeUserId) {
+      query = query.neq('passenger_id', excludeUserId)
+    }
+
+    // Filter by airports if provided
+    if (departureAirport) {
+      query = query.eq('departure_airport', departureAirport)
+    }
+    if (destinationAirport) {
+      query = query.eq('destination_airport', destinationAirport)
+    }
+
+    // Filter by date
+    if (searchByMonth && travelMonth) {
+      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{${travelMonth}-01}`)
+    } else if (!searchByMonth && travelDate) {
+      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{${travelDate}}`)
+    }
+
+    // Only show future requests
+    const today = new Date().toISOString().split('T')[0]
+    query = query.or(`specific_date.gte.${today},expires_at.gte.${new Date().toISOString()}`)
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return data || []
+  })
+}
+
+/**
+ * Format request date display
+ */
+export const formatRequestDateDisplay = (request: RideRequest | TripRequest): string => {
+  switch (request.request_type) {
+    case 'specific_date':
+      return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
+    case 'multiple_dates':
+      return request.multiple_dates && request.multiple_dates.length > 0
+        ? `${request.multiple_dates.length} selected dates`
+        : 'Multiple dates'
+    case 'month':
+      return request.request_month || 'Month'
+    default:
+      return 'Unknown'
+  }
 }
 
 /**
