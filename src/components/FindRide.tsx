@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
 import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
-import { haversineDistance } from '../utils/distance'
-import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
@@ -24,23 +22,16 @@ interface FindRideProps {
   isGuest?: boolean
 }
 
-type SearchType = 'from-to' | 'from-only' | 'to-only'
-type LocationSearchType = 'manual' | 'nearby'
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
-  const [locationSearchType, setLocationSearchType] = useState<LocationSearchType>('manual')
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
-  const [userLocation, setUserLocation] = useState<LocationData | null>(null)
-  const [gettingLocation, setGettingLocation] = useState(false)
-  const [locationError, setLocationError] = useState('')
-  const [searchRadius, setSearchRadius] = useState('10')
-  const [departureDate, setDepartureDate] = useState('')
-  const [departureMonth, setDepartureMonth] = useState('')
+  const [departureDateTime, setDepartureDateTime] = useState('')
   const [searchByMonth, setSearchByMonth] = useState(false)
+  const [departureMonth, setDepartureMonth] = useState('')
   const [rides, setRides] = useState<CarRide[]>([])
   const [rideRequests, setRideRequests] = useState<RideRequest[]>([])
   const [loading, setLoading] = useState(false)
@@ -48,180 +39,18 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatRide, setSelectedChatRide] = useState<CarRide | null>(null)
-  const [showRadiusHelp, setShowRadiusHelp] = useState(false)
-  const [strictSearch, setStrictSearch] = useState(false)
-  const [radiusUnit, setRadiusUnit] = useState('miles')
-  const [useCustomRadius, setUseCustomRadius] = useState(false)
-  const [customRadius, setCustomRadius] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
 
-  // Auto-search on component mount for guests to show available rides
-  React.useEffect(() => {
-    // Remove auto-search for guests - they should search manually
-    // if (effectiveIsGuest && !searched && !loading) {
-    //   handleAutoSearch()
-    // }
-  }, [effectiveIsGuest, searched, loading])
-
-  const handleAutoSearch = async () => {
-    setLoading(true)
-
-    try {
-      console.log('=== AUTO SEARCH FOR GUEST RIDES ===')
-      
-      // Get current date to filter out past rides
-      const now = new Date().toISOString()
-      console.log('Filtering rides after:', now)
-      
-      const { data, error } = await supabase
-        .from('car_rides')
-        .select(`
-          *,
-          user_profiles:user_id (
-            id,
-            full_name
-          )
-        `)
-        .eq('is_closed', false)
-        .gte('departure_date_time', now)
-        .order('departure_date_time')
-        .limit(20) // Limit results for better performance
-
-      if (error) throw error
-
-      console.log('Auto search results:', data?.length || 0, 'rides')
-      setRides(data || [])
-
-      // Also fetch matching ride requests
-      const requests = await getDisplayRideRequests(
-        departureLocation,
-        destinationLocation,
-        travelDate,
-        travelMonth,
-        searchByMonth,
-        user?.id
-      )
-      setRideRequests(requests)
-      setSearched(true)
-    } catch (error) {
-      console.error('Auto search error:', error)
-      // If there's an error, still set searched to true to prevent infinite retries
-      setSearched(true)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getCurrentLocation = async () => {
-    setGettingLocation(true)
-    setLocationError('')
-
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by this browser')
-      setGettingLocation(false)
-      return
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        
-        try {
-          // Use reverse geocoding to get address
-          const response = await fetch(
-            `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${import.meta.env.VITE_OPENCAGE_API_KEY}`
-          )
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (data.results && data.results.length > 0) {
-              const result = data.results[0]
-              setUserLocation({
-                address: result.formatted,
-                latitude: latitude,
-                longitude: longitude
-              })
-            } else {
-              setUserLocation({
-                address: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-                latitude: latitude,
-                longitude: longitude
-              })
-            }
-          } else {
-            // Fallback if reverse geocoding fails
-            setUserLocation({
-              address: `Your Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-              latitude: latitude,
-              longitude: longitude
-            })
-          }
-        } catch (error) {
-          console.error('Reverse geocoding error:', error)
-          // Still set location with coordinates
-          setUserLocation({
-            address: `Your Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-            latitude: latitude,
-            longitude: longitude
-          })
-        }
-        
-        setGettingLocation(false)
-      },
-      (error) => {
-        console.error('Geolocation error:', error)
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError('Location access denied. Please enable location permissions.')
-            break
-          case error.POSITION_UNAVAILABLE:
-            setLocationError('Location information is unavailable.')
-            break
-          case error.TIMEOUT:
-            setLocationError('Location request timed out.')
-            break
-          default:
-            setLocationError('An unknown error occurred while getting location.')
-            break
-        }
-        setGettingLocation(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutes
-      }
-    )
-  }
-
-  const getEffectiveRadiusMiles = (radius: number, unit: string) => {
-    if (unit === 'kilometers') {
-      return radius * 0.621371 // Convert kilometers to miles
-    }
-    return radius
-  }
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     setLoading(true)
 
     try {
-      console.log('=== STARTING RIDE SEARCH ===')
-      console.log('Search criteria:', {
-        fromLocation: fromLocation?.address,
-        toLocation: toLocation?.address,
-        userLocation: userLocation?.address,
-        locationSearchType,
-        strictSearch,
-        searchRadius,
-        departureDate,
-        departureMonth,
-        searchByMonth
-      })
-
+      // Get current date to filter out past rides
+      const now = new Date().toISOString()
+      
       let query = supabase
         .from('car_rides')
         .select(`
@@ -233,25 +62,26 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           )
         `)
 
-      // Apply date filters
+      if (fromLocation) {
+        query = query.ilike('from_location', `%${fromLocation.address}%`)
+      }
+      if (toLocation) {
+        query = query.ilike('to_location', `%${toLocation.address}%`)
+      }
+      
       if (searchByMonth && departureMonth) {
-        const startOfMonth = `${departureMonth}-01T00:00:00`
+        const startOfMonth = `${departureMonth}-01`
         const endOfMonth = new Date(departureMonth + '-01')
         endOfMonth.setMonth(endOfMonth.getMonth() + 1)
         const endOfMonthStr = endOfMonth.toISOString()
         
-        console.log('Applying month filter:', startOfMonth, 'to', endOfMonthStr)
         query = query.gte('departure_date_time', startOfMonth).lt('departure_date_time', endOfMonthStr)
-      } else if (!searchByMonth && departureDate) {
-        const startOfDay = `${departureDate}T00:00:00`
-        const endOfDay = `${departureDate}T23:59:59`
-        console.log('Applying date filter:', startOfDay, 'to', endOfDay)
-        query = query.gte('departure_date_time', startOfDay).lte('departure_date_time', endOfDay)
+      } else if (!searchByMonth && departureDateTime) {
+        const searchDate = new Date(departureDateTime).toISOString().split('T')[0]
+        query = query.gte('departure_date_time', searchDate + 'T00:00:00').lt('departure_date_time', searchDate + 'T23:59:59')
       }
 
       // Always filter for future rides
-      const now = new Date().toISOString()
-      console.log('Filtering for rides after:', now)
       query = query
         .eq('is_closed', false)
         .gte('departure_date_time', now)
@@ -284,263 +114,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
       if (error) throw error
 
-      console.log('Raw database results:', data?.length || 0, 'rides')
-      if (data && data.length > 0) {
-        console.log('Sample ride:', {
-          from: data[0].from_location,
-          to: data[0].to_location,
-          departure: data[0].departure_date_time,
-          intermediate_stops: data[0].intermediate_stops
-        })
-      }
-
-      let filteredRides = data || []
-
-      // Apply location filtering only if we have search criteria
-      if (fromLocation || toLocation || (locationSearchType === 'nearby' && userLocation)) {
-        console.log('=== APPLYING LOCATION FILTERS ===')
-        console.log('FROM search:', fromLocation?.address)
-        console.log('TO search:', toLocation?.address)
-        console.log('USER location:', userLocation?.address)
-        console.log('Search type:', locationSearchType)
-        console.log('Search mode:', strictSearch ? 'STRICT' : 'FLEXIBLE')
-        
-        filteredRides = filteredRides.filter(ride => {
-          console.log(`\n--- Checking ride: ${ride.from_location} → ${ride.to_location} ---`)
-          
-          // For nearby search, we use user location as the search center
-          let matchesFrom = true
-          let matchesTo = true
-          
-          if (locationSearchType === 'nearby' && userLocation) {
-            console.log('NEARBY search mode')
-            matchesFrom = false
-            matchesTo = false
-            
-            // Check if ride starts or ends near user location
-            if (userLocation.latitude && userLocation.longitude && searchRadius) {
-              const radiusMiles = useCustomRadius && customRadius ? parseInt(customRadius) : parseInt(searchRadius)
-              const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
-              
-              // Check distance to departure location
-              if (ride.from_latitude && ride.from_longitude) {
-                const distanceToFrom = haversineDistance(
-                  userLocation.latitude,
-                  userLocation.longitude,
-                  ride.from_latitude,
-                  ride.from_longitude
-                )
-                console.log(`Distance to departure: ${distanceToFrom.toFixed(1)} miles`)
-                if (distanceToFrom <= effectiveRadiusMiles) {
-                  console.log('✅ NEARBY: Within radius of departure location')
-                  matchesFrom = true
-                }
-              }
-              
-              // Check distance to destination location
-              if (ride.to_latitude && ride.to_longitude) {
-                const distanceToTo = haversineDistance(
-                  userLocation.latitude,
-                  userLocation.longitude,
-                  ride.to_latitude,
-                  ride.to_longitude
-                )
-                console.log(`Distance to destination: ${distanceToTo.toFixed(1)} miles`)
-                if (distanceToTo <= effectiveRadiusMiles) {
-                  console.log('✅ NEARBY: Within radius of destination location')
-                  matchesTo = true
-                }
-              }
-              
-              // Check distance to intermediate stops
-              if (!matchesFrom && !matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                for (const stop of ride.intermediate_stops) {
-                  if (stop.latitude && stop.longitude) {
-                    const distance = haversineDistance(
-                      userLocation.latitude,
-                      userLocation.longitude,
-                      stop.latitude,
-                      stop.longitude
-                    )
-                    console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
-                    if (distance <= effectiveRadiusMiles) {
-                      console.log('✅ NEARBY: Within radius of intermediate stop')
-                      matchesFrom = true
-                      matchesTo = true
-                      break
-                    }
-                  }
-                }
-              }
-            }
-          } else {
-            // Manual search mode (existing logic)
-            matchesFrom = !fromLocation // If no FROM criteria, it matches
-            matchesTo = !toLocation     // If no TO criteria, it matches
-          
-            // Check FROM location if specified
-            if (fromLocation) {
-              const searchTerm = fromLocation.address.toLowerCase()
-              console.log('Checking FROM:', searchTerm)
-              matchesFrom = false
-              
-              if (strictSearch) {
-                console.log('STRICT search for FROM location')
-                if (ride.from_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
-                  console.log('✅ FROM: Exact match with departure location')
-                  matchesFrom = true
-                }
-              } else {
-                console.log('FLEXIBLE search for FROM location')
-                if (locationsMatch(ride.from_location, searchTerm)) {
-                  console.log('✅ FROM: Text match found in departure location')
-                  matchesFrom = true
-                }
-                
-                // Check intermediate stops
-                if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                  for (const stop of ride.intermediate_stops) {
-                    if (stop.address && locationsMatch(stop.address, searchTerm)) {
-                      console.log('✅ FROM: Match found in intermediate stop:', stop.address)
-                      matchesFrom = true
-                      break
-                    }
-                  }
-                }
-                
-                // Check distance if coordinates available
-                if (!matchesFrom && fromLocation.latitude && fromLocation.longitude && searchRadius) {
-                  console.log('Checking distance for FROM location')
-                  const radiusMiles = parseInt(searchRadius)
-                  const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
-                  
-                  if (ride.from_latitude && ride.from_longitude) {
-                    const distance = haversineDistance(
-                      fromLocation.latitude,
-                      fromLocation.longitude,
-                      ride.from_latitude,
-                      ride.from_longitude
-                    )
-                    console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                    if (distance <= effectiveRadiusMiles) {
-                      console.log('✅ FROM: Within radius of departure location')
-                      matchesFrom = true
-                    }
-                  }
-                  
-                  // Check distance to intermediate stops
-                  if (!matchesFrom && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                    for (const stop of ride.intermediate_stops) {
-                      if (stop.latitude && stop.longitude) {
-                        const distance = haversineDistance(
-                          fromLocation.latitude,
-                          fromLocation.longitude,
-                          stop.latitude,
-                          stop.longitude
-                        )
-                        console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
-                        if (distance <= effectiveRadiusMiles) {
-                          console.log('✅ FROM: Within radius of intermediate stop')
-                          matchesFrom = true
-                          break
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-              console.log('FROM location result:', matchesFrom ? '✅ MATCH' : '❌ NO MATCH')
-            }
-          
-            // Check TO location if specified
-            if (toLocation) {
-              const searchTerm = toLocation.address.toLowerCase()
-              console.log('Checking TO:', searchTerm)
-              matchesTo = false
-              
-              if (strictSearch) {
-                console.log('STRICT search for TO location')
-                if (ride.to_location.toLowerCase().trim() === searchTerm.toLowerCase().trim()) {
-                  console.log('✅ TO: Exact match with destination location')
-                  matchesTo = true
-                }
-              } else {
-                console.log('FLEXIBLE search for TO location')
-                if (locationsMatch(ride.to_location, searchTerm)) {
-                  console.log('✅ TO: Text match found in destination location')
-                  matchesTo = true
-                }
-                
-                // Check intermediate stops
-                if (!matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
-                  for (const stop of ride.intermediate_stops) {
-                    if (stop.address && locationsMatch(stop.address, searchTerm)) {
-                      console.log('✅ TO: Match found in intermediate stop:', stop.address)
-                      matchesTo = true
-                      break
-                    }
-                  }
-                }
-                
-                // Check distance if coordinates available
-                if (!matchesTo && toLocation.latitude && toLocation.longitude && searchRadius) {
-                  console.log('Checking distance for TO location')
-                  const radiusMiles = parseInt(searchRadius)
-                  
-                  if (ride.to_latitude && ride.to_longitude) {
-                    const distance = haversineDistance(
-                      toLocation.latitude,
-                      toLocation.longitude,
-                      ride.to_latitude,
-                      ride.to_longitude
-                    )
-                    console.log(`Distance to destination: ${distance.toFixed(1)} miles`)
-                    if (distance <= radiusMiles) {
-                      console.log('✅ TO: Within radius of destination location')
-                      matchesTo = true
-                    }
-                  }
-                  
-                  if (!matchesTo && ride.from_latitude && ride.from_longitude) {
-                    const distance = haversineDistance(
-                      toLocation.latitude,
-                      toLocation.longitude,
-                      ride.from_latitude,
-                      ride.from_longitude
-                    )
-                    console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                    if (distance <= radiusMiles) {
-                      console.log('✅ TO: Within radius of departure location')
-                      matchesTo = true
-                    }
-                  }
-                }
-              }
-              console.log('TO location result:', matchesTo ? '✅ MATCH' : '❌ NO MATCH')
-            }
-          }
-          
-          const matches = matchesFrom && matchesTo
-          console.log(`FINAL RESULT: ${matches ? '✅ RIDE MATCHES' : '❌ RIDE REJECTED'}`)
-          
-          return matches
-        })
-      } else {
-        console.log('=== NO LOCATION FILTERS APPLIED ===')
-        console.log('Showing all rides')
-      }
-      
-      console.log('=== SEARCH COMPLETE ===')
-      console.log('Final filtered rides:', filteredRides.length)
-      console.log('Rides:', filteredRides.map(r => `${r.from_location} → ${r.to_location}`))
-
-      setRides(filteredRides)
+      setRides(data || [])
 
       // Also fetch matching ride requests
       const requests = await getDisplayRideRequests(
         fromLocation?.address,
         toLocation?.address,
-        departureDate,
+        departureDateTime ? new Date(departureDateTime).toISOString().split('T')[0] : undefined,
         departureMonth,
         searchByMonth,
         user?.id
@@ -549,16 +129,16 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)
-      setRides([]) // Set empty array on error
+      setRides([])
       setRideRequests([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
+  const handleChatClick = (userId: string, userName: string, ride?: CarRide) => {
     setSelectedChatUser({ userId, userName })
-    setSelectedChatRide(ride)
+    setSelectedChatRide(ride || null)
     
     // Check if disclaimer should be shown
     if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
@@ -572,23 +152,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-ride', user?.id, selectedChatUser.userId)
-    onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined, undefined)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined)
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
-
-  const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0]
+  const getTomorrowDateTime = () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toISOString().slice(0, 16)
   }
 
   const getTodayMonth = () => {
@@ -611,7 +181,16 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Ride</h1>
-            <p className="text-gray-600 mb-4">Search for available car rides in your area</p>
+            <p className="text-gray-600">Search for available rides or passengers looking for rides</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 my-4">
+              <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
+              <ul className="text-left space-y-1 text-green-800 text-sm">
+                <li>• Search by <strong>departure location</strong> to find rides leaving from your area</li>
+                <li>• Search by <strong>destination location</strong> to find rides going to your destination</li>
+                <li>• Use <strong>both locations</strong> for specific route matches</li>
+                <li>• Leave both fields empty to see all available rides</li>
+              </ul>
+            </div>
             {effectiveIsGuest && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
@@ -619,278 +198,24 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 </p>
               </div>
             )}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-              <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
-              <ul className="text-left space-y-1">
-                <li>• Use <strong>Nearby Search</strong> to find rides near your current location</li>
-                <li>• Search by <strong>departure location</strong> to find rides leaving from your area</li>
-                <li>• Search by <strong>destination</strong> to find rides going to where you need</li>
-                <li>• Use <strong>both locations</strong> for specific route matches</li>
-                <li>• <strong>Flexible search</strong> finds rides within your specified radius</li>
-                <li>• <strong>Strict search</strong> only shows exact location matches</li>
-                <li>• Leave locations empty to see all available rides</li>
-              </ul>
-            </div>
           </div>
 
           <form onSubmit={handleSearch} className="space-y-6">
-            {/* Location Search Type Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Search Type
-              </label>
-              <div className="flex space-x-6">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="locationSearchType"
-                    checked={locationSearchType === 'manual'}
-                    onChange={() => {
-                      setLocationSearchType('manual')
-                      setUserLocation(null)
-                      setLocationError('')
-                    }}
-                    className="mr-2 text-green-600"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Manual Search</span>
-                    <p className="text-xs text-gray-500">Enter specific locations</p>
-                  </div>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="locationSearchType"
-                    checked={locationSearchType === 'nearby'}
-                    onChange={() => {
-                      setLocationSearchType('nearby')
-                      setFromLocation(null)
-                      setToLocation(null)
-                    }}
-                    className="mr-2 text-green-600"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Nearby Search</span>
-                    <p className="text-xs text-gray-500">Find rides near your location</p>
-                  </div>
-                </label>
-              </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <LocationAutocomplete
+                value={fromLocation}
+                onChange={setFromLocation}
+                placeholder="Any departure location"
+                label="From Location"
+              />
+
+              <LocationAutocomplete
+                value={toLocation}
+                onChange={setToLocation}
+                placeholder="Any destination location"
+                label="To Location"
+              />
             </div>
-
-            {locationSearchType === 'nearby' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Location
-                </label>
-                {!userLocation ? (
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={getCurrentLocation}
-                      disabled={gettingLocation}
-                      className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Navigation size={20} />
-                      <span>{gettingLocation ? 'Getting Location...' : 'Get My Location'}</span>
-                    </button>
-                    {locationError && (
-                      <p className="text-sm text-red-600">{locationError}</p>
-                    )}
-                    <p className="text-sm text-gray-500">
-                      Click to allow location access and find rides near you
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Navigation size={16} className="text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-green-900">Location Found</p>
-                        <p className="text-sm text-green-700">{userLocation.address}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUserLocation(null)
-                          setLocationError('')
-                        }}
-                        className="text-green-600 hover:text-green-700 text-sm font-medium"
-                      >
-                        Change
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {locationSearchType === 'manual' && (
-             <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Search Mode
-                </label>
-                <div className="flex space-x-6">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="searchMode"
-                      checked={!strictSearch}
-                      onChange={() => setStrictSearch(false)}
-                      className="mr-2 text-green-600"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Flexible Search</span>
-                      <p className="text-xs text-gray-500">Find rides within radius of your locations</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="searchMode"
-                      checked={strictSearch}
-                      onChange={() => setStrictSearch(true)}
-                      className="mr-2 text-green-600"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Strict Search</span>
-                      <p className="text-xs text-gray-500">Only exact location matches</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <LocationAutocomplete
-                  value={fromLocation}
-                  onChange={setFromLocation}
-                  placeholder="Any departure location"
-                  label="From Location"
-                />
-
-                <LocationAutocomplete
-                  value={toLocation}
-                  onChange={setToLocation}
-                  placeholder="Enter city, neighborhood, or landmark (not exact address)"
-                  label="To Location"
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1 mb-4">
-                For best results, enter a city, neighborhood, or landmark as your destination. If you are searching for a specific location, you can enter that as well. Broader locations help you find more rides!
-              </p>
-             </>  
-            )}
-
-            {!!((locationSearchType === 'nearby' && userLocation) || (!strictSearch && (fromLocation?.latitude && fromLocation?.longitude || toLocation?.latitude && toLocation?.longitude))) && (
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Search Radius: {useCustomRadius && customRadius ? customRadius : searchRadius} {radiusUnit}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowRadiusHelp(!showRadiusHelp)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <HelpCircle size={16} />
-                  </button>
-                </div>
-                {showRadiusHelp && (
-                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-                    {locationSearchType === 'nearby' 
-                      ? `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your current location. It finds rides starting, ending, or passing through your area.`
-                      : `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your selected location(s). For departure location, it finds rides starting OR ending nearby. For destination, it finds rides ending OR starting nearby.`
-                    }
-                  </div>
-                )}
-
-                {/* Unit Selection */}
-                <div className="flex space-x-4 mb-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="radiusUnit"
-                      checked={radiusUnit === 'miles'}
-                      onChange={() => setRadiusUnit('miles')}
-                      className="mr-2 text-green-600"
-                    />
-                    <span className="text-sm text-gray-700">Miles</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="radiusUnit"
-                      checked={radiusUnit === 'kilometers'}
-                      onChange={() => setRadiusUnit('kilometers')}
-                      className="mr-2 text-green-600"
-                    />
-                    <span className="text-sm text-gray-700">Kilometers</span>
-                  </label>
-                </div>
-
-                {/* Radius Input Method Selection */}
-                <div className="flex space-x-4 mb-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="radiusInputMethod"
-                      checked={!useCustomRadius}
-                      onChange={() => setUseCustomRadius(false)}
-                      className="mr-2 text-green-600"
-                    />
-                    <span className="text-sm text-gray-700">Use Slider</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="radiusInputMethod"
-                      checked={useCustomRadius}
-                      onChange={() => setUseCustomRadius(true)}
-                      className="mr-2 text-green-600"
-                    />
-                    <span className="text-sm text-gray-700">Enter Custom Value</span>
-                  </label>
-                </div>
-
-                {!useCustomRadius ? (
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1000"
-                      step="5"
-                      value={searchRadius}
-                      onChange={(e) => setSearchRadius(e.target.value)}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                      <span>0 {radiusUnit}</span>
-                      <span>1000 {radiusUnit}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={customRadius}
-                      onChange={(e) => setCustomRadius(e.target.value)}
-                      placeholder={`Enter radius in ${radiusUnit} (can exceed 1000)`}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                    />
-                    <div className="absolute right-3 top-3 text-sm text-gray-500">
-                      {radiusUnit}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      You can enter values greater than 1000 {radiusUnit} manually if needed
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -923,17 +248,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
             {!searchByMonth ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Departure Date
+                  Departure Date & Time
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
-                    type="date"
-                    value={departureDate}
-                    onChange={(e) => setDepartureDate(e.target.value)}
-                    min={getTodayDate()}
+                    type="datetime-local"
+                    value={departureDateTime}
+                    onChange={(e) => setDepartureDateTime(e.target.value)}
+                    min={getTomorrowDateTime()}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                    placeholder="Any date"
+                    placeholder="Any date and time"
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-1">Leave empty to search all dates</p>
@@ -982,8 +307,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors text-sm"
                       >
-                        <option value="date-asc">Departure Date (Earliest First)</option>
-                        <option value="date-desc">Departure Date (Latest First)</option>
+                        <option value="date-asc">Date (Earliest First)</option>
+                        <option value="date-desc">Date (Latest First)</option>
                         <option value="price-asc">Price (Low to High)</option>
                         <option value="price-desc">Price (High to Low)</option>
                         <option value="created-desc">Newly Posted (Latest First)</option>
@@ -1007,7 +332,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
             <button
               type="submit"
-              disabled={loading || (locationSearchType === 'nearby' && !userLocation)}
+              disabled={loading}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Searching...' : 'Search Rides'}
@@ -1057,11 +382,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides found</h3>
                     <p className="text-gray-600 mb-6">
-                      Try adjusting your search criteria or check the "Ride Requests" tab to see if anyone is looking for rides on your route
+                      Try adjusting your search criteria or check the "Ride Requests" tab to see if anyone is looking for a ride on your route
                     </p>
                     <button
                       onClick={() => setActiveTab('requests')}
-                      className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                      className="text-green-600 hover:text-green-700 font-medium transition-colors"
                     >
                       View Ride Requests ({rideRequests.length})
                     </button>
@@ -1102,24 +427,21 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             <div className="grid md:grid-cols-3 gap-4 mb-4">
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">From</p>
-                                <div className="font-semibold text-gray-900 flex items-center">
-                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                <div className="font-semibold text-gray-900">
                                   {ride.from_location}
                                 </div>
                               </div>
 
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">To</p>
-                                <div className="font-semibold text-gray-900 flex items-center">
-                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                <div className="font-semibold text-gray-900">
                                   {ride.to_location}
                                 </div>
                               </div>
 
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">Departure</p>
-                                <div className="font-semibold text-gray-900 flex items-center">
-                                  <Clock size={14} className="mr-1 text-gray-400" />
+                                <div className="font-semibold text-gray-900">
                                   {formatDateTimeSafe(ride.departure_date_time)}
                                 </div>
                               </div>
@@ -1207,23 +529,23 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <h4 className="font-semibold text-blue-900 mb-2">💡 About Ride Requests</h4>
-                      <p className="text-sm text-blue-800">
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                      <h4 className="font-semibold text-purple-900 mb-2">💡 About Ride Requests</h4>
+                      <p className="text-sm text-purple-800">
                         These are passengers looking for rides on routes similar to your search. 
-                        Contact them if you're planning to drive and can offer a ride!
+                        Contact them if you're driving and can provide a ride!
                       </p>
                     </div>
                     
                     {rideRequests.map((request) => (
                       <div
                         key={request.id}
-                        className="border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-blue-50"
+                        className="border border-purple-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-purple-50"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
                                 {request.user_profiles?.profile_image_url ? (
                                   <img
                                     src={request.user_profiles.profile_image_url}
@@ -1240,23 +562,21 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 <h3 className="text-xl font-semibold text-gray-900">
                                   {request.user_profiles?.full_name || 'Passenger'}
                                 </h3>
-                                <p className="text-blue-600 font-medium">Looking for a ride</p>
+                                <p className="text-purple-600 font-medium">Looking for a ride</p>
                               </div>
                             </div>
 
                             <div className="grid md:grid-cols-3 gap-4 mb-4">
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">From</p>
-                                <div className="font-semibold text-gray-900 flex items-center">
-                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                <div className="font-semibold text-gray-900">
                                   {request.departure_location}
                                 </div>
                               </div>
 
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">To</p>
-                                <div className="font-semibold text-gray-900 flex items-center">
-                                  <MapPin size={14} className="mr-1 text-gray-400" />
+                                <div className="font-semibold text-gray-900">
                                   {request.destination_location}
                                 </div>
                               </div>
@@ -1271,24 +591,30 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             </div>
 
                             {request.additional_notes && (
-                              <div className="mt-4 pt-4 border-t border-blue-200">
-                                <p className="text-sm text-gray-600 mb-1">Additional Notes</p>
+                              <div className="mt-4 pt-4 border-t border-purple-200">
+                                <p className="text-sm text-gray-600 mb-1">What they need</p>
                                 <p className="text-gray-900">{request.additional_notes}</p>
                               </div>
                             )}
 
-                            <div className="mt-4 pt-4 border-t border-blue-200">
+                            <div className="mt-4 pt-4 border-t border-purple-200">
                               <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                <div className="flex items-center space-x-1">
-                                  <Search size={12} />
-                                  <span>Search radius: {request.search_radius_miles} miles</span>
-                                </div>
                                 {request.departure_time_preference && (
                                   <div className="flex items-center space-x-1">
                                     <Clock size={12} />
                                     <span>Preferred time: {request.departure_time_preference}</span>
                                   </div>
                                 )}
+                                {request.max_price && (
+                                  <div className="flex items-center space-x-1">
+                                    <DollarSign size={12} />
+                                    <span>Max budget: {getCurrencySymbol(request.currency || 'USD')}{request.max_price}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center space-x-1">
+                                  <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                                  <span>Search radius: {request.search_radius_miles} miles</span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1302,8 +628,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown')}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -1315,8 +641,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger')}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Ride</span>
@@ -1333,51 +659,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   </div>
                 )}
               </>
-            )}
-          </div>
-        )}
-
-        {/* Legacy rides display - remove this section */}
-        {searched && false && (
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Search Results
-              </h2>
-              <span className="text-gray-600">
-                {rides.length} ride{rides.length !== 1 ? 's' : ''} found
-              </span>
-            </div>
-
-            {rides.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Car size={32} className="text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides found</h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your search criteria or check back later for new rides
-                </p>
-                <button
-                  onClick={() => {
-                    setFromLocation(null)
-                    setToLocation(null)
-                    setUserLocation(null)
-                    setSearchRadius('10')
-                    setDepartureDate('')
-                    setDepartureMonth('')
-                    setLocationSearchType('manual')
-                    setSearched(false)
-                  }}
-                  className="text-green-600 hover:text-green-700 font-medium transition-colors"
-                >
-                  Clear Search
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Legacy content removed */}
-              </div>
             )}
           </div>
         )}

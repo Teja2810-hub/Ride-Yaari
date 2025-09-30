@@ -113,12 +113,21 @@ export const getMatchingTripRequests = async (
 export const getDisplayRideRequests = async (
   departureLocation?: string,
   destinationLocation?: string,
-  travelDate?: string,
-  travelMonth?: string,
+  departureDate?: string,
+  departureMonth?: string,
   searchByMonth: boolean = false,
   excludeUserId?: string
 ): Promise<RideRequest[]> => {
   return retryWithBackoff(async () => {
+    console.log('getDisplayRideRequests called with:', {
+      departureLocation,
+      destinationLocation,
+      departureDate,
+      departureMonth,
+      searchByMonth,
+      excludeUserId
+    })
+    
     let query = supabase
       .from('ride_requests')
       .select(`
@@ -138,17 +147,21 @@ export const getDisplayRideRequests = async (
 
     // Filter by location if provided (flexible matching)
     if (departureLocation) {
-      query = query.or(`departure_location.ilike.%${departureLocation}%,departure_location.ilike.%${departureLocation.split(',')[0]}%`)
+      const locationParts = departureLocation.split(',')
+      const mainLocation = locationParts[0].trim()
+      query = query.or(`departure_location.ilike.%${mainLocation}%,departure_location.ilike.%${departureLocation}%`)
     }
     if (destinationLocation) {
-      query = query.or(`destination_location.ilike.%${destinationLocation}%,destination_location.ilike.%${destinationLocation.split(',')[0]}%`)
+      const locationParts = destinationLocation.split(',')
+      const mainLocation = locationParts[0].trim()
+      query = query.or(`destination_location.ilike.%${mainLocation}%,destination_location.ilike.%${destinationLocation}%`)
     }
 
     // Filter by date
-    if (searchByMonth && travelMonth) {
-      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{${travelMonth}-01}`)
-    } else if (!searchByMonth && travelDate) {
-      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{${travelDate}}`)
+    if (searchByMonth && departureMonth) {
+      query = query.or(`request_month.eq.${departureMonth},multiple_dates.cs.{${departureMonth}-01}`)
+    } else if (!searchByMonth && departureDate) {
+      query = query.or(`specific_date.eq.${departureDate},multiple_dates.cs.{${departureDate}}`)
     }
 
     // Only show future requests
@@ -159,6 +172,7 @@ export const getDisplayRideRequests = async (
 
     if (error) throw error
 
+    console.log('getDisplayRideRequests result:', data?.length || 0, 'requests found')
     return data || []
   })
 }
