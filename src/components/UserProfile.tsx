@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { CarRide, Trip, RideConfirmation } from '../types'
