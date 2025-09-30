@@ -4,6 +4,7 @@ import { Trip, RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
+import RequestsView from './RequestsView'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
