@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Car, Plane, User, Calendar, Clock, MapPin, MessageCircle, Search, ListFilter as Filter, CreditCard as Edit, Trash2, CircleCheck as CheckCircle, X, TriangleAlert as AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Car, Plane, User, Calendar, Clock, MapPin, MessageCircle, Search, ListFilter as Filter, CreditCard as Edit, Trash2, CircleCheck as CheckCircle, X, TriangleAlert as AlertTriangle, Lock, Unlock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideRequest, TripRequest } from '../types'
@@ -31,6 +31,11 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
     show: boolean
     request: RideRequest | TripRequest | null
   }>({ show: false, request: null })
+  const [showEditModal, setShowEditModal] = useState<{
+    show: boolean
+    request: RideRequest | TripRequest | null
+  }>({ show: false, request: null })
+  const [editFormData, setEditFormData] = useState<any>({})
 
   useEffect(() => {
     if (user) {
@@ -87,6 +92,35 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
       setTimeout(() => setSuccessMessage(''), 3000)
     }).finally(() => {
       setDeletingId(null)
+    })
+  }
+
+  const handleEditRequest = async (requestId: string, updateData: any) => {
+    if (!user) return
+
+    setShowEditModal({ show: false, request: null })
+
+    await handleAsync(async () => {
+      const tableName = type === 'ride' ? 'ride_requests' : 'trip_requests'
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+        .eq('passenger_id', user.id)
+
+      if (error) throw error
+
+      // Update local state
+      setRequests(prev => prev.map(r => 
+        r.id === requestId ? { ...r, ...updateData } : r
+      ))
+      
+      setSuccessMessage('Request updated successfully!')
+      setTimeout(() => setSuccessMessage(''), 3000)
     })
   }
 
@@ -464,7 +498,19 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
                           : 'bg-green-600 hover:bg-green-700 text-white'
                       }`}
                     >
+                      {request.is_active ? <Lock size={16} /> : <Unlock size={16} />}
                       <span>{request.is_active ? 'Deactivate' : 'Activate'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setEditFormData(request)
+                        setShowEditModal({ show: true, request })
+                      }}
+                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                    >
+                      <Edit size={16} />
+                      <span>Edit</span>
                     </button>
                     
                     <button
@@ -588,6 +634,82 @@ export default function RequestsView({ type, onBack, onStartChat }: RequestsView
                 {isLoading ? 'Deleting...' : 'Delete Request'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Request Modal */}
+      {showEditModal.show && showEditModal.request && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Edit size={32} className="text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Edit {type} Request</h2>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleEditRequest(showEditModal.request!.id, editFormData)
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Notes
+                </label>
+                <textarea
+                  value={editFormData.additional_notes || ''}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, additional_notes: e.target.value }))}
+                  placeholder="Update your requirements or preferences..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                  rows={3}
+                  maxLength={200}
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  {(editFormData.additional_notes || '').length}/200 characters
+                </div>
+              </div>
+
+              {type === 'ride' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Radius
+                  </label>
+                  <select
+                    value={editFormData.search_radius_miles || 25}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, search_radius_miles: parseInt(e.target.value) }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  >
+                    <option value={5}>5 miles</option>
+                    <option value={10}>10 miles</option>
+                    <option value={15}>15 miles</option>
+                    <option value={20}>20 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={30}>30 miles</option>
+                    <option value={50}>50 miles</option>
+                    <option value={75}>75 miles</option>
+                    <option value={100}>100 miles</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal({ show: false, request: null })}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Updating...' : 'Update Request'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

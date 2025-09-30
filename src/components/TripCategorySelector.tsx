@@ -8,25 +8,29 @@ import TripClosureControls from './TripClosureControls'
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
   joinedTrips: RideConfirmation[]
+  requestedTrips: TripRequest[]
   onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
   onEditTrip: (trip: Trip) => void
   onDeleteTrip: (tripId: string) => void
   onViewTripHistory: (trip: Trip) => void
+  onViewRequests: () => void
   onRefresh: () => void
 }
 
 export default function TripCategorySelector({ 
   offeredTrips,
   joinedTrips,
+  requestedTrips,
   onStartChat,
   onEditTrip,
   onDeleteTrip,
   onViewTripHistory,
+  onViewRequests,
   onRefresh
 }: TripCategorySelectorProps) {
   const [expandedOfferedTrip, setExpandedOfferedTrip] = useState<string | null>(null)
   const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
-  const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined'>('overview')
+  const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -117,11 +121,11 @@ export default function TripCategorySelector({
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Airport Trips</h2>
           <p className="text-gray-600">
-            View trips you're offering to other travelers or trips you've joined as a passenger.
+            View trips you're offering, trips you've joined, or trip requests you've made.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Trips You're Offering */}
           <div
             onClick={() => setActiveSection('offered')}
@@ -175,14 +179,41 @@ export default function TripCategorySelector({
               </div>
             </div>
           </div>
+
+          {/* Trip Requests */}
+          <div
+            onClick={() => setActiveSection('requested')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Send size={32} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trip Requests</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Manage trip assistance requests you've submitted to find travelers
+              </p>
+              <div className="bg-purple-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <Send size={20} className="text-purple-600" />
+                  <span className="text-2xl font-bold text-purple-600">{requestedTrips.length}</span>
+                  <span className="text-purple-800">Request{requestedTrips.length !== 1 ? 's' : ''} Made</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
+                View Your Requests
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">
           <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Airport Trips Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">{offeredTrips.length + joinedTrips.length}</div>
+              <div className="text-3xl font-bold text-blue-600 mb-2">{offeredTrips.length + joinedTrips.length + requestedTrips.length}</div>
               <div className="text-gray-700">Total Trips</div>
             </div>
             <div className="text-center">
@@ -192,6 +223,10 @@ export default function TripCategorySelector({
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600 mb-2">{joinedTrips.length}</div>
               <div className="text-gray-700">As Passenger</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-pink-600 mb-2">{requestedTrips.length}</div>
+              <div className="text-gray-700">Requests Made</div>
             </div>
           </div>
         </div>
@@ -670,6 +705,32 @@ export default function TripCategorySelector({
             })}
           </div>
         )}
+      </div>
+    )
+  }
+
+  if (activeSection === 'requested') {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setActiveSection('overview')}
+              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              <ArrowRight size={20} className="rotate-180" />
+              <span>Back</span>
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900">Your Trip Requests</h2>
+          </div>
+          <span className="text-gray-600">{requestedTrips.length} request{requestedTrips.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        <RequestsView
+          type="trip"
+          onBack={() => setActiveSection('overview')}
+          onStartChat={onStartChat}
+        />
       </div>
     )
   }

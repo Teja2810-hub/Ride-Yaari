@@ -44,6 +44,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   const [rides, setRides] = useState<CarRide[]>([])
   const [joinedTrips, setJoinedTrips] = useState<RideConfirmation[]>([])
   const [joinedRides, setJoinedRides] = useState<RideConfirmation[]>([])
+  const [requestedTrips, setRequestedTrips] = useState<TripRequest[]>([])
+  const [requestedRides, setRequestedRides] = useState<RideRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedRide, setSelectedRide] = useState<CarRide | null>(null)
@@ -174,10 +176,46 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       if (joinedRidesError) throw joinedRidesError
       console.log('Fetched joined rides:', joinedRidesData?.length || 0)
       
+      // Fetch trip requests user has made
+      const { data: requestedTripsData, error: requestedTripsError } = await supabase
+        .from('trip_requests')
+        .select(`
+          *,
+          user_profiles!trip_requests_passenger_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        `)
+        .eq('passenger_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (requestedTripsError) throw requestedTripsError
+      console.log('Fetched requested trips:', requestedTripsData?.length || 0)
+
+      // Fetch ride requests user has made
+      const { data: requestedRidesData, error: requestedRidesError } = await supabase
+        .from('ride_requests')
+        .select(`
+          *,
+          user_profiles!ride_requests_passenger_id_fkey (
+            id,
+            full_name,
+            profile_image_url
+          )
+        `)
+        .eq('passenger_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (requestedRidesError) throw requestedRidesError
+      console.log('Fetched requested rides:', requestedRidesData?.length || 0)
+      
       setTrips(tripsData || [])
       setRides(ridesData || [])
       setJoinedTrips(joinedTripsData || [])
       setJoinedRides(joinedRidesData || [])
+      setRequestedTrips(requestedTripsData || [])
+      setRequestedRides(requestedRidesData || [])
       
       console.log('User data fetch completed successfully')
       
@@ -394,6 +432,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <h3 className="text-2xl font-bold text-emerald-600">{joinedRides.length}</h3>
                     <p className="text-emerald-800">Rides Joined</p>
                   </div>
+                  <div className="bg-purple-50 rounded-lg p-6 text-center">
+                    <Send size={32} className="text-purple-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-purple-600">{requestedTrips.length + requestedRides.length}</h3>
+                    <p className="text-purple-800">Requests Made</p>
+                  </div>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-6">
@@ -516,6 +559,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               <TripCategorySelector
                 offeredTrips={trips}
                 joinedTrips={joinedTrips}
+                requestedTrips={requestedTrips}
                 onStartChat={onStartChat}
                 onEditTrip={onEditTrip}
                 onDeleteTrip={(tripId) => {
@@ -524,6 +568,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   showDeleteConfirmation('trip', tripId, tripName)
                 }}
                 onViewTripHistory={handleViewTripHistory}
+                onViewRequests={() => setActiveTab('requests')}
                 onRefresh={fetchUserData}
               />
               ) : (
@@ -539,6 +584,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
               <RideCategorySelector
                 offeredRides={rides}
                 joinedRides={joinedRides}
+                requestedRides={requestedRides}
                 onStartChat={onStartChat}
                 onEditRide={onEditRide}
                 onDeleteRide={(rideId) => {
@@ -547,6 +593,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   showDeleteConfirmation('ride', rideId, rideName)
                 }}
                 onViewRideHistory={handleViewRideHistory}
+                onViewRequests={() => setActiveTab('requests')}
                 onRefresh={fetchUserData}
               />
               ) : (
