@@ -6,6 +6,8 @@ import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
+import NotificationPreferenceForm, { NotificationPreferenceData } from './NotificationPreferenceForm'
+import { createRidePostNotification } from '../utils/postNotificationHelpers'
 
 interface LocationData {
   address: string
@@ -33,6 +35,13 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
   const [error, setError] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferenceData>({
+    enabled: false,
+    dateType: 'specific_date',
+    specificDate: '',
+    multipleDates: [''],
+    notificationMonth: ''
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +97,22 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
 
       if (error) throw error
 
+      // Create notification preference if enabled
+      if (data && data.length > 0 && notificationPreferences.enabled) {
+        try {
+          await createRidePostNotification(data[0].id, user.id, {
+            dateType: notificationPreferences.dateType,
+            specificDate: notificationPreferences.specificDate || undefined,
+            multipleDates: notificationPreferences.multipleDates.filter(d => d) || undefined,
+            notificationMonth: notificationPreferences.notificationMonth || undefined
+          })
+          console.log('Ride notification preference created successfully')
+        } catch (notificationError) {
+          console.error('Error creating ride notification:', notificationError)
+          // Don't fail the ride creation if notification setup fails
+        }
+      }
+
       // Notify matching passengers about the new ride
       if (data && data.length > 0) {
         const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
@@ -110,7 +135,13 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       setPrice('')
       setCurrency('USD')
       setNegotiable(false)
-      setEnableNotifications(false)
+      setNotificationPreferences({
+        enabled: false,
+        dateType: 'specific_date',
+        specificDate: '',
+        multipleDates: [''],
+        notificationMonth: ''
+      })
     } catch (error: any) {
       console.error('Error posting ride:', error)
       setError(error.message)
@@ -349,6 +380,13 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                 Price is negotiable
               </label>
             </div>
+
+            <NotificationPreferenceForm
+              value={notificationPreferences}
+              onChange={setNotificationPreferences}
+              type="ride"
+              className="mb-6"
+            />
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h3 className="font-semibold text-green-900 mb-2">💡 Tips for a Great Ride Post</h3>

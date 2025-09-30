@@ -7,6 +7,8 @@ import DisclaimerModal from './DisclaimerModal'
 import { timezones, getDefaultTimezone } from '../utils/timezones'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
+import NotificationPreferenceForm, { NotificationPreferenceData } from './NotificationPreferenceForm'
+import { createTripPostNotification } from '../utils/postNotificationHelpers'
 
 interface PostTripProps {
   onBack: () => void
@@ -33,6 +35,13 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
   const [error, setError] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferenceData>({
+    enabled: false,
+    dateType: 'specific_date',
+    specificDate: '',
+    multipleDates: [''],
+    notificationMonth: ''
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,6 +91,22 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
 
       if (error) throw error
 
+      // Create notification preference if enabled
+      if (data && data.length > 0 && notificationPreferences.enabled) {
+        try {
+          await createTripPostNotification(data[0].id, user.id, {
+            dateType: notificationPreferences.dateType,
+            specificDate: notificationPreferences.specificDate || undefined,
+            multipleDates: notificationPreferences.multipleDates.filter(d => d) || undefined,
+            notificationMonth: notificationPreferences.notificationMonth || undefined
+          })
+          console.log('Trip notification preference created successfully')
+        } catch (notificationError) {
+          console.error('Error creating trip notification:', notificationError)
+          // Don't fail the trip creation if notification setup fails
+        }
+      }
+
       if (data && data.length > 0) {
         const { notifyMatchingPassengers } = await import('../utils/tripNotificationService')
         
@@ -106,6 +131,13 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
       setPrice('')
       setCurrency('USD')
       setNegotiable(false)
+      setNotificationPreferences({
+        enabled: false,
+        dateType: 'specific_date',
+        specificDate: '',
+        multipleDates: [''],
+        notificationMonth: ''
+      })
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -375,6 +407,13 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
                 </p>
               )}
             </div>
+
+            <NotificationPreferenceForm
+              value={notificationPreferences}
+              onChange={setNotificationPreferences}
+              type="trip"
+              className="mb-6"
+            />
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
