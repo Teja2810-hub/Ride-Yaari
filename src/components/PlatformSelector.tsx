@@ -234,22 +234,6 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           <div className="mb-20">
             <ReviewDisplay title="What Our Community Says" maxReviews={6} />
           </div>
-
-          {/* Review Form Section */}
-          <div className="mb-20">
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Share Your Experience</h2>
-                <p className="text-gray-600">
-                  Help other travelers by sharing your RideYaari experience
-                </p>
-              </div>
-              <ReviewForm onReviewSubmitted={() => {
-                // Refresh reviews display
-                window.location.reload()
-              }} />
-            </div>
-          </div>
           
           {/* Call to Action */}
           <div className="text-center">

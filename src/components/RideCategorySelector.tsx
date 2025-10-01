@@ -735,7 +735,7 @@ export default function RideCategorySelector({
                 key={request.id}
                 className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
                       <Send size={24} className="text-white" />
@@ -745,83 +745,11 @@ export default function RideCategorySelector({
                         {request.departure_location} → {request.destination_location}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Requested on {formatDateTime(request.created_at)}
+                        {formatRequestDateDisplay(request)} • {request.departure_time_preference || 'Flexible time'}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      <span>{request.is_active ? 'Active' : 'Inactive'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-purple-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600 mb-1">Date Preference</p>
-                      <div className="font-medium text-gray-900">
-                        {formatRequestDateDisplay(request)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Search Radius</p>
-                      <div className="font-medium text-gray-900">
-                        {request.search_radius_miles} miles
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-1">Max Budget</p>
-                      <div className="font-medium text-gray-900">
-                        {request.max_price ? `${getCurrencySymbol(request.currency || 'USD')}${request.max_price}` : 'No limit'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {request.departure_time_preference && (
-                    <div className="mt-3 pt-3 border-t border-purple-200">
-                      <p className="text-gray-600 mb-1">Preferred Time</p>
-                      <p className="text-gray-900 text-sm">{request.departure_time_preference}</p>
-                    </div>
-                  )}
-
-                  {request.additional_notes && (
-                    <div className="mt-3 pt-3 border-t border-purple-200">
-                      <p className="text-gray-600 mb-1">Additional Notes</p>
-                      <p className="text-gray-900 text-sm">{request.additional_notes}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Request Status</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600 mb-1">Status</p>
-                      <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        <span>{request.is_active ? 'Active - Looking for drivers' : 'Inactive'}</span>
-                      </div>
-                    </div>
-                    {request.expires_at && (
-                      <div>
-                        <p className="text-gray-600 mb-1">Expires</p>
-                        <div className="font-medium text-gray-900">
-                          {formatDateTime(request.expires_at)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="text-xs text-gray-500">
-                    Request ID: {request.id.slice(0, 8)}...
-                  </div>
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={async (e) => {
@@ -838,16 +766,16 @@ export default function RideCategorySelector({
                           alert('Failed to delete request: ' + error.message)
                         }
                       }}
-                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors text-sm"
                     >
                       <Trash2 size={16} />
                       <span>Delete</span>
                     </button>
-                    {request.is_active && (
-                      <span className="text-sm text-green-600 font-medium">
-                        🔔 Notifications active
-                      </span>
-                    )}
+                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                      request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
                   </div>
                 </div>
               </div>

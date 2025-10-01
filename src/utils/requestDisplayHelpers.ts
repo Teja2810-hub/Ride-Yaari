@@ -263,7 +263,7 @@ export const getDisplayTripRequests = async (
 export const formatRequestDateDisplay = (request: RideRequest | TripRequest): string => {
   switch (request.request_type) {
     case 'specific_date':
-      return request.specific_date ? formatDateSafe(request.specific_date) : 'Flexible'
+      return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
     case 'multiple_dates':
       if (request.multiple_dates && request.multiple_dates.length > 0) {
         const validDates = request.multiple_dates.filter(d => d)
@@ -272,15 +272,15 @@ export const formatRequestDateDisplay = (request: RideRequest | TripRequest): st
         }
         return `${validDates.length} dates`
       }
-      return 'Flexible'
+      return 'Multiple dates'
     case 'month':
       if (request.request_month) {
         const date = new Date(request.request_month + '-01')
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       }
-      return 'Flexible'
+      return 'Month'
     default:
-      return 'Flexible'
+      return 'Unknown'
   }
 }
 
