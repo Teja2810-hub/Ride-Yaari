@@ -1,4 +1,3 @@
-import React from 'react'
 import { Plane, Car, ArrowRight, User, Circle as HelpCircle, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
@@ -235,6 +234,16 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             <ReviewDisplay title="What Our Community Says" maxReviews={6} />
           </div>
           
+          {/* Review Form Section */}
+          <div className="mb-20">
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <ReviewForm onReviewSubmitted={() => {
+                // Refresh reviews display
+                window.location.reload()
+              }} />
+            </div>
+          </div>
+
           {/* Call to Action */}
           <div className="text-center">
             <button
