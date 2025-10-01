@@ -170,22 +170,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       setTrips(data || [])
 
       // Also fetch matching trip requests
-      try {
-        const requests = await getDisplayTripRequests(
-          departureAirport,
-          destinationAirport,
-          travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
-          travelMonth,
-          searchByMonth,
-          user?.id
-        )
-        console.log('FindTrip: Successfully fetched trip requests:', requests.length)
-        setTripRequests(requests)
-      } catch (requestError) {
-        console.error('FindTrip: Error fetching trip requests:', requestError)
-        setTripRequests([]) // Set empty array on error
-      }
-      console.log('FindTrip: Fetched trip requests:', requests.length)
+      const requests = await getDisplayTripRequests(
+        departureAirport,
+        destinationAirport,
+        travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
+        travelMonth,
+        searchByMonth,
+        user?.id
+      )
+      setTripRequests(requests)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)

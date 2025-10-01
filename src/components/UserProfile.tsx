@@ -678,6 +678,42 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     Test the confirmation flow and system functionality to ensure everything is working correctly.
                   </p>
                 </div>
+                
+                {/* Debug Section for Requests */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+                  <h3 className="font-semibold text-yellow-900 mb-4">🔍 Request Data Debug</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-yellow-800 mb-2"><strong>Trip Requests:</strong> {requestedTrips.length}</p>
+                      {requestedTrips.length > 0 && (
+                        <div className="bg-white rounded p-3">
+                          <p className="text-xs text-gray-600">Latest request:</p>
+                          <p className="text-xs text-gray-900">{requestedTrips[0]?.departure_airport} → {requestedTrips[0]?.destination_airport}</p>
+                          <p className="text-xs text-gray-600">Type: {requestedTrips[0]?.request_type}</p>
+                          <p className="text-xs text-gray-600">Active: {requestedTrips[0]?.is_active ? 'Yes' : 'No'}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-yellow-800 mb-2"><strong>Ride Requests:</strong> {requestedRides.length}</p>
+                      {requestedRides.length > 0 && (
+                        <div className="bg-white rounded p-3">
+                          <p className="text-xs text-gray-600">Latest request:</p>
+                          <p className="text-xs text-gray-900">{requestedRides[0]?.departure_location} → {requestedRides[0]?.destination_location}</p>
+                          <p className="text-xs text-gray-600">Type: {requestedRides[0]?.request_type}</p>
+                          <p className="text-xs text-gray-600">Active: {requestedRides[0]?.is_active ? 'Yes' : 'No'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={fetchUserData}
+                    className="mt-4 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+                  >
+                    Refresh Request Data
+                  </button>
+                </div>
+                
                 <SystemHealthDashboard />
               </div>
             )}
