@@ -466,7 +466,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
 
                           <div className="ml-6">
-                            {effectiveIsGuest ? (
+                            {ride.user_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium text-center">
+                                  Your Ride
+                                </div>
+                              </div>
+                            ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}

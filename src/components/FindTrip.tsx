@@ -537,7 +537,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
 
                           <div className="ml-6">
-                            {effectiveIsGuest ? (
+                            {trip.user_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium text-center">
+                                  Your Trip
+                                </div>
+                              </div>
+                            ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
