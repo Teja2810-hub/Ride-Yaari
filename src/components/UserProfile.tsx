@@ -497,6 +497,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       <Settings size={16} />
                       <span>Manage Alerts</span>
                     </button>
+                    <button
+                      onClick={() => setActiveTab('reviews')}
+                      disabled={loading}
+                      className="flex items-center space-x-2 bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      <Star size={16} />
+                      <span>Submit Review</span>
+                    </button>
                   </div>
                   
                   {/* Support Developer Section */}
@@ -522,14 +530,6 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                   </div>
                 </div>
 
-                {/* Review Section */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6">Share Your Experience</h3>
-                  <ReviewForm onReviewSubmitted={() => {
-                    // Refresh the page to show the new review
-                    window.location.reload()
-                  }} />
-                </div>
               </div>
             )}
 

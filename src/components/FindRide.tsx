@@ -137,6 +137,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         user?.id
       )
       console.log('FindRide: Fetched ride requests:', requests.length)
+      setRideRequests(requests)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)

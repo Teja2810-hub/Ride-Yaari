@@ -281,10 +281,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </div>
           </div>
 
-          {/* Reviews Section */}
-          <div className="mt-8 sm:mt-16 px-2">
-            <ReviewDisplay title="Airport Trips Reviews" maxReviews={5} />
-          </div>
 
         </div>
       </div>

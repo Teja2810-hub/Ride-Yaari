@@ -5,6 +5,7 @@ import { getCurrencySymbol } from '../utils/currencies'
 import { formatDateSafe } from '../utils/dateHelpers'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
+import { supabase } from '../utils/supabase'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
@@ -841,14 +842,34 @@ export default function TripCategorySelector({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <div className="text-xs text-gray-500">
                     Request ID: {request.id.slice(0, 8)}...
                   </div>
                   <div className="flex items-center space-x-3">
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!confirm('Are you sure you want to delete this trip request?')) return
+                        try {
+                          const { error } = await supabase
+                            .from('trip_requests')
+                            .delete()
+                            .eq('id', request.id)
+                          if (error) throw error
+                          onRefresh()
+                        } catch (error: any) {
+                          alert('Failed to delete request: ' + error.message)
+                        }
+                      }}
+                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                    >
+                      <Trash2 size={16} />
+                      <span>Delete</span>
+                    </button>
                     {request.is_active && (
                       <span className="text-sm text-blue-600 font-medium">
-                        🔔 You'll be notified when matching trips are found
+                        🔔 Notifications active
                       </span>
                     )}
                   </div>
