@@ -94,6 +94,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             longitude: stop.longitude
           }))
         })
+        .select()
 
       if (error) throw error
 

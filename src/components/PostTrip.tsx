@@ -72,7 +72,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
     popupManager.markDisclaimerShown('trip', user.id)
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('trips')
         .insert({
           user_id: user.id,
@@ -88,6 +88,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
           currency: price ? currency : null,
           negotiable: price ? negotiable : false,
         })
+        .select()
 
       if (error) throw error
 
