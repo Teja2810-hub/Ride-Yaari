@@ -684,16 +684,94 @@ export default function RideCategorySelector({
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setActiveSection('overview')}
+              className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+            >
+              <ArrowRight size={20} className="rotate-180" />
+              <span>Back</span>
+            </button>
             <h2 className="text-2xl font-bold text-gray-900">Your Ride Requests</h2>
           </div>
           <span className="text-gray-600">{requestedRides.length} request{requestedRides.length !== 1 ? 's' : ''}</span>
         </div>
 
-        <RequestsView
-          type="ride"
-          onBack={() => setActiveSection('overview')}
-          onStartChat={onStartChat}
-        />
+        {requestedRides.length === 0 ? (
+          <div className="text-center py-12">
+            <Send size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No ride requests yet</h3>
+            <p className="text-gray-600">Start by requesting rides to find drivers in your area!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {requestedRides.map((request) => (
+              <div
+                key={request.id}
+                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                      <Send size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {request.departure_location} → {request.destination_location}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Requested on {formatDateTime(request.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                      request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600 mb-1">Search Radius</p>
+                      <div className="font-medium text-gray-900">
+                        {request.search_radius_miles} miles
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-1">Date Preference</p>
+                      <div className="font-medium text-gray-900">
+                        {formatRequestDateDisplay(request)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-1">Max Budget</p>
+                      <div className="font-medium text-gray-900">
+                        {request.max_price ? `${getCurrencySymbol(request.currency || 'USD')}${request.max_price}` : 'No limit'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {request.additional_notes && (
+                    <div className="mt-3 pt-3 border-t border-purple-200">
+                      <p className="text-gray-600 mb-1">Additional Notes</p>
+                      <p className="text-gray-900 text-sm">{request.additional_notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Request ID: {request.id.slice(0, 8)}...
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
