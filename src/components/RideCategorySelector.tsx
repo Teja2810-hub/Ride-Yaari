@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
-import { CarRide, RideConfirmation } from '../types'
+import { CarRide, RideConfirmation, RideRequest } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
-import RequestsView from './RequestsView'
 
 interface RideCategorySelectorProps {
   offeredRides: CarRide[]
