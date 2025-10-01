@@ -32,6 +32,7 @@ export default function RideCategorySelector({
 }: RideCategorySelectorProps) {
   const [expandedOfferedRide, setExpandedOfferedRide] = useState<string | null>(null)
   const [expandedJoinedRide, setExpandedJoinedRide] = useState<string | null>(null)
+  const [expandedRequestedRide, setExpandedRequestedRide] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
 
   // Debug logging
@@ -103,6 +104,10 @@ export default function RideCategorySelector({
 
   const toggleJoinedRide = (rideId: string) => {
     setExpandedJoinedRide(expandedJoinedRide === rideId ? null : rideId)
+  }
+
+  const toggleRequestedRide = (requestId: string) => {
+    setExpandedRequestedRide(expandedRequestedRide === requestId ? null : requestId)
   }
 
   const getStatusColor = (status: string) => {
@@ -731,7 +736,201 @@ export default function RideCategorySelector({
         ) : (
           <div className="space-y-4">
             {requestedRides.map((request) => (
-              <div
+              <div key={request.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                {/* Request Header - Always Visible */}
+                <div 
+                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => toggleRequestedRide(request.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                        <Send size={24} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {request.departure_location} → {request.destination_location}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {formatRequestDateDisplay(request)}
+                          {request.departure_time_preference && (
+                            <span> • {request.departure_time_preference}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">
+                          {expandedRequestedRide === request.id ? 'Hide Details' : 'Show Details'}
+                        </span>
+                        {expandedRequestedRide === request.id ? (
+                          <ChevronUp size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={20} className="text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {expandedRequestedRide === request.id && (
+                  <div className="border-t border-gray-200 bg-gray-50">
+                    <div className="p-6 space-y-6">
+                      {/* Request Details */}
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-900 mb-3">Request Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600 mb-1">From</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <MapPin size={14} className="mr-1 text-gray-400" />
+                              {request.departure_location}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">To</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <MapPin size={14} className="mr-1 text-gray-400" />
+                              {request.destination_location}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">When</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <Calendar size={14} className="mr-1 text-gray-400" />
+                              {formatRequestDateDisplay(request)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-purple-200">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            {request.departure_time_preference && (
+                              <div>
+                                <p className="text-gray-600 mb-1">Preferred Time</p>
+                                <div className="font-medium text-gray-900 flex items-center">
+                                  <Clock size={14} className="mr-1 text-gray-400" />
+                                  {request.departure_time_preference}
+                                </div>
+                              </div>
+                            )}
+                            {request.max_price && (
+                              <div>
+                                <p className="text-gray-600 mb-1">Max Budget</p>
+                                <div className="font-medium text-green-600">
+                                  {getCurrencySymbol(request.currency || 'USD')}{request.max_price}
+                                </div>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-gray-600 mb-1">Search Radius</p>
+                              <div className="font-medium text-gray-900">
+                                Airport-to-airport matching
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {request.additional_notes && (
+                          <div className="mt-3 pt-3 border-t border-purple-200">
+                            <p className="text-gray-600 mb-1">Additional Notes</p>
+                            <p className="text-gray-900 text-sm">{request.additional_notes}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Request Timeline */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                              <span className="text-purple-600 font-bold text-xs">1</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Request Created</p>
+                              <p className="text-xs text-gray-600">{formatDateTime(request.created_at)}</p>
+                            </div>
+                          </div>
+                          
+                          {request.expires_at && (
+                            <div className="flex items-center space-x-3">
+                              <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span className="text-orange-600 font-bold text-xs">⏰</span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {new Date(request.expires_at) > new Date() ? 'Expires' : 'Expired'}
+                                </p>
+                                <p className="text-xs text-gray-600">{formatDateTime(request.expires_at)}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-xs text-gray-500">
+                          Request ID: {request.id.slice(0, 8)}...
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              // TODO: Implement edit functionality
+                              alert('Edit functionality coming soon')
+                            }}
+                            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
+                          >
+                            <Edit size={16} />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!confirm('Are you sure you want to delete this trip request?')) return
+                              try {
+                                const { error } = await supabase
+                                  .from('trip_requests')
+                                  .delete()
+                                  .eq('id', request.id)
+                                if (error) throw error
+                                onRefresh()
+                              } catch (error: any) {
+                                alert('Failed to delete request: ' + error.message)
+                              }
+                            }}
+                            className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors text-sm"
+                          >
+                            <Trash2 size={16} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return null
+}
+
                 key={request.id}
                 className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
               >
