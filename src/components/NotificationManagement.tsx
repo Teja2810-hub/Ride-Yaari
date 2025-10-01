@@ -623,7 +623,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                     </div>
                   </div>
                 )}
-                </div>
               </div>
             )
           })}
