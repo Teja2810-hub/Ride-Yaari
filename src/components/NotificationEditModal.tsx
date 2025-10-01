@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Calendar, MapPin, Save, AlertTriangle } from 'lucide-react'
+import { X, Calendar, MapPin, Save, TriangleAlert as AlertTriangle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { RideNotification, TripNotification } from '../types'
 import { formatDateWithWeekday } from '../utils/dateHelpers'
