@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
 import { CarRide, RideConfirmation, RideRequest } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe } from '../utils/dateHelpers'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
 
@@ -31,6 +32,16 @@ export default function RideCategorySelector({
   const [expandedOfferedRide, setExpandedOfferedRide] = useState<string | null>(null)
   const [expandedJoinedRide, setExpandedJoinedRide] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('RideCategorySelector: Data received:', {
+      offeredRides: offeredRides.length,
+      joinedRides: joinedRides.length,
+      requestedRides: requestedRides.length
+    })
+    console.log('RideCategorySelector: Sample requested ride:', requestedRides[0])
+  }, [offeredRides, joinedRides, requestedRides])
 
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
@@ -103,6 +114,21 @@ export default function RideCategorySelector({
         return 'bg-red-100 text-red-800 border-red-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  const formatRequestDateDisplay = (request: RideRequest): string => {
+    switch (request.request_type) {
+      case 'specific_date':
+        return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
+      case 'multiple_dates':
+        return request.multiple_dates && request.multiple_dates.length > 0
+          ? `${request.multiple_dates.length} selected dates`
+          : 'Multiple dates'
+      case 'month':
+        return request.request_month || 'Month'
+      default:
+        return 'Unknown'
     }
   }
 
@@ -735,15 +761,15 @@ export default function RideCategorySelector({
                 <div className="bg-purple-50 rounded-lg p-4 mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600 mb-1">Search Radius</p>
-                      <div className="font-medium text-gray-900">
-                        {request.search_radius_miles} miles
-                      </div>
-                    </div>
-                    <div>
                       <p className="text-gray-600 mb-1">Date Preference</p>
                       <div className="font-medium text-gray-900">
                         {formatRequestDateDisplay(request)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-1">Search Radius</p>
+                      <div className="font-medium text-gray-900">
+                        {request.search_radius_miles} miles
                       </div>
                     </div>
                     <div>
@@ -754,6 +780,13 @@ export default function RideCategorySelector({
                     </div>
                   </div>
 
+                  {request.departure_time_preference && (
+                    <div className="mt-3 pt-3 border-t border-purple-200">
+                      <p className="text-gray-600 mb-1">Preferred Time</p>
+                      <p className="text-gray-900 text-sm">{request.departure_time_preference}</p>
+                    </div>
+                  )}
+
                   {request.additional_notes && (
                     <div className="mt-3 pt-3 border-t border-purple-200">
                       <p className="text-gray-600 mb-1">Additional Notes</p>
@@ -762,9 +795,38 @@ export default function RideCategorySelector({
                   )}
                 </div>
 
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Request Status</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600 mb-1">Status</p>
+                      <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        <span>{request.is_active ? 'Active - Looking for drivers' : 'Inactive'}</span>
+                      </div>
+                    </div>
+                    {request.expires_at && (
+                      <div>
+                        <p className="text-gray-600 mb-1">Expires</p>
+                        <div className="font-medium text-gray-900">
+                          {formatDateTime(request.expires_at)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-gray-500">
                     Request ID: {request.id.slice(0, 8)}...
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {request.is_active && (
+                      <span className="text-sm text-green-600 font-medium">
+                        🔔 You'll be notified when matching rides are found
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

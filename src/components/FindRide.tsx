@@ -48,6 +48,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     setLoading(true)
 
     try {
+      // Debug: Check if there are any ride requests at all
+      const { data: allRequests, error: allRequestsError } = await supabase
+        .from('ride_requests')
+        .select('id, departure_location, destination_location, is_active')
+        .limit(5)
+      
+      console.log('FindRide: Total ride requests in database:', allRequests?.length || 0)
+      if (allRequests && allRequests.length > 0) {
+        console.log('FindRide: Sample requests from database:', allRequests)
+      }
+      
       // Get current date to filter out past rides
       const now = new Date().toISOString()
       
@@ -125,7 +136,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         searchByMonth,
         user?.id
       )
-      setRideRequests(requests)
+      console.log('FindRide: Fetched ride requests:', requests.length)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)

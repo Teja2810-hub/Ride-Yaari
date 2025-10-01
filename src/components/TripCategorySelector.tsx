@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
 import { Trip, RideConfirmation, TripRequest } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe } from '../utils/dateHelpers'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
 
@@ -31,6 +32,16 @@ export default function TripCategorySelector({
   const [expandedOfferedTrip, setExpandedOfferedTrip] = useState<string | null>(null)
   const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('TripCategorySelector: Data received:', {
+      offeredTrips: offeredTrips.length,
+      joinedTrips: joinedTrips.length,
+      requestedTrips: requestedTrips.length
+    })
+    console.log('TripCategorySelector: Sample requested trip:', requestedTrips[0])
+  }, [offeredTrips, joinedTrips, requestedTrips])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -112,6 +123,21 @@ export default function TripCategorySelector({
         return 'bg-red-100 text-red-800 border-red-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  const formatRequestDateDisplay = (request: TripRequest): string => {
+    switch (request.request_type) {
+      case 'specific_date':
+        return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
+      case 'multiple_dates':
+        return request.multiple_dates && request.multiple_dates.length > 0
+          ? `${request.multiple_dates.length} selected dates`
+          : 'Multiple dates'
+      case 'month':
+        return request.request_month || 'Month'
+      default:
+        return 'Unknown'
     }
   }
 
@@ -793,9 +819,38 @@ export default function TripCategorySelector({
                   )}
                 </div>
 
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Request Status</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600 mb-1">Status</p>
+                      <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        <span>{request.is_active ? 'Active - Looking for travelers' : 'Inactive'}</span>
+                      </div>
+                    </div>
+                    {request.expires_at && (
+                      <div>
+                        <p className="text-gray-600 mb-1">Expires</p>
+                        <div className="font-medium text-gray-900">
+                          {formatDateTime(request.expires_at)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-gray-500">
                     Request ID: {request.id.slice(0, 8)}...
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {request.is_active && (
+                      <span className="text-sm text-blue-600 font-medium">
+                        🔔 You'll be notified when matching trips are found
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

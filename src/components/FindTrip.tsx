@@ -88,6 +88,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     setLoading(true)
 
     try {
+      // Debug: Check if there are any trip requests at all
+      const { data: allRequests, error: allRequestsError } = await supabase
+        .from('trip_requests')
+        .select('id, departure_airport, destination_airport, is_active')
+        .limit(5)
+      
+      console.log('FindTrip: Total trip requests in database:', allRequests?.length || 0)
+      if (allRequests && allRequests.length > 0) {
+        console.log('FindTrip: Sample requests from database:', allRequests)
+      }
+      
       // Get current date to filter out past trips
       const now = new Date().toISOString().split('T')[0]
       
@@ -159,15 +170,22 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       setTrips(data || [])
 
       // Also fetch matching trip requests
-      const requests = await getDisplayTripRequests(
-        departureAirport,
-        destinationAirport,
-        travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
-        travelMonth,
-        searchByMonth,
-        user?.id
-      )
-      setTripRequests(requests)
+      try {
+        const requests = await getDisplayTripRequests(
+          departureAirport,
+          destinationAirport,
+          travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
+          travelMonth,
+          searchByMonth,
+          user?.id
+        )
+        console.log('FindTrip: Successfully fetched trip requests:', requests.length)
+        setTripRequests(requests)
+      } catch (requestError) {
+        console.error('FindTrip: Error fetching trip requests:', requestError)
+        setTripRequests([]) // Set empty array on error
+      }
+      console.log('FindTrip: Fetched trip requests:', requests.length)
       setSearched(true)
     } catch (error) {
       console.error('Search error:', error)

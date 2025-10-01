@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
-import { CarRide, Trip, RideConfirmation } from '../types'
+import { CarRide, Trip, RideConfirmation, TripRequest, RideRequest } from '../types'
 import UserConfirmationsContent from './UserConfirmationsContent'
 import PassengerManagement from './PassengerManagement'
 import RideHistoryModal from './RideHistoryModal'
@@ -192,6 +192,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
       if (requestedTripsError) throw requestedTripsError
       console.log('Fetched requested trips:', requestedTripsData?.length || 0)
+      if (requestedTripsData && requestedTripsData.length > 0) {
+        console.log('Sample requested trip:', requestedTripsData[0])
+      }
 
       // Fetch ride requests user has made
       const { data: requestedRidesData, error: requestedRidesError } = await supabase
@@ -209,6 +212,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
       if (requestedRidesError) throw requestedRidesError
       console.log('Fetched requested rides:', requestedRidesData?.length || 0)
+      if (requestedRidesData && requestedRidesData.length > 0) {
+        console.log('Sample requested ride:', requestedRidesData[0])
+      }
       
       setTrips(tripsData || [])
       setRides(ridesData || [])
@@ -218,6 +224,14 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       setRequestedRides(requestedRidesData || [])
       
       console.log('User data fetch completed successfully')
+      console.log('Final data counts:', {
+        trips: tripsData?.length || 0,
+        rides: ridesData?.length || 0,
+        joinedTrips: joinedTripsData?.length || 0,
+        joinedRides: joinedRidesData?.length || 0,
+        requestedTrips: requestedTripsData?.length || 0,
+        requestedRides: requestedRidesData?.length || 0
+      })
       
       // If we're on the notification-management tab, also refresh notifications
       if (activeTab === 'notification-management') {

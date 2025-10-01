@@ -164,15 +164,22 @@ export const getDisplayRideRequests = async (
       query = query.or(`specific_date.eq.${departureDate},multiple_dates.cs.{${departureDate}}`)
     }
 
-    // Only show future requests
+    // Show only active requests
+    query = query.eq('is_active', true)
+    
+    // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},expires_at.gte.${new Date().toISOString()}`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()},expires_at.is.null`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('getDisplayRideRequests error:', error)
+      throw error
+    }
 
     console.log('getDisplayRideRequests result:', data?.length || 0, 'requests found')
+    console.log('Sample ride request data:', data?.[0])
     return data || []
   })
 }
@@ -189,6 +196,15 @@ export const getDisplayTripRequests = async (
   excludeUserId?: string
 ): Promise<TripRequest[]> => {
   return retryWithBackoff(async () => {
+    console.log('getDisplayTripRequests called with:', {
+      departureAirport,
+      destinationAirport,
+      travelDate,
+      travelMonth,
+      searchByMonth,
+      excludeUserId
+    })
+    
     let query = supabase
       .from('trip_requests')
       .select(`
@@ -221,14 +237,22 @@ export const getDisplayTripRequests = async (
       query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{${travelDate}}`)
     }
 
-    // Only show future requests
+    // Show only active requests
+    query = query.eq('is_active', true)
+    
+    // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},expires_at.gte.${new Date().toISOString()}`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()},expires_at.is.null`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('getDisplayTripRequests error:', error)
+      throw error
+    }
 
+    console.log('getDisplayTripRequests result:', data?.length || 0, 'requests found')
+    console.log('Sample trip request data:', data?.[0])
     return data || []
   })
 }
