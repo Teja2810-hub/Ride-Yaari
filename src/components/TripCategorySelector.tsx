@@ -776,12 +776,26 @@ export default function TripCategorySelector({
                         {request.departure_airport} → {request.destination_airport}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {formatRequestDateDisplay(request)} • {request.departure_time_preference || 'Flexible time'}
+                        {formatRequestDateDisplay(request)}
+                        {request.departure_time_preference && (
+                          <span> • {request.departure_time_preference}</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3">
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        // TODO: Implement edit functionality
+                        alert('Edit functionality coming soon')
+                      }}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
+                    >
+                      <Edit size={16} />
+                      <span>Edit</span>
+                    </button>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation()
@@ -809,6 +823,13 @@ export default function TripCategorySelector({
                     </div>
                   </div>
                 </div>
+                
+                {request.additional_notes && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600 mb-1">Notes</p>
+                    <p className="text-gray-900">{request.additional_notes}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

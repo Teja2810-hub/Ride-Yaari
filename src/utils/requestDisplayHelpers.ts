@@ -145,23 +145,19 @@ export const getDisplayRideRequests = async (
       query = query.neq('passenger_id', excludeUserId)
     }
 
-    // Filter by location if provided (flexible matching)
+    // Filter by location if provided
     if (departureLocation) {
-      const locationParts = departureLocation.split(',')
-      const mainLocation = locationParts[0].trim()
-      query = query.or(`departure_location.ilike.%${mainLocation}%,departure_location.ilike.%${departureLocation}%`)
+      query = query.ilike('departure_location', `%${departureLocation}%`)
     }
     if (destinationLocation) {
-      const locationParts = destinationLocation.split(',')
-      const mainLocation = locationParts[0].trim()
-      query = query.or(`destination_location.ilike.%${mainLocation}%,destination_location.ilike.%${destinationLocation}%`)
+      query = query.ilike('destination_location', `%${destinationLocation}%`)
     }
 
     // Filter by date
     if (searchByMonth && departureMonth) {
-      query = query.or(`request_month.eq.${departureMonth},multiple_dates.cs.{${departureMonth}-01}`)
+      query = query.or(`request_month.eq.${departureMonth},multiple_dates.cs.{"${departureMonth}-01"}`)
     } else if (!searchByMonth && departureDate) {
-      query = query.or(`specific_date.eq.${departureDate},multiple_dates.cs.{${departureDate}}`)
+      query = query.or(`specific_date.eq.${departureDate},multiple_dates.cs.{"${departureDate}"}`)
     }
 
     // Show only active requests
@@ -169,7 +165,7 @@ export const getDisplayRideRequests = async (
     
     // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()},expires_at.is.null`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
@@ -232,9 +228,9 @@ export const getDisplayTripRequests = async (
 
     // Filter by date
     if (searchByMonth && travelMonth) {
-      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{${travelMonth}-01}`)
+      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{"${travelMonth}-01"}`)
     } else if (!searchByMonth && travelDate) {
-      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{${travelDate}}`)
+      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{"${travelDate}"}`)
     }
 
     // Show only active requests
@@ -242,7 +238,7 @@ export const getDisplayTripRequests = async (
     
     // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()},expires_at.is.null`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
@@ -263,7 +259,7 @@ export const getDisplayTripRequests = async (
 export const formatRequestDateDisplay = (request: RideRequest | TripRequest): string => {
   switch (request.request_type) {
     case 'specific_date':
-      return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
+      return request.specific_date ? formatDateSafe(request.specific_date) : 'Flexible date'
     case 'multiple_dates':
       if (request.multiple_dates && request.multiple_dates.length > 0) {
         const validDates = request.multiple_dates.filter(d => d)
@@ -272,15 +268,15 @@ export const formatRequestDateDisplay = (request: RideRequest | TripRequest): st
         }
         return `${validDates.length} dates`
       }
-      return 'Multiple dates'
+      return 'Flexible dates'
     case 'month':
       if (request.request_month) {
         const date = new Date(request.request_month + '-01')
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       }
-      return 'Month'
+      return 'Flexible month'
     default:
-      return 'Unknown'
+      return 'Flexible timing'
   }
 }
 

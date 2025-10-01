@@ -745,12 +745,26 @@ export default function RideCategorySelector({
                         {request.departure_location} → {request.destination_location}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {formatRequestDateDisplay(request)} • {request.departure_time_preference || 'Flexible time'}
+                        {formatRequestDateDisplay(request)}
+                        {request.departure_time_preference && (
+                          <span> • {request.departure_time_preference}</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-3">
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        // TODO: Implement edit functionality
+                        alert('Edit functionality coming soon')
+                      }}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
+                    >
+                      <Edit size={16} />
+                      <span>Edit</span>
+                    </button>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation()
@@ -776,6 +790,28 @@ export default function RideCategorySelector({
                     }`}>
                       <span>{request.is_active ? 'Active' : 'Inactive'}</span>
                     </div>
+                  </div>
+                </div>
+                
+                {request.additional_notes && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600 mb-1">Notes</p>
+                    <p className="text-gray-900">{request.additional_notes}</p>
+                  </div>
+                )}
+                
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <div className="flex items-center space-x-1">
+                      <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                      <span>Search radius: {request.search_radius_miles} miles</span>
+                    </div>
+                    {request.max_price && (
+                      <div className="flex items-center space-x-1">
+                        <DollarSign size={12} />
+                        <span>Max budget: {getCurrencySymbol(request.currency || 'USD')}{request.max_price}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
