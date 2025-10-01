@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Plane, User, Calendar, Clock, MapPin, MessageCircle, CreditCard as Edit, Trash2, History, Send, Plus, X, TriangleAlert as AlertTriangle, ListFilter as Filter, Search, RefreshCw, CircleCheck as CheckCircle } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../utils/supabase'
+import React, { useState } from 'react'
+import { Plane, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, Globe, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
 import { Trip, RideConfirmation, TripRequest } from '../types'
+import { getCurrencySymbol } from '../utils/currencies'
+import { formatDateSafe } from '../utils/dateHelpers'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
-import TripRequestEditModal from './TripRequestEditModal'
-import { getCurrencySymbol } from '../utils/currencies'
-import { useErrorHandler } from '../hooks/useErrorHandler'
-import ErrorMessage from './ErrorMessage'
-import LoadingSpinner from './LoadingSpinner'
-import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
+import { supabase } from '../utils/supabase'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
   joinedTrips: RideConfirmation[]
   requestedTrips: TripRequest[]
-  onStartChat: (userId: string, userName: string, ride?: any, trip?: Trip) => void
+  onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void
   onEditTrip: (trip: Trip) => void
   onDeleteTrip: (tripId: string) => void
   onViewTripHistory: (trip: Trip) => void
@@ -24,11 +19,7 @@ interface TripCategorySelectorProps {
   onRefresh: () => void
 }
 
-type TripView = 'selector' | 'offered' | 'joined' | 'requested'
-type SortOption = 'date-desc' | 'date-asc' | 'created-desc' | 'created-asc' | 'destination'
-type FilterOption = 'all' | 'open' | 'closed' | 'future' | 'past'
-
-export default function TripCategorySelector({
+export default function TripCategorySelector({ 
   offeredTrips,
   joinedTrips,
   requestedTrips,
@@ -39,376 +30,287 @@ export default function TripCategorySelector({
   onViewRequests,
   onRefresh
 }: TripCategorySelectorProps) {
-  const { user } = useAuth()
-  const { error, isLoading, handleAsync, clearError } = useErrorHandler()
-  const [tripView, setTripView] = useState<TripView>('selector')
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
-  const [showPassengerManagement, setShowPassengerManagement] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState<SortOption>('date-desc')
-  const [filterBy, setFilterBy] = useState<FilterOption>('all')
-  const [showFilters, setShowFilters] = useState(false)
-  const [editingRequest, setEditingRequest] = useState<TripRequest | null>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState('')
+  const [expandedOfferedTrip, setExpandedOfferedTrip] = useState<string | null>(null)
+  const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
+  const [expandedRequestedTrip, setExpandedRequestedTrip] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
+  const [showDeleteModal, setShowDeleteModal] = useState<{
+    show: boolean
+    request: TripRequest | null
+  }>({ show: false, request: null })
+  const [showEditModal, setShowEditModal] = useState<{
+    show: boolean
+    request: TripRequest | null
+  }>({ show: false, request: null })
 
-  const handleManagePassengers = (trip: Trip) => {
-    setSelectedTrip(trip)
-    setShowPassengerManagement(true)
-  }
+  // Debug logging
+  React.useEffect(() => {
+    console.log('TripCategorySelector: Data received:', {
+      offeredTrips: offeredTrips.length,
+      joinedTrips: joinedTrips.length,
+      requestedTrips: requestedTrips.length
+    })
+    console.log('TripCategorySelector: Sample requested trip:', requestedTrips[0])
+  }, [offeredTrips, joinedTrips, requestedTrips])
 
-  const handleEditRequest = (request: TripRequest) => {
-    setEditingRequest(request)
-    setShowEditModal(true)
-  }
-
-  const handleSaveRequest = async (updatedRequest: Partial<TripRequest>) => {
-    if (!editingRequest) return
-
-    await handleAsync(async () => {
-      const { error } = await supabase
-        .from('trip_requests')
-        .update(updatedRequest)
-        .eq('id', editingRequest.id)
-
-      if (error) throw error
-
-      setShowEditModal(false)
-      setEditingRequest(null)
-      setSuccessMessage('Trip request updated successfully!')
-      setTimeout(() => setSuccessMessage(''), 3000)
-      onRefresh()
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   }
 
-  const handleDeleteRequest = async (requestId: string) => {
-    setDeletingRequestId(requestId)
-
-    await handleAsync(async () => {
-      const { error } = await supabase
-        .from('trip_requests')
-        .delete()
-        .eq('id', requestId)
-        .eq('passenger_id', user?.id)
-
-      if (error) throw error
-
-      setSuccessMessage('Trip request deleted successfully!')
-      setTimeout(() => setSuccessMessage(''), 3000)
-      onRefresh()
-    }).finally(() => {
-      setDeletingRequestId(null)
+  const formatDateTime = (dateTimeString: string) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     })
   }
 
-  const getFilteredAndSortedTrips = (trips: Trip[]) => {
-    let filtered = trips.filter(trip => {
-      const searchMatch = searchTerm === '' || 
-        trip.leaving_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trip.destination_airport.toLowerCase().includes(searchTerm.toLowerCase())
+  const isExpiredOrExpiringSoon = (trip: Trip): boolean => {
+    const now = new Date()
+    const travelDate = new Date(trip.travel_date)
+    
+    // Check if trip is in the past
+    if (travelDate < now) return true
+    
+    // Check if trip is within 1 hour (for same-day trips)
+    const hoursUntilTravel = (travelDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+    return hoursUntilTravel <= 1
+  }
 
-      const now = new Date()
-      const travelDate = new Date(trip.travel_date)
-      
-      let filterMatch = true
-      switch (filterBy) {
-        case 'open':
-          filterMatch = !trip.is_closed
-          break
-        case 'closed':
-          filterMatch = !!trip.is_closed
-          break
-        case 'future':
-          filterMatch = travelDate > now
-          break
-        case 'past':
-          filterMatch = travelDate <= now
-          break
-        default:
-          filterMatch = true
+  const getTripStatus = (trip: Trip): { status: 'open' | 'closed' | 'expired'; color: string; icon: React.ReactNode; label: string } => {
+    const now = new Date()
+    const travelDate = new Date(trip.travel_date)
+    
+    if (trip.is_closed) {
+      return {
+        status: 'closed',
+        color: 'bg-red-100 text-red-800 border-red-200',
+        icon: <Lock size={14} className="text-red-600" />,
+        label: 'Closed'
       }
-
-      return searchMatch && filterMatch
-    })
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date-asc':
-          return new Date(a.travel_date).getTime() - new Date(b.travel_date).getTime()
-        case 'date-desc':
-          return new Date(b.travel_date).getTime() - new Date(a.travel_date).getTime()
-        case 'created-asc':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'created-desc':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'destination':
-          return a.destination_airport.localeCompare(b.destination_airport)
-        default:
-          return 0
+    }
+    
+    if (travelDate <= now) {
+      return {
+        status: 'expired',
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        icon: <XCircle size={14} className="text-gray-600" />,
+        label: 'Expired'
       }
-    })
-
-    return filtered
+    }
+    
+    return {
+      status: 'open',
+      color: 'bg-green-100 text-green-800 border-green-200',
+      icon: <CheckCircle size={14} className="text-green-600" />,
+      label: 'Open'
+    }
+  }
+  const toggleOfferedTrip = (tripId: string) => {
+    setExpandedOfferedTrip(expandedOfferedTrip === tripId ? null : tripId)
   }
 
-  const getFilteredAndSortedRequests = (requests: TripRequest[]) => {
-    let filtered = requests.filter(request => {
-      const searchMatch = searchTerm === '' || 
-        request.departure_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.destination_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (request.additional_notes || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const toggleJoinedTrip = (tripId: string) => {
+    setExpandedJoinedTrip(expandedJoinedTrip === tripId ? null : tripId)
+  }
 
-      const now = new Date()
-      let filterMatch = true
-      
-      switch (filterBy) {
-        case 'open':
-          filterMatch = request.is_active
-          break
-        case 'closed':
-          filterMatch = !request.is_active
-          break
-        case 'future':
-          if (request.specific_date) {
-            filterMatch = new Date(request.specific_date) > now
-          } else if (request.expires_at) {
-            filterMatch = new Date(request.expires_at) > now
-          } else {
-            filterMatch = true
-          }
-          break
-        case 'past':
-          if (request.specific_date) {
-            filterMatch = new Date(request.specific_date) <= now
-          } else if (request.expires_at) {
-            filterMatch = new Date(request.expires_at) <= now
-          } else {
-            filterMatch = false
-          }
-          break
-        default:
-          filterMatch = true
-      }
+  const toggleRequestedTrip = (requestId: string) => {
+    setExpandedRequestedTrip(expandedRequestedTrip === requestId ? null : requestId)
+  }
 
-      return searchMatch && filterMatch
-    })
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date-asc':
-          const dateA = a.specific_date ? new Date(a.specific_date) : new Date(a.created_at)
-          const dateB = b.specific_date ? new Date(b.specific_date) : new Date(b.created_at)
-          return dateA.getTime() - dateB.getTime()
-        case 'date-desc':
-          const dateA2 = a.specific_date ? new Date(a.specific_date) : new Date(a.created_at)
-          const dateB2 = b.specific_date ? new Date(b.specific_date) : new Date(b.created_at)
-          return dateB2.getTime() - dateA2.getTime()
-        case 'created-asc':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'created-desc':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'destination':
-          return a.destination_airport.localeCompare(b.destination_airport)
-        default:
-          return 0
-      }
-    })
-
-    return filtered
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'accepted':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
   }
 
   const formatRequestDateDisplay = (request: TripRequest): string => {
     switch (request.request_type) {
       case 'specific_date':
-        return request.specific_date ? formatDateSafe(request.specific_date) : 'Flexible date'
+        return request.specific_date ? formatDateSafe(request.specific_date) : 'Specific date'
       case 'multiple_dates':
-        if (request.multiple_dates && request.multiple_dates.length > 0) {
-          const validDates = request.multiple_dates.filter(d => d)
-          if (validDates.length === 1) {
-            return formatDateSafe(validDates[0])
-          }
-          return `${validDates.length} dates`
-        }
-        return 'Flexible dates'
+        return request.multiple_dates && request.multiple_dates.length > 0
+          ? `${request.multiple_dates.length} selected dates`
+          : 'Multiple dates'
       case 'month':
-        if (request.request_month) {
-          const date = new Date(request.request_month + '-01')
-          return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-        }
-        return 'Flexible month'
+        return request.request_month || 'Month'
       default:
-        return 'Flexible timing'
+        return 'Unknown'
     }
   }
 
-  const getStats = () => {
-    const totalOffered = offeredTrips.length
-    const openOffered = offeredTrips.filter(t => !t.is_closed).length
-    const closedOffered = offeredTrips.filter(t => t.is_closed).length
-    const totalJoined = joinedTrips.length
-    const confirmedJoined = joinedTrips.filter(c => c.status === 'accepted').length
-    const pendingJoined = joinedTrips.filter(c => c.status === 'pending').length
-    const totalRequested = requestedTrips.length
-    const activeRequested = requestedTrips.filter(r => r.is_active).length
+  const handleEditTripRequest = (request: TripRequest) => {
+    setShowEditModal({ show: true, request })
+  }
 
-    return {
-      totalOffered,
-      openOffered,
-      closedOffered,
-      totalJoined,
-      confirmedJoined,
-      pendingJoined,
-      totalRequested,
-      activeRequested
+  const handleDeleteTripRequest = (request: TripRequest) => {
+    setShowDeleteModal({ show: true, request })
+  }
+
+  const confirmDeleteTripRequest = async () => {
+    if (!showDeleteModal.request) return
+
+    try {
+      const { error } = await supabase
+        .from('trip_requests')
+        .delete()
+        .eq('id', showDeleteModal.request.id)
+      
+      if (error) throw error
+      
+      setShowDeleteModal({ show: false, request: null })
+      onRefresh()
+    } catch (error: any) {
+      alert('Failed to delete request: ' + error.message)
     }
   }
 
-  if (tripView === 'selector') {
-    const stats = getStats()
-    
+  const handleSaveEditTripRequest = async (updatedRequest: Partial<TripRequest>) => {
+    if (!showEditModal.request) return
+
+    try {
+      const { error } = await supabase
+        .from('trip_requests')
+        .update(updatedRequest)
+        .eq('id', showEditModal.request.id)
+      
+      if (error) throw error
+      
+      setShowEditModal({ show: false, request: null })
+      onRefresh()
+    } catch (error: any) {
+      alert('Failed to update request: ' + error.message)
+    }
+  }
+
+  if (activeSection === 'overview') {
     return (
       <div>
-        {error && (
-          <ErrorMessage
-            message={error}
-            onRetry={clearError}
-            onDismiss={clearError}
-            className="mb-6"
-          />
-        )}
-
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <CheckCircle size={20} className="text-green-600" />
-              <p className="text-green-800">{successMessage}</p>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-6">
+        <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Airport Trips</h2>
           <p className="text-gray-600">
-            Manage your posted trips, view trips you've joined, and track your trip requests.
+            View trips you're offering, trips you've joined, or trip requests you've made.
           </p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-blue-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.totalOffered}</div>
-            <div className="text-sm text-blue-800">Trips Offered</div>
-            <div className="text-xs text-gray-600 mt-1">{stats.openOffered} open, {stats.closedOffered} closed</div>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.totalJoined}</div>
-            <div className="text-sm text-green-800">Trips Joined</div>
-            <div className="text-xs text-gray-600 mt-1">{stats.confirmedJoined} confirmed, {stats.pendingJoined} pending</div>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.totalRequested}</div>
-            <div className="text-sm text-purple-800">Trip Requests</div>
-            <div className="text-xs text-gray-600 mt-1">{stats.activeRequested} active</div>
-          </div>
-          <div className="bg-indigo-50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-indigo-600">{stats.totalOffered + stats.totalJoined + stats.totalRequested}</div>
-            <div className="text-sm text-indigo-800">Total Activity</div>
-            <div className="text-xs text-gray-600 mt-1">All trip interactions</div>
-          </div>
-        </div>
-
-        {/* Category Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Trips You've Offered */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Trips You're Offering */}
           <div
-            onClick={() => setTripView('offered')}
-            className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-6"
+            onClick={() => setActiveSection('offered')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Plane size={28} className="text-white" />
+              <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Plane size={32} className="text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Trips You've Offered</h3>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                View and manage airport trips you've posted for others to join
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trips You're Offering</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Manage airport trips you've posted to help other travelers with deliveries and assistance
               </p>
-              <div className="space-y-1 text-sm text-gray-500 mb-4">
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                  {stats.totalOffered} trips posted
-                </p>
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-                  {stats.openOffered} currently open
-                </p>
+              <div className="bg-blue-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <Plus size={20} className="text-blue-600" />
+                  <span className="text-2xl font-bold text-blue-600">{offeredTrips.length}</span>
+                  <span className="text-blue-800">Trip{offeredTrips.length !== 1 ? 's' : ''} Posted</span>
+                </div>
               </div>
               <div className="inline-flex items-center text-blue-600 font-semibold group-hover:text-blue-700">
-                Manage Your Trips
-                <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                View Your Trips
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>
 
           {/* Trips You've Joined */}
           <div
-            onClick={() => setTripView('joined')}
-            className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-6"
+            onClick={() => setActiveSection('joined')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <User size={28} className="text-white" />
+              <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users size={32} className="text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Trips You've Joined</h3>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                View airport trips you've requested to join and their status
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trips You've Joined</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                View airport trips where you've been confirmed as a passenger or service recipient
               </p>
-              <div className="space-y-1 text-sm text-gray-500 mb-4">
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-                  {stats.totalJoined} trips joined
-                </p>
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                  {stats.confirmedJoined} confirmed
-                </p>
+              <div className="bg-indigo-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <User size={20} className="text-indigo-600" />
+                  <span className="text-2xl font-bold text-indigo-600">{joinedTrips.length}</span>
+                  <span className="text-indigo-800">Trip{joinedTrips.length !== 1 ? 's' : ''} Joined</span>
+                </div>
               </div>
-              <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700">
-                View Your Requests
-                <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+              <div className="inline-flex items-center text-indigo-600 font-semibold group-hover:text-indigo-700">
+                View Joined Trips
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>
 
           {/* Trip Requests */}
           <div
-            onClick={() => setTripView('requested')}
-            className="group cursor-pointer bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-6"
+            onClick={() => setActiveSection('requested')}
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Send size={28} className="text-white" />
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Send size={32} className="text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Your Trip Requests</h3>
-              <p className="text-gray-600 mb-4 leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trip Requests</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
                 Manage trip assistance requests you've submitted to find travelers
               </p>
-              <div className="space-y-1 text-sm text-gray-500 mb-4">
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
-                  {stats.totalRequested} requests made
-                </p>
-                <p className="flex items-center justify-center">
-                  <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-                  {stats.activeRequested} active
-                </p>
+              <div className="bg-purple-50 rounded-lg p-4 mb-6 w-full">
+                <div className="flex items-center justify-center space-x-2">
+                  <Send size={20} className="text-purple-600" />
+                  <span className="text-2xl font-bold text-purple-600">{requestedTrips.length}</span>
+                  <span className="text-purple-800">Request{requestedTrips.length !== 1 ? 's' : ''} Made</span>
+                </div>
               </div>
               <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
-                Manage Requests
-                <div className="ml-2 transform group-hover:translate-x-1 transition-transform">→</div>
+                View Your Requests
+                <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Airport Trips Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">{offeredTrips.length + joinedTrips.length + requestedTrips.length}</div>
+              <div className="text-gray-700">Total Trips</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">{offeredTrips.length}</div>
+              <div className="text-gray-700">As Traveler</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">{joinedTrips.length}</div>
+              <div className="text-gray-700">As Passenger</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-pink-600 mb-2">{requestedTrips.length}</div>
+              <div className="text-gray-700">Requests Made</div>
             </div>
           </div>
         </div>
@@ -416,343 +318,275 @@ export default function TripCategorySelector({
     )
   }
 
-  if (tripView === 'offered') {
-    const filteredTrips = getFilteredAndSortedTrips(offeredTrips)
-    
+  if (activeSection === 'offered') {
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setTripView('selector')}
+              onClick={() => setActiveSection('overview')}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowRight size={20} className="rotate-180" />
               <span>Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Trips You've Offered</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Trips You're Offering</h2>
           </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onRefresh}
-              disabled={isLoading}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-              <span>Refresh</span>
-            </button>
-            <span className="text-gray-600">{filteredTrips.length} of {offeredTrips.length} trips</span>
-          </div>
+          <span className="text-gray-600">{offeredTrips.length} trip{offeredTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
-        {error && (
-          <ErrorMessage
-            message={error}
-            onRetry={clearError}
-            onDismiss={clearError}
-            className="mb-6"
-          />
-        )}
-
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <CheckCircle size={20} className="text-green-600" />
-              <p className="text-green-800">{successMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Search and Filter Controls */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Filter & Search</h3>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <Filter size={16} />
-              <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
-            </button>
-          </div>
-
-          {showFilters && (
-            <div className="space-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by airport or destination..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                />
-              </div>
-
-              {/* Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    value={filterBy}
-                    onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="open">Open Trips</option>
-                    <option value="closed">Closed Trips</option>
-                    <option value="future">Future Trips</option>
-                    <option value="past">Past Trips</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  >
-                    <option value="date-desc">Travel Date (Latest First)</option>
-                    <option value="date-asc">Travel Date (Earliest First)</option>
-                    <option value="created-desc">Recently Posted</option>
-                    <option value="created-asc">Oldest Posted</option>
-                    <option value="destination">By Destination</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Trips List */}
-        {filteredTrips.length === 0 ? (
+        {offeredTrips.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plane size={32} className="text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {offeredTrips.length === 0 ? 'No Trips Posted Yet' : 'No Matching Trips'}
-            </h3>
-            <p className="text-gray-600">
-              {offeredTrips.length === 0 
-                ? 'You haven\'t posted any airport trips yet. Start by posting your first trip!'
-                : 'Try adjusting your search or filter criteria.'
-              }
-            </p>
+            <Plane size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips posted yet</h3>
+            <p className="text-gray-600">Start by posting your first airport trip to connect with other travelers.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredTrips.map((trip) => (
-              <div
-                key={trip.id}
-                className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Plane size={24} className="text-blue-600" />
+            {offeredTrips.map((trip) => {
+              const isExpanded = expandedOfferedTrip === trip.id
+              const isExpiredSoon = isExpiredOrExpiringSoon(trip)
+              const tripStatus = getTripStatus(trip)
+              
+              return (
+                <div key={trip.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Trip Header - Always Visible */}
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleOfferedTrip(trip.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Plane size={24} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {trip.leaving_airport} → {trip.destination_airport}
+                          </h3>
+                          <p className="text-gray-600">
+                            {formatDate(trip.travel_date)}
+                            {trip.departure_time && ` at ${trip.departure_time}`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {trip.leaving_airport} → {trip.destination_airport}
-                        </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <Calendar size={12} />
-                            <span>{formatDateSafe(trip.travel_date)}</span>
-                          </div>
-                          {trip.departure_time && (
-                            <div className="flex items-center space-x-1">
-                              <Clock size={12} />
-                              <span>{trip.departure_time}</span>
-                              {trip.departure_timezone && (
-                                <span className="text-xs text-gray-500">
-                                  ({trip.departure_timezone})
-                                </span>
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${tripStatus.color}`}>
+                          {tripStatus.icon}
+                          <span>{tripStatus.label}</span>
+                        </div>
+                        {trip.price && (
+                          <span className="text-sm font-medium text-green-600">
+                            {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                          </span>
+                        )}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="p-6 space-y-6">
+                        {/* Trip Details */}
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-blue-900 mb-3">Trip Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 mb-1">Departure Airport</p>
+                              <p className="font-medium text-gray-900">{trip.leaving_airport}</p>
+                              {trip.departure_time && (
+                                <div className="text-gray-600 flex items-center mt-1">
+                                  <Clock size={12} className="mr-1" />
+                                  {trip.departure_time}
+                                  {trip.departure_timezone && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({trip.departure_timezone})
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <TripClosureControls
-                        trip={trip}
-                        onUpdate={onRefresh}
-                      />
-                      
-                      {trip.is_closed ? (
-                        <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <X size={14} />
-                          <span>Closed</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <CheckCircle size={14} />
-                          <span>Open</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Trip Details */}
-                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">From</p>
-                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
-                        {trip.departure_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.departure_time}
-                            {trip.departure_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.departure_timezone})
-                              </span>
+                            <div>
+                              <p className="text-gray-600 mb-1">Destination Airport</p>
+                              <p className="font-medium text-gray-900">{trip.destination_airport}</p>
+                              {trip.landing_time && (
+                                <div className="text-gray-600 flex items-center mt-1">
+                                  <Clock size={12} className="mr-1" />
+                                  {trip.landing_time}
+                                  {trip.landing_timezone && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({trip.landing_timezone})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">Travel Date</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <Calendar size={14} className="mr-1 text-gray-400" />
+                                {formatDate(trip.travel_date)}
+                              </div>
+                              {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                                <div className="text-gray-600 mt-1">
+                                  Landing: {formatDate(trip.landing_date)}
+                                </div>
+                              )}
+                            </div>
+                            {trip.price && (
+                              <div>
+                                <p className="text-gray-600 mb-1">Service Price</p>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium text-green-600">
+                                    {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                  </span>
+                                  {trip.negotiable && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                      Negotiable
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">To</p>
-                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
-                        {trip.landing_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.landing_time}
-                            {trip.landing_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.landing_timezone})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <Calendar size={14} className="mr-1 text-gray-400" />
-                          {formatDateSafe(trip.travel_date)}
                         </div>
-                        {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            Landing: {formatDateSafe(trip.landing_date)}
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {tripStatus.status !== 'expired' && (
+                              <TripClosureControls
+                                trip={trip}
+                                onUpdate={onRefresh}
+                              />
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onViewTripHistory(trip)
+                              }}
+                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                            >
+                              <History size={16} />
+                              <span>View History</span>
+                            </button>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            {tripStatus.status === 'open' ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditTrip(trip)
+                                }}
+                                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                              >
+                                <Edit size={16} />
+                                <span>Edit</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center space-x-2 text-gray-400 cursor-not-allowed">
+                                <Edit size={16} />
+                                <span>{tripStatus.label === 'Closed' ? 'Closed' : tripStatus.label === 'Expired' ? 'Expired' : 'Cannot Edit'}</span>
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteTrip(trip.id)
+                              }}
+                              className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
+                            >
+                              <Trash2 size={16} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Passenger Management */}
+                        {tripStatus.status === 'open' && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <h4 className="font-semibold text-gray-900 mb-4">Passenger Requests</h4>
+                            <PassengerManagement
+                              trip={trip}
+                              onStartChat={onStartChat}
+                              onUpdate={onRefresh}
+                            />
+                          </div>
+                        )}
+                        
+                        {tripStatus.status === 'closed' && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <Lock size={20} className="text-red-600" />
+                                <div>
+                                  <h4 className="font-semibold text-red-900">Trip Closed</h4>
+                                  <p className="text-sm text-red-800">
+                                    This trip is closed and not accepting new passengers.
+                                    {trip.closed_reason && ` Reason: ${trip.closed_reason}`}
+                                  </p>
+                                  {trip.closed_at && (
+                                    <p className="text-xs text-red-700 mt-1">
+                                      Closed on {formatDateTime(trip.closed_at)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {tripStatus.status === 'expired' && (
+                          <div className="border-t border-gray-200 pt-6">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center space-x-3">
+                                <XCircle size={20} className="text-gray-600" />
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">Trip Expired</h4>
+                                  <p className="text-sm text-gray-800">
+                                    This trip has passed its travel date and is no longer active.
+                                  </p>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Travel date was {formatDate(trip.travel_date)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
-
-                    {trip.price && (
-                      <div className="mt-3 pt-3 border-t border-blue-200">
-                        <span className="text-sm font-medium text-green-600">
-                          Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                          {trip.negotiable && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                              Negotiable
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => handleManagePassengers(trip)}
-                        className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                      >
-                        <User size={16} />
-                        <span>Manage Passengers</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => onViewTripHistory(trip)}
-                        className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 font-medium transition-colors"
-                      >
-                        <History size={16} />
-                        <span>View History</span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => onEditTrip(trip)}
-                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                      >
-                        <Edit size={16} />
-                        <span>Edit</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => onDeleteTrip(trip.id)}
-                        className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                      >
-                        <Trash2 size={16} />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Passenger Management Modal */}
-        {showPassengerManagement && selectedTrip && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="flex items-center space-x-3">
-                  <Plane size={24} className="text-blue-600" />
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Manage Passengers</h2>
-                    <p className="text-sm text-gray-600">
-                      {selectedTrip.leaving_airport} → {selectedTrip.destination_airport}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowPassengerManagement(false)
-                    setSelectedTrip(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              
-              <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
-                <PassengerManagement
-                  trip={selectedTrip}
-                  onStartChat={onStartChat}
-                  onUpdate={onRefresh}
-                />
-              </div>
-            </div>
+              )
+            })}
           </div>
         )}
       </div>
     )
   }
 
-  if (tripView === 'joined') {
+  if (activeSection === 'joined') {
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setTripView('selector')}
+              onClick={() => setActiveSection('overview')}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowRight size={20} className="rotate-180" />
               <span>Back</span>
             </button>
             <h2 className="text-2xl font-bold text-gray-900">Trips You've Joined</h2>
@@ -760,424 +594,465 @@ export default function TripCategorySelector({
           <span className="text-gray-600">{joinedTrips.length} trip{joinedTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
-        {/* Use the imported component */}
-        <div className="space-y-4">
-          {joinedTrips.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plane size={32} className="text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Trips Joined Yet</h3>
-              <p className="text-gray-600">
-                You haven't joined any airport trips yet. Start by finding and requesting trips!
-              </p>
-            </div>
-          ) : (
-            joinedTrips.map((confirmation) => {
+        {joinedTrips.length === 0 ? (
+          <div className="text-center py-12">
+            <Plane size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips joined yet</h3>
+            <p className="text-gray-600">Start by finding and requesting to join airport trips!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {joinedTrips.map((confirmation) => {
               const trip = confirmation.trips!
               const traveler = confirmation.user_profiles
-
+              const isExpanded = expandedJoinedTrip === confirmation.id
+              
               return (
-                <div
-                  key={confirmation.id}
-                  className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
-                        {traveler?.profile_image_url ? (
-                          <img
-                            src={traveler.profile_image_url}
-                            alt={traveler.full_name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white font-semibold">
-                            {(traveler?.full_name || 'T').charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {traveler?.full_name || 'Unknown Traveler'}
-                        </h3>
-                        <p className="text-sm text-gray-600">Trip Owner</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${
-                        confirmation.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                        confirmation.status === 'accepted' ? 'bg-green-100 text-green-800 border-green-200' :
-                        'bg-red-100 text-red-800 border-red-200'
-                      }`}>
-                        {confirmation.status === 'pending' ? (
-                          <Clock size={14} className="text-yellow-600" />
-                        ) : confirmation.status === 'accepted' ? (
-                          <CheckCircle size={14} className="text-green-600" />
-                        ) : (
-                          <X size={14} className="text-red-600" />
-                        )}
-                        <span className="capitalize">{confirmation.status}</span>
-                      </div>
-                      <Plane size={20} className="text-blue-600" />
-                    </div>
-                  </div>
-
-                  {/* Trip Details */}
-                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">From</p>
-                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
-                        {trip.departure_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.departure_time}
-                            {trip.departure_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.departure_timezone})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">To</p>
-                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
-                        {trip.landing_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.landing_time}
-                            {trip.landing_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.landing_timezone})
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <Calendar size={14} className="mr-1 text-gray-400" />
-                          {formatDateSafe(trip.travel_date)}
-                        </div>
-                        {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            Landing: {formatDateSafe(trip.landing_date)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {trip.price && (
-                      <div className="mt-3 pt-3 border-t border-blue-200">
-                        <span className="text-sm font-medium text-green-600">
-                          Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                          {trip.negotiable && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                              Negotiable
+                <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Trip Header - Always Visible */}
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleJoinedTrip(confirmation.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                          {traveler?.profile_image_url ? (
+                            <img
+                              src={traveler.profile_image_url}
+                              alt={traveler.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white font-semibold">
+                              {(traveler?.full_name || 'T').charAt(0).toUpperCase()}
                             </span>
                           )}
-                        </span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {trip.leaving_airport} → {trip.destination_airport}
+                          </h3>
+                          <p className="text-gray-600">
+                            {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => onStartChat(
-                        confirmation.ride_owner_id,
-                        traveler?.full_name || 'Traveler',
-                        undefined,
-                        trip
-                      )}
-                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                    >
-                      <MessageCircle size={16} />
-                      <span>Chat with {traveler?.full_name || 'Traveler'}</span>
-                    </button>
-
-                    <div className="text-xs text-gray-500">
-                      Request ID: {confirmation.id.slice(0, 8)}...
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                          <span className="capitalize">{confirmation.status}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={20} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    )
-  }
 
-  if (tripView === 'requested') {
-    const filteredRequests = getFilteredAndSortedRequests(requestedTrips)
-    
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="p-6 space-y-6">
+                        {/* Trip Details */}
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-blue-900 mb-3">Trip Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 mb-1">From</p>
+                              <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
+                              {trip.departure_time && (
+                                <div className="text-gray-600 flex items-center mt-1">
+                                  <Clock size={12} className="mr-1" />
+                                  {trip.departure_time}
+                                  {trip.departure_timezone && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({trip.departure_timezone})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">To</p>
+                              <div className="font-medium text-gray-900">{trip.destination_airport}</div>
+                              {trip.landing_time && (
+                                <div className="text-gray-600 flex items-center mt-1">
+                                  <Clock size={12} className="mr-1" />
+                                  {trip.landing_time}
+                                  {trip.landing_timezone && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({trip.landing_timezone})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-gray-600 mb-1">Travel Date</p>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <Calendar size={14} className="mr-1 text-gray-400" />
+                                {formatDate(trip.travel_date)}
+                              </div>
+                              {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                                <div className="text-gray-600 mt-1">
+                                  Landing: {formatDate(trip.landing_date)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {trip.price && (
+                            <div className="mt-3 pt-3 border-t border-blue-200">
+                              <span className="text-sm font-medium text-green-600">
+                                Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                                {trip.negotiable && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                    Negotiable
+                                  </span>
+                    className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+                              </span>
+                            }}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onStartChat(
+                                confirmation.ride_owner_id,
+                                traveler?.full_name || 'Traveler',
+                    {/* Request Header - Always Visible */}
+                    <div 
+                      className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => toggleRequestedTrip(request.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                            <Send size={24} className="text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {request.departure_airport} → {request.destination_airport}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {formatRequestDateDisplay(request)}
+                              {request.departure_time_preference && (
+                                <span> • {request.departure_time_preference}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                            request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-500">
+                              {expandedRequestedTrip === request.id ? 'Hide Details' : 'Show Details'}
+                            </span>
+                            {expandedRequestedTrip === request.id ? (
+                              <ChevronUp size={20} className="text-gray-400" />
+                            ) : (
+                              <ChevronDown size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details */}
+                    {expandedRequestedTrip === request.id && (
+                      <div className="border-t border-gray-200 bg-gray-50">
+                        <div className="p-6 space-y-6">
+                          {/* Request Details */}
+                          <div className="bg-purple-50 rounded-lg p-4">
+                            <h4 className="font-semibold text-purple-900 mb-3">Request Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-600 mb-1">From</p>
+                                <div className="font-medium text-gray-900">{request.departure_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 mb-1">To</p>
+                                <div className="font-medium text-gray-900">{request.destination_airport}</div>
+                              </div>
+                              <div>
+                                <p className="text-gray-600 mb-1">When</p>
+                                <div className="font-medium text-gray-900 flex items-center">
+                                  <Calendar size={14} className="mr-1 text-gray-400" />
+                                  {formatRequestDateDisplay(request)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {request.departure_time_preference && (
+                              <div className="mt-3 pt-3 border-t border-purple-200">
+                                <p className="text-sm text-gray-600 mb-1">Preferred Time</p>
+                                <div className="font-medium text-gray-900 flex items-center">
+                                  <Clock size={14} className="mr-1 text-gray-400" />
+                                  {request.departure_time_preference}
+                                </div>
+                              </div>
+                            )}
+    )
+                            {request.max_price && (
+                              <div className="mt-3 pt-3 border-t border-purple-200">
+                                <p className="text-sm text-gray-600 mb-1">Maximum Budget</p>
+                                <div className="font-medium text-green-600">
+                                  {getCurrencySymbol(request.currency || 'USD')}{request.max_price}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+  }
+                          {request.additional_notes && (
+                            <div className="bg-white rounded-lg p-4">
+                              <h4 className="font-semibold text-gray-900 mb-2">Additional Notes</h4>
+                              <p className="text-gray-700">{request.additional_notes}</p>
+                            </div>
+                          )}
+
+                          {/* Request Timeline */}
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                                  <span className="text-purple-600 font-bold text-xs">1</span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">Request Created</p>
+                                  <p className="text-xs text-gray-600">{formatDateTime(request.created_at)}</p>
+                                </div>
+                              </div>
+                              
+                              {request.expires_at && (
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <span className="text-orange-600 font-bold text-xs">⏰</span>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">Expires</p>
+                                    <p className="text-xs text-gray-600">{formatDateTime(request.expires_at)}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+  if (activeSection === 'requested') {
+                          {/* Actions */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <div className="text-xs text-gray-500">
+                              Request ID: {request.id.slice(0, 8)}...
+                            </div>
+                            
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleEditTripRequest(request)
+                                }}
+                                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                              >
+                                <Edit size={16} />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteTripRequest(request)
+                                }}
+                                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                              >
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => setTripView('selector')}
+              onClick={() => setActiveSection('overview')}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowRight size={20} className="rotate-180" />
               <span>Back</span>
             </button>
             <h2 className="text-2xl font-bold text-gray-900">Your Trip Requests</h2>
           </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onRefresh}
-              disabled={isLoading}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-              <span>Refresh</span>
-            </button>
-            <span className="text-gray-600">{filteredRequests.length} of {requestedTrips.length} requests</span>
-          </div>
+          <span className="text-gray-600">{requestedTrips.length} request{requestedTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
-        {error && (
-          <ErrorMessage
-            message={error}
-            onRetry={clearError}
-            onDismiss={clearError}
-            className="mb-6"
-          />
-        )}
-
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <CheckCircle size={20} className="text-green-600" />
-              <p className="text-green-800">{successMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Search and Filter Controls */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 sm:mb-0">Filter & Search</h3>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <Filter size={16} />
-              <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
-            </button>
-          </div>
-
-          {showFilters && (
-            <div className="space-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by airport, destination, or notes..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                />
-              </div>
-
-              {/* Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    value={filterBy}
-                    onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="open">Active Requests</option>
-                    <option value="closed">Inactive Requests</option>
-                    <option value="future">Future Dates</option>
-                    <option value="past">Past Dates</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  >
-                    <option value="date-desc">Request Date (Latest First)</option>
-                    <option value="date-asc">Request Date (Earliest First)</option>
-                    <option value="created-desc">Recently Created</option>
-                    <option value="created-asc">Oldest Created</option>
-                    <option value="destination">By Destination</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Trip Requests List */}
-        {filteredRequests.length === 0 ? (
+        {requestedTrips.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Send size={32} className="text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {requestedTrips.length === 0 ? 'No Trip Requests Yet' : 'No Matching Requests'}
-            </h3>
-            <p className="text-gray-600">
-              {requestedTrips.length === 0 
-                ? 'You haven\'t made any trip requests yet. Start by requesting assistance for your travel needs!'
-                : 'Try adjusting your search or filter criteria.'
-              }
-            </p>
+            <Send size={48} className="text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No trip requests yet</h3>
+            <p className="text-gray-600">Start by requesting trips to find travelers who can assist you!</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredRequests.map((request) => (
+            {requestedTrips.map((request) => (
               <div
                 key={request.id}
                 className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Send size={24} className="text-purple-600" />
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                      <Send size={24} className="text-white" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">
                         {request.departure_airport} → {request.destination_airport}
                       </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <Calendar size={12} />
-                          <span>{formatRequestDateDisplay(request)}</span>
-                        </div>
+                      <p className="text-sm text-gray-600">
+                        {formatRequestDateDisplay(request)}
                         {request.departure_time_preference && (
-                          <div className="flex items-center space-x-1">
-                            <Clock size={12} />
-                            <span>Preferred: {request.departure_time_preference}</span>
-                          </div>
+                          <span> • {request.departure_time_preference}</span>
                         )}
-                      </div>
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    {request.is_active ? (
-                      <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        <CheckCircle size={14} />
-                        <span>Active</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                        <X size={14} />
-                        <span>Inactive</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Request Details */}
-                <div className="bg-purple-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Request Type</p>
-                      <div className="font-medium text-gray-900 capitalize">
-                        {request.request_type.replace('_', ' ')}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Created</p>
-                      <div className="font-medium text-gray-900">
-                        {formatDateTimeSafe(request.created_at)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Status</p>
-                      <div className={`font-medium ${request.is_active ? 'text-green-600' : 'text-gray-600'}`}>
-                        {request.is_active ? 'Active' : 'Inactive'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {request.additional_notes && (
-                    <div className="mt-3 pt-3 border-t border-purple-200">
-                      <p className="text-sm text-gray-600 mb-1">What you need</p>
-                      <p className="text-gray-900">{request.additional_notes}</p>
-                    </div>
-                  )}
-
-                  {request.max_price && (
-                    <div className="mt-3 pt-3 border-t border-purple-200">
-                      <span className="text-sm font-medium text-green-600">
-                        Max Budget: {getCurrencySymbol(request.currency || 'USD')}{request.max_price}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-500">
-                    Request ID: {request.id.slice(0, 8)}...
                   </div>
                   
                   <div className="flex items-center space-x-3">
                     <button
-                      onClick={() => handleEditRequest(request)}
-                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        // TODO: Implement edit functionality
+                        alert('Edit functionality coming soon')
+                      }}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
                     >
                       <Edit size={16} />
                       <span>Edit</span>
                     </button>
-                    
                     <button
-                      onClick={() => handleDeleteRequest(request.id)}
-                      disabled={deletingRequestId === request.id}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!confirm('Are you sure you want to delete this trip request?')) return
+                        try {
+                          const { error } = await supabase
+                            .from('trip_requests')
+                            .delete()
+                            .eq('id', request.id)
+                          if (error) throw error
+                          onRefresh()
+                        } catch (error: any) {
+                          alert('Failed to delete request: ' + error.message)
+                        }
+                      }}
+                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors text-sm"
                     >
-                      {deletingRequestId === request.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Deleting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 size={16} />
-                          <span>Delete</span>
-                        </>
-                      )}
+                      <Trash2 size={16} />
+                      <span>Delete</span>
                     </button>
+                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                      request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
                   </div>
                 </div>
+                
+                {request.additional_notes && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600 mb-1">Notes</p>
+                    <p className="text-gray-900">{request.additional_notes}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        )}
-
-        {/* Edit Request Modal */}
-        {showEditModal && editingRequest && (
-          <TripRequestEditModal
-            isOpen={showEditModal}
-            onClose={() => {
-              setShowEditModal(false)
-              setEditingRequest(null)
-            }}
-            request={editingRequest}
-            onSave={handleSaveRequest}
-          />
         )}
       </div>
     )
   }
 
   return null
+
+  // Delete Confirmation Modal
+  return (
+    <>
+      {/* Main content rendered above */}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal.show && showDeleteModal.request && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={32} className="text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Delete Trip Request</h2>
+              <p className="text-gray-600">
+                Are you sure you want to delete this trip request?
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-gray-900 mb-2">Request Details:</h4>
+              <div className="text-sm text-gray-700 space-y-1">
+                <p><strong>Route:</strong> {showDeleteModal.request.departure_airport} → {showDeleteModal.request.destination_airport}</p>
+                <p><strong>When:</strong> {formatRequestDateDisplay(showDeleteModal.request)}</p>
+                <p><strong>Status:</strong> {showDeleteModal.request.is_active ? 'Active' : 'Inactive'}</p>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-900 mb-1">What happens:</h4>
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    <li>• This request will be permanently deleted</li>
+                    <li>• You will stop receiving notifications for this route</li>
+                    <li>• This action cannot be undone</li>
+                    <li>• You can create a new request anytime</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal({ show: false, request: null })}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteTripRequest}
+                className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Modal */}
+      {showEditModal.show && showEditModal.request && (
+        <TripRequestEditModal
+          isOpen={showEditModal.show}
+          onClose={() => setShowEditModal({ show: false, request: null })}
+          request={showEditModal.request}
+          onSave={handleSaveEditTripRequest}
+        />
+      )}
+    </>
+  )
 }
