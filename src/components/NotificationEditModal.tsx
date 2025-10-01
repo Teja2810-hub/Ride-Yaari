@@ -44,7 +44,6 @@ export default function NotificationEditModal({
     setError('')
 
     try {
-      // Calculate new expiry date
       let expiresAt: string | null = null
 
       if (dateType === 'specific_date' && specificDate) {
@@ -141,7 +140,6 @@ export default function NotificationEditModal({
         )}
 
         <div className="space-y-6">
-          {/* Route Info (Read-only) */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-2">Route</h3>
             <div className="flex items-center text-gray-700">
@@ -154,7 +152,6 @@ export default function NotificationEditModal({
             <p className="text-xs text-gray-500 mt-2">Route cannot be changed. Delete and create a new notification to change the route.</p>
           </div>
 
-          {/* Date Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Date Type
@@ -193,7 +190,6 @@ export default function NotificationEditModal({
             </div>
           </div>
 
-          {/* Date Inputs */}
           {dateType === 'specific_date' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -272,7 +268,6 @@ export default function NotificationEditModal({
             </div>
           )}
 
-          {/* Search Radius (only for ride notifications) */}
           {'departure_location' in notification && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -291,7 +286,6 @@ export default function NotificationEditModal({
             </div>
           )}
 
-          {/* Active Status */}
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -317,7 +311,6 @@ export default function NotificationEditModal({
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end space-x-3 mt-8">
           <button
             onClick={onClose}

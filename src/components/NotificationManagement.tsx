@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane } from 'lucide-react'
+import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification, TripNotification } from '../types'
@@ -7,6 +7,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
 import { formatDateWithWeekday } from '../utils/dateHelpers'
+import NotificationEditModal from './NotificationEditModal'
 
 interface NotificationManagementProps {
   onBack?: () => void
@@ -32,6 +33,9 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
     show: boolean
     notification: NotificationItem | null
   }>({ show: false, notification: null })
+  const [expandedNotification, setExpandedNotification] = useState<string | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingNotification, setEditingNotification] = useState<NotificationItem | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -125,6 +129,14 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
     setDeletingId(null)
   }
 
+  const handleEditNotification = (notification: NotificationItem) => {
+    setEditingNotification(notification)
+    setShowEditModal(true)
+  }
+
+  const toggleNotificationExpansion = (notificationId: string) => {
+    setExpandedNotification(expandedNotification === notificationId ? null : notificationId)
+  }
 
   const formatDateTime = (dateTimeString: string) => {
     return new Date(dateTimeString).toLocaleString('en-US', {
@@ -447,141 +459,170 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         <div className="space-y-4">
           {filteredNotifications.map((notification) => {
             const expiryStatus = getExpiryStatus(notification)
+            const isExpanded = expandedNotification === notification.id
             
             return (
               <div
                 key={notification.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      {notification.type === 'ride' ? (
-                        <Car size={24} className="text-green-600" />
-                      ) : (
-                        <Plane size={24} className="text-blue-600" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {getNotificationTypeLabel((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>Created {formatDateTime(notification.created_at)}</span>
-                        <span className={expiryStatus.color}>{expiryStatus.text}</span>
+                {/* Header - Always Visible */}
+                <div 
+                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => toggleNotificationExpansion(notification.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        {notification.type === 'ride' ? (
+                          <Car size={24} className="text-green-600" />
+                        ) : (
+                          <Plane size={24} className="text-blue-600" />
+                        )}
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
-                      <span>{notification.type === 'ride' ? '🚗' : '✈️'}</span>
-                      <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {getLocationDisplay(notification)}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>{getDateTypeDisplay(notification)}</span>
+                          <span className={expiryStatus.color}>{expiryStatus.text}</span>
+                        </div>
+                      </div>
                     </div>
                     
-                    {notification.is_active ? (
-                      <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        <CheckCircle size={14} />
-                        <span>Active</span>
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
+                        <span>{notification.type === 'ride' ? '🚗' : '✈️'}</span>
+                        <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
                       </div>
-                    ) : (
-                      <div className="flex items-center space-x-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                        <X size={14} />
-                        <span>Inactive</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Notification Details */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Route</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <MapPin size={14} className="mr-1 text-gray-400" />
-                        {getLocationDisplay(notification)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Date Preference</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <Calendar size={14} className="mr-1 text-gray-400" />
-                        {getDateTypeDisplay(notification)}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Search Radius</p>
-                      <div className="font-medium text-gray-900">
-                        {notification.type === 'ride' ? (notification as RideNotification).search_radius_miles + ' miles' : 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Details */}
-                  {notification.date_type === 'multiple_dates' && notification.multiple_dates && notification.multiple_dates.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Selected Dates:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {notification.multiple_dates.map((date, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {formatDateWithWeekday(date)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {notification.expires_at && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <Clock size={14} className="text-gray-400" />
-                        <span className="text-gray-600">Expires:</span>
-                        <span className={`font-medium ${expiryStatus.color}`}>
-                          {formatDateTime(notification.expires_at)}
+                      
+                      {notification.is_active ? (
+                        <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          <CheckCircle size={14} />
+                          <span>Active</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                          <X size={14} />
+                          <span>Inactive</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">
+                          {isExpanded ? 'Hide Details' : 'Show Details'}
                         </span>
+                        {isExpanded ? (
+                          <ChevronUp size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={20} className="text-gray-400" />
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    ID: {notification.id.slice(0, 8)}...
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    {expiryStatus.status !== 'expired' && (
-                      <button
-                        onClick={() => {
-                          alert('Edit functionality coming soon!')
-                        }}
-                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                      >
-                        <Edit size={16} />
-                        <span>Edit</span>
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={() => setShowDeleteModal({ show: true, notification })}
-                      disabled={deletingId === notification.id}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                    >
-                      {deletingId === notification.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Deleting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 size={16} />
-                          <span>Delete</span>
-                        </>
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 bg-gray-50">
+                    <div className="p-6 space-y-6">
+                      {/* Notification Details */}
+                      <div className="bg-white rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Notification Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600 mb-1">Type</p>
+                            <div className="font-medium text-gray-900">
+                              {getNotificationTypeLabel((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">Created</p>
+                            <div className="font-medium text-gray-900">
+                              {formatDateTime(notification.created_at)}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">Status</p>
+                            <div className={`font-medium ${expiryStatus.color}`}>
+                              {expiryStatus.text}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Details */}
+                      {notification.date_type === 'multiple_dates' && notification.multiple_dates && notification.multiple_dates.length > 0 && (
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-600 mb-2">Selected Dates:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {notification.multiple_dates.map((date, index) => (
+                              <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                {formatDateWithWeekday(date)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    </button>
+
+                      {notification.expires_at && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Clock size={14} className="text-gray-400" />
+                            <span className="text-gray-600">Expires:</span>
+                            <span className={`font-medium ${expiryStatus.color}`}>
+                              {formatDateTime(notification.expires_at)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-500">
+                          ID: {notification.id.slice(0, 8)}...
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          {expiryStatus.status !== 'expired' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEditNotification(notification)
+                              }}
+                              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                            >
+                              <Edit size={16} />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowDeleteModal({ show: true, notification })
+                            }}
+                            disabled={deletingId === notification.id}
+                            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                          >
+                            {deletingId === notification.id ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Deleting...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                )}
                 </div>
               </div>
             )
@@ -680,6 +721,21 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
           </div>
         </div>
       )}
+
+      {/* Edit Modal */}
+      <NotificationEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setEditingNotification(null)
+        }}
+        notification={editingNotification}
+        onUpdate={() => {
+          setShowEditModal(false)
+          setEditingNotification(null)
+          fetchNotifications()
+        }}
+      />
     </div>
   )
 }
