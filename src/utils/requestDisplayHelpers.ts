@@ -221,10 +221,10 @@ export const getDisplayTripRequests = async (
 
     // Filter by airports if provided
     if (departureAirport) {
-      query = query.or(`departure_airport.eq.${departureAirport},destination_airport.eq.${departureAirport}`)
+      query = query.eq('departure_airport', departureAirport)
     }
     if (destinationAirport) {
-      query = query.or(`departure_airport.eq.${destinationAirport},destination_airport.eq.${destinationAirport}`)
+      query = query.eq('destination_airport', destinationAirport)
     }
 
     // Filter by date
@@ -238,6 +238,7 @@ export const getDisplayTripRequests = async (
     const today = new Date().toISOString().split('T')[0]
     query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
 
+    // Remove the excludeUserId filter to show user's own requests
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {

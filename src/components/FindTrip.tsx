@@ -176,7 +176,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         travelDate ? new Date(travelDate).toISOString().split('T')[0] : undefined,
         travelMonth,
         searchByMonth,
-        user?.id
+        undefined // Don't exclude user's own requests
       )
       setTripRequests(requests)
       setSearched(true)
