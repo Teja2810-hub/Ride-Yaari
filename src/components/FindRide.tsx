@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send, Search, MapPin, Navigation } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
@@ -9,6 +9,7 @@ import { getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
+import { haversineDistance } from '../utils/distance'
 
 interface LocationData {
   address: string
@@ -22,7 +23,8 @@ interface FindRideProps {
   isGuest?: boolean
 }
 
-type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
+type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc' | 'distance-asc' | 'distance-desc'
+type FilterOption = 'all' | 'free' | 'paid' | 'negotiable' | 'today' | 'tomorrow' | 'this-week'
 
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
@@ -32,6 +34,9 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [departureDateTime, setDepartureDateTime] = useState('')
   const [searchByMonth, setSearchByMonth] = useState(false)
   const [departureMonth, setDepartureMonth] = useState('')
+  const [searchRadius, setSearchRadius] = useState(25)
+  const [maxPrice, setMaxPrice] = useState('')
+  const [currency, setCurrency] = useState('USD')
   const [rides, setRides] = useState<CarRide[]>([])
   const [rideRequests, setRideRequests] = useState<RideRequest[]>([])
   const [loading, setLoading] = useState(false)
@@ -40,8 +45,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatRide, setSelectedChatRide] = useState<CarRide | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [filterBy, setFilterBy] = useState<FilterOption>('all')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
+  const [useManualRadius, setUseManualRadius] = useState(false)
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,11 +81,26 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           )
         `)
 
-      if (fromLocation) {
-        query = query.ilike('from_location', `%${fromLocation.address}%`)
-      }
-      if (toLocation) {
-        query = query.ilike('to_location', `%${toLocation.address}%`)
+      // Location-based filtering with radius support
+      if (fromLocation || toLocation) {
+        if (useManualRadius && (fromLocation?.latitude || toLocation?.latitude)) {
+          // Use coordinate-based search with manual radius
+          // This would require a more complex query - for now use text matching
+          if (fromLocation) {
+            query = query.ilike('from_location', `%${fromLocation.address}%`)
+          }
+          if (toLocation) {
+            query = query.ilike('to_location', `%${toLocation.address}%`)
+          }
+        } else {
+          // Use text-based matching
+          if (fromLocation) {
+            query = query.ilike('from_location', `%${fromLocation.address}%`)
+          }
+          if (toLocation) {
+            query = query.ilike('to_location', `%${toLocation.address}%`)
+          }
+        }
       }
       
       if (searchByMonth && departureMonth) {
@@ -90,6 +113,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       } else if (!searchByMonth && departureDateTime) {
         const searchDate = new Date(departureDateTime).toISOString().split('T')[0]
         query = query.gte('departure_date_time', searchDate + 'T00:00:00').lt('departure_date_time', searchDate + 'T23:59:59')
+      }
+
+      // Price filtering
+      if (maxPrice) {
+        query = query.lte('price', parseFloat(maxPrice))
       }
 
       // Always filter for future rides
@@ -125,7 +153,65 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
       if (error) throw error
 
-      setRides(data || [])
+      let filteredRides = data || []
+
+      // Apply additional filters
+      if (filterBy !== 'all') {
+        filteredRides = filteredRides.filter(ride => {
+          switch (filterBy) {
+            case 'free':
+              return ride.price === 0
+            case 'paid':
+              return ride.price > 0
+            case 'negotiable':
+              return ride.negotiable
+            case 'today':
+              return new Date(ride.departure_date_time).toDateString() === new Date().toDateString()
+            case 'tomorrow':
+              const tomorrow = new Date()
+              tomorrow.setDate(tomorrow.getDate() + 1)
+              return new Date(ride.departure_date_time).toDateString() === tomorrow.toDateString()
+            case 'this-week':
+              const weekFromNow = new Date()
+              weekFromNow.setDate(weekFromNow.getDate() + 7)
+              return new Date(ride.departure_date_time) <= weekFromNow
+            default:
+              return true
+          }
+        })
+      }
+
+      // Calculate distances if coordinates are available
+      if (useManualRadius && (fromLocation?.latitude || toLocation?.latitude)) {
+        filteredRides = filteredRides.map(ride => ({
+          ...ride,
+          departureDistance: fromLocation?.latitude && ride.from_latitude 
+            ? haversineDistance(fromLocation.latitude, fromLocation.longitude || 0, ride.from_latitude, ride.from_longitude || 0)
+            : null,
+          destinationDistance: toLocation?.latitude && ride.to_latitude
+            ? haversineDistance(toLocation.latitude, toLocation.longitude || 0, ride.to_latitude, ride.to_longitude || 0)
+            : null
+        })).filter(ride => {
+          if (fromLocation?.latitude && ride.departureDistance !== null) {
+            if (ride.departureDistance > searchRadius) return false
+          }
+          if (toLocation?.latitude && ride.destinationDistance !== null) {
+            if (ride.destinationDistance > searchRadius) return false
+          }
+          return true
+        })
+
+        // Sort by distance if distance sorting is selected
+        if (sortBy === 'distance-asc' || sortBy === 'distance-desc') {
+          filteredRides.sort((a, b) => {
+            const distanceA = (a.departureDistance || 0) + (a.destinationDistance || 0)
+            const distanceB = (b.departureDistance || 0) + (b.destinationDistance || 0)
+            return sortBy === 'distance-asc' ? distanceA - distanceB : distanceB - distanceA
+          })
+        }
+      }
+
+      setRides(filteredRides)
 
       // Also fetch matching ride requests
       const requests = await getDisplayRideRequests(
@@ -177,6 +263,22 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     return new Date().toISOString().slice(0, 7)
   }
 
+  const clearSearch = () => {
+    setFromLocation(null)
+    setToLocation(null)
+    setDepartureDateTime('')
+    setDepartureMonth('')
+    setSearchRadius(25)
+    setMaxPrice('')
+    setCurrency('USD')
+    setSearched(false)
+    setRides([])
+    setRideRequests([])
+    setFilterBy('all')
+    setSortBy('date-asc')
+    setUseManualRadius(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <div className="container mx-auto max-w-4xl">
@@ -201,6 +303,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 <li>• Search by <strong>destination location</strong> to find rides going to your destination</li>
                 <li>• Use <strong>both locations</strong> for specific route matches</li>
                 <li>• Leave both fields empty to see all available rides</li>
+                <li>• Enable manual radius for precise distance-based searching</li>
               </ul>
             </div>
             {effectiveIsGuest && (
@@ -227,6 +330,55 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 placeholder="Any destination location"
                 label="To Location"
               />
+            </div>
+
+            {/* Manual Search Radius Control */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={useManualRadius}
+                    onChange={(e) => setUseManualRadius(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-blue-900">Use Manual Search Radius</span>
+                </label>
+                <span className="text-xs text-blue-700">
+                  {useManualRadius ? `${searchRadius} miles` : 'Text matching only'}
+                </span>
+              </div>
+              
+              {useManualRadius && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Radius: {searchRadius} miles
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">5</span>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      step="5"
+                      value={searchRadius}
+                      onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{ '--value': `${((searchRadius - 5) / 95) * 100}%` } as any}
+                    />
+                    <span className="text-sm text-gray-600">100</span>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Larger radius = more potential matches. Requires location coordinates.
+                  </p>
+                </div>
+              )}
+              
+              {!useManualRadius && (
+                <p className="text-xs text-blue-700">
+                  Using text-based location matching. Enable manual radius for precise distance-based searching.
+                </p>
+              )}
             </div>
 
             <div>
@@ -294,6 +446,95 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
               </div>
             )}
 
+            {/* Advanced Search Options */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Advanced Search Options
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                  className="flex items-center space-x-2 text-green-600 hover:text-green-700 text-sm font-medium"
+                >
+                  <Filter size={14} />
+                  <span>{showAdvancedSearch ? 'Hide' : 'Show'} Advanced</span>
+                </button>
+              </div>
+              
+              {showAdvancedSearch && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Maximum Price
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-3 text-gray-400 font-medium">
+                          {getCurrencySymbol(currency)}
+                        </span>
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(e.target.value)}
+                          className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                          placeholder="Any price"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Currency
+                      </label>
+                      <select
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="INR">INR - Indian Rupee</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quick Filters</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { key: 'all', label: 'All Rides' },
+                        { key: 'free', label: 'Free Rides' },
+                        { key: 'paid', label: 'Paid Rides' },
+                        { key: 'negotiable', label: 'Negotiable Price' },
+                        { key: 'today', label: 'Today' },
+                        { key: 'tomorrow', label: 'Tomorrow' },
+                        { key: 'this-week', label: 'This Week' }
+                      ].map(filter => (
+                        <button
+                          key={filter.key}
+                          type="button"
+                          onClick={() => setFilterBy(filter.key as FilterOption)}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                            filterBy === filter.key
+                              ? 'bg-green-600 text-white'
+                              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          {filter.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Sorting and Filters */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -301,6 +542,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   Sort & Filter Results
                 </label>
                 <button
+                  type="button"
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center space-x-2 text-green-600 hover:text-green-700 text-sm font-medium"
                 >
@@ -325,14 +567,22 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         <option value="price-desc">Price (High to Low)</option>
                         <option value="created-desc">Newly Posted (Latest First)</option>
                         <option value="created-asc">Newly Posted (Oldest First)</option>
+                        {useManualRadius && (
+                          <>
+                            <option value="distance-asc">Distance (Closest First)</option>
+                            <option value="distance-desc">Distance (Farthest First)</option>
+                          </>
+                        )}
                       </select>
                     </div>
                     <div className="flex items-end">
                       <div className="text-sm text-green-700">
-                        <p className="font-medium mb-1">Filter Info:</p>
+                        <p className="font-medium mb-1">Search Info:</p>
                         <ul className="text-xs space-y-1">
                           <li>• Only shows open rides</li>
                           <li>• Future departure times only</li>
+                          {useManualRadius && <li>• Distance-based filtering enabled</li>}
+                          {maxPrice && <li>• Price filter: ≤ {getCurrencySymbol(currency)}{maxPrice}</li>}
                         </ul>
                       </div>
                     </div>
@@ -341,13 +591,25 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
               )}
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Searching...' : 'Search Rides'}
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Searching...' : 'Search Rides'}
+              </button>
+              
+              {searched && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
@@ -378,9 +640,16 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   Ride Requests ({rideRequests.length})
                 </button>
               </div>
-              <span className="text-gray-600">
-                {activeTab === 'rides' ? rides.length : rideRequests.length} {activeTab === 'rides' ? 'ride' : 'request'}{(activeTab === 'rides' ? rides.length : rideRequests.length) !== 1 ? 's' : ''} found
-              </span>
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-600">
+                  {activeTab === 'rides' ? rides.length : rideRequests.length} {activeTab === 'rides' ? 'ride' : 'request'}{(activeTab === 'rides' ? rides.length : rideRequests.length) !== 1 ? 's' : ''} found
+                </span>
+                {useManualRadius && fromLocation?.latitude && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    📍 Distance-based search
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Available Rides Tab */}
@@ -395,12 +664,20 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                     <p className="text-gray-600 mb-6">
                       Try adjusting your search criteria or check the "Ride Requests" tab to see if anyone is looking for a ride on your route
                     </p>
-                    <button
-                      onClick={() => setActiveTab('requests')}
-                      className="text-green-600 hover:text-green-700 font-medium transition-colors"
-                    >
-                      View Ride Requests ({rideRequests.length})
-                    </button>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setActiveTab('requests')}
+                        className="text-green-600 hover:text-green-700 font-medium transition-colors block mx-auto"
+                      >
+                        View Ride Requests ({rideRequests.length})
+                      </button>
+                      <button
+                        onClick={clearSearch}
+                        className="text-gray-600 hover:text-gray-700 font-medium transition-colors text-sm"
+                      >
+                        Clear Search Filters
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -438,25 +715,53 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             <div className="grid md:grid-cols-3 gap-4 mb-4">
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">From</p>
-                                <div className="font-semibold text-gray-900">
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
                                   {ride.from_location}
+                                  {useManualRadius && (ride as any).departureDistance !== null && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                      {Math.round((ride as any).departureDistance)}mi
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">To</p>
-                                <div className="font-semibold text-gray-900">
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <MapPin size={14} className="mr-1 text-gray-400" />
                                   {ride.to_location}
+                                  {useManualRadius && (ride as any).destinationDistance !== null && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                                      {Math.round((ride as any).destinationDistance)}mi
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">Departure</p>
-                                <div className="font-semibold text-gray-900">
+                                <div className="font-semibold text-gray-900 flex items-center">
+                                  <Clock size={14} className="mr-1 text-gray-400" />
                                   {formatDateTimeSafe(ride.departure_date_time)}
                                 </div>
                               </div>
                             </div>
+
+                            {/* Intermediate Stops */}
+                            {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {ride.intermediate_stops.map((stop, index) => (
+                                    <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
+                                      <Navigation size={10} className="mr-1" />
+                                      {stop.address}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             <div className="mt-4 pt-4 border-t border-gray-200">
                               <div className="flex items-center space-x-4">
@@ -464,7 +769,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                   <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
                                   <div className="flex items-center space-x-2">
                                     <span className="font-semibold text-green-600 flex items-center">
-                                      {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                                      {ride.price === 0 ? 'Free' : `${getCurrencySymbol(ride.currency || 'USD')}${ride.price}`}
                                     </span>
                                     {ride.negotiable && (
                                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -473,6 +778,14 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                     )}
                                   </div>
                                 </div>
+                                {useManualRadius && (ride as any).departureDistance !== null && (ride as any).destinationDistance !== null && (
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-1">Total Distance</p>
+                                    <div className="font-semibold text-blue-600">
+                                      {Math.round(((ride as any).departureDistance + (ride as any).destinationDistance) / 2)} miles avg
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
