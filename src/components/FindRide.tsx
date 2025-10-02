@@ -10,6 +10,7 @@ import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
 import { haversineDistance } from '../utils/distance'
+import { clearChatDeletion } from '../utils/blockingHelpers'
 
 interface LocationData {
   address: string
@@ -50,6 +51,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
   const [useManualRadius, setUseManualRadius] = useState(false)
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
+  const [maxPrice, setMaxPrice] = useState('')
+  const [showPriceFilter, setShowPriceFilter] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,7 +120,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
       // Price filtering
       if (maxPrice) {
-        query = query.lte('price', parseFloat(maxPrice))
+        query = query.lte('price', parseFloat(maxPrice)).eq('currency', currency)
       }
 
       // Always filter for future rides
@@ -175,6 +178,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
               const weekFromNow = new Date()
               weekFromNow.setDate(weekFromNow.getDate() + 7)
               return new Date(ride.departure_date_time) <= weekFromNow
+            case 'free':
+              return ride.price === 0
+            case 'paid':
+              return ride.price > 0
             default:
               return true
           }
@@ -268,15 +275,31 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     setToLocation(null)
     setDepartureDateTime('')
     setDepartureMonth('')
+    setDepartureMonth('')
     setSearchRadius(25)
     setMaxPrice('')
     setCurrency('USD')
     setSearched(false)
     setRides([])
     setRideRequests([])
+    setRideRequests([])
     setFilterBy('all')
     setSortBy('date-asc')
     setUseManualRadius(false)
+    setShowAdvancedSearch(false)
+  }
+
+  const handleChatStart = async (userId: string, userName: string, ride?: CarRide) => {
+    // Clear any chat deletion records when starting a new chat
+    if (user) {
+      try {
+        await clearChatDeletion(user.id, userId)
+      } catch (error) {
+        console.warn('Failed to clear chat deletion record:', error)
+      }
+    }
+    
+    handleChatClick(userId, userName, ride)
   }
 
   return (
@@ -467,7 +490,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Maximum Price
+                        Maximum Price Filter
                       </label>
                       <div className="relative">
                         <span className="absolute left-3 top-3 text-gray-400 font-medium">
@@ -481,8 +504,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           placeholder="Any price"
                           min="0"
                           step="0.01"
+                          title="Filter rides by maximum price"
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">Only show rides at or below this price</p>
                     </div>
 
                     <div>
@@ -514,7 +539,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         { key: 'negotiable', label: 'Negotiable Price' },
                         { key: 'today', label: 'Today' },
                         { key: 'tomorrow', label: 'Tomorrow' },
-                        { key: 'this-week', label: 'This Week' }
+                        { key: 'this-week', label: 'This Week' },
+                        { key: 'free', label: 'Free Rides Only' }
                       ].map(filter => (
                         <button
                           key={filter.key}
@@ -584,6 +610,15 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           {useManualRadius && <li>• Distance-based filtering enabled</li>}
                           {maxPrice && <li>• Price filter: ≤ {getCurrencySymbol(currency)}{maxPrice}</li>}
                         </ul>
+                        {maxPrice && (
+                          <button
+                            type="button"
+                            onClick={() => setMaxPrice('')}
+                            className="text-xs text-green-600 hover:text-green-700 mt-1 underline"
+                          >
+                            Clear price filter
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -769,7 +804,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                   <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
                                   <div className="flex items-center space-x-2">
                                     <span className="font-semibold text-green-600 flex items-center">
-                                      {ride.price === 0 ? 'Free' : `${getCurrencySymbol(ride.currency || 'USD')}${ride.price}`}
+                                      {ride.price === 0 ? (
+                                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                          FREE RIDE
+                                        </span>
+                                      ) : (
+                                        `${getCurrencySymbol(ride.currency || 'USD')}${ride.price}`
+                                      )}
                                     </span>
                                     {ride.negotiable && (
                                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -793,34 +834,37 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           <div className="ml-6">
                             {ride.user_id === user?.id ? (
                               <div className="flex flex-col space-y-2">
-                                <div className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium text-center">
+                                <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
                                   Your Ride
                                 </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  This is your posted ride
+                                </p>
                               </div>
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
+                                  onClick={() => handleChatStart(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
                                   className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Driver</span>
                                 </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Sign up required to chat
+                                <p className="text-xs text-orange-600 text-center font-medium">
+                                  ⚠️ Sign up required to chat
                                 </p>
                               </div>
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Driver', ride)}
+                                  onClick={() => handleChatStart(ride.user_id, ride.user_profiles?.full_name || 'Driver', ride)}
                                   className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Start Chat</span>
                                 </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Chat first, then request confirmation
+                                <p className="text-xs text-blue-600 text-center font-medium">
+                                  💬 Chat first, then request confirmation
                                 </p>
                               </div>
                             )}
@@ -945,33 +989,43 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
 
                           <div className="ml-6">
+                            {request.passenger_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-purple-100 text-purple-800 px-6 py-3 rounded-lg font-medium text-center border border-purple-200">
+                                  Your Request
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  This is your posted request
+                                </p>
+                              </div>
+                            ) : 
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown')}
+                                  onClick={() => handleChatStart(request.passenger_id, request.user_profiles?.full_name || 'Unknown')}
                                   className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
                                 </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Sign up required to chat
+                                <p className="text-xs text-orange-600 text-center font-medium">
+                                  ⚠️ Sign up required to chat
                                 </p>
                               </div>
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger')}
+                                  onClick={() => handleChatStart(request.passenger_id, request.user_profiles?.full_name || 'Passenger')}
                                   className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Ride</span>
                                 </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Chat to discuss details
+                                <p className="text-xs text-purple-600 text-center font-medium">
+                                  💬 Chat to discuss details
                                 </p>
                               </div>
-                            )}
+                            )}}
                           </div>
                         </div>
                       </div>
