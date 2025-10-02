@@ -1145,12 +1145,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
 
                           <div className="ml-6">
-                            {ride.user_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
-                                <span>Your Ride</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
@@ -1161,6 +1156,15 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
+                                </p>
+                              </div>
+                            ) : ride.user_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                                  🚗 Your Ride
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  This is your posted ride
                                 </p>
                               </div>
                             ) : (
