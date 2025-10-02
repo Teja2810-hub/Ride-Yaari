@@ -1300,7 +1300,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 <span>Your Request</span>
                               </div>
                             ) : effectiveIsGuest ? (
-                            {request.passenger_id === user?.id ? (
+                            request.passenger_id === user?.id ? (
                               <div className="flex flex-col space-y-2">
                                 <div className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium text-center">
                                   Your Request
