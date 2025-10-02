@@ -32,7 +32,29 @@ export default function TripCategorySelector({
 }: TripCategorySelectorProps) {
   const [expandedOfferedTrip, setExpandedOfferedTrip] = useState<string | null>(null)
   const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
+  const [expandedRequestedTrip, setExpandedRequestedTrip] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
+  const [showEditModal, setShowEditModal] = useState<{
+    show: boolean
+    request: TripRequest | null
+  }>({ show: false, request: null })
+  const [showDeleteModal, setShowDeleteModal] = useState<{
+    show: boolean
+    request: TripRequest | null
+  }>({ show: false, request: null })
+  const [editFormData, setEditFormData] = useState({
+    departure_airport: '',
+    destination_airport: '',
+    request_type: 'specific_date' as 'specific_date' | 'multiple_dates' | 'month',
+    specific_date: '',
+    multiple_dates: [''],
+    request_month: '',
+    departure_time_preference: '',
+    additional_notes: '',
+    is_active: true
+  })
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Debug logging
   React.useEffect(() => {
@@ -112,6 +134,10 @@ export default function TripCategorySelector({
 
   const toggleJoinedTrip = (tripId: string) => {
     setExpandedJoinedTrip(expandedJoinedTrip === tripId ? null : tripId)
+  }
+
+  const toggleRequestedTrip = (requestId: string) => {
+    setExpandedRequestedTrip(expandedRequestedTrip === requestId ? null : requestId)
   }
 
   const getStatusColor = (status: string) => {
