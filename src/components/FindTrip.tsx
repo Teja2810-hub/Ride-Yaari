@@ -548,13 +548,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
 
                           <div className="ml-6">
-                            {trip.user_id === user?.id ? (
-                              <div className="flex flex-col space-y-2">
-                                <div className="bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium text-center">
-                                  Your Trip
-                                </div>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
@@ -565,6 +559,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
+                                </p>
+                              </div>
+                            ) : trip.user_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                                  ✈️ Your Trip
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  This is your posted trip
                                 </p>
                               </div>
                             ) : (
