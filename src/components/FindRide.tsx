@@ -49,10 +49,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [filterBy, setFilterBy] = useState<FilterOption>('all')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
-  const [useManualRadius, setUseManualRadius] = useState(false)
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
-  const [maxPrice, setMaxPrice] = useState('')
-  const [showPriceFilter, setShowPriceFilter] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
