@@ -147,14 +147,12 @@ export const getDisplayRideRequests = async (
 
     // Filter by location if provided
     if (departureLocation) {
-      // Split the location filtering to avoid PostgREST parsing issues with commas in or() clauses
-      const locationPattern = `%${departureLocation}%`
-      query = query.or(`departure_location.ilike.${locationPattern},destination_location.ilike.${locationPattern}`)
+      // Use individual filters to avoid PostgREST parsing issues with commas
+      query = query.or(`departure_location.ilike.*${departureLocation}*,destination_location.ilike.*${departureLocation}*`)
     }
     if (destinationLocation) {
-      // Split the location filtering to avoid PostgREST parsing issues with commas in or() clauses
-      const locationPattern = `%${destinationLocation}%`
-      query = query.or(`departure_location.ilike.${locationPattern},destination_location.ilike.${locationPattern}`)
+      // Use individual filters to avoid PostgREST parsing issues with commas
+      query = query.or(`departure_location.ilike.*${destinationLocation}*,destination_location.ilike.*${destinationLocation}*`)
     }
 
     // Filter by date
