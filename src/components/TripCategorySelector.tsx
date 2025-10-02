@@ -128,16 +128,114 @@ export default function TripCategorySelector({
       label: 'Open'
     }
   }
+
+  const handleEditRequest = (request: TripRequest) => {
+    setEditFormData({
+      departure_airport: request.departure_airport,
+      destination_airport: request.destination_airport,
+      request_type: request.request_type,
+      specific_date: request.specific_date || '',
+      multiple_dates: request.multiple_dates || [''],
+      request_month: request.request_month || '',
+      departure_time_preference: request.departure_time_preference || '',
+      additional_notes: request.additional_notes || '',
+      is_active: request.is_active
+    })
+    setShowEditModal({ show: true, request })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!showEditModal.request) return
+
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('trip_requests')
+        .update({
+          departure_airport: editFormData.departure_airport,
+          destination_airport: editFormData.destination_airport,
+          request_type: editFormData.request_type,
+          specific_date: editFormData.request_type === 'specific_date' ? editFormData.specific_date : null,
+          multiple_dates: editFormData.request_type === 'multiple_dates' ? editFormData.multiple_dates.filter(d => d) : null,
+          request_month: editFormData.request_type === 'month' ? editFormData.request_month : null,
+          departure_time_preference: editFormData.departure_time_preference || null,
+          additional_notes: editFormData.additional_notes || null,
+          is_active: editFormData.is_active,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', showEditModal.request.id)
+
+      if (error) throw error
+
+      setShowEditModal({ show: false, request: null })
+      onRefresh()
+    } catch (error: any) {
+      alert('Failed to update request: ' + error.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteRequest = async () => {
+    if (!showDeleteModal.request) return
+
+    setDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('trip_requests')
+        .delete()
+        .eq('id', showDeleteModal.request.id)
+
+      if (error) throw error
+
+      setShowDeleteModal({ show: false, request: null })
+      onRefresh()
+    } catch (error: any) {
+      alert('Failed to delete request: ' + error.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const addMultipleDate = () => {
+    if (editFormData.multiple_dates.length < 5) {
+      setEditFormData(prev => ({
+        ...prev,
+        multiple_dates: [...prev.multiple_dates, '']
+      }))
+    }
+  }
+
+  const removeMultipleDate = (index: number) => {
+    setEditFormData(prev => ({
+      ...prev,
+      multiple_dates: prev.multiple_dates.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateMultipleDate = (index: number, date: string) => {
+    setEditFormData(prev => {
+      const newDates = [...prev.multiple_dates]
+      newDates[index] = date
+      return { ...prev, multiple_dates: newDates }
+    })
+  }
+
+  const getTomorrowDate = () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toISOString().split('T')[0]
+  }
+
+  const getTodayMonth = () => {
+    return new Date().toISOString().slice(0, 7)
+  }
   const toggleOfferedTrip = (tripId: string) => {
     setExpandedOfferedTrip(expandedOfferedTrip === tripId ? null : tripId)
   }
 
   const toggleJoinedTrip = (tripId: string) => {
     setExpandedJoinedTrip(expandedJoinedTrip === tripId ? null : tripId)
-  }
-
-  const toggleRequestedTrip = (requestId: string) => {
-    setExpandedRequestedTrip(expandedRequestedTrip === requestId ? null : requestId)
   }
 
   const getStatusColor = (status: string) => {
@@ -725,10 +823,6 @@ export default function TripCategorySelector({
                           </div>
                         </div>
 
-                            onUpdate={() => {
-                              console.log('TripClosureControls onUpdate called for trip:', trip.id)
-                              onRefresh()
-                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {
