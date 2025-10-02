@@ -145,18 +145,47 @@ export const getDisplayRideRequests = async (
       query = query.neq('passenger_id', excludeUserId)
     }
 
-    // Filter by location if provided
+    // Filter by location if provided - use broader matching for better results
     if (departureLocation) {
-      // Use individual filters to avoid PostgREST parsing issues with commas
-      // First try to match departure location
-      const cleanLocation = departureLocation.split(',')[0].trim() // Use just the city name
-      query = query.or(`departure_location.ilike.%${cleanLocation}%,destination_location.ilike.%${cleanLocation}%`)
-     }
-     if (destinationLocation) {
-      // Use individual filters to avoid PostgREST parsing issues with commas
-      // First try to match destination location
-      const cleanLocation = destinationLocation.split(',')[0].trim() // Use just the city name
-      query = query.or(`departure_location.ilike.%${cleanLocation}%,destination_location.ilike.%${cleanLocation}%`)
+      // Extract city/state from location string for broader matching
+      const locationParts = departureLocation.split(',').map(part => part.trim())
+      const cityName = locationParts[0]
+      const stateName = locationParts[1] || locationParts[0]
+      
+      // Match if any part of the location string matches
+      const locationFilters = [
+        `departure_location.ilike.%${cityName}%`,
+        `destination_location.ilike.%${cityName}%`
+      ]
+      
+      // If we have a state name, also search for that
+      if (stateName && stateName !== cityName) {
+        locationFilters.push(`departure_location.ilike.%${stateName}%`)
+        locationFilters.push(`destination_location.ilike.%${stateName}%`)
+      }
+      
+      query = query.or(locationFilters.join(','))
+    }
+    
+    if (destinationLocation) {
+      // Extract city/state from location string for broader matching
+      const locationParts = destinationLocation.split(',').map(part => part.trim())
+      const cityName = locationParts[0]
+      const stateName = locationParts[1] || locationParts[0]
+      
+      // Match if any part of the location string matches
+      const locationFilters = [
+        `departure_location.ilike.%${cityName}%`,
+        `destination_location.ilike.%${cityName}%`
+      ]
+      
+      // If we have a state name, also search for that
+      if (stateName && stateName !== cityName) {
+        locationFilters.push(`departure_location.ilike.%${stateName}%`)
+        locationFilters.push(`destination_location.ilike.%${stateName}%`)
+      }
+      
+      query = query.or(locationFilters.join(','))
     }
 
     // Filter by date
@@ -242,7 +271,6 @@ export const getDisplayTripRequests = async (
     const today = new Date().toISOString().split('T')[0]
     query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
 
-    // Remove the excludeUserId filter to show user's own requests
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
