@@ -147,25 +147,22 @@ export const getDisplayRideRequests = async (
 
     // Filter by location if provided
     if (departureLocation) {
-      query = query.ilike('departure_location', `%${departureLocation}%`)
+      query = query.or(`departure_location.ilike.%${departureLocation}%,destination_location.ilike.%${departureLocation}%`)
     }
     if (destinationLocation) {
-      query = query.ilike('destination_location', `%${destinationLocation}%`)
+      query = query.or(`departure_location.ilike.%${destinationLocation}%,destination_location.ilike.%${destinationLocation}%`)
     }
 
     // Filter by date
     if (searchByMonth && departureMonth) {
-      query = query.or(`request_month.eq.${departureMonth},multiple_dates.cs.{"${departureMonth}-01"}`)
+      query = query.or(`request_month.eq.${departureMonth},specific_date.gte.${departureMonth}-01,specific_date.lt.${getNextMonth(departureMonth)}-01`)
     } else if (!searchByMonth && departureDate) {
-      query = query.or(`specific_date.eq.${departureDate},multiple_dates.cs.{"${departureDate}"}`)
+      query = query.or(`specific_date.eq.${departureDate},request_month.eq.${departureDate.substring(0, 7)}`)
     }
 
-    // Show only active requests
-    query = query.eq('is_active', true)
-    
     // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},specific_date.is.null`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
@@ -175,7 +172,9 @@ export const getDisplayRideRequests = async (
     }
 
     console.log('getDisplayRideRequests result:', data?.length || 0, 'requests found')
-    console.log('Sample ride request data:', data?.[0])
+    if (data && data.length > 0) {
+      console.log('Sample ride request data:', data[0])
+    }
     return data || []
   })
 }
@@ -220,25 +219,22 @@ export const getDisplayTripRequests = async (
 
     // Filter by airports if provided
     if (departureAirport) {
-      query = query.eq('departure_airport', departureAirport)
+      query = query.or(`departure_airport.eq.${departureAirport},destination_airport.eq.${departureAirport}`)
     }
     if (destinationAirport) {
-      query = query.eq('destination_airport', destinationAirport)
+      query = query.or(`departure_airport.eq.${destinationAirport},destination_airport.eq.${destinationAirport}`)
     }
 
     // Filter by date
     if (searchByMonth && travelMonth) {
-      query = query.or(`request_month.eq.${travelMonth},multiple_dates.cs.{"${travelMonth}-01"}`)
+      query = query.or(`request_month.eq.${travelMonth},specific_date.gte.${travelMonth}-01,specific_date.lt.${getNextMonth(travelMonth)}-01`)
     } else if (!searchByMonth && travelDate) {
-      query = query.or(`specific_date.eq.${travelDate},multiple_dates.cs.{"${travelDate}"}`)
+      query = query.or(`specific_date.eq.${travelDate},request_month.eq.${travelDate.substring(0, 7)}`)
     }
 
-    // Show only active requests
-    query = query.eq('is_active', true)
-    
     // Only show future requests (basic filter)
     const today = new Date().toISOString().split('T')[0]
-    query = query.or(`specific_date.gte.${today},specific_date.is.null`)
+    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
@@ -248,9 +244,21 @@ export const getDisplayTripRequests = async (
     }
 
     console.log('getDisplayTripRequests result:', data?.length || 0, 'requests found')
-    console.log('Sample trip request data:', data?.[0])
+    if (data && data.length > 0) {
+      console.log('Sample trip request data:', data[0])
+    }
     return data || []
   })
+}
+
+/**
+ * Helper function to get next month string
+ */
+const getNextMonth = (monthString: string): string => {
+  const [year, month] = monthString.split('-').map(Number)
+  const nextMonth = month === 12 ? 1 : month + 1
+  const nextYear = month === 12 ? year + 1 : year
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}`
 }
 
 /**
