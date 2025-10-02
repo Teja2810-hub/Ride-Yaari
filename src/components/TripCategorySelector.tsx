@@ -6,6 +6,7 @@ import { formatDateSafe } from '../utils/dateHelpers'
 import PassengerManagement from './PassengerManagement'
 import TripClosureControls from './TripClosureControls'
 import { supabase } from '../utils/supabase'
+import TripRequestEditModal from './TripRequestEditModal'
 
 interface TripCategorySelectorProps {
   offeredTrips: Trip[]
@@ -34,26 +35,11 @@ export default function TripCategorySelector({
   const [expandedJoinedTrip, setExpandedJoinedTrip] = useState<string | null>(null)
   const [expandedRequestedTrip, setExpandedRequestedTrip] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'overview' | 'offered' | 'joined' | 'requested'>('overview')
-  const [showEditModal, setShowEditModal] = useState<{
-    show: boolean
-    request: TripRequest | null
-  }>({ show: false, request: null })
+  const [editingRequest, setEditingRequest] = useState<TripRequest | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<{
     show: boolean
     request: TripRequest | null
   }>({ show: false, request: null })
-  const [editFormData, setEditFormData] = useState({
-    departure_airport: '',
-    destination_airport: '',
-    request_type: 'specific_date' as 'specific_date' | 'multiple_dates' | 'month',
-    specific_date: '',
-    multiple_dates: [''],
-    request_month: '',
-    departure_time_preference: '',
-    additional_notes: '',
-    is_active: true
-  })
-  const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   // Debug logging
@@ -725,10 +711,6 @@ export default function TripCategorySelector({
                           </div>
                         </div>
 
-                            onUpdate={() => {
-                              console.log('TripClosureControls onUpdate called for trip:', trip.id)
-                              onRefresh()
-                            }}
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={(e) => {
@@ -788,76 +770,266 @@ export default function TripCategorySelector({
         ) : (
           <div className="space-y-4">
             {requestedTrips.map((request) => (
-              <div
-                key={request.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                      <Send size={24} className="text-white" />
+              <div key={request.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                {/* Request Header - Always Visible */}
+                <div 
+                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => toggleRequestedTrip(request.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                        <Send size={24} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {request.departure_airport} → {request.destination_airport}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {formatRequestDateDisplay(request)}
+                          {request.departure_time_preference && (
+                            <span> • {request.departure_time_preference}</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {request.departure_airport} → {request.destination_airport}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {formatRequestDateDisplay(request)}
-                        {request.departure_time_preference && (
-                          <span> • {request.departure_time_preference}</span>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">
+                          {expandedRequestedTrip === request.id ? 'Hide Details' : 'Show Details'}
+                        </span>
+                        {expandedRequestedTrip === request.id ? (
+                          <ChevronUp size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={20} className="text-gray-400" />
                         )}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        // TODO: Implement edit functionality
-                        alert('Edit functionality coming soon')
-                      }}
-                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm"
-                    >
-                      <Edit size={16} />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        if (!confirm('Are you sure you want to delete this trip request?')) return
-                        try {
-                          const { error } = await supabase
-                            .from('trip_requests')
-                            .delete()
-                            .eq('id', request.id)
-                          if (error) throw error
-                          onRefresh()
-                        } catch (error: any) {
-                          alert('Failed to delete request: ' + error.message)
-                        }
-                      }}
-                      className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors text-sm"
-                    >
-                      <Trash2 size={16} />
-                      <span>Delete</span>
-                    </button>
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      <span>{request.is_active ? 'Active' : 'Inactive'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                {request.additional_notes && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-600 mb-1">Notes</p>
-                    <p className="text-gray-900">{request.additional_notes}</p>
+
+                {/* Expanded Details */}
+                {expandedRequestedTrip === request.id && (
+                  <div className="border-t border-gray-200 bg-gray-50">
+                    <div className="p-6 space-y-6">
+                      {/* Request Details */}
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-900 mb-3">Request Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600 mb-1">From</p>
+                            <div className="font-medium text-gray-900">{request.departure_airport}</div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">To</p>
+                            <div className="font-medium text-gray-900">{request.destination_airport}</div>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 mb-1">When</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <Calendar size={14} className="mr-1 text-gray-400" />
+                              {formatRequestDateDisplay(request)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {request.departure_time_preference && (
+                          <div className="mt-3 pt-3 border-t border-purple-200">
+                            <p className="text-gray-600 mb-1">Preferred Time</p>
+                            <div className="font-medium text-gray-900 flex items-center">
+                              <Clock size={14} className="mr-1 text-gray-400" />
+                              {request.departure_time_preference}
+                            </div>
+                          </div>
+                        )}
+
+                        {request.max_price && (
+                          <div className="mt-3 pt-3 border-t border-purple-200">
+                            <p className="text-gray-600 mb-1">Maximum Budget</p>
+                            <div className="font-medium text-green-600">
+                              {getCurrencySymbol(request.currency || 'USD')}{request.max_price}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Additional Notes */}
+                      {request.additional_notes && (
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-blue-900 mb-2">What You Need</h4>
+                          <p className="text-blue-800">{request.additional_notes}</p>
+                        </div>
+                      )}
+
+                      {/* Request Timeline */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                              <span className="text-purple-600 font-bold text-xs">1</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Request Created</p>
+                              <p className="text-xs text-gray-600">{formatDateTime(request.created_at)}</p>
+                            </div>
+                          </div>
+                          
+                          {request.expires_at && (
+                            <div className="flex items-center space-x-3">
+                              <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span className="text-orange-600 font-bold text-xs">⏰</span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {new Date(request.expires_at) > new Date() ? 'Expires' : 'Expired'}
+                                </p>
+                                <p className="text-xs text-gray-600">{formatDateTime(request.expires_at)}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-500">
+                          Request ID: {request.id.slice(0, 8)}...
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingRequest(request)
+                            }}
+                            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
+                          >
+                            <Edit size={16} />
+                            <span>Edit</span>
+                          </button>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowDeleteModal({ show: true, request })
+                            }}
+                            disabled={deleting}
+                            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                          >
+                            {deleting ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Deleting...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {editingRequest && (
+          <TripRequestEditModal
+            isOpen={true}
+            onClose={() => setEditingRequest(null)}
+            request={editingRequest}
+            onUpdate={() => {
+              setEditingRequest(null)
+              onRefresh()
+            }}
+          />
+        )}
+
+        {/* Delete Modal */}
+        {showDeleteModal.show && showDeleteModal.request && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} className="text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Delete Trip Request</h2>
+                <p className="text-gray-600">
+                  Are you sure you want to delete this trip request?
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Request Details:</h4>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p><strong>Route:</strong> {showDeleteModal.request.departure_airport} → {showDeleteModal.request.destination_airport}</p>
+                  <p><strong>When:</strong> {formatRequestDateDisplay(showDeleteModal.request)}</p>
+                  {showDeleteModal.request.additional_notes && (
+                    <p><strong>Notes:</strong> {showDeleteModal.request.additional_notes}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-900 mb-1">What happens:</h4>
+                    <ul className="text-sm text-yellow-800 space-y-1">
+                      <li>• Your trip request will be permanently deleted</li>
+                      <li>• You will stop receiving notifications for this route</li>
+                      <li>• This action cannot be undone</li>
+                      <li>• You can create a new request anytime</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal({ show: false, request: null })}
+                  className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!showDeleteModal.request) return
+                    setDeleting(true)
+                    try {
+                      const { error } = await supabase
+                        .from('trip_requests')
+                        .delete()
+                        .eq('id', showDeleteModal.request.id)
+                      if (error) throw error
+                      setShowDeleteModal({ show: false, request: null })
+                      onRefresh()
+                    } catch (error: any) {
+                      alert('Failed to delete request: ' + error.message)
+                    } finally {
+                      setDeleting(false)
+                    }
+                  }}
+                  disabled={deleting}
+                  className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Request'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
