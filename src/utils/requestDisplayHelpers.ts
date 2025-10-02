@@ -147,10 +147,12 @@ export const getDisplayRideRequests = async (
 
     // Filter by location if provided
     if (departureLocation) {
-      query = query.or(`departure_location.ilike.%${departureLocation}%,destination_location.ilike.%${departureLocation}%`)
+      // Use separate filters to avoid comma parsing issues
+      query = query.or(`departure_location.ilike.%${departureLocation.replace(/,/g, '')}%,destination_location.ilike.%${departureLocation.replace(/,/g, '')}%`)
     }
     if (destinationLocation) {
-      query = query.or(`departure_location.ilike.%${destinationLocation}%,destination_location.ilike.%${destinationLocation}%`)
+      // Use separate filters to avoid comma parsing issues  
+      query = query.or(`departure_location.ilike.%${destinationLocation.replace(/,/g, '')}%,destination_location.ilike.%${destinationLocation.replace(/,/g, '')}%`)
     }
 
     // Filter by date
