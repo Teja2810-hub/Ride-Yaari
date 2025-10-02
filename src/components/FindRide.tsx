@@ -51,7 +51,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
 
   const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
     setLoading(true)
 
     try {
