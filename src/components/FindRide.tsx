@@ -1166,7 +1166,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Driver', ride)}
+                                  Your Ride
                                   className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
@@ -1310,6 +1310,15 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
+                                </p>
+                              </div>
+                            ) : request.passenger_id === user?.id ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className="bg-orange-100 text-orange-800 px-6 py-3 rounded-lg font-medium text-center border border-orange-200">
+                                  Your Request
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                  This is your posted request
                                 </p>
                               </div>
                             ) : (
