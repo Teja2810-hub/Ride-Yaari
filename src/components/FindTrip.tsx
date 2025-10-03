@@ -555,34 +555,24 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                                   className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
-                                  <span>Contact Traveler</span>
+                                  <span>Chat with Traveler</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
                                 </p>
                               </div>
                             ) : trip.user_id === user?.id ? (
-                              <div className="flex flex-col space-y-2">
-                                <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
-                                  Your Trip
-                                </div>
-                                <p className="text-xs text-gray-500 text-center">
-                                  This is your posted trip
-                                </p>
+                              <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                                Your Trip
                               </div>
                             ) : (
-                              <div className="flex flex-col space-y-2">
-                                <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                >
-                                  <MessageCircle size={20} />
-                                  <span>Start Chat</span>
-                                </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Chat first, then request confirmation
-                                </p>
-                              </div>
+                              <button
+                                onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
+                                className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                              >
+                                <MessageCircle size={20} />
+                                <span>Chat with Traveler</span>
+                              </button>
                             )}
                           </div>
                         </div>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Check, X, Clock, TriangleAlert as AlertTriangle, MoveVertical as MoreVertical, Shield, Trash2, RefreshCw, Car, Plane } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ChatMessage, RideConfirmation, CarRide, Trip } from '../types'
 import RideConfirmationModal from './RideConfirmationModal'
 import DisclaimerModal from './DisclaimerModal'
 import EnhancedSystemMessage from './EnhancedSystemMessage'
 import ChatBlockingControls from './ChatBlockingControls'
+import RideRequestModal from './RideRequestModal'
+import TripRequestModal from './TripRequestModal'
 import { useConfirmationFlow } from '../hooks/useConfirmationFlow'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
@@ -39,6 +41,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [chatDeleted, setChatDeleted] = useState(false)
   const [expiredMessageIds, setExpiredMessageIds] = useState<Set<string>>(new Set())
   const [showStartNewChatModal, setShowStartNewChatModal] = useState(false)
+  const [showRideRequestModal, setShowRideRequestModal] = useState(false)
+  const [showTripRequestModal, setShowTripRequestModal] = useState(false)
   const { 
     error: confirmationError,
     isLoading: confirmationLoading,
@@ -787,7 +791,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   const handleRequestAgain = async () => {
     if (!user || !currentConfirmation) return
-    
+
     await handleAsync(async () => {
       await requestAgain(
         currentConfirmation.id,
@@ -796,6 +800,130 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         preSelectedRide,
         preSelectedTrip
       )
+    })
+  }
+
+  const handleRideRequestSubmit = async (rideId: string, seatsRequested: number) => {
+    if (!user) return
+
+    await handleAsync(async () => {
+      const { data: existingConfirmation, error: checkError } = await supabase
+        .from('ride_confirmations')
+        .select('id, status')
+        .eq('ride_id', rideId)
+        .eq('passenger_id', user.id)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingConfirmation) {
+        throw new Error('You already have a pending request for this ride')
+      }
+
+      const { data: rideData } = await supabase
+        .from('car_rides')
+        .select('user_id, seats_available')
+        .eq('id', rideId)
+        .single()
+
+      if (!rideData) throw new Error('Ride not found')
+      if (rideData.seats_available < seatsRequested) {
+        throw new Error(`Only ${rideData.seats_available} seats available`)
+      }
+
+      const { error: insertError } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          ride_id: rideId,
+          ride_owner_id: rideData.user_id,
+          passenger_id: user.id,
+          status: 'pending',
+          seats_requested: seatsRequested
+        })
+
+      if (insertError) throw insertError
+
+      const { data: passengerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(user.id)
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: rideData.user_id,
+          message_content: `🚗 ${passengerName} has requested ${seatsRequested} seat${seatsRequested > 1 ? 's' : ''} for your ride. Please review and respond.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      fetchMessages()
+      fetchConfirmationStatus()
+    })
+  }
+
+  const handleTripRequestSubmit = async (tripId: string) => {
+    if (!user) return
+
+    await handleAsync(async () => {
+      const { data: existingConfirmation, error: checkError } = await supabase
+        .from('ride_confirmations')
+        .select('id, status')
+        .eq('trip_id', tripId)
+        .eq('passenger_id', user.id)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingConfirmation) {
+        throw new Error('You already have a pending request for this trip')
+      }
+
+      const { data: tripData } = await supabase
+        .from('trips')
+        .select('user_id')
+        .eq('id', tripId)
+        .single()
+
+      if (!tripData) throw new Error('Trip not found')
+
+      const { error: insertError } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          trip_id: tripId,
+          ride_owner_id: tripData.user_id,
+          passenger_id: user.id,
+          status: 'pending'
+        })
+
+      if (insertError) throw insertError
+
+      const { data: passengerProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      const passengerName = passengerProfile?.full_name || await getUserDisplayName(user.id)
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: tripData.user_id,
+          message_content: `✈️ ${passengerName} has requested to join your trip. Please review and respond.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      fetchMessages()
+      fetchConfirmationStatus()
     })
   }
 
@@ -1237,6 +1365,30 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </div>
           )}
 
+          {/* Request Buttons for Passengers */}
+          {!isCurrentUserOwnerOfPreselected() && !isBlocked && !currentConfirmation && (
+            <div className="mb-3">
+              {preSelectedRide && (
+                <button
+                  onClick={() => setShowRideRequestModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                >
+                  <Car size={20} />
+                  <span>Request Ride</span>
+                </button>
+              )}
+              {preSelectedTrip && (
+                <button
+                  onClick={() => setShowTripRequestModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <Plane size={20} />
+                  <span>Request Trip</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && !isBlocked && (
             <div className="mb-3 flex justify-center">
@@ -1346,6 +1498,28 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         loading={confirmationLoading}
         type="cancel-confirmed"
       />
+
+      {/* Ride Request Modal */}
+      {preSelectedRide && (
+        <RideRequestModal
+          isOpen={showRideRequestModal}
+          onClose={() => setShowRideRequestModal(false)}
+          driverId={otherUserId}
+          driverName={otherUserName}
+          onRequestSubmit={handleRideRequestSubmit}
+        />
+      )}
+
+      {/* Trip Request Modal */}
+      {preSelectedTrip && (
+        <TripRequestModal
+          isOpen={showTripRequestModal}
+          onClose={() => setShowTripRequestModal(false)}
+          travelerId={otherUserId}
+          travelerName={otherUserName}
+          onRequestSubmit={handleTripRequestSubmit}
+        />
+      )}
     </div>
   )
 }
