@@ -180,92 +180,21 @@ export const getDisplayRideRequests = async (
 
     console.log('getDisplayRideRequests result:', data?.length || 0, 'requests found')
     
-    // Apply additional filtering if search radius is specified and > 0
-    if (searchRadius > 0 && (departureLocation || destinationLocation)) {
+    // Apply radius filtering for zero radius (exact text matching)
+    if (searchRadius === 0 && (departureLocation || destinationLocation)) {
       const filteredData = (data || []).filter(request => {
-        // For zero radius, use exact text matching
-        if (searchRadius === 0) {
-          let matches = true
-          
-          if (departureLocation) {
-            const cleanDeparture = departureLocation.split(',')[0].trim().toLowerCase()
-            const requestDeparture = request.departure_location.toLowerCase()
-            matches = matches && (cleanDeparture === requestDeparture || requestDeparture.includes(cleanDeparture) || cleanDeparture.includes(requestDeparture))
-          }
-          
-          if (destinationLocation) {
-            const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
-            const requestDestination = request.destination_location.toLowerCase()
-            matches = matches && (cleanDestination === requestDestination || requestDestination.includes(cleanDestination) || cleanDestination.includes(requestDestination))
-          }
-          
-          return matches
-        }
-        
-        // For non-zero radius, use coordinate-based distance calculation if available
-        if (request.departure_latitude && request.departure_longitude && 
-            request.destination_latitude && request.destination_longitude) {
-          
-          let withinRadius = true
-          
-          if (departureLocation) {
-            // We need coordinates for the search location to calculate distance
-            // Since we don't have them, fall back to text matching for departure
-            const cleanDeparture = departureLocation.split(',')[0].trim().toLowerCase()
-            const requestDeparture = request.departure_location.toLowerCase()
-            const departureWords = cleanDeparture.split(' ')
-            const requestWords = requestDeparture.split(' ')
-            const hasCommonWord = departureWords.some(word => 
-              word.length > 2 && requestWords.some(reqWord => 
-                reqWord.includes(word) || word.includes(reqWord)
-              )
-            )
-            withinRadius = withinRadius && hasCommonWord
-          }
-          
-          if (destinationLocation) {
-            // Same issue for destination - need coordinates for accurate distance
-            const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
-            const requestDestination = request.destination_location.toLowerCase()
-            const destinationWords = cleanDestination.split(' ')
-            const requestWords = requestDestination.split(' ')
-            const hasCommonWord = destinationWords.some(word => 
-              word.length > 2 && requestWords.some(reqWord => 
-                reqWord.includes(word) || word.includes(reqWord)
-              )
-            )
-            withinRadius = withinRadius && hasCommonWord
-          }
-          
-          return withinRadius
-        }
-        
-        // Fallback to text-based matching for requests without coordinates
         let matches = true
+        
         if (departureLocation) {
           const cleanDeparture = departureLocation.split(',')[0].trim().toLowerCase()
           const requestDeparture = request.departure_location.toLowerCase()
-          const departureWords = cleanDeparture.split(' ')
-          const requestWords = requestDeparture.split(' ')
-          const hasCommonWord = departureWords.some(word => 
-            word.length > 2 && requestWords.some(reqWord => 
-              reqWord.includes(word) || word.includes(reqWord)
-            )
-          )
-          matches = matches && hasCommonWord
+          matches = matches && (cleanDeparture === requestDeparture || requestDeparture.includes(cleanDeparture) || cleanDeparture.includes(requestDeparture))
         }
         
         if (destinationLocation) {
           const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
           const requestDestination = request.destination_location.toLowerCase()
-          const destinationWords = cleanDestination.split(' ')
-          const requestWords = requestDestination.split(' ')
-          const hasCommonWord = destinationWords.some(word => 
-            word.length > 2 && requestWords.some(reqWord => 
-              reqWord.includes(word) || word.includes(reqWord)
-            )
-          )
-          matches = matches && hasCommonWord
+          matches = matches && (cleanDestination === requestDestination || requestDestination.includes(cleanDestination) || cleanDestination.includes(requestDestination))
         }
         
         return matches
