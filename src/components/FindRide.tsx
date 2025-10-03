@@ -998,7 +998,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         onChange={(e) => setSearchRadius(parseInt(e.target.value))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors text-sm"
                       >
-                        <option value={0}>Exact location match</option>
+                        <option value={0}>Exact Match Only</option>
                         <option value={5}>5 miles</option>
                         <option value={10}>10 miles</option>
                         <option value={15}>15 miles</option>
@@ -1009,6 +1009,9 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         <option value={75}>75 miles</option>
                         <option value={100}>100 miles</option>
                       </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {searchRadius === 0 ? 'Only exact location matches' : `Show rides within ${searchRadius} miles`}
+                      </p>
                     </div>
                     <div className="flex items-end">
                       <div className="text-sm text-green-700">
