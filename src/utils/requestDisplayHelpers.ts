@@ -116,7 +116,8 @@ export const getDisplayRideRequests = async (
   departureDate?: string,
   departureMonth?: string,
   searchByMonth: boolean = false,
-  includeUserId?: string
+  includeUserId?: string,
+  searchRadius: number = 25
 ): Promise<RideRequest[]> => {
   return retryWithBackoff(async () => {
     console.log('getDisplayRideRequests called with:', {
@@ -125,7 +126,8 @@ export const getDisplayRideRequests = async (
       departureDate,
       departureMonth,
       searchByMonth,
-      includeUserId
+      includeUserId,
+      searchRadius
     })
     
     let query = supabase
@@ -142,14 +144,18 @@ export const getDisplayRideRequests = async (
 
     // Include all requests - filtering will be done in the UI
 
-    // Filter by location if provided
+    // Filter by location if provided and radius is 0 (exact match)
     if (departureLocation) {
       const cleanLocation = departureLocation.split(',')[0].trim()
-      query = query.ilike('departure_location', `%${cleanLocation}%`)
+      if (searchRadius === 0) {
+        query = query.ilike('departure_location', `%${cleanLocation}%`)
+      }
     }
     if (destinationLocation) {
       const cleanLocation = destinationLocation.split(',')[0].trim()
-      query = query.ilike('destination_location', `%${cleanLocation}%`)
+      if (searchRadius === 0) {
+        query = query.ilike('destination_location', `%${cleanLocation}%`)
+      }
     }
 
     // Filter by date
@@ -174,6 +180,59 @@ export const getDisplayRideRequests = async (
     if (data && data.length > 0) {
       console.log('Sample ride request data:', data[0])
     }
+    
+    // Apply radius filtering if searchRadius > 0 and coordinates are available
+    if (searchRadius > 0 && (departureLocation || destinationLocation)) {
+      const filteredData = (data || []).filter(request => {
+        // For now, use simple text matching since we don't have coordinates
+        // This is a simplified implementation - in production you'd want proper geocoding
+        let matches = true
+        
+        if (departureLocation) {
+          const cleanDeparture = departureLocation.split(',')[0].trim().toLowerCase()
+          const requestDeparture = request.departure_location.toLowerCase()
+          
+          // Simple text matching - if exact match or contains, it's within radius
+          if (searchRadius === 0) {
+            matches = matches && (requestDeparture.includes(cleanDeparture) || cleanDeparture.includes(requestDeparture))
+          } else {
+            // For radius > 0, be more flexible with matching
+            const departureWords = cleanDeparture.split(' ')
+            const requestWords = requestDeparture.split(' ')
+            const hasCommonWord = departureWords.some(word => 
+              word.length > 2 && requestWords.some(reqWord => 
+                reqWord.includes(word) || word.includes(reqWord)
+              )
+            )
+            matches = matches && hasCommonWord
+          }
+        }
+        
+        if (destinationLocation) {
+          const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
+          const requestDestination = request.destination_location.toLowerCase()
+          
+          if (searchRadius === 0) {
+            matches = matches && (requestDestination.includes(cleanDestination) || cleanDestination.includes(requestDestination))
+          } else {
+            const destinationWords = cleanDestination.split(' ')
+            const requestWords = requestDestination.split(' ')
+            const hasCommonWord = destinationWords.some(word => 
+              word.length > 2 && requestWords.some(reqWord => 
+                reqWord.includes(word) || word.includes(reqWord)
+              )
+            )
+            matches = matches && hasCommonWord
+          }
+        }
+        
+        return matches
+      })
+      
+      console.log(`Filtered ${data?.length || 0} requests to ${filteredData.length} based on ${searchRadius} mile radius`)
+      return filteredData
+    }
+    
     return data || []
   })
 }

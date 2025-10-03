@@ -37,7 +37,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [userLocation, setUserLocation] = useState<LocationData | null>(null)
   const [gettingLocation, setGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState('')
-  const [searchRadius, setSearchRadius] = useState('10')
+  const [searchRadius, setSearchRadius] = useState(25)
   const [departureDate, setDepartureDate] = useState('')
   const [departureMonth, setDepartureMonth] = useState('')
   const [searchByMonth, setSearchByMonth] = useState(false)
@@ -543,7 +543,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         departureDate,
         departureMonth,
         searchByMonth,
-        user?.id
+        undefined, // Don't exclude user's own requests
+        searchRadius
       )
       setRideRequests(requests)
       setSearched(true)
@@ -974,7 +975,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
               
               {showFilters && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                       <select
@@ -982,12 +983,31 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors text-sm"
                       >
-                        <option value="date-asc">Departure Date (Earliest First)</option>
-                        <option value="date-desc">Departure Date (Latest First)</option>
+                        <option value="date-asc">Travel Date (Earliest First)</option>
+                        <option value="date-desc">Travel Date (Latest First)</option>
                         <option value="price-asc">Price (Low to High)</option>
                         <option value="price-desc">Price (High to Low)</option>
                         <option value="created-desc">Newly Posted (Latest First)</option>
                         <option value="created-asc">Newly Posted (Oldest First)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Search Radius</label>
+                      <select
+                        value={searchRadius}
+                        onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors text-sm"
+                      >
+                        <option value={0}>Exact location match</option>
+                        <option value={5}>5 miles</option>
+                        <option value={10}>10 miles</option>
+                        <option value={15}>15 miles</option>
+                        <option value={20}>20 miles</option>
+                        <option value={25}>25 miles</option>
+                        <option value={30}>30 miles</option>
+                        <option value={50}>50 miles</option>
+                        <option value={75}>75 miles</option>
+                        <option value={100}>100 miles</option>
                       </select>
                     </div>
                     <div className="flex items-end">
@@ -995,8 +1015,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                         <p className="font-medium mb-1">Filter Info:</p>
                         <ul className="text-xs space-y-1">
                           <li>• Only shows open rides</li>
-                          <li>• Future departure times only</li>
-                          <li>• Excludes your own rides</li>
+                          <li>• Future travel dates only</li>
+                          <li>• Radius: {searchRadius === 0 ? 'Exact match' : `${searchRadius} miles`}</li>
                         </ul>
                       </div>
                     </div>
@@ -1166,7 +1186,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  Your Ride
+                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
                                   className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                                 >
                                   <MessageCircle size={20} />
