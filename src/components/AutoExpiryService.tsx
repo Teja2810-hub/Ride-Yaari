@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Clock, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react'
+import { Clock, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
 import { supabase } from '../utils/supabase'
