@@ -800,9 +800,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   <button
                     type="button"
                     onClick={() => setShowRadiusHelp(!showRadiusHelp)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                    title="Click for more information about search radius"
                   >
-                    <HelpCircle size={16} />
+                    <HelpCircle size={16} className="stroke-2" />
                   </button>
                 </div>
                 {showRadiusHelp && (
