@@ -310,9 +310,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           
           // For nearby search, we use user location as the search center
           let matchesFrom = true
-          // Check both departure and destination proximity
-          let departureMatches = true
-          let destinationMatches = true
+          let matchesTo = true
+          
           if (locationSearchType === 'nearby' && userLocation) {
             console.log('NEARBY search mode')
             matchesFrom = false
@@ -510,6 +509,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                       ride.from_longitude
                     )
                     console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
+                    if (distance <= radiusMiles) {
                       console.log('✅ TO: Within radius of departure location')
                       matchesTo = true
                     }
@@ -517,27 +517,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 }
               }
               console.log('TO location result:', matchesTo ? '✅ MATCH' : '❌ NO MATCH')
-            departureMatches = hasCommonWord
-          }
-          
-          if (destinationLocation) {
-            const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
-            const rideDestination = ride.to_location.toLowerCase()
-            
-            const destinationWords = cleanDestination.split(' ')
-            const rideWords = rideDestination.split(' ')
-            const hasCommonWord = destinationWords.some(word => 
-              word.length > 2 && rideWords.some(rideWord => 
-                rideWord.includes(word) || word.includes(rideWord)
-              )
-            )
-            destinationMatches = hasCommonWord
+            }
           }
           
           const matches = matchesFrom && matchesTo
           console.log(`FINAL RESULT: ${matches ? '✅ RIDE MATCHES' : '❌ RIDE REJECTED'}`)
           
-          return departureMatches && destinationMatches
+          return matches
         })
       } else {
         console.log('=== NO LOCATION FILTERS APPLIED ===')
