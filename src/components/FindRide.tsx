@@ -101,7 +101,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         travelDate,
         travelMonth,
         searchByMonth,
-        user?.id
+        undefined // Include user's own requests to show them
       )
       setRideRequests(requests)
       setSearched(true)
@@ -1315,10 +1315,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : request.passenger_id === user?.id ? (
                               <div className="flex flex-col space-y-2">
                                 <div className="bg-orange-100 text-orange-800 px-6 py-3 rounded-lg font-medium text-center border border-orange-200">
-                                  Your Request
+                                  Your Ride Request
                                 </div>
                                 <p className="text-xs text-gray-500 text-center">
-                                  This is your posted request
+                                  This is your ride request
                                 </p>
                               </div>
                             ) : (
