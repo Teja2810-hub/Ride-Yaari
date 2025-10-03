@@ -485,8 +485,9 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 // Check distance if coordinates available
                 if (!matchesTo && toLocation.latitude && toLocation.longitude && searchRadius) {
                   console.log('Checking distance for TO location')
-                  const radiusMiles = parseInt(searchRadius)
-                  
+                  const radiusMiles = useCustomRadius && customRadius ? parseInt(customRadius) : parseInt(searchRadius)
+                  const effectiveRadiusMiles = getEffectiveRadiusMiles(radiusMiles, radiusUnit)
+
                   if (ride.to_latitude && ride.to_longitude) {
                     const distance = haversineDistance(
                       toLocation.latitude,
@@ -495,12 +496,12 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                       ride.to_longitude
                     )
                     console.log(`Distance to destination: ${distance.toFixed(1)} miles`)
-                    if (distance <= radiusMiles) {
+                    if (distance <= effectiveRadiusMiles) {
                       console.log('✅ TO: Within radius of destination location')
                       matchesTo = true
                     }
                   }
-                  
+
                   if (!matchesTo && ride.from_latitude && ride.from_longitude) {
                     const distance = haversineDistance(
                       toLocation.latitude,
@@ -509,9 +510,29 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                       ride.from_longitude
                     )
                     console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                    if (distance <= radiusMiles) {
+                    if (distance <= effectiveRadiusMiles) {
                       console.log('✅ TO: Within radius of departure location')
                       matchesTo = true
+                    }
+                  }
+
+                  // Check distance to intermediate stops
+                  if (!matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
+                    for (const stop of ride.intermediate_stops) {
+                      if (stop.latitude && stop.longitude) {
+                        const distance = haversineDistance(
+                          toLocation.latitude,
+                          toLocation.longitude,
+                          stop.latitude,
+                          stop.longitude
+                        )
+                        console.log(`Distance to intermediate stop "${stop.address}": ${distance.toFixed(1)} miles`)
+                        if (distance <= effectiveRadiusMiles) {
+                          console.log('✅ TO: Within radius of intermediate stop')
+                          matchesTo = true
+                          break
+                        }
+                      }
                     }
                   }
                 }
