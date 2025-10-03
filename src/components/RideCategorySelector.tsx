@@ -835,6 +835,19 @@ export default function RideCategorySelector({
                           </div>
                         </div>
 
+                        {request.request_type === 'multiple_dates' && request.multiple_dates && request.multiple_dates.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-purple-200">
+                            <p className="text-gray-600 mb-2">Selected Dates:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {request.multiple_dates.map((date, index) => (
+                                <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                                  {formatDateSafe(date)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         <div className="mt-3 pt-3 border-t border-purple-200">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div>
