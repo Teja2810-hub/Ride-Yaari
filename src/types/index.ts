@@ -66,6 +66,8 @@ export interface CarRide {
   created_at: string
   user_profiles?: UserProfile
   intermediate_stops?: { address: string; latitude: number | null; longitude: number | null; }[]
+  total_seats: number
+  seats_available: number
 }
 
 export interface ChatMessage {
@@ -111,6 +113,7 @@ export interface RideConfirmation {
   ride_owner_id: string
   passenger_id: string
   status: 'pending' | 'accepted' | 'rejected'
+  seats_requested?: number
   confirmed_at?: string
   created_at: string
   updated_at: string
