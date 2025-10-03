@@ -243,6 +243,7 @@ export const getDisplayTripRequests = async (
     query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
 
     // Remove the excludeUserId filter to show user's own requests
+    // Don't exclude user's own requests - they should see them
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
