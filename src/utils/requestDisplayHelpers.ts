@@ -244,7 +244,9 @@ export const getDisplayTripRequests = async (
 
     // Remove the excludeUserId filter to show user's own requests
     // Don't exclude user's own requests - they should see them
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(50) // Add reasonable limit for performance
 
     if (error) {
       console.error('getDisplayTripRequests error:', error)
