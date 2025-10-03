@@ -807,9 +807,9 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                 </div>
                 {showRadiusHelp && (
                   <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-                    {locationSearchType === 'nearby' 
+                    {locationSearchType === 'nearby'
                       ? `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your current location. It finds rides starting, ending, or passing through your area.`
-                      : `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your selected location(s). For departure location, it finds rides starting OR ending nearby. For destination, it finds rides ending OR starting nearby.`
+                      : `This will search for rides within ${useCustomRadius && customRadius ? customRadius : searchRadius} ${radiusUnit} of your selected location(s). For departure location, it finds rides starting nearby. For destination, it finds rides ending nearby.`
                     }
                   </div>
                 )}
