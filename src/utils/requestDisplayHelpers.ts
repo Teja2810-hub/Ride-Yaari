@@ -142,13 +142,89 @@ export const getDisplayRideRequests = async (
       `)
       .eq('is_active', true)
 
-    // Include all requests - filtering will be done in the UI
-
-    // Filter by location if provided and radius is 0 (exact match)
-    if (departureLocation) {
+    // Apply location filters based on what's provided
+    if (departureLocation && !destinationLocation) {
+      // Only departure specified - show requests departing from this location
       const cleanLocation = departureLocation.split(',')[0].trim()
-      if (searchRadius === 0) {
-        query = query.ilike('departure_location', `%${cleanLocation}%`)
+      query = query.ilike('departure_location', `%${cleanLocation}%`)
+    } else if (!departureLocation && destinationLocation) {
+      // Only destination specified - show requests arriving to this location
+      const cleanLocation = destinationLocation.split(',')[0].trim()
+      query = query.ilike('destination_location', `%${cleanLocation}%`)
+    } else if (departureLocation && destinationLocation) {
+      // Both specified - show requests matching both
+      const cleanDeparture = departureLocation.split(',')[0].trim()
+      const cleanDestination = destinationLocation.split(',')[0].trim()
+      query = query
+        .ilike('departure_location', `%${cleanDeparture}%`)
+        .ilike('destination_location', `%${cleanDestination}%`)
+    }
+
+    // Apply date filters
+    if (searchByMonth && departureMonth) {
+      query = query.or(`request_month.eq.${departureMonth},specific_date.gte.${departureMonth}-01,specific_date.lt.${getNextMonth(departureMonth)}-01`)
+    } else if (!searchByMonth && departureDate) {
+      query = query.or(`specific_date.eq.${departureDate},request_month.eq.${departureDate.substring(0, 7)}`)
+    }
+
+    // Only show future requests
+    const today = new Date().toISOString().split('T')[0]
+    query = query.or(`specific_date.gte.${today},specific_date.is.null,expires_at.gte.${new Date().toISOString()}`)
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getDisplayRideRequests error:', error)
+      throw error
+    }
+
+    console.log('getDisplayRideRequests result:', data?.length || 0, 'requests found')
+    
+    // Apply additional filtering if search radius is specified and > 0
+    if (searchRadius > 0 && (departureLocation || destinationLocation)) {
+      const filteredData = (data || []).filter(request => {
+        // Simple text-based proximity check since we don't have coordinates
+        let matches = true
+        
+        if (departureLocation) {
+          const cleanDeparture = departureLocation.split(',')[0].trim().toLowerCase()
+          const requestDeparture = request.departure_location.toLowerCase()
+          
+          // For radius-based search, be more flexible
+          const departureWords = cleanDeparture.split(' ')
+          const requestWords = requestDeparture.split(' ')
+          const hasCommonWord = departureWords.some(word => 
+            word.length > 2 && requestWords.some(reqWord => 
+              reqWord.includes(word) || word.includes(reqWord)
+            )
+          )
+          matches = matches && hasCommonWord
+        }
+        
+        if (destinationLocation) {
+          const cleanDestination = destinationLocation.split(',')[0].trim().toLowerCase()
+          const requestDestination = request.destination_location.toLowerCase()
+          
+          const destinationWords = cleanDestination.split(' ')
+          const requestWords = requestDestination.split(' ')
+          const hasCommonWord = destinationWords.some(word => 
+            word.length > 2 && requestWords.some(reqWord => 
+              reqWord.includes(word) || word.includes(reqWord)
+            )
+          )
+          matches = matches && hasCommonWord
+        }
+        
+        return matches
+      })
+      
+      console.log(`Filtered ${data?.length || 0} requests to ${filteredData.length} based on ${searchRadius} mile radius`)
+      return filteredData
+    }
+    
+    return data || []
+  })
+}
       }
     }
     if (destinationLocation) {
