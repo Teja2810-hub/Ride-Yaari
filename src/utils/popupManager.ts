@@ -125,9 +125,10 @@ class PopupManager {
     const state = this.getPopupState(userId)
     const today = new Date().toDateString()
     
-    // Show welcome popup only once per user (not per session)
+    // Show welcome popup only once per day per user
     if (userId) {
-      return !state.welcomeShown
+      // For authenticated users, check if shown today
+      return state.lastShownDate !== today || !state.welcomeShown
     }
     
     // For guests, show once per day
