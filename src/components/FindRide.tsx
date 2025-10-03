@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, HelpCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
@@ -799,11 +799,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   </label>
                   <button
                     type="button"
+                    onMouseEnter={() => setShowRadiusHelp(true)}
+                    onMouseLeave={() => setShowRadiusHelp(false)}
                     onClick={() => setShowRadiusHelp(!showRadiusHelp)}
                     className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
                     title="Click for more information about search radius"
                   >
-                    <HelpCircle size={16} className="stroke-2" />
+                    <HelpCircle size={16} />
                   </button>
                 </div>
                 {showRadiusHelp && (
