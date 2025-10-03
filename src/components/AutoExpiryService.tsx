@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Clock, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { autoExpireConfirmations, getConfirmationStats } from '../utils/confirmationHelpers'
+import { supabase } from '../utils/supabase'
 
 interface AutoExpiryServiceProps {
   onExpiryProcessed?: (expiredCount: number) => void
@@ -38,12 +39,12 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
     try {
       console.log('Running automatic confirmation expiry check...')
-      
+
       // Add a small delay to prevent rapid successive calls
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       const result = await autoExpireConfirmations()
-      
+
       setStats(prev => ({
         totalProcessed: prev.totalProcessed + result.processed,
         totalExpired: prev.totalExpired + result.expired,
@@ -54,7 +55,7 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
 
       if (result.expired > 0) {
         console.log(`Automatically expired ${result.expired} confirmations`)
-        
+
         if (onExpiryProcessed) {
           onExpiryProcessed(result.expired)
         }
@@ -65,12 +66,51 @@ export default function AutoExpiryService({ onExpiryProcessed }: AutoExpiryServi
         // Log errors but don't show them to user - handle silently in background
         console.warn(`Auto-expiry service: ${result.errors.length} errors occurred but continuing operation`)
       }
+
+      // Check and deactivate expired notifications
+      await deactivateExpiredNotifications()
     } catch (error: any) {
       console.error('Error in auto-expiry service:', error)
       // Log error but don't show to user - this is a background service
       console.warn('Auto-expiry service encountered an error but continuing operation:', error)
     } finally {
       setIsRunning(false)
+    }
+  }
+
+  const deactivateExpiredNotifications = async () => {
+    if (!user) return
+
+    try {
+      const now = new Date().toISOString()
+
+      // Update expired ride notifications
+      const { error: rideError } = await supabase
+        .from('ride_notifications')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .lte('expires_at', now)
+
+      if (rideError) {
+        console.error('Error deactivating expired ride notifications:', rideError)
+      }
+
+      // Update expired trip notifications
+      const { error: tripError } = await supabase
+        .from('trip_notifications')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .lte('expires_at', now)
+
+      if (tripError) {
+        console.error('Error deactivating expired trip notifications:', tripError)
+      }
+
+      console.log('Expired notifications deactivated')
+    } catch (error) {
+      console.error('Error in deactivateExpiredNotifications:', error)
     }
   }
 

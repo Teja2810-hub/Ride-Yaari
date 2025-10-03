@@ -150,24 +150,24 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
     })
   }
 
-  const getExpiryStatus = (notification: RideNotification) => {
-    if (!notification.expires_at) return { status: 'no-expiry', text: 'Active', color: 'text-green-600' }
-    
+  const getExpiryStatus = (notification: RideNotification | TripNotification) => {
+    if (!notification.expires_at) return { status: 'no-expiry', text: 'Active', color: 'text-green-600', isExpired: false }
+
     const expiryDate = new Date(notification.expires_at)
     const now = new Date()
-    
+
     if (expiryDate <= now) {
-      return { status: 'expired', text: 'Expired', color: 'text-red-600' }
+      return { status: 'expired', text: 'Expired', color: 'text-red-600', isExpired: true }
     }
-    
+
     const hoursUntilExpiry = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60)
-    
+
     if (hoursUntilExpiry <= 24) {
-      return { status: 'expiring-soon', text: `Expires in ${Math.ceil(hoursUntilExpiry)}h`, color: 'text-orange-600' }
+      return { status: 'expiring-soon', text: `Expires in ${Math.ceil(hoursUntilExpiry)}h`, color: 'text-orange-600', isExpired: false }
     }
-    
+
     const daysUntilExpiry = Math.ceil(hoursUntilExpiry / 24)
-    return { status: 'active', text: `Expires in ${daysUntilExpiry}d`, color: 'text-green-600' }
+    return { status: 'active', text: `Expires in ${daysUntilExpiry}d`, color: 'text-green-600', isExpired: false }
   }
 
   const getNotificationTypeLabel = (type: string) => {
@@ -497,7 +497,12 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                         <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
                       </div>
                       
-                      {notification.is_active ? (
+                      {expiryStatus.isExpired ? (
+                        <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                          <X size={14} />
+                          <span>Expired</span>
+                        </div>
+                      ) : notification.is_active ? (
                         <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                           <CheckCircle size={14} />
                           <span>Active</span>
