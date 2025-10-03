@@ -10,6 +10,7 @@ import { haversineDistance } from '../utils/distance'
 import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
+import { haversineDistance } from '../utils/distance'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface LocationData {
@@ -56,6 +57,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
+  const [fromLocationData, setFromLocationData] = useState<{address: string, latitude: number | null, longitude: number | null} | null>(null)
+  const [toLocationData, setToLocationData] = useState<{address: string, latitude: number | null, longitude: number | null} | null>(null)
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
@@ -92,12 +95,47 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       if (error) throw error
 
       console.log('Auto search results:', data?.length || 0, 'rides')
-      setRides(data || [])
+      let filteredRides = data || []
+      
+      // Apply distance filtering if coordinates are available and search radius > 0
+      if (searchRadius > 0 && (fromLocationData || toLocationData)) {
+        filteredRides = filteredRides.filter(ride => {
+          let withinRadius = true
+          
+          // Check departure location distance
+          if (fromLocationData && fromLocationData.latitude && fromLocationData.longitude && 
+              ride.from_latitude && ride.from_longitude) {
+            const departureDistance = haversineDistance(
+              fromLocationData.latitude,
+              fromLocationData.longitude,
+              ride.from_latitude,
+              ride.from_longitude
+            )
+            withinRadius = withinRadius && departureDistance <= searchRadius
+          }
+          
+          // Check destination location distance
+          if (toLocationData && toLocationData.latitude && toLocationData.longitude && 
+              ride.to_latitude && ride.to_longitude) {
+            const destinationDistance = haversineDistance(
+              toLocationData.latitude,
+              toLocationData.longitude,
+              ride.to_latitude,
+              ride.to_longitude
+            )
+            withinRadius = withinRadius && destinationDistance <= searchRadius
+          }
+          
+          return withinRadius
+        })
+      }
+      
+      setRides(filteredRides)
 
       // Also fetch matching ride requests
       const requests = await getDisplayRideRequests(
-        departureLocation,
-        destinationLocation,
+        fromLocationData?.address || fromLocation,
+        toLocationData?.address || toLocation,
         travelDate,
         travelMonth,
         searchByMonth,
