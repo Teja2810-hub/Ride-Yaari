@@ -116,7 +116,7 @@ export const getDisplayRideRequests = async (
   departureDate?: string,
   departureMonth?: string,
   searchByMonth: boolean = false,
-  excludeUserId?: string
+  includeUserId?: string
 ): Promise<RideRequest[]> => {
   return retryWithBackoff(async () => {
     console.log('getDisplayRideRequests called with:', {
@@ -125,7 +125,7 @@ export const getDisplayRideRequests = async (
       departureDate,
       departureMonth,
       searchByMonth,
-      excludeUserId
+      includeUserId
     })
     
     let query = supabase
@@ -140,10 +140,7 @@ export const getDisplayRideRequests = async (
       `)
       .eq('is_active', true)
 
-    // Exclude specific user if provided
-    if (excludeUserId) {
-      query = query.neq('passenger_id', excludeUserId)
-    }
+    // Include all requests - filtering will be done in the UI
 
     // Filter by location if provided
     if (departureLocation) {
