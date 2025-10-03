@@ -803,21 +803,15 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
 
               <div className="grid md:grid-cols-2 gap-6">
                 <LocationAutocomplete
-                  value={fromLocationData}
-                  onChange={(location) => {
-                    setFromLocationData(location)
-                    setFromLocation(location?.address || '')
-                  }}
+                  value={fromLocation}
+                  onChange={setFromLocation}
                   placeholder="Any departure location"
                   label="From Location"
                 />
 
                 <LocationAutocomplete
-                  value={toLocationData}
-                  onChange={(location) => {
-                    setToLocationData(location)
-                    setToLocation(location?.address || '')
-                  }}
+                  value={toLocation}
+                  onChange={setToLocation}
                   placeholder="Enter city, neighborhood, or landmark (not exact address)"
                   label="To Location"
                 />
