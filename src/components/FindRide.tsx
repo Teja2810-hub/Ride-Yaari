@@ -502,20 +502,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                     }
                   }
 
-                  if (!matchesTo && ride.from_latitude && ride.from_longitude) {
-                    const distance = haversineDistance(
-                      toLocation.latitude,
-                      toLocation.longitude,
-                      ride.from_latitude,
-                      ride.from_longitude
-                    )
-                    console.log(`Distance to departure: ${distance.toFixed(1)} miles`)
-                    if (distance <= effectiveRadiusMiles) {
-                      console.log('✅ TO: Within radius of departure location')
-                      matchesTo = true
-                    }
-                  }
-
                   // Check distance to intermediate stops
                   if (!matchesTo && ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
                     for (const stop of ride.intermediate_stops) {
