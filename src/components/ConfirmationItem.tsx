@@ -403,6 +403,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         {/* Ride/Trip Details */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           {ride && (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-600 mb-1">From</p>
@@ -426,6 +427,20 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </div>
               </div>
             </div>
+            {confirmation.seats_requested && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">Seats Requested:</span>
+                  <span className="text-sm font-bold text-blue-600">{confirmation.seats_requested}</span>
+                  {ride.seats_available !== undefined && ride.total_seats !== undefined && (
+                    <span className="text-xs text-gray-500">
+                      ({ride.seats_available} of {ride.total_seats} available)
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            </>
           )}
 
           {trip && (

@@ -812,13 +812,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .select('id, status')
         .eq('ride_id', rideId)
         .eq('passenger_id', user.id)
-        .eq('status', 'pending')
         .maybeSingle()
 
       if (checkError) throw checkError
 
       if (existingConfirmation) {
-        throw new Error('You already have a pending request for this ride')
+        if (existingConfirmation.status === 'pending') {
+          throw new Error('You already have a pending request for this ride. Please check your Confirmations tab.')
+        }
       }
 
       const { data: rideData } = await supabase
@@ -876,13 +877,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .select('id, status')
         .eq('trip_id', tripId)
         .eq('passenger_id', user.id)
-        .eq('status', 'pending')
         .maybeSingle()
 
       if (checkError) throw checkError
 
       if (existingConfirmation) {
-        throw new Error('You already have a pending request for this trip')
+        if (existingConfirmation.status === 'pending') {
+          throw new Error('You already have a pending request for this trip. Please check your Confirmations tab.')
+        }
       }
 
       const { data: tripData } = await supabase
