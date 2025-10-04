@@ -200,6 +200,16 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   const handleAccept = async () => {
     if (!user) return
+
+    if (confirmation.ride_id && ride) {
+      const seatsRequested = confirmation.seats_requested || 0
+      if (ride.seats_available < seatsRequested) {
+        setError(`Cannot accept request. Insufficient seats available. Requested: ${seatsRequested}, Available: ${ride.seats_available}`)
+        setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
+        return
+      }
+    }
+
     setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
     hideDisclaimer()
     await acceptRequest(confirmation.id, user.id, confirmation.passenger_id)
@@ -579,6 +589,13 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Pending status actions */}
             {confirmation.status === 'pending' && isCurrentUserOwner && (
               <>
+                {confirmation.seats_requested && ride && (
+                  <div className="text-xs text-gray-600 mr-2">
+                    <span className="font-medium">Requested:</span> {confirmation.seats_requested} seat{confirmation.seats_requested > 1 ? 's' : ''}
+                    <br />
+                    <span className="font-medium">Available:</span> {ride.seats_available} of {ride.total_seats}
+                  </div>
+                )}
                 <button
                   onClick={() => showConfirmationModal('reject')}
                   disabled={isLoading}
@@ -589,8 +606,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </button>
                 <button
                   onClick={() => showConfirmationModal('accept')}
-                  disabled={isLoading}
+                  disabled={isLoading || (confirmation.ride_id && ride && ride.seats_available < (confirmation.seats_requested || 0))}
                   className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  title={confirmation.ride_id && ride && ride.seats_available < (confirmation.seats_requested || 0) ? 'Not enough seats available' : ''}
                 >
                   <Check size={16} />
                   <span>Accept</span>

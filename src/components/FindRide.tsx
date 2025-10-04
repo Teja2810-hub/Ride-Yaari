@@ -1160,7 +1160,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-200">
-                              <div className="flex items-center space-x-4">
+                              <div className="flex items-center justify-between space-x-4">
                                 <div>
                                   <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
                                   <div className="flex items-center space-x-2">
@@ -1170,6 +1170,24 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                     {ride.negotiable && (
                                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                         Negotiable
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-1">Seats Available</p>
+                                  <div className="flex items-center space-x-2">
+                                    {ride.seats_available === 0 ? (
+                                      <span className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded-full font-bold">
+                                        Fully Booked
+                                      </span>
+                                    ) : ride.seats_available <= 2 ? (
+                                      <span className="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold">
+                                        {ride.seats_available} seat{ride.seats_available > 1 ? 's' : ''} left
+                                      </span>
+                                    ) : (
+                                      <span className="font-semibold text-blue-600">
+                                        {ride.seats_available} of {ride.total_seats}
                                       </span>
                                     )}
                                   </div>

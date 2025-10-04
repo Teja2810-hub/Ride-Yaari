@@ -30,6 +30,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [negotiable, setNegotiable] = useState(false)
+  const [totalSeats, setTotalSeats] = useState('4')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -88,6 +89,8 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
+          total_seats: parseInt(totalSeats),
+          seats_available: parseInt(totalSeats),
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,
@@ -136,6 +139,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       setPrice('')
       setCurrency('USD')
       setNegotiable(false)
+      setTotalSeats('4')
       setNotificationPreferences({
         enabled: false,
         dateType: 'specific_date',
@@ -367,6 +371,23 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Seats Available <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={totalSeats}
+                onChange={(e) => setTotalSeats(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                placeholder="4"
+                min="1"
+                max="8"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">How many passengers can you accommodate? (1-8)</p>
             </div>
 
             <div className="flex items-center space-x-2 mb-6">

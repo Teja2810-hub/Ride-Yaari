@@ -26,6 +26,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [negotiable, setNegotiable] = useState(false)
+  const [totalSeats, setTotalSeats] = useState('4')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -48,6 +49,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
     setPrice(ride.price.toString())
     setCurrency(ride.currency || 'USD')
     setNegotiable(ride.negotiable || false)
+    setTotalSeats(ride.total_seats.toString())
     
     // Initialize intermediate stops if they exist
     if (ride.intermediate_stops && Array.isArray(ride.intermediate_stops)) {
@@ -68,7 +70,23 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
 
     try {
       console.log('Updating ride with locations:', { fromLocation, toLocation, intermediateStops })
-      
+
+      const newTotalSeats = parseInt(totalSeats)
+      const currentTotalSeats = ride.total_seats
+      const currentSeatsAvailable = ride.seats_available
+      const seatsBooked = currentTotalSeats - currentSeatsAvailable
+
+      let newSeatsAvailable = currentSeatsAvailable
+      if (newTotalSeats !== currentTotalSeats) {
+        newSeatsAvailable = Math.max(0, newTotalSeats - seatsBooked)
+
+        if (newTotalSeats < seatsBooked) {
+          setError(`Cannot reduce total seats to ${newTotalSeats}. You have ${seatsBooked} seats already booked. Please cancel some confirmations first.`)
+          setLoading(false)
+          return
+        }
+      }
+
       const { error } = await supabase
         .from('car_rides')
         .update({
@@ -82,6 +100,8 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
           price: parseFloat(price),
           currency: currency,
           negotiable: negotiable,
+          total_seats: newTotalSeats,
+          seats_available: newSeatsAvailable,
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,
@@ -281,6 +301,30 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Total Seats Available <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={totalSeats}
+                onChange={(e) => setTotalSeats(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                placeholder="4"
+                min="1"
+                max="8"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Currently available: {ride.seats_available} of {ride.total_seats} seats
+                {ride.total_seats - ride.seats_available > 0 && (
+                  <span className="text-orange-600 font-medium">
+                    {' '}({ride.total_seats - ride.seats_available} booked)
+                  </span>
+                )}
+              </p>
             </div>
 
             <div className="flex items-center space-x-2 mb-6">
