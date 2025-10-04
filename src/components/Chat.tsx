@@ -1369,6 +1369,29 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </div>
           )}
 
+          {/* Request Buttons for Passengers */}
+          {!isCurrentUserOwnerOfPreselected() && !isBlocked && !currentConfirmation && (
+            <div className="mb-3">
+              {preSelectedRide && (
+                <button
+                  onClick={() => setShowRideRequestModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                >
+                  <Car size={20} />
+                  <span>Request Ride</span>
+                </button>
+              )}
+              {preSelectedTrip && (
+                <button
+                  onClick={() => setShowTripRequestModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <Plane size={20} />
+                  <span>Request Trip</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Confirmation Button */}
           {(preSelectedRide || preSelectedTrip) && !isBlocked && (

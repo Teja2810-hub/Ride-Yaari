@@ -50,27 +50,19 @@ export function useConfirmationFlow({
     rideId: string | null,
     tripId: string | null,
     rideOwnerId: string,
-    passengerId: string,
-    seatsRequested?: number
+    passengerId: string
   ) => {
     return handleAsync(async () => {
       // Insert the ride confirmation
-      const insertData: any = {
-        ride_id: rideId,
-        trip_id: tripId,
-        ride_owner_id: rideOwnerId,
-        passenger_id: passengerId,
-        status: 'pending'
-      }
-
-      // Add seats_requested only for car rides
-      if (rideId && seatsRequested) {
-        insertData.seats_requested = seatsRequested
-      }
-
       const { data, error } = await supabase
         .from('ride_confirmations')
-        .insert(insertData)
+        .insert({
+          ride_id: rideId,
+          trip_id: tripId,
+          ride_owner_id: rideOwnerId,
+          passenger_id: passengerId,
+          status: 'pending'
+        })
         .select()
         .single()
 
