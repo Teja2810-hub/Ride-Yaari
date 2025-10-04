@@ -292,7 +292,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           departure_date_time,
           price,
           currency,
-          user_id
+          user_id,
+          seats_available,
+          total_seats
         )`
       } else if (preSelectedTrip) {
         selectStatement += `,
