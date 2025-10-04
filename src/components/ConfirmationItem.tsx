@@ -437,7 +437,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </div>
               </div>
             </div>
-            {confirmation.seats_requested && (
+            {ride && confirmation.seats_requested && (
               <div className="mt-3 pt-3 border-t border-gray-200">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-700">Seats Requested:</span>
@@ -589,7 +589,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Pending status actions */}
             {confirmation.status === 'pending' && isCurrentUserOwner && (
               <>
-                {confirmation.seats_requested && ride && (
+                {ride && confirmation.seats_requested && (
                   <div className="text-xs text-gray-600 mr-2">
                     <span className="font-medium">Requested:</span> {confirmation.seats_requested} seat{confirmation.seats_requested > 1 ? 's' : ''}
                     <br />
@@ -606,9 +606,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </button>
                 <button
                   onClick={() => showConfirmationModal('accept')}
-                  disabled={isLoading || (confirmation.ride_id && ride && ride.seats_available < (confirmation.seats_requested || 0))}
+                  disabled={isLoading || (ride && ride.seats_available < (confirmation.seats_requested || 0))}
                   className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
-                  title={confirmation.ride_id && ride && ride.seats_available < (confirmation.seats_requested || 0) ? 'Not enough seats available' : ''}
+                  title={ride && ride.seats_available < (confirmation.seats_requested || 0) ? 'Not enough seats available' : ''}
                 >
                   <Check size={16} />
                   <span>Accept</span>
