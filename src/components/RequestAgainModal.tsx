@@ -144,7 +144,7 @@ export default function RequestAgainModal({
             onClick={onClose}
             className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
           >
-            Go Back to Chat
+            Back to Chat
           </button>
         </div>
       </div>

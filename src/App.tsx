@@ -44,6 +44,7 @@ function AppContent() {
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [previousView, setPreviousView] = useState<AppView>('platform-selector')
 
   // Set up global error handling with user context
   React.useEffect(() => {
@@ -85,6 +86,9 @@ function AppContent() {
     }
 
     console.log('Opening chat with user:', userId, userName)
+
+    // Store the current view before switching to chat
+    setPreviousView(currentView)
 
     setChatUserId(userId)
     setChatUserName(userName || 'User')
@@ -353,7 +357,14 @@ function AppContent() {
                     <ErrorBoundary>
                       <Chat
                         key={`chat-${chatUserId}`}
-                        onBack={handleBackToDashboard}
+                        onBack={() => {
+                          // Go back to the view where chat was opened from
+                          setChatUserId('')
+                          setChatUserName('')
+                          setSelectedRideForChat(null)
+                          setSelectedTripForChat(null)
+                          setCurrentView(previousView)
+                        }}
                         otherUserId={chatUserId}
                         otherUserName={chatUserName}
                         preSelectedRide={selectedRideForChat}

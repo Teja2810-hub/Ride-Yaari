@@ -846,28 +846,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           </div>
         )}
 
-        {/* Request Buttons */}
-        <div className="flex gap-2 mb-3">
-          {preSelectedRide && (
-            <button
-              onClick={() => setShowRideRequestModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
-            >
-              <Car size={18} />
-              <span>Request Ride</span>
-            </button>
-          )}
-          {preSelectedTrip && (
-            <button
-              onClick={() => setShowTripRequestModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-            >
-              <Plane size={18} />
-              <span>Request Trip</span>
-            </button>
-          )}
-          {!preSelectedRide && !preSelectedTrip && (
-            <>
+        {/* Request Buttons - Only show for posted rides/trips */}
+        {(preSelectedRide || preSelectedTrip) && (
+          <div className="flex gap-2 mb-3">
+            {preSelectedRide && (
               <button
                 onClick={() => setShowRideRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
@@ -875,6 +857,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <Car size={18} />
                 <span>Request Ride</span>
               </button>
+            )}
+            {preSelectedTrip && (
               <button
                 onClick={() => setShowTripRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
@@ -882,9 +866,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <Plane size={18} />
                 <span>Request Trip</span>
               </button>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSendMessage} className="flex space-x-4">
           <input
