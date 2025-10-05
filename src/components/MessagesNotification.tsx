@@ -213,18 +213,15 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
-    // Close dropdown first to prevent overlap
     setShowDropdown(false)
 
     try {
-      // Mark messages as read first
       await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('sender_id', userId)
         .eq('receiver_id', user?.id)
 
-      // Update local state immediately
       setUnreadCount(0)
       setConversations(prev => prev.map(conv =>
         conv.other_user_id === userId

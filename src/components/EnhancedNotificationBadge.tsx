@@ -307,13 +307,13 @@ export default function EnhancedNotificationBadge({
   }
 
   const handleNotificationClick = (notification: NotificationItem) => {
+    setShowDropdown(false)
+
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
-        setShowDropdown(false)
         onViewConfirmations()
       }
     } else if (notification.type === 'message' && onStartChat) {
-      setShowDropdown(false)
       onStartChat(
         notification.actionData.userId,
         notification.actionData.userName,
