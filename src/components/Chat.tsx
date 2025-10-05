@@ -72,86 +72,54 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       return
     }
 
+    setLoading(true)
+    setError('')
+    setMessages([])
+    setIsBlocked(false)
+    setChatDeleted(false)
+
     try {
       console.log('Chat: Initializing chat between', user.id, 'and', otherUserId)
-      
-      // Check blocking status with timeout
-      console.log('Chat: Checking if user is blocked...')
-      const blockingPromise = isUserBlocked(user.id, otherUserId)
-      const blockingTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Blocking check timeout')), 5000)
-      )
-      
-      try {
-        const blocked = await Promise.race([blockingPromise, blockingTimeout]) as boolean
-        console.log('Chat: Blocking check result:', blocked)
-        setIsBlocked(blocked)
-      } catch (blockingError) {
-        console.warn('Chat: Blocking check failed, continuing anyway:', blockingError)
-        setIsBlocked(false)
+
+      // Check blocking status
+      const blocked = await isUserBlocked(user.id, otherUserId)
+      console.log('Chat: Blocking check result:', blocked)
+      setIsBlocked(blocked)
+      if (blocked) {
+        setLoading(false)
+        return
       }
 
-      // Check chat deletion status with timeout
-      console.log('Chat: Checking if chat is deleted...')
-      const deletionPromise = isChatDeleted(user.id, otherUserId)
-      const deletionTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Deletion check timeout')), 5000)
-      )
-      
-      try {
-        const deleted = await Promise.race([deletionPromise, deletionTimeout]) as boolean
-        console.log('Chat: Deletion check result:', deleted)
-        setChatDeleted(deleted)
-      } catch (deletionError) {
-        console.warn('Chat: Deletion check failed, continuing anyway:', deletionError)
-        setChatDeleted(false)
+      // Check chat deletion status
+      const deleted = await isChatDeleted(user.id, otherUserId)
+      console.log('Chat: Deletion check result:', deleted)
+      setChatDeleted(deleted)
+      if (deleted) {
+        setLoading(false)
+        return
       }
 
-      // Fetch other user profile with timeout
-      console.log('Chat: Fetching other user profile...')
-      const profilePromise = supabase
+      // Fetch other user profile
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', otherUserId)
-        .single()
-      
-      const profileTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-      )
-      
-      try {
-        const { data: profile, error: profileError } = await Promise.race([
-          profilePromise, 
-          profileTimeout
-        ]) as { data: any; error: any }
-        
-        if (profileError) {
-          console.warn('Chat: Profile fetch error:', profileError)
-          // Use fallback profile data
-          setOtherUserProfile({
-            id: otherUserId,
-            full_name: otherUserName || 'User',
-            profile_image_url: null
-          })
-        } else {
-          console.log('Chat: Other user profile loaded:', profile?.full_name)
-          setOtherUserProfile(profile)
-        }
-      } catch (profileError) {
-        console.warn('Chat: Profile fetch timeout, using fallback:', profileError)
-        setOtherUserProfile({
-          id: otherUserId,
-          full_name: otherUserName || 'User',
-          profile_image_url: null
-        })
+        .maybeSingle()
+
+      if (profileError) {
+        console.warn('Chat: Profile fetch error:', profileError)
       }
 
-      // Fetch messages with timeout
-      console.log('Chat: Fetching chat messages...')
+      setOtherUserProfile(profile || {
+        id: otherUserId,
+        full_name: otherUserName || 'User',
+        profile_image_url: null
+      })
+
+      // Fetch messages
       await fetchMessages()
 
       // Set up real-time subscription
-      console.log('Chat: Setting up real-time subscription...')
       setupRealtimeSubscription()
 
     } catch (error: any) {
@@ -174,9 +142,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     try {
       console.log('Chat: Fetching messages between', user.id, 'and', otherUserId)
-      
-      // Add timeout to message fetching
-      const messagePromise = supabase
+
+      const { data, error } = await supabase
         .from('chat_messages')
         .select(`
           *,
@@ -190,15 +157,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .order('created_at', { ascending: true })
         .limit(100)
 
-      const messageTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Message fetch timeout')), 8000)
-      )
-
-      const { data, error } = await Promise.race([
-        messagePromise,
-        messageTimeout
-      ]) as { data: any; error: any }
-
       if (error) {
         console.error('Chat: Error fetching messages:', error)
         throw error
@@ -209,10 +167,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       // Mark messages as read
       if (data && data.length > 0) {
-        const unreadMessages = data.filter((msg: ChatMessage) => 
+        const unreadMessages = data.filter((msg: ChatMessage) =>
           msg.receiver_id === user.id && !msg.is_read
         )
-        
+
         if (unreadMessages.length > 0) {
           console.log('Chat: Marking', unreadMessages.length, 'messages as read')
           await supabase
@@ -225,12 +183,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }
     } catch (error: any) {
       console.error('Chat: Error in fetchMessages:', error)
-      if (error.message?.includes('timeout')) {
-        setError('Loading messages is taking longer than expected. Please try refreshing.')
-      } else {
-        setError('Failed to load messages. Please try again.')
-      }
-      // Set empty messages array to prevent infinite loading
+      setError('Failed to load messages. Please try again.')
       setMessages([])
     }
   }
