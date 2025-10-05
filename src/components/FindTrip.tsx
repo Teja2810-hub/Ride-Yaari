@@ -566,18 +566,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                                 Your Trip
                               </div>
                             ) : (
-                              <div className="flex flex-col space-y-2">
-                                <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                >
-                                  <MessageCircle size={20} />
-                                  <span>Request Trip</span>
-                                </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Chat to request assistance
-                                </p>
-                              </div>
+                              <button
+                                onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
+                                className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                              >
+                                <MessageCircle size={20} />
+                                <span>Chat with Traveler</span>
+                              </button>
                             )}
                           </div>
                         </div>
