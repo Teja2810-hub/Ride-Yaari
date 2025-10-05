@@ -335,7 +335,7 @@ function AppContent() {
                     </ErrorBoundary>
                   )
                 case 'chat':
-                  return (
+                  return chatUserId ? (
                     <ErrorBoundary>
                       <Chat
                         key={`chat-${chatUserId}`}
@@ -346,7 +346,7 @@ function AppContent() {
                         preSelectedTrip={selectedTripForChat}
                       />
                     </ErrorBoundary>
-                  )
+                  ) : null
                 case 'edit-trip':
                   return editingTrip ? (
                     <ErrorBoundary>
