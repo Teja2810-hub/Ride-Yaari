@@ -201,15 +201,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
   const handleAccept = async () => {
     if (!user) return
 
-    if (confirmation.ride_id && ride) {
-      const seatsRequested = confirmation.seats_requested || 0
-      if (ride.seats_available < seatsRequested) {
-        setError(`Cannot accept request. Insufficient seats available. Requested: ${seatsRequested}, Available: ${ride.seats_available}`)
-        setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
-        return
-      }
-    }
-
     setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
     hideDisclaimer()
     await acceptRequest(confirmation.id, user.id, confirmation.passenger_id)
