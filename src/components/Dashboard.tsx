@@ -24,6 +24,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
 
   const handleStartChat = (userId: string, userName: string) => {
+    setActiveNotification(null)
     if (onStartChat) {
       onStartChat(userId, userName, true)
     }

@@ -225,6 +225,8 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   }
 
   const handleChatClick = (userId: string, userName: string, trip: Trip | undefined) => {
+    console.log('FindTrip: handleChatClick called with:', { userId, userName, trip })
+
     if (!userId || userId.trim() === '') {
       console.error('FindTrip: Invalid userId in handleChatClick:', { userId, userName, trip })
       alert('Cannot open chat: User information is not available. Please try refreshing the page.')
@@ -620,9 +622,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <button
                                 onClick={() => {
+                                  console.log('FindTrip: Chat button clicked for trip:', { trip })
                                   const userId = trip.user_id || (trip.user_profiles as any)?.id
                                   const userName = trip.user_profiles?.full_name || 'Traveler'
+                                  console.log('FindTrip: Extracted user data:', { userId, userName })
+
                                   if (!userId || userId.trim() === '') {
+                                    console.error('FindTrip: Missing user ID', { trip })
                                     alert('Cannot open chat: User information is not available')
                                     return
                                   }

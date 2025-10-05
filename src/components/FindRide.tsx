@@ -604,6 +604,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   }
 
   const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
+    console.log('FindRide: handleChatClick called with:', { userId, userName, ride })
+
     if (!userId || userId.trim() === '') {
       console.error('FindRide: Invalid userId in handleChatClick:', { userId, userName, ride })
       alert('Cannot open chat: User information is not available. Please try refreshing the page.')
@@ -1261,9 +1263,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <button
                                 onClick={() => {
+                                  console.log('FindRide: Chat button clicked for ride:', { ride })
                                   const userId = ride.user_id || (ride.user_profiles as any)?.id
                                   const userName = ride.user_profiles?.full_name || 'Driver'
+                                  console.log('FindRide: Extracted user data:', { userId, userName })
+
                                   if (!userId || userId.trim() === '') {
+                                    console.error('FindRide: Missing user ID', { ride })
                                     alert('Cannot open chat: User information is not available')
                                     return
                                   }
