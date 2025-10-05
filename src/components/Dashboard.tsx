@@ -23,8 +23,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   const { userProfile, signOut, setGuestMode } = useAuth()
 
   const handleStartChat = (userId: string, userName: string) => {
-    // Ensure we have a clean state before starting chat
-    // Pass showRequestButtons=true when opening from messages
     if (onStartChat) {
       onStartChat(userId, userName, true)
     }

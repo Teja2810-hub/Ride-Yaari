@@ -19,9 +19,10 @@ interface ChatProps {
   preSelectedRide?: CarRide
   preSelectedTrip?: Trip
   showRequestButtons?: boolean
+  fromMessages?: boolean
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false }: ChatProps) {
   const { user, userProfile } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -845,10 +846,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons) && (
+        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages */}
+        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && (
           <div className="flex gap-2 mb-3">
-            {(preSelectedRide || showRequestButtons) && (
+            {(preSelectedRide || showRequestButtons || fromMessages) && (
               <button
                 onClick={() => setShowRideRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
@@ -857,7 +858,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <span>Request Ride</span>
               </button>
             )}
-            {(preSelectedTrip || showRequestButtons) && (
+            {(preSelectedTrip || showRequestButtons || fromMessages) && (
               <button
                 onClick={() => setShowTripRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"

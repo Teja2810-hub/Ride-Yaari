@@ -228,9 +228,6 @@ export default function NotificationCenter({
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Close notification center first to prevent overlap
-    onClose()
-
     // Mark this notification as read immediately
     if (!notification.read && notification.type === 'message' && user) {
       try {
@@ -244,6 +241,9 @@ export default function NotificationCenter({
         console.error('Error marking notification as read:', error)
       }
     }
+
+    // Close notification center after marking as read
+    onClose()
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
