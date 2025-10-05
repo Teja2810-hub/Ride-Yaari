@@ -299,3 +299,6 @@ export default function RideRequestModal({
     </div>
   )
 }
+
+
+export default RideRequestModal
