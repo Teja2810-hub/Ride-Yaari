@@ -3,6 +3,7 @@ import { RefreshCw, X, Clock, TriangleAlert as AlertTriangle, Car, Plane, Messag
 import { canRequestAgain } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
+import { supabase } from '../utils/supabase'
 
 interface RequestAgainModalProps {
   isOpen: boolean
@@ -31,12 +32,30 @@ export default function RequestAgainModal({
     cooldownMinutes?: number
   }>({ canRequest: false })
   const [showReasonField, setShowReasonField] = useState(false)
+  const [rideOwnerName, setRideOwnerName] = useState<string>('User')
 
   useEffect(() => {
     if (isOpen) {
       checkEligibility()
+      fetchRideOwnerName()
     }
   }, [isOpen, confirmation.id, userId])
+
+  const fetchRideOwnerName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', confirmation.ride_owner_id)
+        .maybeSingle()
+
+      if (!error && data) {
+        setRideOwnerName(data.full_name)
+      }
+    } catch (error) {
+      console.error('Error fetching ride owner name:', error)
+    }
+  }
 
   const checkEligibility = async () => {
     try {
@@ -148,7 +167,7 @@ export default function RequestAgainModal({
               if (onStartChat) {
                 onStartChat(
                   confirmation.ride_owner_id,
-                  confirmation.user_profiles?.full_name || 'User',
+                  rideOwnerName,
                   confirmation.car_rides,
                   confirmation.trips
                 )
