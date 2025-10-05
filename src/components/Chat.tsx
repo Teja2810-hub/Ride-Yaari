@@ -681,24 +681,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     )
   }
 
-  if (chatDeleted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <Trash2 size={48} className="text-gray-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat Deleted</h3>
-          <p className="text-gray-600 mb-6">
-            You have deleted this conversation. Start a new conversation by sending a message.
-          </p>
-          <button
-            onClick={onBack}
-            className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    )
+  // Don't show deleted state - just reinitialize chat when messages are deleted
+  if (chatDeleted && messages.length === 0) {
+    setChatDeleted(false)
   }
 
   return (
@@ -863,20 +848,42 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
         {/* Request Buttons */}
         <div className="flex gap-2 mb-3">
-          <button
-            onClick={() => setShowRideRequestModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
-          >
-            <Car size={18} />
-            <span>Request Ride</span>
-          </button>
-          <button
-            onClick={() => setShowTripRequestModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-          >
-            <Plane size={18} />
-            <span>Request Trip</span>
-          </button>
+          {preSelectedRide && (
+            <button
+              onClick={() => setShowRideRequestModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
+            >
+              <Car size={18} />
+              <span>Request Ride</span>
+            </button>
+          )}
+          {preSelectedTrip && (
+            <button
+              onClick={() => setShowTripRequestModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+            >
+              <Plane size={18} />
+              <span>Request Trip</span>
+            </button>
+          )}
+          {!preSelectedRide && !preSelectedTrip && (
+            <>
+              <button
+                onClick={() => setShowRideRequestModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
+              >
+                <Car size={18} />
+                <span>Request Ride</span>
+              </button>
+              <button
+                onClick={() => setShowTripRequestModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+              >
+                <Plane size={18} />
+                <span>Request Trip</span>
+              </button>
+            </>
+          )}
         </div>
 
         <form onSubmit={handleSendMessage} className="flex space-x-4">
