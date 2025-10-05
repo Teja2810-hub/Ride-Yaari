@@ -428,23 +428,6 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             </div>
           )}
 
-          {ride && confirmation.seats_requested && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Seats Requested</p>
-                  <p className="font-semibold text-gray-900">{confirmation.seats_requested}</p>
-                </div>
-                {isCurrentUserOwner && (
-                  <div>
-                    <p className="text-sm text-gray-600">Available Seats</p>
-                    <p className="font-semibold text-gray-900">{ride.seats_available || 0} / {ride.total_seats || 0}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {trip && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

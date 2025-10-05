@@ -76,9 +76,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             price,
             currency,
             negotiable,
-            user_id,
-            total_seats,
-            seats_available
+            user_id
           ),
           trips!ride_confirmations_trip_id_fkey (
             id,
