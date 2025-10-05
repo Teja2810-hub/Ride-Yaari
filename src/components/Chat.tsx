@@ -382,8 +382,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         const latest = existingConfirmations[0]
 
         if (latest.status === 'pending') {
-          alert('You already have a pending request for this ride. You cannot send another request until it is accepted or rejected.')
           setShowRideRequestModal(false)
+          setError('You already have a pending request for this ride. You cannot send another request until it is accepted or rejected.')
           return
         } else if (latest.status === 'accepted') {
           throw new Error('You have already been accepted for this ride')
@@ -395,6 +395,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
           if (timeDiff < cooldownPeriod) {
             const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
+            setShowRideRequestModal(false)
             setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this ride again`)
             return
           }
@@ -507,8 +508,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         const latest = existingConfirmations[0]
 
         if (latest.status === 'pending') {
-          alert('You already have a pending request for this trip. You cannot send another request until it is accepted or rejected.')
           setShowTripRequestModal(false)
+          setError('You already have a pending request for this trip. You cannot send another request until it is accepted or rejected.')
           return
         } else if (latest.status === 'accepted') {
           throw new Error('You have already been accepted for this trip')
@@ -520,6 +521,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
           if (timeDiff < cooldownPeriod) {
             const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
+            setShowTripRequestModal(false)
             setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this trip again`)
             return
           }
@@ -648,26 +650,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat Error</h3>
           <p className="text-gray-600 mb-6">{error}</p>
-          <div className="space-y-3">
-            <button
-              onClick={handleRetryLoading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Try Again
-            </button>
-            <button
-              onClick={handleSkipLoading}
-              className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              Continue Without History
-            </button>
-            <button
-              onClick={onBack}
-              className="w-full text-gray-600 hover:text-gray-700 font-medium transition-colors"
-            >
-              Go Back
-            </button>
-          </div>
+          <button
+            onClick={onBack}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     )
