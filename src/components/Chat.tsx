@@ -397,10 +397,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             return
           }
 
-          await supabase
+          const { error: deleteError } = await supabase
             .from('ride_confirmations')
             .delete()
-            .eq('id', latest.id)
+            .eq('ride_id', rideId)
+            .eq('passenger_id', user.id)
+
+          if (deleteError) {
+            console.error('Error deleting old confirmation:', deleteError)
+            throw new Error('Failed to process previous request')
+          }
         }
       }
 
@@ -479,10 +485,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             return
           }
 
-          await supabase
+          const { error: deleteError } = await supabase
             .from('ride_confirmations')
             .delete()
-            .eq('id', latest.id)
+            .eq('trip_id', tripId)
+            .eq('passenger_id', user.id)
+
+          if (deleteError) {
+            console.error('Error deleting old confirmation:', deleteError)
+            throw new Error('Failed to process previous request')
+          }
         }
       }
 
