@@ -36,6 +36,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const subscriptionRef = useRef<any>(null)
   const [showRideRequestModal, setShowRideRequestModal] = useState(false)
   const [showTripRequestModal, setShowTripRequestModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (!user || !otherUserId || !otherUserId.trim()) {
@@ -363,18 +365,30 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
 
     try {
-      const { data: existingConfirmation } = await supabase
+      const { data: existingConfirmations } = await supabase
         .from('ride_confirmations')
-        .select('id, status')
+        .select('id, status, updated_at')
         .eq('ride_id', rideId)
         .eq('passenger_id', user.id)
-        .maybeSingle()
+        .order('updated_at', { ascending: false })
 
-      if (existingConfirmation) {
-        if (existingConfirmation.status === 'pending') {
+      if (existingConfirmations && existingConfirmations.length > 0) {
+        const latest = existingConfirmations[0]
+
+        if (latest.status === 'pending') {
           throw new Error('You already have a pending request for this ride')
-        } else if (existingConfirmation.status === 'accepted') {
+        } else if (latest.status === 'accepted') {
           throw new Error('You have already been accepted for this ride')
+        } else if (latest.status === 'rejected') {
+          const rejectedTime = new Date(latest.updated_at).getTime()
+          const now = new Date().getTime()
+          const timeDiff = now - rejectedTime
+          const cooldownPeriod = 30 * 60 * 1000
+
+          if (timeDiff < cooldownPeriod) {
+            const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
+            throw new Error(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this ride again`)
+          }
         }
       }
 
@@ -414,6 +428,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         })
 
       setShowRideRequestModal(false)
+      setSuccessMessage('Request sent successfully! You can view and manage this confirmation in your Confirmations tab. Please wait for the driver to respond.')
+      setShowSuccessModal(true)
     } catch (error: any) {
       console.error('Error submitting ride request:', error)
       setError(error.message || 'Failed to submit ride request')
@@ -425,18 +441,30 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     if (!user) return
 
     try {
-      const { data: existingConfirmation } = await supabase
+      const { data: existingConfirmations } = await supabase
         .from('ride_confirmations')
-        .select('id, status')
+        .select('id, status, updated_at')
         .eq('trip_id', tripId)
         .eq('passenger_id', user.id)
-        .maybeSingle()
+        .order('updated_at', { ascending: false })
 
-      if (existingConfirmation) {
-        if (existingConfirmation.status === 'pending') {
+      if (existingConfirmations && existingConfirmations.length > 0) {
+        const latest = existingConfirmations[0]
+
+        if (latest.status === 'pending') {
           throw new Error('You already have a pending request for this trip')
-        } else if (existingConfirmation.status === 'accepted') {
+        } else if (latest.status === 'accepted') {
           throw new Error('You have already been accepted for this trip')
+        } else if (latest.status === 'rejected') {
+          const rejectedTime = new Date(latest.updated_at).getTime()
+          const now = new Date().getTime()
+          const timeDiff = now - rejectedTime
+          const cooldownPeriod = 30 * 60 * 1000
+
+          if (timeDiff < cooldownPeriod) {
+            const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
+            throw new Error(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this trip again`)
+          }
         }
       }
 
@@ -475,6 +503,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         })
 
       setShowTripRequestModal(false)
+      setSuccessMessage('Request sent successfully! You can view and manage this confirmation in your Confirmations tab. Please wait for the traveler to respond.')
+      setShowSuccessModal(true)
     } catch (error: any) {
       console.error('Error submitting trip request:', error)
       setError(error.message || 'Failed to submit trip request')
@@ -807,6 +837,26 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         travelerName={otherUserProfile?.full_name || otherUserName || 'User'}
         onRequestSubmit={handleTripRequestSubmit}
       />
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Request Sent!</h3>
+              <p className="text-gray-600 mb-6">{successMessage}</p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
