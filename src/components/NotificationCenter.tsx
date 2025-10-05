@@ -227,7 +227,21 @@ export default function NotificationCenter({
     }
   }
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark this notification as read immediately
+    if (!notification.read && notification.type === 'message' && user) {
+      try {
+        // Extract message ID from notification ID (format: "message-{messageId}")
+        const messageId = notification.id.replace('message-', '')
+        await supabase
+          .from('chat_messages')
+          .update({ is_read: true })
+          .eq('id', messageId)
+      } catch (error) {
+        console.error('Error marking notification as read:', error)
+      }
+    }
+
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
         onClose()
@@ -253,8 +267,11 @@ export default function NotificationCenter({
         .eq('receiver_id', user.id)
         .eq('is_read', false)
 
-      // Refresh notifications
-      fetchNotifications()
+      // Update local state immediately for better UX
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+
+      // Refresh notifications from server
+      await fetchNotifications()
     } catch (error) {
       console.error('Error marking notifications as read:', error)
     }

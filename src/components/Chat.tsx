@@ -10,6 +10,7 @@ import TripRequestModal from './TripRequestModal'
 import { popupManager } from '../utils/popupManager'
 import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
+import { cleanupOldSystemMessages } from '../utils/confirmationHelpers'
 
 interface ChatProps {
   onBack: () => void
@@ -51,6 +52,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       console.log('Chat: Loading timeout reached, showing skip option')
       setLoadingTimeout(timeout)
     }, 10000)
+
+    // Clean up old system messages on mount
+    cleanupOldSystemMessages().catch(err =>
+      console.warn('Chat: Failed to cleanup old system messages:', err)
+    )
 
     initializeChat()
 
@@ -383,11 +389,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
           const timeDiff = now - rejectedTime
-          const cooldownPeriod = 30 * 60 * 1000
+          const cooldownPeriod = 10 * 60 * 1000
 
           if (timeDiff < cooldownPeriod) {
             const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
-            throw new Error(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this ride again`)
+            setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this ride again`)
+            return
           }
         }
       }
@@ -459,11 +466,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
           const timeDiff = now - rejectedTime
-          const cooldownPeriod = 30 * 60 * 1000
+          const cooldownPeriod = 10 * 60 * 1000
 
           if (timeDiff < cooldownPeriod) {
             const remainingMinutes = Math.ceil((cooldownPeriod - timeDiff) / (60 * 1000))
-            throw new Error(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this trip again`)
+            setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this trip again`)
+            return
           }
         }
       }
@@ -763,7 +771,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       </div>
 
       {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-white border-t border-gray-200 p-4 pb-24">
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
