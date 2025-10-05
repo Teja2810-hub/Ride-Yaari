@@ -378,6 +378,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         }
       }
 
+      const { data: rideData } = await supabase
+        .from('car_rides')
+        .select('*')
+        .eq('id', rideId)
+        .maybeSingle()
+
+      if (!rideData) {
+        throw new Error('Ride not found')
+      }
+
       const { error: insertError } = await supabase
         .from('ride_confirmations')
         .insert({
@@ -390,8 +400,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       if (insertError) throw insertError
 
-      setNewMessage(`I'd like to request ${seatsRequested} seat${seatsRequested > 1 ? 's' : ''} for your ride`)
-      await sendMessage()
+      const passengerName = userProfile?.full_name || 'A passenger'
+      const rideDetails = `${rideData.from_location} → ${rideData.to_location}`
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: otherUserId,
+          message_content: `🚗 ${passengerName} has requested ${seatsRequested} seat${seatsRequested > 1 ? 's' : ''} for your ride (${rideDetails}). Please review and respond in your Confirmations tab.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      setShowRideRequestModal(false)
     } catch (error: any) {
       console.error('Error submitting ride request:', error)
       setError(error.message || 'Failed to submit ride request')
@@ -418,6 +440,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         }
       }
 
+      const { data: tripData } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', tripId)
+        .maybeSingle()
+
+      if (!tripData) {
+        throw new Error('Trip not found')
+      }
+
       const { error: insertError } = await supabase
         .from('ride_confirmations')
         .insert({
@@ -429,8 +461,20 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       if (insertError) throw insertError
 
-      setNewMessage(`I'd like to request assistance with your airport trip`)
-      await sendMessage()
+      const passengerName = userProfile?.full_name || 'A passenger'
+      const tripDetails = `${tripData.leaving_airport} → ${tripData.destination_airport}`
+
+      await supabase
+        .from('chat_messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: otherUserId,
+          message_content: `✈️ ${passengerName} has requested to join your airport trip (${tripDetails}). Please review and respond in your Confirmations tab.`,
+          message_type: 'system',
+          is_read: false
+        })
+
+      setShowTripRequestModal(false)
     } catch (error: any) {
       console.error('Error submitting trip request:', error)
       setError(error.message || 'Failed to submit trip request')
