@@ -190,14 +190,22 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   }
 
   const handleChatClick = (userId: string, userName: string, trip: Trip) => {
+    if (!userId || userId.trim() === '') {
+      console.error('Cannot open chat: Invalid user ID', { userId, userName, trip })
+      return
+    }
+
+    if (!userName || userName.trim() === '') {
+      console.error('Cannot open chat: Invalid user name', { userId, userName, trip })
+      return
+    }
+
     setSelectedChatUser({ userId, userName })
     setSelectedChatTrip(trip)
-    
-    // Check if disclaimer should be shown
+
     if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      // Auto-proceed if disclaimer was already shown
       handleConfirmChat()
     }
   }
@@ -551,8 +559,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = trip.user_id || trip.user_profiles?.id
+                                    const userName = trip.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { trip })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, trip)
+                                  }}
+                                  disabled={!trip.user_id && !trip.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Traveler</span>
@@ -573,8 +590,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = trip.user_id || trip.user_profiles?.id
+                                    const userName = trip.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { trip })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, trip)
+                                  }}
+                                  disabled={!trip.user_id && !trip.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Start Chat</span>
@@ -704,8 +730,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || request.user_profiles?.id
+                                    const userName = request.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { request })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !request.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -726,8 +761,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || request.user_profiles?.id
+                                    const userName = request.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { request })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !request.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Assistance</span>

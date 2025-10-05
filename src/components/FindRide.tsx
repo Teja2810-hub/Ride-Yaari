@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
@@ -565,14 +565,22 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   }
 
   const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
+    if (!userId || userId.trim() === '') {
+      console.error('Cannot open chat: Invalid user ID', { userId, userName, ride })
+      return
+    }
+
+    if (!userName || userName.trim() === '') {
+      console.error('Cannot open chat: Invalid user name', { userId, userName, ride })
+      return
+    }
+
     setSelectedChatUser({ userId, userName })
     setSelectedChatRide(ride)
-    
-    // Check if disclaimer should be shown
+
     if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      // Auto-proceed if disclaimer was already shown
       handleConfirmChat()
     }
   }
@@ -1187,8 +1195,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
-                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = ride.user_id || ride.user_profiles?.id
+                                    const userName = ride.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { ride })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, ride)
+                                  }}
+                                  disabled={!ride.user_id && !ride.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Driver</span>
@@ -1200,8 +1217,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
-                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = ride.user_id || ride.user_profiles?.id
+                                    const userName = ride.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { ride })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, ride)
+                                  }}
+                                  disabled={!ride.user_id && !ride.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Start Chat</span>
@@ -1336,8 +1362,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || request.user_profiles?.id
+                                    const userName = request.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { request })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !request.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -1358,8 +1393,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || request.user_profiles?.id
+                                    const userName = request.user_profiles?.full_name
+                                    if (!userId || !userName) {
+                                      console.error('Invalid user data', { request })
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !request.user_profiles?.id}
+                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Ride</span>
