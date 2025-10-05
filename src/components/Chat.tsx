@@ -31,11 +31,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [skipLoading, setSkipLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null)
+  const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
     if (user && otherUserId && otherUserId.trim()) {
       console.log('Chat: Starting to load chat data for users:', user.id, 'and', otherUserId)
-      
+
       // Set a timeout to allow users to skip loading if it takes too long
       const timeout = setTimeout(() => {
         console.log('Chat: Loading timeout reached, showing skip option')
@@ -43,10 +44,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       }, 10000) // 10 seconds
 
       initializeChat()
-      
+
       return () => {
         if (timeout) clearTimeout(timeout)
         if (loadingTimeout) clearTimeout(loadingTimeout)
+        if (subscriptionRef.current) {
+          console.log('Chat: Cleaning up subscription on unmount')
+          subscriptionRef.current.unsubscribe()
+          subscriptionRef.current = null
+        }
       }
     } else {
       console.error('Chat: Missing required data:', { user: !!user, otherUserId })
@@ -232,8 +238,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const setupRealtimeSubscription = () => {
     if (!user || !otherUserId) return
 
+    // Clean up existing subscription first
+    if (subscriptionRef.current) {
+      console.log('Chat: Cleaning up existing subscription')
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+
     console.log('Chat: Setting up realtime subscription')
-    
+
     const subscription = supabase
       .channel(`chat_${user.id}_${otherUserId}`)
       .on(
@@ -247,16 +260,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         (payload) => {
           console.log('Chat: New message received via realtime:', payload)
           const newMessage = payload.new as ChatMessage
-          
+
           // Add sender profile info if available
           if (newMessage.sender_id === user.id) {
             newMessage.sender = userProfile || undefined
           } else {
             newMessage.sender = otherUserProfile || undefined
           }
-          
+
           setMessages(prev => [...prev, newMessage])
-          
+
           // Mark as read if it's for the current user
           if (newMessage.receiver_id === user.id) {
             supabase
@@ -272,10 +285,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         console.log('Chat: Subscription status:', status)
       })
 
-    return () => {
-      console.log('Chat: Cleaning up subscription')
-      subscription.unsubscribe()
-    }
+    subscriptionRef.current = subscription
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
