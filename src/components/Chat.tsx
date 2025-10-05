@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Send, User, Plane, Car, Shield, Trash2, TriangleAlert as AlertTriangle, MessageCircle, X, Clock } from 'lucide-react'
+import { ArrowLeft, Send, User, Plane, Car, Shield, Trash2, TriangleAlert as AlertTriangle, MessageCircle, X, Clock, CircleCheck as CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { ChatMessage, CarRide, Trip } from '../types'
 import DisclaimerModal from './DisclaimerModal'
 import ChatBlockingControls from './ChatBlockingControls'
+import RideRequestModal from './RideRequestModal'
+import TripRequestModal from './TripRequestModal'
 import { popupManager } from '../utils/popupManager'
 import { isUserBlocked, isChatDeleted } from '../utils/blockingHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
@@ -32,6 +34,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null)
   const subscriptionRef = useRef<any>(null)
+  const [showRideRequestModal, setShowRideRequestModal] = useState(false)
+  const [showTripRequestModal, setShowTripRequestModal] = useState(false)
 
   useEffect(() => {
     if (!user || !otherUserId || !otherUserId.trim()) {
@@ -355,6 +359,85 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     initializeChat()
   }
 
+  const handleRideRequestSubmit = async (rideId: string, seatsRequested: number) => {
+    if (!user) return
+
+    try {
+      const { data: existingConfirmation } = await supabase
+        .from('ride_confirmations')
+        .select('id, status')
+        .eq('ride_id', rideId)
+        .eq('passenger_id', user.id)
+        .maybeSingle()
+
+      if (existingConfirmation) {
+        if (existingConfirmation.status === 'pending') {
+          throw new Error('You already have a pending request for this ride')
+        } else if (existingConfirmation.status === 'accepted') {
+          throw new Error('You have already been accepted for this ride')
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          ride_id: rideId,
+          ride_owner_id: otherUserId,
+          passenger_id: user.id,
+          seats_requested: seatsRequested,
+          status: 'pending'
+        })
+
+      if (insertError) throw insertError
+
+      setNewMessage(`I'd like to request ${seatsRequested} seat${seatsRequested > 1 ? 's' : ''} for your ride`)
+      await sendMessage()
+    } catch (error: any) {
+      console.error('Error submitting ride request:', error)
+      setError(error.message || 'Failed to submit ride request')
+      throw error
+    }
+  }
+
+  const handleTripRequestSubmit = async (tripId: string) => {
+    if (!user) return
+
+    try {
+      const { data: existingConfirmation } = await supabase
+        .from('ride_confirmations')
+        .select('id, status')
+        .eq('trip_id', tripId)
+        .eq('passenger_id', user.id)
+        .maybeSingle()
+
+      if (existingConfirmation) {
+        if (existingConfirmation.status === 'pending') {
+          throw new Error('You already have a pending request for this trip')
+        } else if (existingConfirmation.status === 'accepted') {
+          throw new Error('You have already been accepted for this trip')
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from('ride_confirmations')
+        .insert({
+          trip_id: tripId,
+          ride_owner_id: otherUserId,
+          passenger_id: user.id,
+          status: 'pending'
+        })
+
+      if (insertError) throw insertError
+
+      setNewMessage(`I'd like to request assistance with your airport trip`)
+      await sendMessage()
+    } catch (error: any) {
+      console.error('Error submitting trip request:', error)
+      setError(error.message || 'Failed to submit trip request')
+      throw error
+    }
+  }
+
   if (loading && !skipLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -612,7 +695,25 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             {error}
           </div>
         )}
-        
+
+        {/* Request Buttons */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setShowRideRequestModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
+          >
+            <Car size={18} />
+            <span>Request Ride</span>
+          </button>
+          <button
+            onClick={() => setShowTripRequestModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+          >
+            <Plane size={18} />
+            <span>Request Trip</span>
+          </button>
+        </div>
+
         <form onSubmit={handleSendMessage} className="flex space-x-4">
           <input
             type="text"
@@ -645,6 +746,22 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         onConfirm={handleConfirmSend}
         loading={sending}
         type={preSelectedRide ? 'chat-ride' : 'chat-trip'}
+      />
+
+      <RideRequestModal
+        isOpen={showRideRequestModal}
+        onClose={() => setShowRideRequestModal(false)}
+        driverId={otherUserId}
+        driverName={otherUserProfile?.full_name || otherUserName || 'User'}
+        onRequestSubmit={handleRideRequestSubmit}
+      />
+
+      <TripRequestModal
+        isOpen={showTripRequestModal}
+        onClose={() => setShowTripRequestModal(false)}
+        travelerId={otherUserId}
+        travelerName={otherUserProfile?.full_name || otherUserName || 'User'}
+        onRequestSubmit={handleTripRequestSubmit}
       />
     </div>
   )
