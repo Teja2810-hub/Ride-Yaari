@@ -239,7 +239,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      handleConfirmChat()
+      handleConfirmChatWithParams(userId, userName, trip)
     }
   }
 
@@ -247,6 +247,12 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-trip', user?.id, selectedChatUser.userId)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
+  }
+
+  const handleConfirmChatWithParams = (userId: string, userName: string, trip?: Trip) => {
+    setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-trip', user?.id, userId)
+    onStartChat(userId, userName, undefined, trip)
   }
 
 
