@@ -382,11 +382,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         const latest = existingConfirmations[0]
 
         if (latest.status === 'pending') {
-          alert('You already have a pending request for this ride. You cannot send another request until it is accepted or rejected.')
+          setError('You already have a pending request for this ride.')
           setShowRideRequestModal(false)
           return
         } else if (latest.status === 'accepted') {
-          throw new Error('You have already been accepted for this ride')
+          setError('You have already been accepted for this ride.')
+          setShowRideRequestModal(false)
+          return
         } else if (latest.status === 'rejected') {
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
@@ -507,11 +509,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         const latest = existingConfirmations[0]
 
         if (latest.status === 'pending') {
-          alert('You already have a pending request for this trip. You cannot send another request until it is accepted or rejected.')
+          setError('You already have a pending request for this trip.')
           setShowTripRequestModal(false)
           return
         } else if (latest.status === 'accepted') {
-          throw new Error('You have already been accepted for this trip')
+          setError('You have already been accepted for this trip.')
+          setShowTripRequestModal(false)
+          return
         } else if (latest.status === 'rejected') {
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
