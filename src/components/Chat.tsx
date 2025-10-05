@@ -175,19 +175,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       console.log('Chat: Fetched', data?.length || 0, 'messages')
       setMessages(data || [])
 
-      // Mark messages as read
+      // Mark ALL messages as read (both user and system messages)
       if (data && data.length > 0) {
         const unreadMessages = data.filter((msg: ChatMessage) =>
           msg.receiver_id === user.id && !msg.is_read
         )
 
         if (unreadMessages.length > 0) {
-          console.log('Chat: Marking', unreadMessages.length, 'messages as read')
+          console.log('Chat: Marking', unreadMessages.length, 'messages as read (including system messages)')
           await supabase
             .from('chat_messages')
             .update({ is_read: true })
             .eq('receiver_id', user.id)
-            .eq('sender_id', otherUserId)
+            .or(`sender_id.eq.${otherUserId},message_type.eq.system`)
             .eq('is_read', false)
         }
       }
@@ -841,8 +841,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start justify-between">
+            <span className="flex-1">{error}</span>
+            <button
+              onClick={() => setError('')}
+              className="ml-2 text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
+              title="Dismiss"
+            >
+              <X size={16} />
+            </button>
           </div>
         )}
 
