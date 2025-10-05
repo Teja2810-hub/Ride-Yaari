@@ -76,8 +76,17 @@ function AppContent() {
       setShowAuthPrompt(true)
       return
     }
+
+    // Validate userId before opening chat
+    if (!userId || userId.trim() === '') {
+      console.error('handleStartChat: Invalid userId provided:', userId)
+      alert('Cannot open chat: Invalid user information')
+      return
+    }
+
+    console.log('Opening chat with user:', userId, userName)
     setChatUserId(userId)
-    setChatUserName(userName)
+    setChatUserName(userName || 'User')
     setSelectedRideForChat(ride || null)
     setSelectedTripForChat(trip || null)
     setCurrentView('chat')
@@ -346,7 +355,20 @@ function AppContent() {
                         preSelectedTrip={selectedTripForChat}
                       />
                     </ErrorBoundary>
-                  ) : null
+                  ) : (
+                    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+                      <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Unable to Open Chat</h2>
+                        <p className="text-gray-600 mb-6">Chat user information is missing. Please try selecting a conversation again.</p>
+                        <button
+                          onClick={handleBackToDashboard}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Back to Dashboard
+                        </button>
+                      </div>
+                    </div>
+                  )
                 case 'edit-trip':
                   return editingTrip ? (
                     <ErrorBoundary>
