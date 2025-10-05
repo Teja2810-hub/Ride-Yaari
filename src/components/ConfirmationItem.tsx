@@ -927,6 +927,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         onClose={() => setShowRequestAgainModal(false)}
         onConfirm={handleRequestAgainAction}
         confirmation={confirmation}
+        onStartChat={onStartChat}
         userId={user?.id || ''}
         loading={isLoading}
       />

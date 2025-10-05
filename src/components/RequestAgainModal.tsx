@@ -11,6 +11,7 @@ interface RequestAgainModalProps {
   confirmation: RideConfirmation
   userId: string
   loading: boolean
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
 }
 
 export default function RequestAgainModal({
@@ -19,7 +20,8 @@ export default function RequestAgainModal({
   onConfirm,
   confirmation,
   userId,
-  loading
+  loading,
+  onStartChat
 }: RequestAgainModalProps) {
   const [reason, setReason] = useState('')
   const [eligibility, setEligibility] = useState<{
@@ -141,7 +143,17 @@ export default function RequestAgainModal({
             )}
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              onClose()
+              if (onStartChat) {
+                onStartChat(
+                  confirmation.ride_owner_id,
+                  confirmation.user_profiles?.full_name || 'User',
+                  confirmation.car_rides,
+                  confirmation.trips
+                )
+              }
+            }}
             className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
           >
             Back to Chat

@@ -274,8 +274,8 @@ export default function NotificationCenter({
 
       console.log('All messages marked as read')
 
-      // Update local state immediately for better UX
-      setNotifications([])
+      // Clear local notifications immediately
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
 
       // Refresh notifications from server
       await fetchNotifications()
