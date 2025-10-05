@@ -34,30 +34,28 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
-    if (user && otherUserId && otherUserId.trim()) {
-      console.log('Chat: Starting to load chat data for users:', user.id, 'and', otherUserId)
-
-      // Set a timeout to allow users to skip loading if it takes too long
-      const timeout = setTimeout(() => {
-        console.log('Chat: Loading timeout reached, showing skip option')
-        setLoadingTimeout(timeout)
-      }, 10000) // 10 seconds
-
-      initializeChat()
-
-      return () => {
-        if (timeout) clearTimeout(timeout)
-        if (loadingTimeout) clearTimeout(loadingTimeout)
-        if (subscriptionRef.current) {
-          console.log('Chat: Cleaning up subscription on unmount')
-          subscriptionRef.current.unsubscribe()
-          subscriptionRef.current = null
-        }
-      }
-    } else {
+    if (!user || !otherUserId || !otherUserId.trim()) {
       console.error('Chat: Missing required data:', { user: !!user, otherUserId })
-      setError('Missing required user information')
-      setLoading(false)
+      return
+    }
+
+    console.log('Chat: Starting to load chat data for users:', user.id, 'and', otherUserId)
+
+    const timeout = setTimeout(() => {
+      console.log('Chat: Loading timeout reached, showing skip option')
+      setLoadingTimeout(timeout)
+    }, 10000)
+
+    initializeChat()
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+      if (loadingTimeout) clearTimeout(loadingTimeout)
+      if (subscriptionRef.current) {
+        console.log('Chat: Cleaning up subscription on unmount')
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
     }
   }, [user, otherUserId])
 

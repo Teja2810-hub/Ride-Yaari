@@ -84,8 +84,7 @@ function AppContent() {
   }
 
   const handleBackToDashboard = () => {
-    setCurrentView('platform-selector')
-    // Reset all chat-related state to prevent stale state issues
+    // Reset all chat-related state BEFORE changing view
     setChatUserId('')
     setChatUserName('')
     setSelectedRideForChat(null)
@@ -93,6 +92,7 @@ function AppContent() {
     setEditingTrip(null)
     setEditingRide(null)
     setInitialProfileTab(undefined)
+    setCurrentView('platform-selector')
   }
 
   const handleEditTrip = (trip: Trip) => {
