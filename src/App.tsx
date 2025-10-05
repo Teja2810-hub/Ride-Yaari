@@ -85,11 +85,15 @@ function AppContent() {
     }
 
     console.log('Opening chat with user:', userId, userName)
-    setChatUserId(userId)
-    setChatUserName(userName || 'User')
-    setSelectedRideForChat(ride || null)
-    setSelectedTripForChat(trip || null)
-    setCurrentView('chat')
+
+    // Use requestAnimationFrame to ensure state updates happen in next render cycle
+    requestAnimationFrame(() => {
+      setChatUserId(userId)
+      setChatUserName(userName || 'User')
+      setSelectedRideForChat(ride || null)
+      setSelectedTripForChat(trip || null)
+      setCurrentView('chat')
+    })
   }
 
   const handleBackToDashboard = () => {
