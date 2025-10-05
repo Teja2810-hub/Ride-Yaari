@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle, CircleCheck as CheckCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { CarRide, RideRequest } from '../types'
@@ -564,27 +564,10 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     }
   }
 
-  const handleChatClick = async (userId: string, userName: string, ride: CarRide) => {
-    if (!user) return
-
-    const { data: existingConfirmations } = await supabase
-      .from('ride_confirmations')
-      .select('status')
-      .eq('ride_id', ride.id)
-      .eq('passenger_id', user.id)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-
-    if (existingConfirmations && existingConfirmations.length > 0) {
-      const latest = existingConfirmations[0]
-      if (latest.status === 'pending' || latest.status === 'accepted') {
-        return
-      }
-    }
-
+  const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
     setSelectedChatUser({ userId, userName })
     setSelectedChatRide(ride)
-
+    
     // Check if disclaimer should be shown
     if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
       setShowDisclaimer(true)
@@ -1119,30 +1102,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {rides.map((ride) => {
-                      const [rideStatus, setRideStatus] = React.useState<'pending' | 'accepted' | null>(null)
-
-                      React.useEffect(() => {
-                        if (!user) return
-
-                        supabase
-                          .from('ride_confirmations')
-                          .select('status')
-                          .eq('ride_id', ride.id)
-                          .eq('passenger_id', user.id)
-                          .order('updated_at', { ascending: false })
-                          .limit(1)
-                          .then(({ data }) => {
-                            if (data && data.length > 0) {
-                              const status = data[0].status
-                              if (status === 'pending' || status === 'accepted') {
-                                setRideStatus(status as 'pending' | 'accepted')
-                              }
-                            }
-                          })
-                      }, [])
-
-                      return (
+                    {rides.map((ride) => (
                       <div
                         key={ride.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
@@ -1242,16 +1202,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                 <AlertTriangle size={20} />
                                 <span>Your Ride</span>
                               </div>
-                            ) : rideStatus === 'accepted' ? (
-                              <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <CheckCircle size={20} />
-                                <span>Accepted</span>
-                              </div>
-                            ) : rideStatus === 'pending' ? (
-                              <div className="flex items-center space-x-2 bg-yellow-100 text-yellow-700 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <Clock size={20} />
-                                <span>Request Pending</span>
-                              </div>
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
@@ -1277,7 +1227,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
                         </div>
                       </div>
-                    )})}
+                    ))}
                   </div>
                 )}
               </>
