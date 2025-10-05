@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send, CircleCheck as CheckCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Trip, TripRequest } from '../types'
@@ -189,7 +189,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     }
   }
 
-  const handleChatClick = async (userId: string, userName: string, trip: Trip) => {
+  const handleChatClick = (userId: string, userName: string, trip: Trip) => {
     // Validate userId before proceeding
     if (!userId || userId.trim() === '') {
       console.error('handleChatClick: Invalid userId provided:', userId)
@@ -197,26 +197,9 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       return
     }
 
-    if (!user) return
-
-    const { data: existingConfirmations } = await supabase
-      .from('ride_confirmations')
-      .select('status')
-      .eq('trip_id', trip.id)
-      .eq('passenger_id', user.id)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-
-    if (existingConfirmations && existingConfirmations.length > 0) {
-      const latest = existingConfirmations[0]
-      if (latest.status === 'pending' || latest.status === 'accepted') {
-        return
-      }
-    }
-
     setSelectedChatUser({ userId, userName })
     setSelectedChatTrip(trip)
-
+    
     // Check if disclaimer should be shown
     if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
@@ -469,30 +452,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {trips.map((trip) => {
-                      const [tripStatus, setTripStatus] = React.useState<'pending' | 'accepted' | null>(null)
-
-                      React.useEffect(() => {
-                        if (!user) return
-
-                        supabase
-                          .from('ride_confirmations')
-                          .select('status')
-                          .eq('trip_id', trip.id)
-                          .eq('passenger_id', user.id)
-                          .order('updated_at', { ascending: false })
-                          .limit(1)
-                          .then(({ data }) => {
-                            if (data && data.length > 0) {
-                              const status = data[0].status
-                              if (status === 'pending' || status === 'accepted') {
-                                setTripStatus(status as 'pending' | 'accepted')
-                              }
-                            }
-                          })
-                      }, [])
-
-                      return (
+                    {trips.map((trip) => (
                       <div
                         key={trip.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
@@ -595,21 +555,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
 
                           <div className="ml-6">
-                            {trip.user_id === user?.id ? (
-                              <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
-                                Your Trip
-                              </div>
-                            ) : tripStatus === 'accepted' ? (
-                              <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <CheckCircle size={20} />
-                                <span>Accepted</span>
-                              </div>
-                            ) : tripStatus === 'pending' ? (
-                              <div className="flex items-center space-x-2 bg-yellow-100 text-yellow-700 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <Clock size={20} />
-                                <span>Request Pending</span>
-                              </div>
-                            ) : effectiveIsGuest ? (
+                            {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => {
@@ -632,6 +578,10 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
                                 </p>
+                              </div>
+                            ) : trip.user_id === user?.id ? (
+                              <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                                Your Trip
                               </div>
                             ) : (
                               <button
@@ -656,7 +606,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
                         </div>
                       </div>
-                    )})}
+                    ))}
                   </div>
                 )}
               </>
