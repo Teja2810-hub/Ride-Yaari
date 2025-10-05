@@ -31,16 +31,29 @@ type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'creat
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
-  const [locationSearchType, setLocationSearchType] = useState<LocationSearchType>('manual')
-  const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
-  const [toLocation, setToLocation] = useState<LocationData | null>(null)
-  const [userLocation, setUserLocation] = useState<LocationData | null>(null)
+
+  // Load cached filters from localStorage
+  const loadCachedFilters = () => {
+    try {
+      const cached = localStorage.getItem('findRideFilters')
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  }
+
+  const cachedFilters = loadCachedFilters()
+
+  const [locationSearchType, setLocationSearchType] = useState<LocationSearchType>(cachedFilters?.locationSearchType || 'manual')
+  const [fromLocation, setFromLocation] = useState<LocationData | null>(cachedFilters?.fromLocation || null)
+  const [toLocation, setToLocation] = useState<LocationData | null>(cachedFilters?.toLocation || null)
+  const [userLocation, setUserLocation] = useState<LocationData | null>(cachedFilters?.userLocation || null)
   const [gettingLocation, setGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState('')
-  const [searchRadius, setSearchRadius] = useState(25)
-  const [departureDate, setDepartureDate] = useState('')
-  const [departureMonth, setDepartureMonth] = useState('')
-  const [searchByMonth, setSearchByMonth] = useState(false)
+  const [searchRadius, setSearchRadius] = useState(cachedFilters?.searchRadius || 25)
+  const [departureDate, setDepartureDate] = useState(cachedFilters?.departureDate || '')
+  const [departureMonth, setDepartureMonth] = useState(cachedFilters?.departureMonth || '')
+  const [searchByMonth, setSearchByMonth] = useState(cachedFilters?.searchByMonth || false)
   const [rides, setRides] = useState<CarRide[]>([])
   const [rideRequests, setRideRequests] = useState<RideRequest[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,13 +62,33 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatRide, setSelectedChatRide] = useState<CarRide | null>(null)
   const [showRadiusHelp, setShowRadiusHelp] = useState(false)
-  const [strictSearch, setStrictSearch] = useState(false)
-  const [radiusUnit, setRadiusUnit] = useState('miles')
-  const [useCustomRadius, setUseCustomRadius] = useState(false)
-  const [customRadius, setCustomRadius] = useState('')
-  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [strictSearch, setStrictSearch] = useState(cachedFilters?.strictSearch || false)
+  const [radiusUnit, setRadiusUnit] = useState(cachedFilters?.radiusUnit || 'miles')
+  const [useCustomRadius, setUseCustomRadius] = useState(cachedFilters?.useCustomRadius || false)
+  const [customRadius, setCustomRadius] = useState(cachedFilters?.customRadius || '')
+  const [sortBy, setSortBy] = useState<SortOption>(cachedFilters?.sortBy || 'date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
+
+  // Cache filters whenever they change
+  React.useEffect(() => {
+    const filters = {
+      locationSearchType,
+      fromLocation,
+      toLocation,
+      userLocation,
+      searchRadius,
+      departureDate,
+      departureMonth,
+      searchByMonth,
+      strictSearch,
+      radiusUnit,
+      useCustomRadius,
+      customRadius,
+      sortBy
+    }
+    localStorage.setItem('findRideFilters', JSON.stringify(filters))
+  }, [locationSearchType, fromLocation, toLocation, userLocation, searchRadius, departureDate, departureMonth, searchByMonth, strictSearch, radiusUnit, useCustomRadius, customRadius, sortBy])
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
@@ -555,6 +588,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       )
       setRideRequests(requests)
       setSearched(true)
+
+      // Restore from cache if returning from chat
+      if (cachedFilters?.searched) {
+        setSearched(true)
+      }
     } catch (error) {
       console.error('Search error:', error)
       setRides([]) // Set empty array on error

@@ -838,20 +838,34 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4 pb-24">
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start justify-between">
-            <span className="flex-1">{error}</span>
+      {/* Error Overlay Popup */}
+      {error && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start justify-between mb-4">
+              <AlertTriangle size={24} className="text-red-500 flex-shrink-0" />
+              <button
+                onClick={() => setError('')}
+                className="ml-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to send request</h3>
+            <p className="text-gray-700 mb-6">{error}</p>
             <button
               onClick={() => setError('')}
-              className="ml-2 text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
-              title="Dismiss"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
-              <X size={16} />
+              Close
             </button>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Message Input */}
+      <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
         {/* Request Buttons - Only show for posted rides/trips */}
         {(preSelectedRide || preSelectedTrip) && (

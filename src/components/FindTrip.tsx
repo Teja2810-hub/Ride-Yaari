@@ -21,21 +21,55 @@ type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'creat
 export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
   const { user, isGuest: contextIsGuest } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
-  const [departureAirport, setDepartureAirport] = useState('')
-  const [destinationAirport, setDestinationAirport] = useState('')
-  const [travelDate, setTravelDate] = useState('')
-  const [travelMonth, setTravelMonth] = useState('')
-  const [searchByMonth, setSearchByMonth] = useState(false)
+
+  // Load cached filters from localStorage
+  const loadCachedFilters = () => {
+    try {
+      const cached = localStorage.getItem('findTripFilters')
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  }
+
+  const cachedFilters = loadCachedFilters()
+
+  const [departureAirport, setDepartureAirport] = useState(cachedFilters?.departureAirport || '')
+  const [destinationAirport, setDestinationAirport] = useState(cachedFilters?.destinationAirport || '')
+  const [travelDate, setTravelDate] = useState(cachedFilters?.travelDate || '')
+  const [travelMonth, setTravelMonth] = useState(cachedFilters?.travelMonth || '')
+  const [searchByMonth, setSearchByMonth] = useState(cachedFilters?.searchByMonth || false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [tripRequests, setTripRequests] = useState<TripRequest[]>([])
   const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+  const [searched, setSearched] = useState(cachedFilters?.searched || false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
-  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [sortBy, setSortBy] = useState<SortOption>(cachedFilters?.sortBy || 'date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'trips' | 'requests'>('trips')
+
+  // Cache filters whenever they change
+  React.useEffect(() => {
+    const filters = {
+      departureAirport,
+      destinationAirport,
+      travelDate,
+      travelMonth,
+      searchByMonth,
+      sortBy,
+      searched
+    }
+    localStorage.setItem('findTripFilters', JSON.stringify(filters))
+  }, [departureAirport, destinationAirport, travelDate, travelMonth, searchByMonth, sortBy, searched])
+
+  // Restore results from cache on mount
+  React.useEffect(() => {
+    if (cachedFilters?.searched && trips.length === 0 && !loading) {
+      handleSearch(new Event('submit') as any)
+    }
+  }, [])
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {

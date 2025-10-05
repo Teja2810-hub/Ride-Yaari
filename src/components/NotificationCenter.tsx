@@ -260,27 +260,51 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
+      console.log('NotificationCenter: Marking all messages as read for user:', user.id)
+
+      // Get count of unread messages before marking
+      const { count: beforeCount } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false)
+
+      console.log('NotificationCenter: Unread messages before:', beforeCount)
+
       // Mark all unread messages as read (including system messages)
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
+        .select('*', { count: 'exact', head: true })
 
       if (error) {
-        console.error('Error marking messages as read:', error)
+        console.error('NotificationCenter: Error marking messages as read:', error)
         throw error
       }
 
-      console.log('All messages marked as read')
+      console.log('NotificationCenter: Marked', count, 'messages as read')
 
-      // Clear local notifications immediately
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      // Verify the update
+      const { count: afterCount } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false)
+
+      console.log('NotificationCenter: Unread messages after:', afterCount)
+
+      // Clear all notifications immediately
+      setNotifications([])
+
+      // Wait a moment before refreshing to ensure DB is updated
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       // Refresh notifications from server
       await fetchNotifications()
     } catch (error) {
-      console.error('Error marking notifications as read:', error)
+      console.error('NotificationCenter: Error in markAllAsRead:', error)
     }
   }
 
