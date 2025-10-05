@@ -1,3 +1,4 @@
+import React from 'react'
 import { Plane, Car, ArrowRight, User, Circle as HelpCircle, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
@@ -17,10 +18,10 @@ interface PlatformSelectorProps {
 
 export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations, isGuest = false }: PlatformSelectorProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
+  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
 
   const handleStartChat = (userId: string, userName: string) => {
-    // Ensure we have a clean state before starting chat
-    // Pass showRequestButtons=true when opening from messages
+    setActiveNotification(null)
     if (onStartChat) {
       onStartChat(userId, userName, true)
     }
@@ -51,9 +52,26 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
             </button>
             {!isGuest && (
               <>
-                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <MessagesNotification onStartChat={handleStartChat} />
-                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <MessagesNotification
+                  onStartChat={handleStartChat}
+                  isOpen={activeNotification === 'messages'}
+                  onOpen={() => setActiveNotification('messages')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
                 <button
                   onClick={onProfile}
                   className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
