@@ -26,6 +26,7 @@ export default function TripRequestModal({
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [userConfirmations, setUserConfirmations] = useState<{[key: string]: {status: string}}>({})
 
   useEffect(() => {
     if (isOpen && travelerId) {
@@ -40,6 +41,9 @@ export default function TripRequestModal({
     try {
       const now = new Date().toISOString().split('T')[0]
 
+      const { data: session } = await supabase.auth.getSession()
+      const userId = session?.session?.user?.id
+
       const { data, error } = await supabase
         .from('trips')
         .select('*')
@@ -50,10 +54,32 @@ export default function TripRequestModal({
 
       if (error) throw error
 
+      // Fetch user's confirmations for these trips
+      if (userId && data) {
+        const tripIds = data.map(t => t.id)
+        const { data: confirmations } = await supabase
+          .from('ride_confirmations')
+          .select('trip_id, status')
+          .eq('passenger_id', userId)
+          .in('trip_id', tripIds)
+          .in('status', ['pending', 'accepted'])
+
+        const confirmationsMap: {[key: string]: {status: string}} = {}
+        confirmations?.forEach(conf => {
+          if (conf.trip_id) {
+            confirmationsMap[conf.trip_id] = { status: conf.status }
+          }
+        })
+        setUserConfirmations(confirmationsMap)
+      }
+
       setTrips(data || [])
 
       if (data && data.length === 1) {
-        setSelectedTrip(data[0])
+        const confirmation = userConfirmations[data[0].id]
+        if (!confirmation || (confirmation.status !== 'pending' && confirmation.status !== 'accepted')) {
+          setSelectedTrip(data[0])
+        }
       }
     } catch (err) {
       console.error('Error fetching traveler trips:', err)
@@ -129,17 +155,34 @@ export default function TripRequestModal({
               <div className="space-y-4 mb-6">
                 {trips.map((trip) => {
                   const isSelected = selectedTrip?.id === trip.id
+                  const confirmation = userConfirmations[trip.id]
+                  const hasPendingRequest = confirmation?.status === 'pending'
+                  const hasAcceptedRequest = confirmation?.status === 'accepted'
+                  const cannotSelect = hasPendingRequest || hasAcceptedRequest
 
                   return (
                     <div
                       key={trip.id}
-                      onClick={() => setSelectedTrip(trip)}
-                      className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      onClick={() => !cannotSelect && setSelectedTrip(trip)}
+                      className={`border rounded-xl p-4 transition-all ${
+                        cannotSelect
+                          ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed'
+                          : isSelected
+                          ? 'border-blue-500 bg-blue-50 shadow-md cursor-pointer'
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
                       }`}
                     >
+                      {cannotSelect && (
+                        <div className="mb-2">
+                          <span className={`inline-block text-xs font-semibold px-2 py-1 rounded ${
+                            hasAcceptedRequest
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {hasAcceptedRequest ? 'Already Accepted' : 'Request Pending'}
+                          </span>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
                           <p className="text-xs text-gray-600 mb-1">Departure</p>

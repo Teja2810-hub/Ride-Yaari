@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -56,6 +56,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides')
+  const [userConfirmations, setUserConfirmations] = useState<{[key: string]: {status: string}}>({})
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
@@ -203,9 +204,39 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
     return radius
   }
 
+  useEffect(() => {
+    if (user && !effectiveIsGuest) {
+      fetchUserConfirmations()
+    }
+  }, [user, effectiveIsGuest])
+
+  const fetchUserConfirmations = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('ride_confirmations')
+        .select('ride_id, status')
+        .eq('passenger_id', user.id)
+        .in('status', ['pending', 'accepted'])
+
+      if (error) throw error
+
+      const confirmationsMap: {[key: string]: {status: string}} = {}
+      data?.forEach(conf => {
+        if (conf.ride_id) {
+          confirmationsMap[conf.ride_id] = { status: conf.status }
+        }
+      })
+      setUserConfirmations(confirmationsMap)
+    } catch (error) {
+      console.error('Error fetching user confirmations:', error)
+    }
+  }
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     setLoading(true)
 
     try {
@@ -542,6 +573,11 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
       console.log('Rides:', filteredRides.map(r => `${r.from_location} → ${r.to_location}`))
 
       setRides(filteredRides)
+
+      // Fetch user confirmations after getting rides
+      if (user && !effectiveIsGuest) {
+        await fetchUserConfirmations()
+      }
 
       // Also fetch matching ride requests
       const requests = await getDisplayRideRequests(
@@ -1102,7 +1138,13 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {rides.map((ride) => (
+                    {rides.map((ride) => {
+                      const confirmation = userConfirmations[ride.id]
+                      const hasPendingRequest = confirmation?.status === 'pending'
+                      const hasAcceptedRequest = confirmation?.status === 'accepted'
+                      const cannotRequest = hasPendingRequest || hasAcceptedRequest
+
+                      return (
                       <div
                         key={ride.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
@@ -1215,6 +1257,16 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                                   Sign up required to chat
                                 </p>
                               </div>
+                            ) : cannotRequest ? (
+                              <div className="flex flex-col space-y-2">
+                                <div className={`px-6 py-3 rounded-lg font-medium text-center border ${
+                                  hasAcceptedRequest
+                                    ? 'bg-green-100 text-green-800 border-green-200'
+                                    : 'bg-orange-100 text-orange-800 border-orange-200'
+                                }`}>
+                                  {hasAcceptedRequest ? 'Accepted' : 'Request Pending'}
+                                </div>
+                              </div>
                             ) : (
                               <button
                                 onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
@@ -1227,7 +1279,8 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                           </div>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </>

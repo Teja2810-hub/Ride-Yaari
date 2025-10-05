@@ -27,6 +27,7 @@ export default function RideRequestModal({
   const [seatsRequested, setSeatsRequested] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [userConfirmations, setUserConfirmations] = useState<{[key: string]: {status: string}}>({})
 
   useEffect(() => {
     if (isOpen && driverId) {
@@ -41,6 +42,9 @@ export default function RideRequestModal({
     try {
       const now = new Date().toISOString()
 
+      const { data: session } = await supabase.auth.getSession()
+      const userId = session?.session?.user?.id
+
       const { data, error } = await supabase
         .from('car_rides')
         .select('*')
@@ -51,10 +55,32 @@ export default function RideRequestModal({
 
       if (error) throw error
 
+      // Fetch user's confirmations for these rides
+      if (userId && data) {
+        const rideIds = data.map(r => r.id)
+        const { data: confirmations } = await supabase
+          .from('ride_confirmations')
+          .select('ride_id, status')
+          .eq('passenger_id', userId)
+          .in('ride_id', rideIds)
+          .in('status', ['pending', 'accepted'])
+
+        const confirmationsMap: {[key: string]: {status: string}} = {}
+        confirmations?.forEach(conf => {
+          if (conf.ride_id) {
+            confirmationsMap[conf.ride_id] = { status: conf.status }
+          }
+        })
+        setUserConfirmations(confirmationsMap)
+      }
+
       setRides(data || [])
 
       if (data && data.length === 1) {
-        setSelectedRide(data[0])
+        const confirmation = userConfirmations[data[0].id]
+        if (!confirmation || (confirmation.status !== 'pending' && confirmation.status !== 'accepted')) {
+          setSelectedRide(data[0])
+        }
       }
     } catch (err) {
       console.error('Error fetching driver rides:', err)
@@ -136,23 +162,33 @@ export default function RideRequestModal({
                 {rides.map((ride) => {
                   const isSelected = selectedRide?.id === ride.id
                   const hasSeats = ride.seats_available > 0
+                  const confirmation = userConfirmations[ride.id]
+                  const hasPendingRequest = confirmation?.status === 'pending'
+                  const hasAcceptedRequest = confirmation?.status === 'accepted'
+                  const cannotSelect = !hasSeats || hasPendingRequest || hasAcceptedRequest
 
                   return (
                     <div
                       key={ride.id}
-                      onClick={() => hasSeats && setSelectedRide(ride)}
-                      className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                        !hasSeats
+                      onClick={() => !cannotSelect && setSelectedRide(ride)}
+                      className={`border rounded-xl p-4 transition-all ${
+                        cannotSelect
                           ? 'bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed'
                           : isSelected
-                          ? 'border-green-500 bg-green-50 shadow-md'
-                          : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
+                          ? 'border-green-500 bg-green-50 shadow-md cursor-pointer'
+                          : 'border-gray-200 hover:border-green-300 hover:bg-green-50 cursor-pointer'
                       }`}
                     >
-                      {!hasSeats && (
+                      {(!hasSeats || hasPendingRequest || hasAcceptedRequest) && (
                         <div className="mb-2">
-                          <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                            Fully Booked
+                          <span className={`inline-block text-xs font-semibold px-2 py-1 rounded ${
+                            !hasSeats
+                              ? 'bg-red-100 text-red-800'
+                              : hasAcceptedRequest
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {!hasSeats ? 'Fully Booked' : hasAcceptedRequest ? 'Already Accepted' : 'Request Pending'}
                           </span>
                         </div>
                       )}
@@ -263,3 +299,6 @@ export default function RideRequestModal({
     </div>
   )
 }
+
+
+export default RideRequestModal
