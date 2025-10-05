@@ -21,6 +21,7 @@ interface DashboardProps {
 
 export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
+  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
 
   const handleStartChat = (userId: string, userName: string) => {
     if (onStartChat) {
@@ -49,12 +50,29 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
               <span className="hidden sm:inline">Help</span>
             </button>
             {onStartChat && !isGuest && (
-              <MessagesNotification onStartChat={handleStartChat} />
+              <MessagesNotification
+                onStartChat={handleStartChat}
+                isOpen={activeNotification === 'messages'}
+                onOpen={() => setActiveNotification('messages')}
+                onClose={() => setActiveNotification(null)}
+              />
             )}
             {!isGuest && (
               <>
-                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
                 <button
                   onClick={onProfile}
                   className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"

@@ -6,6 +6,9 @@ import { ChatMessage } from '../types'
 
 interface MessagesNotificationProps {
   onStartChat: (userId: string, userName: string) => void
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }
 
 interface Conversation {
@@ -22,12 +25,22 @@ interface Conversation {
   unread_count: number
 }
 
-export default function MessagesNotification({ onStartChat }: MessagesNotificationProps) {
+export default function MessagesNotification({ onStartChat, isOpen: controlledIsOpen, onOpen, onClose }: MessagesNotificationProps) {
   const { user } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [internalShowDropdown, setInternalShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
+  const setShowDropdown = (value: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (value && onOpen) onOpen()
+      if (!value && onClose) onClose()
+    } else {
+      setInternalShowDropdown(value)
+    }
+  }
 
   useEffect(() => {
     if (user) {

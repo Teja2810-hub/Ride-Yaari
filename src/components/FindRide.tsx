@@ -259,6 +259,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         .from('car_rides')
         .select(`
           *,
+          user_id,
           user_profiles:user_id (
             id,
             full_name,
@@ -603,14 +604,18 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   }
 
   const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
+    if (!userId || userId.trim() === '') {
+      console.error('FindRide: Invalid userId in handleChatClick:', { userId, userName, ride })
+      alert('Cannot open chat: User information is not available. Please try refreshing the page.')
+      return
+    }
+
     setSelectedChatUser({ userId, userName })
     setSelectedChatRide(ride)
-    
-    // Check if disclaimer should be shown
+
     if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      // Auto-proceed if disclaimer was already shown
       handleConfirmChat()
     }
   }
@@ -1255,8 +1260,17 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
                               </div>
                             ) : (
                               <button
-                                onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
-                                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                onClick={() => {
+                                  const userId = ride.user_id || (ride.user_profiles as any)?.id
+                                  const userName = ride.user_profiles?.full_name || 'Driver'
+                                  if (!userId || userId.trim() === '') {
+                                    alert('Cannot open chat: User information is not available')
+                                    return
+                                  }
+                                  handleChatClick(userId, userName, ride)
+                                }}
+                                disabled={!ride.user_id && !(ride.user_profiles as any)?.id}
+                                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                               >
                                 <MessageCircle size={20} />
                                 <span>Chat with Driver</span>

@@ -21,19 +21,35 @@ interface NotificationItem {
 interface EnhancedNotificationBadgeProps {
   onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
   onViewConfirmations?: () => void
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }
 
-export default function EnhancedNotificationBadge({ 
-  onStartChat, 
-  onViewConfirmations 
+export default function EnhancedNotificationBadge({
+  onStartChat,
+  onViewConfirmations,
+  isOpen: controlledIsOpen,
+  onOpen,
+  onClose
 }: EnhancedNotificationBadgeProps) {
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [stats, setStats] = useState<NotificationStats>({ pendingConfirmations: 0, unreadMessages: 0, recentUpdates: 0, total: 0 })
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [internalShowDropdown, setInternalShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'high' | 'confirmations' | 'messages'>('all')
   const [showFilters, setShowFilters] = useState(false)
+
+  const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
+  const setShowDropdown = (value: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (value && onOpen) onOpen()
+      if (!value && onClose) onClose()
+    } else {
+      setInternalShowDropdown(value)
+    }
+  }
 
   useEffect(() => {
     if (user) {

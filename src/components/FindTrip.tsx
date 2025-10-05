@@ -140,6 +140,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         .from('trips')
         .select(`
           *,
+          user_id,
           user_profiles:user_id (
             id,
             full_name,
@@ -223,22 +224,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     }
   }
 
-  const handleChatClick = (userId: string, userName: string, trip: Trip) => {
-    // Validate userId before proceeding
+  const handleChatClick = (userId: string, userName: string, trip: Trip | undefined) => {
     if (!userId || userId.trim() === '') {
-      console.error('handleChatClick: Invalid userId provided:', userId)
-      alert('Cannot open chat: Invalid user information')
+      console.error('FindTrip: Invalid userId in handleChatClick:', { userId, userName, trip })
+      alert('Cannot open chat: User information is not available. Please try refreshing the page.')
       return
     }
 
     setSelectedChatUser({ userId, userName })
-    setSelectedChatTrip(trip)
-    
-    // Check if disclaimer should be shown
+    setSelectedChatTrip(trip || null)
+
     if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      // Auto-proceed if disclaimer was already shown
       handleConfirmChat()
     }
   }
@@ -593,15 +591,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => {
-                                    if (trip.user_id && trip.user_id.trim()) {
-                                      handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)
-                                    } else {
-                                      alert('Cannot open chat: Invalid user information')
+                                    const userId = trip.user_id || (trip.user_profiles as any)?.id
+                                    const userName = trip.user_profiles?.full_name || 'Traveler'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
                                     }
+                                    handleChatClick(userId, userName, trip)
                                   }}
-                                  disabled={!trip.user_id || trip.user_id.trim() === ''}
+                                  disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
                                   className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                                    !trip.user_id || trip.user_id.trim() === ''
+                                    !trip.user_id && !(trip.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-blue-600 text-white hover:bg-blue-700'
                                   }`}
@@ -620,15 +620,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <button
                                 onClick={() => {
-                                  if (trip.user_id && trip.user_id.trim()) {
-                                    handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)
-                                  } else {
-                                    alert('Cannot open chat: Invalid user information')
+                                  const userId = trip.user_id || (trip.user_profiles as any)?.id
+                                  const userName = trip.user_profiles?.full_name || 'Traveler'
+                                  if (!userId || userId.trim() === '') {
+                                    alert('Cannot open chat: User information is not available')
+                                    return
                                   }
+                                  handleChatClick(userId, userName, trip)
                                 }}
-                                disabled={!trip.user_id || trip.user_id.trim() === ''}
+                                disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
                                 className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                                  !trip.user_id || trip.user_id.trim() === ''
+                                  !trip.user_id && !(trip.user_profiles as any)?.id
                                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                                 }`}
@@ -758,15 +760,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => {
-                                    if (request.passenger_id && request.passenger_id.trim()) {
-                                      handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)
-                                    } else {
-                                      alert('Cannot open chat: Invalid user information')
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
                                     }
+                                    handleChatClick(userId, userName, undefined)
                                   }}
-                                  disabled={!request.passenger_id || request.passenger_id.trim() === ''}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
                                   className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                                    !request.passenger_id || request.passenger_id.trim() === ''
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-purple-600 text-white hover:bg-purple-700'
                                   }`}
@@ -791,15 +795,17 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               <div className="flex flex-col space-y-2">
                                 <button
                                   onClick={() => {
-                                    if (request.passenger_id && request.passenger_id.trim()) {
-                                      handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)
-                                    } else {
-                                      alert('Cannot open chat: Invalid user information')
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
                                     }
+                                    handleChatClick(userId, userName, undefined)
                                   }}
-                                  disabled={!request.passenger_id || request.passenger_id.trim() === ''}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
                                   className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                                    !request.passenger_id || request.passenger_id.trim() === ''
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-purple-600 text-white hover:bg-purple-700'
                                   }`}

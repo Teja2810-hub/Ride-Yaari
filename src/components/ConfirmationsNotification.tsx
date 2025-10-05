@@ -9,14 +9,27 @@ import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 interface ConfirmationsNotificationProps {
   onStartChat: (userId: string, userName: string) => void
   onViewConfirmations: () => void
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }
 
-export default function ConfirmationsNotification({ onStartChat, onViewConfirmations }: ConfirmationsNotificationProps) {
+export default function ConfirmationsNotification({ onStartChat, onViewConfirmations, isOpen: controlledIsOpen, onOpen, onClose }: ConfirmationsNotificationProps) {
   const { user } = useAuth()
   const [pendingCount, setPendingCount] = useState(0)
   const [confirmations, setConfirmations] = useState<RideConfirmation[]>([])
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [internalShowDropdown, setInternalShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
+  const setShowDropdown = (value: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (value && onOpen) onOpen()
+      if (!value && onClose) onClose()
+    } else {
+      setInternalShowDropdown(value)
+    }
+  }
 
   useEffect(() => {
     if (user) {
