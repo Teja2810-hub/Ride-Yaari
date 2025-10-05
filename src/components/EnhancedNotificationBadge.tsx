@@ -323,6 +323,8 @@ export default function EnhancedNotificationBadge({
   }
 
   const handleNotificationClick = (notification: NotificationItem) => {
+    // Close dropdown immediately
+    if (onClose) onClose()
     setShowDropdown(false)
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
@@ -712,6 +714,7 @@ export default function EnhancedNotificationBadge({
                   {onViewConfirmations && stats.pendingConfirmations > 0 && (
                     <button
                       onClick={() => {
+                        if (onClose) onClose()
                         setShowDropdown(false)
                         onViewConfirmations()
                       }}

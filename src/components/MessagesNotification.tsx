@@ -226,6 +226,8 @@ export default function MessagesNotification({ onStartChat, isOpen: controlledIs
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
+    // Close dropdown immediately
+    if (onClose) onClose()
     setShowDropdown(false)
 
     try {

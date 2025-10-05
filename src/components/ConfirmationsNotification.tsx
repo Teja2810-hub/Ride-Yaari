@@ -259,6 +259,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
 
                           <button
                             onClick={() => {
+                              if (onClose) onClose()
                               setShowDropdown(false)
                               onViewConfirmations()
                             }}
@@ -275,6 +276,7 @@ export default function ConfirmationsNotification({ onStartChat, onViewConfirmat
                 <div className="p-3 border-t border-gray-200">
                   <button
                     onClick={() => {
+                      if (onClose) onClose()
                       setShowDropdown(false)
                       onViewConfirmations()
                     }}
