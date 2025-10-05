@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -36,7 +36,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [sortBy, setSortBy] = useState<SortOption>('date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'trips' | 'requests'>('trips')
-  const [userConfirmations, setUserConfirmations] = useState<{[key: string]: {status: string}}>({})
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
@@ -81,36 +80,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       setSearched(true)
     } finally {
       setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (user && !effectiveIsGuest) {
-      fetchUserConfirmations()
-    }
-  }, [user, effectiveIsGuest])
-
-  const fetchUserConfirmations = async () => {
-    if (!user) return
-
-    try {
-      const { data, error } = await supabase
-        .from('ride_confirmations')
-        .select('trip_id, status')
-        .eq('passenger_id', user.id)
-        .in('status', ['pending', 'accepted'])
-
-      if (error) throw error
-
-      const confirmationsMap: {[key: string]: {status: string}} = {}
-      data?.forEach(conf => {
-        if (conf.trip_id) {
-          confirmationsMap[conf.trip_id] = { status: conf.status }
-        }
-      })
-      setUserConfirmations(confirmationsMap)
-    } catch (error) {
-      console.error('Error fetching user confirmations:', error)
     }
   }
 
@@ -199,11 +168,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
       if (error) throw error
 
       setTrips(data || [])
-
-      // Fetch user confirmations after getting trips
-      if (user && !effectiveIsGuest) {
-        await fetchUserConfirmations()
-      }
 
       // Also fetch matching trip requests
       const requests = await getDisplayTripRequests(
@@ -488,13 +452,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {trips.map((trip) => {
-                      const confirmation = userConfirmations[trip.id]
-                      const hasPendingRequest = confirmation?.status === 'pending'
-                      const hasAcceptedRequest = confirmation?.status === 'accepted'
-                      const cannotRequest = hasPendingRequest || hasAcceptedRequest
-
-                      return (
+                    {trips.map((trip) => (
                       <div
                         key={trip.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
@@ -625,16 +583,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
                                 Your Trip
                               </div>
-                            ) : cannotRequest ? (
-                              <div className="flex flex-col space-y-2">
-                                <div className={`px-6 py-3 rounded-lg font-medium text-center border ${
-                                  hasAcceptedRequest
-                                    ? 'bg-green-100 text-green-800 border-green-200'
-                                    : 'bg-orange-100 text-orange-800 border-orange-200'
-                                }`}>
-                                  {hasAcceptedRequest ? 'Accepted' : 'Request Pending'}
-                                </div>
-                              </div>
                             ) : (
                               <button
                                 onClick={() => {
@@ -658,8 +606,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                           </div>
                         </div>
                       </div>
-                      )
-                    })}
+                    ))}
                   </div>
                 )}
               </>

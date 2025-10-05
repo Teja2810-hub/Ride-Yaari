@@ -386,9 +386,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           setShowRideRequestModal(false)
           return
         } else if (latest.status === 'accepted') {
-          alert('You have already been accepted for this ride')
-          setShowRideRequestModal(false)
-          return
+          throw new Error('You have already been accepted for this ride')
         } else if (latest.status === 'rejected') {
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
@@ -513,9 +511,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           setShowTripRequestModal(false)
           return
         } else if (latest.status === 'accepted') {
-          alert('You have already been accepted for this trip')
-          setShowTripRequestModal(false)
-          return
+          throw new Error('You have already been accepted for this trip')
         } else if (latest.status === 'rejected') {
           const rejectedTime = new Date(latest.updated_at).getTime()
           const now = new Date().getTime()
