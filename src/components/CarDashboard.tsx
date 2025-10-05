@@ -20,9 +20,10 @@ interface CarDashboardProps {
 
 export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
+  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
 
   const handleStartChat = (userId: string, userName: string) => {
-    // Ensure we have a clean state before starting chat
+    setActiveNotification(null)
     if (onStartChat) {
       onStartChat(userId, userName)
     }
@@ -42,12 +43,29 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               <span>Back</span>
             </button>
             {onStartChat && !isGuest && (
-              <MessagesNotification onStartChat={handleStartChat} />
+              <MessagesNotification
+                onStartChat={handleStartChat}
+                isOpen={activeNotification === 'messages'}
+                onOpen={() => setActiveNotification('messages')}
+                onClose={() => setActiveNotification(null)}
+              />
             )}
             {!isGuest && (
               <>
-                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
                 <button
                   onClick={onProfile}
                   className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
