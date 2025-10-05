@@ -213,6 +213,9 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
+    // Close dropdown first to prevent overlap
+    setShowDropdown(false)
+
     try {
       // Mark messages as read first
       await supabase
@@ -223,8 +226,8 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
 
       // Update local state immediately
       setUnreadCount(0)
-      setConversations(prev => prev.map(conv => 
-        conv.other_user_id === userId 
+      setConversations(prev => prev.map(conv =>
+        conv.other_user_id === userId
           ? { ...conv, unread_count: 0 }
           : conv
       ))
@@ -232,7 +235,6 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
       console.error('Error marking messages as read:', error)
     }
 
-    setShowDropdown(false)
     onStartChat(userId, userName)
   }
 

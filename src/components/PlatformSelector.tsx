@@ -10,7 +10,7 @@ interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
   onProfile: () => void
   onHelp: () => void
-  onStartChat: (userId: string, userName: string) => void
+  onStartChat: (userId: string, userName: string, showRequestButtons?: boolean) => void
   onViewConfirmations: () => void
   isGuest?: boolean
 }
@@ -20,8 +20,9 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
 
   const handleStartChat = (userId: string, userName: string) => {
     // Ensure we have a clean state before starting chat
+    // Pass showRequestButtons=true when opening from messages
     if (onStartChat) {
-      onStartChat(userId, userName)
+      onStartChat(userId, userName, true)
     }
   }
   return (

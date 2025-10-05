@@ -228,6 +228,9 @@ export default function NotificationCenter({
   }
 
   const handleNotificationClick = async (notification: Notification) => {
+    // Close notification center first to prevent overlap
+    onClose()
+
     // Mark this notification as read immediately
     if (!notification.read && notification.type === 'message' && user) {
       try {
@@ -244,11 +247,9 @@ export default function NotificationCenter({
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
-        onClose()
         onViewConfirmations()
       }
     } else if (notification.type === 'message' && onStartChat) {
-      onClose()
       onStartChat(
         notification.actionData.userId,
         notification.actionData.userName

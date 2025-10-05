@@ -18,9 +18,10 @@ interface ChatProps {
   otherUserName: string
   preSelectedRide?: CarRide
   preSelectedTrip?: Trip
+  showRequestButtons?: boolean
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false }: ChatProps) {
   const { user, userProfile } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -844,10 +845,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Only show for posted rides/trips */}
-        {(preSelectedRide || preSelectedTrip) && (
+        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested */}
+        {(preSelectedRide || preSelectedTrip || showRequestButtons) && (
           <div className="flex gap-2 mb-3">
-            {preSelectedRide && (
+            {(preSelectedRide || showRequestButtons) && (
               <button
                 onClick={() => setShowRideRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
@@ -856,7 +857,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <span>Request Ride</span>
               </button>
             )}
-            {preSelectedTrip && (
+            {(preSelectedTrip || showRequestButtons) && (
               <button
                 onClick={() => setShowTripRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
