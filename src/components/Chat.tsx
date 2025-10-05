@@ -643,49 +643,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     )
   }
 
-  if (error && !skipLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
-        <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat Error</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={onBack}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (isBlocked) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
-        <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <Shield size={48} className="text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">User Blocked</h3>
-          <p className="text-gray-600 mb-6">
-            You have blocked this user. Unblock them to start chatting again.
-          </p>
-          <button
-            onClick={onBack}
-            className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Don't show deleted state - just reinitialize chat when messages are deleted
-  if (chatDeleted && messages.length === 0) {
-    setChatDeleted(false)
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Fixed Header */}
@@ -839,23 +796,43 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       </div>
 
       {/* Error Overlay Popup */}
-      {error && (
+      {(error || isBlocked || (chatDeleted && messages.length === 0)) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-start justify-between mb-4">
-              <AlertTriangle size={24} className="text-red-500 flex-shrink-0" />
+              {isBlocked ? (
+                <Shield size={24} className="text-red-500 flex-shrink-0" />
+              ) : (
+                <AlertTriangle size={24} className="text-red-500 flex-shrink-0" />
+              )}
               <button
-                onClick={() => setError('')}
+                onClick={() => {
+                  setError('')
+                  setIsBlocked(false)
+                  setChatDeleted(false)
+                }}
                 className="ml-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
                 title="Close"
               >
                 <X size={20} />
               </button>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to send request</h3>
-            <p className="text-gray-700 mb-6">{error}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {isBlocked ? 'User Blocked' : chatDeleted ? 'Chat Deleted' : 'Unable to send request'}
+            </h3>
+            <p className="text-gray-700 mb-6">
+              {isBlocked
+                ? 'You have blocked this user. Unblock them to start chatting again.'
+                : chatDeleted
+                ? 'This chat has been deleted.'
+                : error}
+            </p>
             <button
-              onClick={() => setError('')}
+              onClick={() => {
+                setError('')
+                setIsBlocked(false)
+                setChatDeleted(false)
+              }}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
               Close
