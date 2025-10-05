@@ -396,6 +396,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this ride again`)
             return
           }
+
+          await supabase
+            .from('ride_confirmations')
+            .delete()
+            .eq('id', latest.id)
         }
       }
 
@@ -473,6 +478,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             setError(`Please wait ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''} before requesting this trip again`)
             return
           }
+
+          await supabase
+            .from('ride_confirmations')
+            .delete()
+            .eq('id', latest.id)
         }
       }
 
