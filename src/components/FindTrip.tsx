@@ -190,6 +190,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   }
 
   const handleChatClick = (userId: string, userName: string, trip: Trip) => {
+    // Validate userId before proceeding
+    if (!userId || userId.trim() === '') {
+      console.error('handleChatClick: Invalid userId provided:', userId)
+      alert('Cannot open chat: Invalid user information')
+      return
+    }
+
     setSelectedChatUser({ userId, userName })
     setSelectedChatTrip(trip)
     
@@ -551,8 +558,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    if (trip.user_id && trip.user_id.trim()) {
+                                      handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)
+                                    } else {
+                                      alert('Cannot open chat: Invalid user information')
+                                    }
+                                  }}
+                                  disabled={!trip.user_id || trip.user_id.trim() === ''}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !trip.user_id || trip.user_id.trim() === ''
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Chat with Traveler</span>
@@ -567,8 +585,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                               </div>
                             ) : (
                               <button
-                                onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                                className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                onClick={() => {
+                                  if (trip.user_id && trip.user_id.trim()) {
+                                    handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)
+                                  } else {
+                                    alert('Cannot open chat: Invalid user information')
+                                  }
+                                }}
+                                disabled={!trip.user_id || trip.user_id.trim() === ''}
+                                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  !trip.user_id || trip.user_id.trim() === ''
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
                               >
                                 <MessageCircle size={20} />
                                 <span>Chat with Traveler</span>
@@ -694,8 +723,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    if (request.passenger_id && request.passenger_id.trim()) {
+                                      handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)
+                                    } else {
+                                      alert('Cannot open chat: Invalid user information')
+                                    }
+                                  }}
+                                  disabled={!request.passenger_id || request.passenger_id.trim() === ''}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id || request.passenger_id.trim() === ''
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -716,8 +756,19 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    if (request.passenger_id && request.passenger_id.trim()) {
+                                      handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)
+                                    } else {
+                                      alert('Cannot open chat: Invalid user information')
+                                    }
+                                  }}
+                                  disabled={!request.passenger_id || request.passenger_id.trim() === ''}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id || request.passenger_id.trim() === ''
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Assistance</span>
