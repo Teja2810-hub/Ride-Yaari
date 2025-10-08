@@ -1526,15 +1526,6 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
               setSidebarOpen(false)
               onBack()
             }}
-            onNotifications={() => {
-              setSidebarOpen(false)
-            }}
-            onMessages={() => {
-              setSidebarOpen(false)
-            }}
-            onRideRequests={() => {
-              setSidebarOpen(false)
-            }}
             onSignOut={() => {
               setSidebarOpen(false)
               signOut()

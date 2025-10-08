@@ -913,15 +913,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
               setSidebarOpen(false)
               onBack()
             }}
-            onNotifications={() => {
-              setSidebarOpen(false)
-            }}
-            onMessages={() => {
-              setSidebarOpen(false)
-            }}
-            onRideRequests={() => {
-              setSidebarOpen(false)
-            }}
             onSignOut={() => {
               setSidebarOpen(false)
               signOut()

@@ -521,15 +521,6 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
             setSidebarOpen(false)
             onBack()
           }}
-          onNotifications={() => {
-            setSidebarOpen(false)
-          }}
-          onMessages={() => {
-            setSidebarOpen(false)
-          }}
-          onRideRequests={() => {
-            setSidebarOpen(false)
-          }}
           onSignOut={() => {
             setSidebarOpen(false)
             signOut()

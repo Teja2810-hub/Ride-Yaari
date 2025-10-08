@@ -475,15 +475,6 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
               setSidebarOpen(false)
               onBack()
             }}
-            onNotifications={() => {
-              setSidebarOpen(false)
-            }}
-            onMessages={() => {
-              setSidebarOpen(false)
-            }}
-            onRideRequests={() => {
-              setSidebarOpen(false)
-            }}
             onSignOut={() => {
               setSidebarOpen(false)
               signOut()

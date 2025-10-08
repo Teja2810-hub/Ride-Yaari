@@ -248,18 +248,6 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
             setSidebarOpen(false)
             onProfile()
           }}
-          onNotifications={() => {
-            setSidebarOpen(false)
-            setActiveNotification('notifications')
-          }}
-          onMessages={() => {
-            setSidebarOpen(false)
-            setActiveNotification('messages')
-          }}
-          onRideRequests={() => {
-            setSidebarOpen(false)
-            setActiveNotification('confirmations')
-          }}
           onSignOut={() => {
             setSidebarOpen(false)
             signOut()
