@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plane, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Circle as HelpCircle, MessageCircle, Send, Menu } from 'lucide-react'
+import { Plane, CirclePlus as PlusCircle, Search, ArrowLeft, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
@@ -46,7 +46,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
               </button>
             )}
           </div>
-          
+
           <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
               onClick={onBack}
@@ -54,13 +54,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             >
               <ArrowLeft size={18} />
               <span>Back</span>
-            </button>
-            <button
-              onClick={onHelp}
-              className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-            >
-              <HelpCircle size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Help</span>
             </button>
             {onStartChat && !isGuest && (
               <MessagesNotification
@@ -86,13 +79,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                   onOpen={() => setActiveNotification('confirmations')}
                   onClose={() => setActiveNotification(null)}
                 />
-                <button
-                  onClick={onProfile}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-                >
-                  <User size={16} className="sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Profile</span>
-                </button>
                 <div className="text-center sm:text-right">
                   <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
                   <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
@@ -109,30 +95,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                     />
                   </div>
                 )}
-                <button
-                  onClick={signOut}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-                >
-                  <LogOut size={16} className="sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </button>
-              </>
-            )}
-            {isGuest && (
-              <>
-                <button
-                  onClick={() => {
-                    setGuestMode(false)
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
-                >
-                  <User size={18} />
-                  <span>Sign Up</span>
-                </button>
-                <div className="text-center sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
-                </div>
               </>
             )}
           </div>
