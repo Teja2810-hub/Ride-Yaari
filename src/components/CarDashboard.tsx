@@ -54,16 +54,23 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               <ArrowLeft size={18} />
               <span>Back</span>
             </button>
-            {onStartChat && !isGuest && (
-              <MessagesNotification
-                onStartChat={handleStartChat}
-                isOpen={activeNotification === 'messages'}
-                onOpen={() => setActiveNotification('messages')}
-                onClose={() => setActiveNotification(null)}
-              />
-            )}
-            {!isGuest && (
+            {isGuest ? (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign Up / Sign In
+              </button>
+            ) : (
               <>
+                {onStartChat && (
+                  <MessagesNotification
+                    onStartChat={handleStartChat}
+                    isOpen={activeNotification === 'messages'}
+                    onOpen={() => setActiveNotification('messages')}
+                    onClose={() => setActiveNotification(null)}
+                  />
+                )}
                 <NotificationBadge
                   onStartChat={handleStartChat}
                   onViewConfirmations={onViewConfirmations}
@@ -78,10 +85,6 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                   onOpen={() => setActiveNotification('confirmations')}
                   onClose={() => setActiveNotification(null)}
                 />
-                <div className="text-center sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
-                </div>
                 {userProfile?.profile_image_url && (
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
                     <img

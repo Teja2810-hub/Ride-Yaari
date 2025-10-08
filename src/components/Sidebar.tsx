@@ -81,7 +81,6 @@ export default function Sidebar({
                 </div>
               )}
               <div className="text-white">
-                <p className="text-xs opacity-90">Welcome back,</p>
                 <p className="font-semibold text-sm truncate max-w-[150px]">
                   {userProfile?.full_name || 'User'}
                 </p>

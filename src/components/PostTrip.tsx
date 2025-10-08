@@ -196,7 +196,14 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
-          {!effectiveIsGuest && (
+          {effectiveIsGuest ? (
+            <button
+              onClick={() => setGuestMode(false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              Sign Up / Sign In
+            </button>
+          ) : (
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
