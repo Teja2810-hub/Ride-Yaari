@@ -46,7 +46,14 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
-            {!isGuest && (
+            {isGuest ? (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign Up / Sign In
+              </button>
+            ) : (
               <>
                 <NotificationBadge
                   onStartChat={handleStartChat}
