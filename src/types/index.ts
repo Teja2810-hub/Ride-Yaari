@@ -5,6 +5,7 @@ export interface UserProfile {
   age?: number
   gender?: string
   profile_image_url?: string
+  is_admin?: boolean
 }
 
 export interface Airport {
