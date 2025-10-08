@@ -17,7 +17,7 @@ interface PostTripProps {
 }
 
 export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
-  const { user, userProfile, setGuestMode, signOut } = useAuth()
+  const { user, setGuestMode, signOut } = useAuth()
   const effectiveIsGuest = isGuest || !user
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [leavingAirport, setLeavingAirport] = useState('')
@@ -208,28 +208,9 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Trip</h1>
-              <p className="text-gray-600">Share your flight details to help other travelers</p>
-            </div>
-            {!effectiveIsGuest && userProfile?.profile_image_url && (
-              <button
-                onClick={onBack}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-600 transition-all cursor-pointer flex-shrink-0 ml-4"
-              >
-                <img
-                  src={userProfile.profile_image_url}
-                  alt={userProfile.full_name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              </button>
-            )}
-          </div>
-          <div>
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Trip</h1>
+            <p className="text-gray-600">Share your flight details to help other travelers</p>
             {effectiveIsGuest && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
