@@ -81,9 +81,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
         newSeatsAvailable = Math.max(0, newTotalSeats - seatsBooked)
 
         if (newTotalSeats < seatsBooked) {
-          setError(`Cannot reduce total seats to ${newTotalSeats}. You have ${seatsBooked} seats already booked. Please cancel some confirmations first.`)
-          setLoading(false)
-          return
+          throw new Error(`Cannot reduce total seats to ${newTotalSeats}. You have ${seatsBooked} seats already booked. Please cancel some confirmations first.`)
         }
       }
 
