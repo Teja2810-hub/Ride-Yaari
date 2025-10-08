@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle, Menu } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import Sidebar from './Sidebar'
 import { CarRide, RideRequest } from '../types'
 import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
@@ -29,8 +30,9 @@ type LocationSearchType = 'manual' | 'nearby'
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
-  const { user, isGuest: contextIsGuest } = useAuth()
+  const { user, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Load cached filters from localStorage
   const loadCachedFilters = () => {
@@ -651,7 +653,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
@@ -659,6 +661,15 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
+          {!effectiveIsGuest && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -1503,6 +1514,33 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
           loading={false}
           type="chat-ride"
         />
+
+        {!effectiveIsGuest && (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onHelp={() => {
+              setSidebarOpen(false)
+            }}
+            onProfile={() => {
+              setSidebarOpen(false)
+              onBack()
+            }}
+            onNotifications={() => {
+              setSidebarOpen(false)
+            }}
+            onMessages={() => {
+              setSidebarOpen(false)
+            }}
+            onRideRequests={() => {
+              setSidebarOpen(false)
+            }}
+            onSignOut={() => {
+              setSidebarOpen(false)
+              signOut()
+            }}
+          />
+        )}
       </div>
     </div>
   )

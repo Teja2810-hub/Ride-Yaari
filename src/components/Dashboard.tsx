@@ -1,11 +1,12 @@
 import React from 'react'
-import { Plane, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Circle as HelpCircle, MessageCircle, Send } from 'lucide-react'
+import { Plane, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Circle as HelpCircle, MessageCircle, Send, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
 import NotificationBadge from './NotificationBadge'
+import Sidebar from './Sidebar'
 
 interface DashboardProps {
   onPostTrip: () => void
@@ -22,6 +23,7 @@ interface DashboardProps {
 export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   const handleStartChat = (userId: string, userName: string) => {
     setActiveNotification(null)
@@ -33,7 +35,17 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
-          <div></div>
+          <div>
+            {!isGuest && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+              >
+                <Menu size={20} />
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+            )}
+          </div>
           
           <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
@@ -302,6 +314,37 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
 
         </div>
       </div>
+
+      {!isGuest && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onHelp={() => {
+            setSidebarOpen(false)
+            onHelp()
+          }}
+          onProfile={() => {
+            setSidebarOpen(false)
+            onProfile()
+          }}
+          onNotifications={() => {
+            setSidebarOpen(false)
+            setActiveNotification('notifications')
+          }}
+          onMessages={() => {
+            setSidebarOpen(false)
+            setActiveNotification('messages')
+          }}
+          onRideRequests={() => {
+            setSidebarOpen(false)
+            setActiveNotification('confirmations')
+          }}
+          onSignOut={() => {
+            setSidebarOpen(false)
+            signOut()
+          }}
+        />
+      )}
     </div>
   )
 }

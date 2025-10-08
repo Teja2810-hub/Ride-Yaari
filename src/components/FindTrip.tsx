@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send, Menu } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import Sidebar from './Sidebar'
 import { Trip, TripRequest } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
@@ -19,8 +20,9 @@ interface FindTripProps {
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
-  const { user, isGuest: contextIsGuest } = useAuth()
+  const { user, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Load cached filters from localStorage
   const loadCachedFilters = () => {
@@ -267,7 +269,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -275,6 +277,15 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
+          {!effectiveIsGuest && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -890,6 +901,33 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
           loading={false}
           type="chat-trip"
         />
+
+        {!effectiveIsGuest && (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onHelp={() => {
+              setSidebarOpen(false)
+            }}
+            onProfile={() => {
+              setSidebarOpen(false)
+              onBack()
+            }}
+            onNotifications={() => {
+              setSidebarOpen(false)
+            }}
+            onMessages={() => {
+              setSidebarOpen(false)
+            }}
+            onRideRequests={() => {
+              setSidebarOpen(false)
+            }}
+            onSignOut={() => {
+              setSidebarOpen(false)
+              signOut()
+            }}
+          />
+        )}
       </div>
     </div>
   )
