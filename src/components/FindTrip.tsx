@@ -6,9 +6,6 @@ import Sidebar from './Sidebar'
 import { Trip, TripRequest } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
-import MessagesNotification from './MessagesNotification'
-import NotificationBadge from './NotificationBadge'
-import ConfirmationsNotification from './ConfirmationsNotification'
 import { getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayTripRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
@@ -54,11 +51,6 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   const [sortBy, setSortBy] = useState<SortOption>(cachedFilters?.sortBy || 'date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'trips' | 'requests'>('trips')
-  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
-
-  const onViewConfirmations = () => {
-    console.log('View confirmations clicked')
-  }
 
   // Cache filters whenever they change
   React.useEffect(() => {
@@ -286,35 +278,13 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
             <span>Back to Dashboard</span>
           </button>
           {!effectiveIsGuest && (
-            <div className="flex items-center space-x-4">
-              <MessagesNotification
-                onStartChat={(userId, userName) => onStartChat(userId, userName, undefined, undefined)}
-                isOpen={activeNotification === 'messages'}
-                onOpen={() => setActiveNotification('messages')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <NotificationBadge
-                onStartChat={(userId, userName) => onStartChat(userId, userName, undefined, undefined)}
-                onViewConfirmations={onViewConfirmations}
-                isOpen={activeNotification === 'notifications'}
-                onOpen={() => setActiveNotification('notifications')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <ConfirmationsNotification
-                onStartChat={(userId, userName) => onStartChat(userId, userName, undefined, undefined)}
-                onViewConfirmations={onViewConfirmations}
-                isOpen={activeNotification === 'confirmations'}
-                onOpen={() => setActiveNotification('confirmations')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
-              >
-                <Menu size={20} />
-                <span className="hidden sm:inline">Menu</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
           )}
         </div>
 

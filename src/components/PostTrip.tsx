@@ -5,9 +5,6 @@ import { supabase } from '../utils/supabase'
 import Sidebar from './Sidebar'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
-import MessagesNotification from './MessagesNotification'
-import NotificationBadge from './NotificationBadge'
-import ConfirmationsNotification from './ConfirmationsNotification'
 import { timezones, getDefaultTimezone } from '../utils/timezones'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { popupManager } from '../utils/popupManager'
@@ -40,7 +37,6 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
   const [error, setError] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
-  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferenceData>({
     enabled: false,
     dateType: 'specific_date',
@@ -201,35 +197,13 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
             <span>Back to Dashboard</span>
           </button>
           {!effectiveIsGuest && (
-            <div className="flex items-center space-x-4">
-              <MessagesNotification
-                onStartChat={(userId, userName) => console.log('Start chat from PostTrip')}
-                isOpen={activeNotification === 'messages'}
-                onOpen={() => setActiveNotification('messages')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <NotificationBadge
-                onStartChat={(userId, userName) => console.log('Start chat from PostTrip')}
-                onViewConfirmations={() => console.log('View confirmations from PostTrip')}
-                isOpen={activeNotification === 'notifications'}
-                onOpen={() => setActiveNotification('notifications')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <ConfirmationsNotification
-                onStartChat={(userId, userName) => console.log('Start chat from PostTrip')}
-                onViewConfirmations={() => console.log('View confirmations from PostTrip')}
-                isOpen={activeNotification === 'confirmations'}
-                onOpen={() => setActiveNotification('confirmations')}
-                onClose={() => setActiveNotification(null)}
-              />
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
-              >
-                <Menu size={20} />
-                <span className="hidden sm:inline">Menu</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
           )}
         </div>
 

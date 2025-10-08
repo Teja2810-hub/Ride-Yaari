@@ -54,13 +54,36 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               <ArrowLeft size={18} />
               <span>Back</span>
             </button>
+            {onStartChat && !isGuest && (
+              <MessagesNotification
+                onStartChat={handleStartChat}
+                isOpen={activeNotification === 'messages'}
+                onOpen={() => setActiveNotification('messages')}
+                onClose={() => setActiveNotification(null)}
+              />
+            )}
             {!isGuest && (
               <>
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
+                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
+                </div>
                 {userProfile?.profile_image_url && (
-                  <button
-                    onClick={onProfile}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                  >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
@@ -69,7 +92,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                         e.currentTarget.style.display = 'none'
                       }}
                     />
-                  </button>
+                  </div>
                 )}
               </>
             )}
