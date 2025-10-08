@@ -614,7 +614,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
     }
   }
 
-  const handleChatClick = (userId: string, userName: string, ride: CarRide) => {
+  const handleChatClick = (userId: string, userName: string, ride: CarRide | undefined) => {
     console.log('FindRide: handleChatClick called with:', { userId, userName, ride })
 
     if (!userId || userId.trim() === '') {
@@ -624,13 +624,19 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
     }
 
     setSelectedChatUser({ userId, userName })
-    setSelectedChatRide(ride)
+    setSelectedChatRide(ride || null)
 
     if (popupManager.shouldShowDisclaimer('chat-ride', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      handleConfirmChat()
+      handleConfirmChatWithParams(userId, userName, ride)
     }
+  }
+
+  const handleConfirmChatWithParams = (userId: string, userName: string, ride?: CarRide) => {
+    setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-ride', user?.id, userId)
+    onStartChat(userId, userName, ride, undefined)
   }
 
   const handleConfirmChat = () => {
