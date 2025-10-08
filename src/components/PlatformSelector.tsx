@@ -1,11 +1,12 @@
 import React from 'react'
-import { Plane, Car, ArrowRight, User, Circle as HelpCircle, LogOut } from 'lucide-react'
+import { Plane, Car, ArrowRight, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ReviewForm from './ReviewForm'
 import ConfirmationsNotification from './ConfirmationsNotification'
 import NotificationBadge from './NotificationBadge'
+import Sidebar from './Sidebar'
 
 interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
@@ -19,6 +20,7 @@ interface PlatformSelectorProps {
 export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations, isGuest = false }: PlatformSelectorProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   const handleStartChat = (userId: string, userName: string) => {
     setActiveNotification(null)
@@ -31,25 +33,19 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-16 space-y-4 sm:space-y-0">
-          <div></div>
-          
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
-            {isGuest && (
+          <div>
+            {!isGuest && (
               <button
-                onClick={() => setGuestMode(false)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
               >
-                <User size={18} />
-                <span>Sign Up</span>
+                <Menu size={20} />
+                <span className="hidden sm:inline">Menu</span>
               </button>
             )}
-            <button
-              onClick={onHelp}
-              className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-            >
-              <HelpCircle size={18} />
-              <span>Help</span>
-            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             {!isGuest && (
               <>
                 <NotificationBadge
@@ -72,13 +68,6 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                   onOpen={() => setActiveNotification('confirmations')}
                   onClose={() => setActiveNotification(null)}
                 />
-                <button
-                  onClick={onProfile}
-                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </button>
                 <div className="text-right">
                   <p className="text-sm text-text-secondary font-light">Welcome,</p>
                   <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
@@ -95,20 +84,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                     />
                   </div>
                 )}
-                <button
-                  onClick={signOut}
-                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-                >
-                  <LogOut size={18} />
-                  <span>Sign Out</span>
-                </button>
               </>
-            )}
-            {isGuest && (
-              <div className="text-center sm:text-right">
-                <p className="text-sm text-text-secondary font-light">Browsing as</p>
-                <p className="font-semibold text-text-primary text-base">Guest</p>
-              </div>
             )}
           </div>
         </div>
@@ -276,6 +252,37 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           </div>
         </div>
       </div>
+
+      {!isGuest && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onHelp={() => {
+            setSidebarOpen(false)
+            onHelp()
+          }}
+          onProfile={() => {
+            setSidebarOpen(false)
+            onProfile()
+          }}
+          onNotifications={() => {
+            setSidebarOpen(false)
+            setActiveNotification('notifications')
+          }}
+          onMessages={() => {
+            setSidebarOpen(false)
+            setActiveNotification('messages')
+          }}
+          onRideRequests={() => {
+            setSidebarOpen(false)
+            setActiveNotification('confirmations')
+          }}
+          onSignOut={() => {
+            setSidebarOpen(false)
+            signOut()
+          }}
+        />
+      )}
     </div>
   )
 }
