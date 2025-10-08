@@ -217,8 +217,343 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
         )}
       </div>
 
-      {/* Trips List */}
-      {filteredTrips.length === 0 ? (
+      {/* Accepted Trips */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-green-900 mb-4">Accepted Trips ({filteredTrips.filter(c => c.status === 'accepted').length})</h3>
+        {filteredTrips.filter(c => c.status === 'accepted').length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">No accepted trips</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredTrips.filter(c => c.status === 'accepted').map((confirmation) => {
+              const trip = confirmation.trips!
+              const traveler = confirmation.user_profiles
+
+              return (
+                <div
+                  key={confirmation.id}
+                  className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                        {traveler?.profile_image_url ? (
+                          <img
+                            src={traveler.profile_image_url}
+                            alt={traveler.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-semibold">
+                            {(traveler?.full_name || 'T').charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {traveler?.full_name || 'Unknown Traveler'}
+                        </h3>
+                        <p className="text-sm text-gray-600">Trip Owner</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                        {getStatusIcon(confirmation.status)}
+                        <span className="capitalize">{confirmation.status}</span>
+                      </div>
+                      <Plane size={20} className="text-blue-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">From</p>
+                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
+                        {trip.departure_time && (
+                          <div className="text-sm text-gray-600 flex items-center mt-1">
+                            <Clock size={12} className="mr-1" />
+                            {trip.departure_time}
+                            {trip.departure_timezone && (
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({trip.departure_timezone})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">To</p>
+                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
+                        {trip.landing_time && (
+                          <div className="text-sm text-gray-600 flex items-center mt-1">
+                            <Clock size={12} className="mr-1" />
+                            {trip.landing_time}
+                            {trip.landing_timezone && (
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({trip.landing_timezone})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Travel Date</p>
+                        <div className="font-medium text-gray-900 flex items-center">
+                          <Calendar size={14} className="mr-1 text-gray-400" />
+                          {formatDate(trip.travel_date)}
+                        </div>
+                        {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            Landing: {formatDate(trip.landing_date)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {trip.price && (
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <span className="text-sm font-medium text-green-600">
+                          Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                          {trip.negotiable && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                              Negotiable
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-xs">1</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Request Submitted</p>
+                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                        </div>
+                      </div>
+
+                      {confirmation.confirmed_at && (
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+                          }`}>
+                            <span className={`font-bold text-xs ${
+                              confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                            }`}>2</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
+                            </p>
+                            <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => onStartChat(
+                        confirmation.ride_owner_id,
+                        traveler?.full_name || 'Traveler',
+                        undefined,
+                        trip
+                      )}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      <MessageCircle size={16} />
+                      <span>Chat with {traveler?.full_name || 'Traveler'}</span>
+                    </button>
+
+                    <div className="text-xs text-gray-500">
+                      Request ID: {confirmation.id.slice(0, 8)}...
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Rejected Trips */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-red-900 mb-4">Rejected Trips ({filteredTrips.filter(c => c.status === 'rejected').length})</h3>
+        {filteredTrips.filter(c => c.status === 'rejected').length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">No rejected trips</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredTrips.filter(c => c.status === 'rejected').map((confirmation) => {
+              const trip = confirmation.trips!
+              const traveler = confirmation.user_profiles
+
+              return (
+                <div
+                  key={confirmation.id}
+                  className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                        {traveler?.profile_image_url ? (
+                          <img
+                            src={traveler.profile_image_url}
+                            alt={traveler.full_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-semibold">
+                            {(traveler?.full_name || 'T').charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {traveler?.full_name || 'Unknown Traveler'}
+                        </h3>
+                        <p className="text-sm text-gray-600">Trip Owner</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                        {getStatusIcon(confirmation.status)}
+                        <span className="capitalize">{confirmation.status}</span>
+                      </div>
+                      <Plane size={20} className="text-blue-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">From</p>
+                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
+                        {trip.departure_time && (
+                          <div className="text-sm text-gray-600 flex items-center mt-1">
+                            <Clock size={12} className="mr-1" />
+                            {trip.departure_time}
+                            {trip.departure_timezone && (
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({trip.departure_timezone})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">To</p>
+                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
+                        {trip.landing_time && (
+                          <div className="text-sm text-gray-600 flex items-center mt-1">
+                            <Clock size={12} className="mr-1" />
+                            {trip.landing_time}
+                            {trip.landing_timezone && (
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({trip.landing_timezone})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Travel Date</p>
+                        <div className="font-medium text-gray-900 flex items-center">
+                          <Calendar size={14} className="mr-1 text-gray-400" />
+                          {formatDate(trip.travel_date)}
+                        </div>
+                        {trip.landing_date && trip.landing_date !== trip.travel_date && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            Landing: {formatDate(trip.landing_date)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {trip.price && (
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <span className="text-sm font-medium text-green-600">
+                          Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                          {trip.negotiable && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                              Negotiable
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-xs">1</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Request Submitted</p>
+                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                        </div>
+                      </div>
+
+                      {confirmation.confirmed_at && (
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+                          }`}>
+                            <span className={`font-bold text-xs ${
+                              confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                            }`}>2</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
+                            </p>
+                            <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => onStartChat(
+                        confirmation.ride_owner_id,
+                        traveler?.full_name || 'Traveler',
+                        undefined,
+                        trip
+                      )}
+                      className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    >
+                      <MessageCircle size={16} />
+                      <span>Chat with {traveler?.full_name || 'Traveler'}</span>
+                    </button>
+
+                    <div className="text-xs text-gray-500">
+                      Request ID: {confirmation.id.slice(0, 8)}...
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {filteredTrips.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plane size={32} className="text-gray-400" />
@@ -232,167 +567,6 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
               : 'Try adjusting your search or filter criteria.'
             }
           </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredTrips.map((confirmation) => {
-            const trip = confirmation.trips!
-            const traveler = confirmation.user_profiles
-
-            return (
-              <div
-                key={confirmation.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
-                      {traveler?.profile_image_url ? (
-                        <img
-                          src={traveler.profile_image_url}
-                          alt={traveler.full_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white font-semibold">
-                          {(traveler?.full_name || 'T').charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {traveler?.full_name || 'Unknown Traveler'}
-                      </h3>
-                      <p className="text-sm text-gray-600">Trip Owner</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
-                      {getStatusIcon(confirmation.status)}
-                      <span className="capitalize">{confirmation.status}</span>
-                    </div>
-                    <Plane size={20} className="text-blue-600" />
-                  </div>
-                </div>
-
-                {/* Trip Details */}
-                <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">From</p>
-                      <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
-                      {trip.departure_time && (
-                        <div className="text-sm text-gray-600 flex items-center mt-1">
-                          <Clock size={12} className="mr-1" />
-                          {trip.departure_time}
-                          {trip.departure_timezone && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({trip.departure_timezone})
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">To</p>
-                      <div className="font-medium text-gray-900">{trip.destination_airport}</div>
-                      {trip.landing_time && (
-                        <div className="text-sm text-gray-600 flex items-center mt-1">
-                          <Clock size={12} className="mr-1" />
-                          {trip.landing_time}
-                          {trip.landing_timezone && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({trip.landing_timezone})
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <Calendar size={14} className="mr-1 text-gray-400" />
-                        {formatDate(trip.travel_date)}
-                      </div>
-                      {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          Landing: {formatDate(trip.landing_date)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {trip.price && (
-                    <div className="mt-3 pt-3 border-t border-blue-200">
-                      <span className="text-sm font-medium text-green-600">
-                        Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                        {trip.negotiable && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                            Negotiable
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Request Timeline */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-xs">1</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                        <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
-                      </div>
-                    </div>
-                    
-                    {confirmation.confirmed_at && (
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
-                        }`}>
-                          <span className={`font-bold text-xs ${
-                            confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
-                          }`}>2</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
-                          </p>
-                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => onStartChat(
-                      confirmation.ride_owner_id,
-                      traveler?.full_name || 'Traveler',
-                      undefined,
-                      trip
-                    )}
-                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                  >
-                    <MessageCircle size={16} />
-                    <span>Chat with {traveler?.full_name || 'Traveler'}</span>
-                  </button>
-
-                  <div className="text-xs text-gray-500">
-                    Request ID: {confirmation.id.slice(0, 8)}...
-                  </div>
-                </div>
-              </div>
-            )
-          })}
         </div>
       )}
 
