@@ -1280,8 +1280,21 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(ride.user_id, ride.user_profiles?.full_name || 'Unknown', ride)}
-                                  className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = ride.user_id || (ride.user_profiles as any)?.id
+                                    const userName = ride.user_profiles?.full_name || 'Driver'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, ride)
+                                  }}
+                                  disabled={!ride.user_id && !(ride.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !ride.user_id && !(ride.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-green-600 text-white hover:bg-green-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Chat with Driver</span>
@@ -1437,8 +1450,21 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             ) : effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -1459,8 +1485,21 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Ride</span>
