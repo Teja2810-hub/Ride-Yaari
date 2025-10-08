@@ -17,12 +17,13 @@ interface LocationData {
 
 interface RequestRideProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
 type RequestType = 'specific_date' | 'multiple_dates' | 'month'
 
-export default function RequestRide({ onBack, isGuest = false }: RequestRideProps) {
+export default function RequestRide({ onBack, onProfile, isGuest = false }: RequestRideProps) {
   const { user, setGuestMode, signOut } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -685,7 +686,7 @@ export default function RequestRide({ onBack, isGuest = false }: RequestRideProp
           }}
           onProfile={() => {
             setSidebarOpen(false)
-            onBack()
+            onProfile()
           }}
           onNotifications={() => {
             setSidebarOpen(false)

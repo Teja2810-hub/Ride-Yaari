@@ -63,7 +63,10 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
-            <div className="flex items-center space-x-3">
+            <button
+              onClick={onProfile}
+              className="flex items-center space-x-3 hover:opacity-90 transition-opacity cursor-pointer"
+            >
               {userProfile?.profile_image_url ? (
                 <img
                   src={userProfile.profile_image_url}
@@ -85,7 +88,7 @@ export default function Sidebar({
                   {userProfile?.full_name || 'User'}
                 </p>
               </div>
-            </div>
+            </button>
             <button
               onClick={onClose}
               className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"

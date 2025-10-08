@@ -18,10 +18,11 @@ interface LocationData {
 
 interface PostRideProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
-export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
+export default function PostRide({ onBack, onProfile, isGuest = false }: PostRideProps) {
   const { user, setGuestMode, signOut } = useAuth()
   const effectiveIsGuest = isGuest || !user
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -480,7 +481,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
             }}
             onProfile={() => {
               setSidebarOpen(false)
-              onBack()
+              onProfile()
             }}
             onSignOut={() => {
               setSidebarOpen(false)

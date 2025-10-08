@@ -21,6 +21,7 @@ interface LocationData {
 
 interface FindRideProps {
   onBack: () => void
+  onProfile: () => void
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: any) => void
   isGuest?: boolean
 }
@@ -29,7 +30,7 @@ type SearchType = 'from-to' | 'from-only' | 'to-only'
 type LocationSearchType = 'manual' | 'nearby'
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
-export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
+export default function FindRide({ onBack, onProfile, onStartChat, isGuest = false }: FindRideProps) {
   const { user, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -1534,7 +1535,7 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
             }}
             onProfile={() => {
               setSidebarOpen(false)
-              onBack()
+              onProfile()
             }}
             onSignOut={() => {
               setSidebarOpen(false)

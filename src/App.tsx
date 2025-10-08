@@ -269,14 +269,15 @@ function AppContent() {
                 case 'post-trip':
                   return (
                     <ErrorBoundary>
-                      <PostTrip onBack={handleBackToAirportDashboard} isGuest={isGuest} />
+                      <PostTrip onBack={handleBackToAirportDashboard} onProfile={handleProfile} isGuest={isGuest} />
                     </ErrorBoundary>
                   )
                 case 'find-trip':
                   return (
                     <ErrorBoundary>
-                      <FindTrip 
-                        onBack={handleBackToAirportDashboard} 
+                      <FindTrip
+                        onBack={handleBackToAirportDashboard}
+                        onProfile={handleProfile}
                         onStartChat={handleStartChat}
                         isGuest={isGuest}
                       />
@@ -285,8 +286,9 @@ function AppContent() {
                 case 'request-trip':
                   return (
                     <ErrorBoundary>
-                      <RequestTrip 
-                        onBack={handleBackToAirportDashboard} 
+                      <RequestTrip
+                        onBack={handleBackToAirportDashboard}
+                        onProfile={handleProfile}
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>
@@ -294,14 +296,15 @@ function AppContent() {
                 case 'post-ride':
                   return (
                     <ErrorBoundary>
-                      <PostRide onBack={handleBackToCarDashboard} isGuest={isGuest} />
+                      <PostRide onBack={handleBackToCarDashboard} onProfile={handleProfile} isGuest={isGuest} />
                     </ErrorBoundary>
                   )
                 case 'find-ride':
                   return (
                     <ErrorBoundary>
-                      <FindRide 
-                        onBack={handleBackToCarDashboard} 
+                      <FindRide
+                        onBack={handleBackToCarDashboard}
+                        onProfile={handleProfile}
                         onStartChat={handleStartChat}
                         isGuest={isGuest}
                       />
@@ -310,8 +313,9 @@ function AppContent() {
                 case 'request-ride':
                   return (
                     <ErrorBoundary>
-                      <RequestRide 
-                        onBack={handleBackToCarDashboard} 
+                      <RequestRide
+                        onBack={handleBackToCarDashboard}
+                        onProfile={handleProfile}
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>

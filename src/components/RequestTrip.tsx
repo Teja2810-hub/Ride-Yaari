@@ -11,12 +11,13 @@ import LoadingSpinner from './LoadingSpinner'
 
 interface RequestTripProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
 type RequestType = 'specific_date' | 'multiple_dates' | 'month'
 
-export default function RequestTrip({ onBack, isGuest = false }: RequestTripProps) {
+export default function RequestTrip({ onBack, onProfile, isGuest = false }: RequestTripProps) {
   const { user, setGuestMode, signOut } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -638,7 +639,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
           }}
           onProfile={() => {
             setSidebarOpen(false)
-            onBack()
+            onProfile()
           }}
           onNotifications={() => {
             setSidebarOpen(false)

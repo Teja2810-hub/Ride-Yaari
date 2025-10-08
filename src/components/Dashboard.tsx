@@ -87,7 +87,10 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                   onClose={() => setActiveNotification(null)}
                 />
                 {userProfile?.profile_image_url && (
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
+                  <button
+                    onClick={onProfile}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+                  >
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
@@ -96,7 +99,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                         e.currentTarget.style.display = 'none'
                       }}
                     />
-                  </div>
+                  </button>
                 )}
               </>
             )}

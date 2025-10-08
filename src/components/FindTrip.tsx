@@ -13,13 +13,14 @@ import { formatDateSafe } from '../utils/dateHelpers'
 
 interface FindTripProps {
   onBack: () => void
+  onProfile: () => void
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
   isGuest?: boolean
 }
 
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
-export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
+export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = false }: FindTripProps) {
   const { user, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -921,7 +922,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
             }}
             onProfile={() => {
               setSidebarOpen(false)
-              onBack()
+              onProfile()
             }}
             onSignOut={() => {
               setSidebarOpen(false)

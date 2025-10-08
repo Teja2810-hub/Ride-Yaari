@@ -80,7 +80,10 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                   <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
                 </div>
                 {userProfile?.profile_image_url && (
-                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-md">
+                  <button
+                    onClick={onProfile}
+                    className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+                  >
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
@@ -89,7 +92,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                         e.currentTarget.style.display = 'none'
                       }}
                     />
-                  </div>
+                  </button>
                 )}
               </>
             )}

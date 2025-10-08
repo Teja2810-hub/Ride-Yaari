@@ -13,10 +13,11 @@ import { createTripPostNotification } from '../utils/postNotificationHelpers'
 
 interface PostTripProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
-export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
+export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTripProps) {
   const { user, setGuestMode, signOut } = useAuth()
   const effectiveIsGuest = isGuest || !user
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -526,7 +527,7 @@ export default function PostTrip({ onBack, isGuest = false }: PostTripProps) {
           }}
           onProfile={() => {
             setSidebarOpen(false)
-            onBack()
+            onProfile()
           }}
           onSignOut={() => {
             setSidebarOpen(false)
