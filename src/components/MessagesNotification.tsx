@@ -6,6 +6,9 @@ import { ChatMessage } from '../types'
 
 interface MessagesNotificationProps {
   onStartChat: (userId: string, userName: string) => void
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }
 
 interface Conversation {
@@ -22,12 +25,22 @@ interface Conversation {
   unread_count: number
 }
 
-export default function MessagesNotification({ onStartChat }: MessagesNotificationProps) {
+export default function MessagesNotification({ onStartChat, isOpen: controlledIsOpen, onOpen, onClose }: MessagesNotificationProps) {
   const { user } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [internalShowDropdown, setInternalShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
+  const setShowDropdown = (value: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (value && onOpen) onOpen()
+      if (!value && onClose) onClose()
+    } else {
+      setInternalShowDropdown(value)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -213,18 +226,20 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
   }
 
   const handleChatClick = async (userId: string, userName: string) => {
+    // Close dropdown immediately
+    if (onClose) onClose()
+    setShowDropdown(false)
+
     try {
-      // Mark messages as read first
       await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('sender_id', userId)
         .eq('receiver_id', user?.id)
 
-      // Update local state immediately
       setUnreadCount(0)
-      setConversations(prev => prev.map(conv => 
-        conv.other_user_id === userId 
+      setConversations(prev => prev.map(conv =>
+        conv.other_user_id === userId
           ? { ...conv, unread_count: 0 }
           : conv
       ))
@@ -232,7 +247,6 @@ export default function MessagesNotification({ onStartChat }: MessagesNotificati
       console.error('Error marking messages as read:', error)
     }
 
-    setShowDropdown(false)
     onStartChat(userId, userName)
   }
 

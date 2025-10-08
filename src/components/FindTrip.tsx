@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Plane, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Send, Menu } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import Sidebar from './Sidebar'
 import { Trip, TripRequest } from '../types'
 import AirportAutocomplete from './AirportAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
@@ -12,30 +13,66 @@ import { formatDateSafe } from '../utils/dateHelpers'
 
 interface FindTripProps {
   onBack: () => void
+  onProfile: () => void
   onStartChat: (userId: string, userName: string, ride?: CarRide, trip?: Trip) => void
   isGuest?: boolean
 }
 
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
-export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
-  const { user, isGuest: contextIsGuest } = useAuth()
+export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = false }: FindTripProps) {
+  const { user, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
-  const [departureAirport, setDepartureAirport] = useState('')
-  const [destinationAirport, setDestinationAirport] = useState('')
-  const [travelDate, setTravelDate] = useState('')
-  const [travelMonth, setTravelMonth] = useState('')
-  const [searchByMonth, setSearchByMonth] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Load cached filters from localStorage
+  const loadCachedFilters = () => {
+    try {
+      const cached = localStorage.getItem('findTripFilters')
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  }
+
+  const cachedFilters = loadCachedFilters()
+
+  const [departureAirport, setDepartureAirport] = useState(cachedFilters?.departureAirport || '')
+  const [destinationAirport, setDestinationAirport] = useState(cachedFilters?.destinationAirport || '')
+  const [travelDate, setTravelDate] = useState(cachedFilters?.travelDate || '')
+  const [travelMonth, setTravelMonth] = useState(cachedFilters?.travelMonth || '')
+  const [searchByMonth, setSearchByMonth] = useState(cachedFilters?.searchByMonth || false)
   const [trips, setTrips] = useState<Trip[]>([])
   const [tripRequests, setTripRequests] = useState<TripRequest[]>([])
   const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+  const [searched, setSearched] = useState(cachedFilters?.searched || false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [selectedChatUser, setSelectedChatUser] = useState<{userId: string, userName: string}>({userId: '', userName: ''})
   const [selectedChatTrip, setSelectedChatTrip] = useState<Trip | null>(null)
-  const [sortBy, setSortBy] = useState<SortOption>('date-asc')
+  const [sortBy, setSortBy] = useState<SortOption>(cachedFilters?.sortBy || 'date-asc')
   const [showFilters, setShowFilters] = useState(false)
   const [activeTab, setActiveTab] = useState<'trips' | 'requests'>('trips')
+
+  // Cache filters whenever they change
+  React.useEffect(() => {
+    const filters = {
+      departureAirport,
+      destinationAirport,
+      travelDate,
+      travelMonth,
+      searchByMonth,
+      sortBy,
+      searched
+    }
+    localStorage.setItem('findTripFilters', JSON.stringify(filters))
+  }, [departureAirport, destinationAirport, travelDate, travelMonth, searchByMonth, sortBy, searched])
+
+  // Restore results from cache on mount
+  React.useEffect(() => {
+    if (cachedFilters?.searched && trips.length === 0 && !loading) {
+      handleSearch(new Event('submit') as any)
+    }
+  }, [])
 
   // Auto-search on component mount for guests to show available trips
   React.useEffect(() => {
@@ -106,6 +143,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         .from('trips')
         .select(`
           *,
+          user_id,
           user_profiles:user_id (
             id,
             full_name,
@@ -189,16 +227,22 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     }
   }
 
-  const handleChatClick = (userId: string, userName: string, trip: Trip) => {
+  const handleChatClick = (userId: string, userName: string, trip: Trip | undefined) => {
+    console.log('FindTrip: handleChatClick called with:', { userId, userName, trip })
+
+    if (!userId || userId.trim() === '') {
+      console.error('FindTrip: Invalid userId in handleChatClick:', { userId, userName, trip })
+      alert('Cannot open chat: User information is not available. Please try refreshing the page.')
+      return
+    }
+
     setSelectedChatUser({ userId, userName })
-    setSelectedChatTrip(trip)
-    
-    // Check if disclaimer should be shown
+    setSelectedChatTrip(trip || null)
+
     if (popupManager.shouldShowDisclaimer('chat-trip', user?.id, userId)) {
       setShowDisclaimer(true)
     } else {
-      // Auto-proceed if disclaimer was already shown
-      handleConfirmChat()
+      handleConfirmChatWithParams(userId, userName, trip)
     }
   }
 
@@ -206,6 +250,12 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-trip', user?.id, selectedChatUser.userId)
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
+  }
+
+  const handleConfirmChatWithParams = (userId: string, userName: string, trip?: Trip) => {
+    setShowDisclaimer(false)
+    popupManager.markDisclaimerShown('chat-trip', user?.id, userId)
+    onStartChat(userId, userName, undefined, trip)
   }
 
 
@@ -220,7 +270,7 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -228,6 +278,25 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
+          {effectiveIsGuest ? (
+            <button
+              onClick={() => {
+                localStorage.setItem('redirectAfterAuth', 'find-trip')
+                window.location.reload()
+              }}
+              className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              Sign Up / Sign In
+            </button>
+          ) : (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
@@ -551,38 +620,58 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Unknown', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = trip.user_id || (trip.user_profiles as any)?.id
+                                    const userName = trip.user_profiles?.full_name || 'Traveler'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, trip)
+                                  }}
+                                  disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !trip.user_id && !(trip.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
-                                  <span>Contact Traveler</span>
+                                  <span>Chat with Traveler</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
                                 </p>
                               </div>
                             ) : trip.user_id === user?.id ? (
-                              <div className="flex flex-col space-y-2">
-                                <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
-                                  Your Trip
-                                </div>
-                                <p className="text-xs text-gray-500 text-center">
-                                  This is your posted trip
-                                </p>
+                              <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                                Your Trip
                               </div>
                             ) : (
-                              <div className="flex flex-col space-y-2">
-                                <button
-                                  onClick={() => handleChatClick(trip.user_id, trip.user_profiles?.full_name || 'Traveler', trip)}
-                                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                >
-                                  <MessageCircle size={20} />
-                                  <span>Start Chat</span>
-                                </button>
-                                <p className="text-xs text-gray-500 text-center">
-                                  Chat first, then request confirmation
-                                </p>
-                              </div>
+                              <button
+                                onClick={() => {
+                                  console.log('FindTrip: Chat button clicked for trip:', { trip })
+                                  const userId = trip.user_id || (trip.user_profiles as any)?.id
+                                  const userName = trip.user_profiles?.full_name || 'Traveler'
+                                  console.log('FindTrip: Extracted user data:', { userId, userName })
+
+                                  if (!userId || userId.trim() === '') {
+                                    console.error('FindTrip: Missing user ID', { trip })
+                                    alert('Cannot open chat: User information is not available')
+                                    return
+                                  }
+                                  handleChatClick(userId, userName, trip)
+                                }}
+                                disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
+                                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  !trip.user_id && !(trip.user_profiles as any)?.id
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
+                              >
+                                <MessageCircle size={20} />
+                                <span>Chat with Traveler</span>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -704,8 +793,21 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Unknown', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Contact Passenger</span>
@@ -726,8 +828,21 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
                             ) : (
                               <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleChatClick(request.passenger_id, request.user_profiles?.full_name || 'Passenger', undefined)}
-                                  className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                  onClick={() => {
+                                    const userId = request.passenger_id || (request.user_profiles as any)?.id
+                                    const userName = request.user_profiles?.full_name || 'Passenger'
+                                    if (!userId || userId.trim() === '') {
+                                      alert('Cannot open chat: User information is not available')
+                                      return
+                                    }
+                                    handleChatClick(userId, userName, undefined)
+                                  }}
+                                  disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
+                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                    !request.passenger_id && !(request.user_profiles as any)?.id
+                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                                  }`}
                                 >
                                   <MessageCircle size={20} />
                                   <span>Offer Assistance</span>
@@ -797,6 +912,24 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
           loading={false}
           type="chat-trip"
         />
+
+        {!effectiveIsGuest && (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onHelp={() => {
+              setSidebarOpen(false)
+            }}
+            onProfile={() => {
+              setSidebarOpen(false)
+              onProfile()
+            }}
+            onSignOut={() => {
+              setSidebarOpen(false)
+              signOut()
+            }}
+          />
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, X, Check, Clock, AlertTriangle, Car, Plane, MessageCircle, Filter, BookMarked as MarkAsRead } from 'lucide-react'
+import { Bell, X, Check, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, ListFilter as Filter, BookMarked as MarkAsRead } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { getSystemMessageTemplate } from '../utils/messageTemplates'
@@ -227,14 +227,29 @@ export default function NotificationCenter({
     }
   }
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark this notification as read immediately
+    if (!notification.read && notification.type === 'message' && user) {
+      try {
+        // Extract message ID from notification ID (format: "message-{messageId}")
+        const messageId = notification.id.replace('message-', '')
+        await supabase
+          .from('chat_messages')
+          .update({ is_read: true })
+          .eq('id', messageId)
+      } catch (error) {
+        console.error('Error marking notification as read:', error)
+      }
+    }
+
+    // Close notification center after marking as read
+    onClose()
+
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
-        onClose()
         onViewConfirmations()
       }
     } else if (notification.type === 'message' && onStartChat) {
-      onClose()
       onStartChat(
         notification.actionData.userId,
         notification.actionData.userName
@@ -246,17 +261,51 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
-      // Mark all unread messages as read
-      await supabase
+      console.log('NotificationCenter: Marking all messages as read for user:', user.id)
+
+      // Get count of unread messages before marking
+      const { count: beforeCount } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false)
+
+      console.log('NotificationCenter: Unread messages before:', beforeCount)
+
+      // Mark all unread messages as read (including system messages)
+      const { error, count } = await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
+        .select('*', { count: 'exact', head: true })
 
-      // Refresh notifications
-      fetchNotifications()
+      if (error) {
+        console.error('NotificationCenter: Error marking messages as read:', error)
+        throw error
+      }
+
+      console.log('NotificationCenter: Marked', count, 'messages as read')
+
+      // Verify the update
+      const { count: afterCount } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false)
+
+      console.log('NotificationCenter: Unread messages after:', afterCount)
+
+      // Clear all notifications immediately
+      setNotifications([])
+
+      // Wait a moment before refreshing to ensure DB is updated
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Refresh notifications from server
+      await fetchNotifications()
     } catch (error) {
-      console.error('Error marking notifications as read:', error)
+      console.error('NotificationCenter: Error in markAllAsRead:', error)
     }
   }
 

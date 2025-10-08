@@ -1,27 +1,31 @@
-import { Plane, Car, ArrowRight, User, Circle as HelpCircle, LogOut } from 'lucide-react'
+import React from 'react'
+import { Plane, Car, ArrowRight, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ReviewForm from './ReviewForm'
 import ConfirmationsNotification from './ConfirmationsNotification'
 import NotificationBadge from './NotificationBadge'
+import Sidebar from './Sidebar'
 
 interface PlatformSelectorProps {
   onSelectPlatform: (platform: 'airport' | 'car') => void
   onProfile: () => void
   onHelp: () => void
-  onStartChat: (userId: string, userName: string) => void
+  onStartChat: (userId: string, userName: string, showRequestButtons?: boolean) => void
   onViewConfirmations: () => void
   isGuest?: boolean
 }
 
 export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, onStartChat, onViewConfirmations, isGuest = false }: PlatformSelectorProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
+  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   const handleStartChat = (userId: string, userName: string) => {
-    // Ensure we have a clean state before starting chat
+    setActiveNotification(null)
     if (onStartChat) {
-      onStartChat(userId, userName)
+      onStartChat(userId, userName, true)
     }
   }
   return (
@@ -29,43 +33,57 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-16 space-y-4 sm:space-y-0">
-          <div></div>
-          
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
-            {isGuest && (
+          <div>
+            {!isGuest && (
               <button
-                onClick={() => setGuestMode(false)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
               >
-                <User size={18} />
-                <span>Sign Up</span>
+                <Menu size={20} />
+                <span className="hidden sm:inline">Menu</span>
               </button>
             )}
-            <button
-              onClick={onHelp}
-              className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-            >
-              <HelpCircle size={18} />
-              <span>Help</span>
-            </button>
-            {!isGuest && (
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
+            {isGuest ? (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign Up / Sign In
+              </button>
+            ) : (
               <>
-                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <MessagesNotification onStartChat={handleStartChat} />
-                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <button
-                  onClick={onProfile}
-                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </button>
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <MessagesNotification
+                  onStartChat={handleStartChat}
+                  isOpen={activeNotification === 'messages'}
+                  onOpen={() => setActiveNotification('messages')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
                 <div className="text-right">
                   <p className="text-sm text-text-secondary font-light">Welcome,</p>
                   <p className="font-semibold text-text-primary text-base truncate max-w-32">{userProfile?.full_name}</p>
                 </div>
                 {userProfile?.profile_image_url && (
-                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-md">
+                  <button
+                    onClick={onProfile}
+                    className="w-10 h-10 rounded-full overflow-hidden shadow-md hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+                  >
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
@@ -74,22 +92,9 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
                         e.currentTarget.style.display = 'none'
                       }}
                     />
-                  </div>
+                  </button>
                 )}
-                <button
-                  onClick={signOut}
-                  className="flex items-center space-x-2 px-4 py-2 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium rounded-xl"
-                >
-                  <LogOut size={18} />
-                  <span>Sign Out</span>
-                </button>
               </>
-            )}
-            {isGuest && (
-              <div className="text-center sm:text-right">
-                <p className="text-sm text-text-secondary font-light">Browsing as</p>
-                <p className="font-semibold text-text-primary text-base">Guest</p>
-              </div>
             )}
           </div>
         </div>
@@ -257,6 +262,37 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           </div>
         </div>
       </div>
+
+      {!isGuest && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onHelp={() => {
+            setSidebarOpen(false)
+            onHelp()
+          }}
+          onProfile={() => {
+            setSidebarOpen(false)
+            onProfile()
+          }}
+          onNotifications={() => {
+            setSidebarOpen(false)
+            setActiveNotification('notifications')
+          }}
+          onMessages={() => {
+            setSidebarOpen(false)
+            setActiveNotification('messages')
+          }}
+          onRideRequests={() => {
+            setSidebarOpen(false)
+            setActiveNotification('confirmations')
+          }}
+          onSignOut={() => {
+            setSidebarOpen(false)
+            signOut()
+          }}
+        />
+      )}
     </div>
   )
 }

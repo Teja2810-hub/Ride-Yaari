@@ -40,10 +40,12 @@ function AppContent() {
   const [chatUserName, setChatUserName] = useState<string>('')
   const [selectedRideForChat, setSelectedRideForChat] = useState<CarRide | null>(null)
   const [selectedTripForChat, setSelectedTripForChat] = useState<Trip | null>(null)
+  const [showRequestButtonsInChat, setShowRequestButtonsInChat] = useState(false)
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [previousView, setPreviousView] = useState<AppView>('platform-selector')
 
   // Set up global error handling with user context
   React.useEffect(() => {
@@ -71,21 +73,42 @@ function AppContent() {
     setShowWelcomePopup(false)
   }
 
-  const handleStartChat = (userId: string, userName: string, ride?: CarRide, trip?: Trip) => {
+  const handleStartChat = (userId: string, userName: string, rideOrShowButtons?: CarRide | boolean, trip?: Trip) => {
     if (isGuest) {
       setShowAuthPrompt(true)
       return
     }
+
+    // Validate userId before opening chat
+    if (!userId || userId.trim() === '') {
+      console.error('handleStartChat: Invalid userId provided:', userId)
+      alert('Cannot open chat: Invalid user information')
+      return
+    }
+
+    console.log('Opening chat with user:', userId, userName)
+
+    // Store the current view before switching to chat
+    setPreviousView(currentView)
+
+    // Check if third parameter is boolean (showRequestButtons from messages)
+    const showRequestButtons = typeof rideOrShowButtons === 'boolean' ? rideOrShowButtons : false
+    const ride = typeof rideOrShowButtons === 'object' ? rideOrShowButtons : undefined
+
     setChatUserId(userId)
-    setChatUserName(userName)
+    setChatUserName(userName || 'User')
     setSelectedRideForChat(ride || null)
     setSelectedTripForChat(trip || null)
-    setCurrentView('chat')
+    setShowRequestButtonsInChat(showRequestButtons)
+
+    // Use setTimeout to ensure state updates are processed before view change
+    setTimeout(() => {
+      setCurrentView('chat')
+    }, 0)
   }
 
   const handleBackToDashboard = () => {
-    setCurrentView('platform-selector')
-    // Reset all chat-related state to prevent stale state issues
+    // Reset all chat-related state BEFORE changing view
     setChatUserId('')
     setChatUserName('')
     setSelectedRideForChat(null)
@@ -93,6 +116,7 @@ function AppContent() {
     setEditingTrip(null)
     setEditingRide(null)
     setInitialProfileTab(undefined)
+    setCurrentView('platform-selector')
   }
 
   const handleEditTrip = (trip: Trip) => {
@@ -245,14 +269,15 @@ function AppContent() {
                 case 'post-trip':
                   return (
                     <ErrorBoundary>
-                      <PostTrip onBack={handleBackToAirportDashboard} isGuest={isGuest} />
+                      <PostTrip onBack={handleBackToAirportDashboard} onProfile={handleProfile} isGuest={isGuest} />
                     </ErrorBoundary>
                   )
                 case 'find-trip':
                   return (
                     <ErrorBoundary>
-                      <FindTrip 
-                        onBack={handleBackToAirportDashboard} 
+                      <FindTrip
+                        onBack={handleBackToAirportDashboard}
+                        onProfile={handleProfile}
                         onStartChat={handleStartChat}
                         isGuest={isGuest}
                       />
@@ -261,8 +286,9 @@ function AppContent() {
                 case 'request-trip':
                   return (
                     <ErrorBoundary>
-                      <RequestTrip 
-                        onBack={handleBackToAirportDashboard} 
+                      <RequestTrip
+                        onBack={handleBackToAirportDashboard}
+                        onProfile={handleProfile}
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>
@@ -270,14 +296,15 @@ function AppContent() {
                 case 'post-ride':
                   return (
                     <ErrorBoundary>
-                      <PostRide onBack={handleBackToCarDashboard} isGuest={isGuest} />
+                      <PostRide onBack={handleBackToCarDashboard} onProfile={handleProfile} isGuest={isGuest} />
                     </ErrorBoundary>
                   )
                 case 'find-ride':
                   return (
                     <ErrorBoundary>
-                      <FindRide 
-                        onBack={handleBackToCarDashboard} 
+                      <FindRide
+                        onBack={handleBackToCarDashboard}
+                        onProfile={handleProfile}
                         onStartChat={handleStartChat}
                         isGuest={isGuest}
                       />
@@ -286,8 +313,9 @@ function AppContent() {
                 case 'request-ride':
                   return (
                     <ErrorBoundary>
-                      <RequestRide 
-                        onBack={handleBackToCarDashboard} 
+                      <RequestRide
+                        onBack={handleBackToCarDashboard}
+                        onProfile={handleProfile}
                         isGuest={isGuest}
                       />
                     </ErrorBoundary>
@@ -335,17 +363,39 @@ function AppContent() {
                     </ErrorBoundary>
                   )
                 case 'chat':
-                  return (
+                  return chatUserId ? (
                     <ErrorBoundary>
                       <Chat
                         key={`chat-${chatUserId}`}
-                        onBack={handleBackToDashboard}
+                        onBack={() => {
+                          // Go back to the view where chat was opened from
+                          setChatUserId('')
+                          setChatUserName('')
+                          setSelectedRideForChat(null)
+                          setSelectedTripForChat(null)
+                          setShowRequestButtonsInChat(false)
+                          setCurrentView(previousView)
+                        }}
                         otherUserId={chatUserId}
                         otherUserName={chatUserName}
                         preSelectedRide={selectedRideForChat}
                         preSelectedTrip={selectedTripForChat}
+                        fromMessages={showRequestButtonsInChat}
                       />
                     </ErrorBoundary>
+                  ) : (
+                    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+                      <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Unable to Open Chat</h2>
+                        <p className="text-gray-600 mb-6">Chat user information is missing. Please try selecting a conversation again.</p>
+                        <button
+                          onClick={handleBackToDashboard}
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Back to Dashboard
+                        </button>
+                      </div>
+                    </div>
                   )
                 case 'edit-trip':
                   return editingTrip ? (

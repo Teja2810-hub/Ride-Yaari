@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check, X, MessageCircle, Car, Plane, Calendar, Clock, User, TriangleAlert as AlertTriangle, History, RotateCcw, RefreshCw, ListFilter as Filter, Search } from 'lucide-react'
+import { Check, X, MessageCircle, Car, Plane, Calendar, Clock, User, TriangleAlert as AlertTriangle, History, RotateCcw, RefreshCw, ListFilter as Filter, Search, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideConfirmation } from '../types'
@@ -13,6 +13,83 @@ interface UserConfirmationsContentProps {
 
 type StatusFilter = 'pending' | 'accepted' | 'rejected'
 type SortOption = 'date-desc' | 'date-asc' | 'status'
+
+function CollapsibleConfirmationItem({ confirmation, onUpdate, onStartChat }: { confirmation: RideConfirmation, onUpdate: () => void, onStartChat: (userId: string, userName: string, ride?: any, trip?: any) => void }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const { user } = useAuth()
+  const ride = confirmation.car_rides
+  const trip = confirmation.trips
+  const passenger = confirmation.user_profiles
+  const isCurrentUserOwner = confirmation.ride_owner_id === user?.id
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+      <div
+        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+              {passenger.profile_image_url ? (
+                <img
+                  src={passenger.profile_image_url}
+                  alt={passenger.full_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white font-semibold text-sm">
+                  {passenger.full_name.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900">{passenger.full_name}</h3>
+              <p className="text-sm text-gray-600">
+                {ride ? `${ride.from_location} → ${ride.to_location}` : `${trip?.leaving_airport} → ${trip?.destination_airport}`}
+              </p>
+              <p className="text-xs text-gray-500">
+                {ride ? formatDateTimeSafe(ride.departure_date_time) : formatDateSafe(trip?.travel_date || '')}
+              </p>
+              <p className="text-xs font-medium mt-1">
+                {isCurrentUserOwner ? (
+                  <span className={confirmation.status === 'accepted' ? 'text-green-600' : confirmation.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>
+                    You {confirmation.status === 'accepted' ? 'accepted' : confirmation.status === 'rejected' ? 'rejected' : 'have a request from'} {passenger.full_name}
+                  </span>
+                ) : (
+                  <span className={confirmation.status === 'accepted' ? 'text-green-600' : confirmation.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>
+                    {confirmation.status === 'accepted' ? 'You were accepted' : confirmation.status === 'rejected' ? 'You were rejected' : 'Request pending'}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              confirmation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              confirmation.status === 'accepted' ? 'bg-green-100 text-green-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {confirmation.status.charAt(0).toUpperCase() + confirmation.status.slice(1)}
+            </span>
+            {ride ? <Car size={16} className="text-green-600" /> : <Plane size={16} className="text-blue-600" />}
+            {isExpanded ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-gray-200 p-4 bg-gray-50">
+          <ConfirmationItem
+            confirmation={confirmation}
+            onUpdate={onUpdate}
+            onStartChat={onStartChat}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function UserConfirmationsContent({ onStartChat }: UserConfirmationsContentProps) {
   const { user } = useAuth()
@@ -76,7 +153,9 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             price,
             currency,
             negotiable,
-            user_id
+            user_id,
+            seats_available,
+            total_seats
           ),
           trips!ride_confirmations_trip_id_fkey (
             id,
@@ -269,7 +348,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
             No {activeTab} Confirmations
           </h3>
           <p className="text-gray-600">
-            {searchTerm 
+            {searchTerm
               ? 'No confirmations match your search criteria.'
               : `You don't have any ${activeTab} confirmations yet.`
             }
@@ -278,7 +357,7 @@ export default function UserConfirmationsContent({ onStartChat }: UserConfirmati
       ) : (
         <div className="space-y-4">
           {filteredConfirmations.map((confirmation) => (
-            <ConfirmationItem
+            <CollapsibleConfirmationItem
               key={confirmation.id}
               confirmation={confirmation}
               onUpdate={fetchConfirmations}

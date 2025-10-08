@@ -5,6 +5,35 @@ import { retryWithBackoff, validateConfirmationFlow } from './errorUtils'
 import { getUserDisplayName } from './messageTemplates'
 
 /**
+ * Clean up system messages that are older than the end of the current day
+ * This keeps user messages intact while removing automated system notifications
+ */
+export const cleanupOldSystemMessages = async (): Promise<{ deletedCount: number }> => {
+  return retryWithBackoff(async () => {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('message_type', 'system')
+      .lt('created_at', startOfToday.toISOString())
+
+    if (error) {
+      console.error('Error cleaning up system messages:', error)
+      return { deletedCount: 0 }
+    }
+
+    const deletedCount = data?.length || 0
+    if (deletedCount > 0) {
+      console.log(`Cleaned up ${deletedCount} old system messages`)
+    }
+
+    return { deletedCount }
+  })
+}
+
+/**
  * Check if a user can request again for a specific ride/trip
  */
 export const canRequestAgain = async (
@@ -55,11 +84,11 @@ export const canRequestAgain = async (
       return { canRequest: false, reason: 'You are already confirmed for this ride' }
     }
 
-    // If rejected, check cooldown period (30 minutes minimum between requests)
+    // If rejected, check cooldown period (10 minutes minimum between requests)
     if (latestConfirmation.status === 'rejected') {
       const lastRejection = new Date(latestConfirmation.updated_at)
       const minutesSinceRejection = (new Date().getTime() - lastRejection.getTime()) / (1000 * 60)
-      const cooldownMinutes = 30
+      const cooldownMinutes = 10
       
       console.log('canRequestAgain: Checking cooldown', { 
         lastRejection: lastRejection.toISOString(), 

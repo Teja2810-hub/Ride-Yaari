@@ -1,11 +1,12 @@
 import React from 'react'
-import { Car, CirclePlus as PlusCircle, Search, LogOut, User, ArrowLeft, Send } from 'lucide-react'
+import { Car, CirclePlus as PlusCircle, Search, ArrowLeft, Send, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
 import ReviewDisplay from './ReviewDisplay'
 import ConfirmationsNotification from './ConfirmationsNotification'
 import NotificationBadge from './NotificationBadge'
+import Sidebar from './Sidebar'
 
 interface CarDashboardProps {
   onPostRide: () => void
@@ -20,9 +21,11 @@ interface CarDashboardProps {
 
 export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, onProfile, onBack, onStartChat, onViewConfirmations, isGuest = false }: CarDashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
+  const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   const handleStartChat = (userId: string, userName: string) => {
-    // Ensure we have a clean state before starting chat
+    setActiveNotification(null)
     if (onStartChat) {
       onStartChat(userId, userName)
     }
@@ -31,8 +34,18 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
-          <div></div>
-          
+          <div>
+            {!isGuest && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+              >
+                <Menu size={20} />
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+            )}
+          </div>
+
           <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
               onClick={onBack}
@@ -41,26 +54,42 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               <ArrowLeft size={18} />
               <span>Back</span>
             </button>
-            {onStartChat && !isGuest && (
-              <MessagesNotification onStartChat={handleStartChat} />
-            )}
-            {!isGuest && (
+            {isGuest ? (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign Up / Sign In
+              </button>
+            ) : (
               <>
-                <NotificationBadge onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <ConfirmationsNotification onStartChat={handleStartChat} onViewConfirmations={onViewConfirmations} />
-                <button
-                  onClick={onProfile}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-                >
-                  <User size={16} className="sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Profile</span>
-                </button>
-                <div className="text-center sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Welcome back,</p>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-24 sm:max-w-none">{userProfile?.full_name}</p>
-                </div>
+                {onStartChat && (
+                  <MessagesNotification
+                    onStartChat={handleStartChat}
+                    isOpen={activeNotification === 'messages'}
+                    onOpen={() => setActiveNotification('messages')}
+                    onClose={() => setActiveNotification(null)}
+                  />
+                )}
+                <NotificationBadge
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'notifications'}
+                  onOpen={() => setActiveNotification('notifications')}
+                  onClose={() => setActiveNotification(null)}
+                />
+                <ConfirmationsNotification
+                  onStartChat={handleStartChat}
+                  onViewConfirmations={onViewConfirmations}
+                  isOpen={activeNotification === 'confirmations'}
+                  onOpen={() => setActiveNotification('confirmations')}
+                  onClose={() => setActiveNotification(null)}
+                />
                 {userProfile?.profile_image_url && (
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
+                  <button
+                    onClick={onProfile}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+                  >
                     <img
                       src={userProfile.profile_image_url}
                       alt={userProfile.full_name}
@@ -69,32 +98,8 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                         e.currentTarget.style.display = 'none'
                       }}
                     />
-                  </div>
+                  </button>
                 )}
-                <button
-                  onClick={signOut}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
-                >
-                  <LogOut size={16} className="sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </button>
-              </>
-            )}
-            {isGuest && (
-              <>
-                <button
-                  onClick={() => {
-                    setGuestMode(false)
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium rounded-xl"
-                >
-                  <User size={18} />
-                  <span>Sign Up</span>
-                </button>
-                <div className="text-center sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Browsing as</p>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base">Guest</p>
-                </div>
               </>
             )}
           </div>
@@ -237,6 +242,24 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
 
         </div>
       </div>
+
+      {!isGuest && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onHelp={() => {
+            setSidebarOpen(false)
+          }}
+          onProfile={() => {
+            setSidebarOpen(false)
+            onProfile()
+          }}
+          onSignOut={() => {
+            setSidebarOpen(false)
+            signOut()
+          }}
+        />
+      )}
     </div>
   )
 }

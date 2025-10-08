@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X, User } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X, User, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
+import Sidebar from './Sidebar'
 import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
@@ -17,12 +18,14 @@ interface LocationData {
 
 interface PostRideProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
-export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
-  const { user, setGuestMode } = useAuth()
+export default function PostRide({ onBack, onProfile, isGuest = false }: PostRideProps) {
+  const { user, setGuestMode, signOut } = useAuth()
   const effectiveIsGuest = isGuest || !user
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
   const [toLocation, setToLocation] = useState<LocationData | null>(null)
   const [intermediateStops, setIntermediateStops] = useState<LocationData[]>([])
@@ -30,6 +33,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [negotiable, setNegotiable] = useState(false)
+  const [totalSeats, setTotalSeats] = useState('4')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -88,6 +92,8 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
+          total_seats: parseInt(totalSeats, 10),
+          seats_available: parseInt(totalSeats, 10),
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,
@@ -136,6 +142,7 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
       setPrice('')
       setCurrency('USD')
       setNegotiable(false)
+      setTotalSeats('4')
       setNotificationPreferences({
         enabled: false,
         dateType: 'specific_date',
@@ -220,14 +227,30 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
     <>
       <div className="min-h-screen bg-gradient-to-br from-green-50/90 to-emerald-100/90 travel-bg p-4">
       <div className="container mx-auto max-w-2xl">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
           >
             <ArrowLeft size={20} />
-            {loading ? 'Posting Ride...' : effectiveIsGuest ? 'Sign Up to Post Ride' : 'Post My Ride'}
+            <span>Back to Dashboard</span>
           </button>
+          {effectiveIsGuest ? (
+            <button
+              onClick={() => setGuestMode(false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              Sign Up / Sign In
+            </button>
+          ) : (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Menu</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -369,6 +392,23 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Seats Available <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={totalSeats}
+                onChange={(e) => setTotalSeats(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                placeholder="4"
+                min="1"
+                max="8"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">How many passengers can you accommodate? (1-8)</p>
+            </div>
+
             <div className="flex items-center space-x-2 mb-6">
               <input
                 type="checkbox"
@@ -431,6 +471,24 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
           loading={loading}
           type="ride"
         />
+
+        {!effectiveIsGuest && (
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            onHelp={() => {
+              setSidebarOpen(false)
+            }}
+            onProfile={() => {
+              setSidebarOpen(false)
+              onProfile()
+            }}
+            onSignOut={() => {
+              setSidebarOpen(false)
+              signOut()
+            }}
+          />
+        )}
       </div>
     </div>
 

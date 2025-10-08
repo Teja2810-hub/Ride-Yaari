@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, Clock, DollarSign, Send, Bell, Search, User, Plane, Plus, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, DollarSign, Send, Bell, Search, User, Plane, Plus, X, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import AirportAutocomplete from './AirportAutocomplete'
+import Sidebar from './Sidebar'
 import { currencies, getCurrencySymbol } from '../utils/currencies'
 import { createTripRequest, createTripNotification } from '../utils/tripRequestHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
@@ -10,14 +11,16 @@ import LoadingSpinner from './LoadingSpinner'
 
 interface RequestTripProps {
   onBack: () => void
+  onProfile: () => void
   isGuest?: boolean
 }
 
 type RequestType = 'specific_date' | 'multiple_dates' | 'month'
 
-export default function RequestTrip({ onBack, isGuest = false }: RequestTripProps) {
-  const { user, setGuestMode } = useAuth()
+export default function RequestTrip({ onBack, onProfile, isGuest = false }: RequestTripProps) {
+  const { user, setGuestMode, signOut } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [departureAirport, setDepartureAirport] = useState('')
   const [destinationAirport, setDestinationAirport] = useState('')
   const [requestType, setRequestType] = useState<RequestType>('specific_date')
@@ -188,7 +191,7 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
     <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg p-4">
         <div className="container mx-auto max-w-2xl">
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <button
               onClick={onBack}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -196,6 +199,22 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
               <ArrowLeft size={20} />
               <span>Back to Dashboard</span>
             </button>
+            {isGuest ? (
+              <button
+                onClick={() => setGuestMode(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign Up / Sign In
+              </button>
+            ) : (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+              >
+                <Menu size={20} />
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -609,6 +628,33 @@ export default function RequestTrip({ onBack, isGuest = false }: RequestTripProp
             </div>
           </div>
         </div>
+      )}
+
+      {!isGuest && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onHelp={() => {
+            setSidebarOpen(false)
+          }}
+          onProfile={() => {
+            setSidebarOpen(false)
+            onProfile()
+          }}
+          onNotifications={() => {
+            setSidebarOpen(false)
+          }}
+          onMessages={() => {
+            setSidebarOpen(false)
+          }}
+          onRideRequests={() => {
+            setSidebarOpen(false)
+          }}
+          onSignOut={() => {
+            setSidebarOpen(false)
+            signOut()
+          }}
+        />
       )}
     </>
   )

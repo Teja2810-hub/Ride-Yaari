@@ -21,19 +21,35 @@ interface NotificationItem {
 interface EnhancedNotificationBadgeProps {
   onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
   onViewConfirmations?: () => void
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }
 
-export default function EnhancedNotificationBadge({ 
-  onStartChat, 
-  onViewConfirmations 
+export default function EnhancedNotificationBadge({
+  onStartChat,
+  onViewConfirmations,
+  isOpen: controlledIsOpen,
+  onOpen,
+  onClose
 }: EnhancedNotificationBadgeProps) {
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [stats, setStats] = useState<NotificationStats>({ pendingConfirmations: 0, unreadMessages: 0, recentUpdates: 0, total: 0 })
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [internalShowDropdown, setInternalShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'high' | 'confirmations' | 'messages'>('all')
   const [showFilters, setShowFilters] = useState(false)
+
+  const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
+  const setShowDropdown = (value: boolean) => {
+    if (controlledIsOpen !== undefined) {
+      if (value && onOpen) onOpen()
+      if (!value && onClose) onClose()
+    } else {
+      setInternalShowDropdown(value)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -307,13 +323,15 @@ export default function EnhancedNotificationBadge({
   }
 
   const handleNotificationClick = (notification: NotificationItem) => {
+    // Close dropdown immediately
+    if (onClose) onClose()
+    setShowDropdown(false)
+
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
-        setShowDropdown(false)
         onViewConfirmations()
       }
     } else if (notification.type === 'message' && onStartChat) {
-      setShowDropdown(false)
       onStartChat(
         notification.actionData.userId,
         notification.actionData.userName,
@@ -327,15 +345,22 @@ export default function EnhancedNotificationBadge({
     if (!user) return
 
     try {
-      // Mark all unread messages as read
-      await supabase
+      // Mark all unread messages as read (including system messages)
+      const { error } = await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
 
+      if (error) {
+        console.error('Error marking messages as read:', error)
+        throw error
+      }
+
+      console.log('All messages marked as read, refreshing stats...')
+
       // Clear local notifications state and refresh
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setNotifications([])
       await fetchStats()
       await fetchNotifications()
     } catch (error) {
@@ -689,6 +714,7 @@ export default function EnhancedNotificationBadge({
                   {onViewConfirmations && stats.pendingConfirmations > 0 && (
                     <button
                       onClick={() => {
+                        if (onClose) onClose()
                         setShowDropdown(false)
                         onViewConfirmations()
                       }}

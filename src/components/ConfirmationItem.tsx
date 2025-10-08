@@ -200,6 +200,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
 
   const handleAccept = async () => {
     if (!user) return
+
     setShowConfirmModal({ show: false, type: 'accept', title: '', message: '' })
     hideDisclaimer()
     await acceptRequest(confirmation.id, user.id, confirmation.passenger_id)
@@ -403,6 +404,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         {/* Ride/Trip Details */}
         <div className="bg-gray-50 rounded-lg p-4 mb-4">
           {ride && (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-600 mb-1">From</p>
@@ -426,6 +428,20 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </div>
               </div>
             </div>
+            {ride && confirmation.seats_requested && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">Seats Requested:</span>
+                  <span className="text-sm font-bold text-blue-600">{confirmation.seats_requested}</span>
+                  {ride.seats_available !== undefined && ride.total_seats !== undefined && (
+                    <span className="text-xs text-gray-500">
+                      ({ride.seats_available} of {ride.total_seats} available)
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            </>
           )}
 
           {trip && (
@@ -564,6 +580,13 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
             {/* Pending status actions */}
             {confirmation.status === 'pending' && isCurrentUserOwner && (
               <>
+                {ride && confirmation.seats_requested && (
+                  <div className="text-xs text-gray-600 mr-2">
+                    <span className="font-medium">Requested:</span> {confirmation.seats_requested} seat{confirmation.seats_requested > 1 ? 's' : ''}
+                    <br />
+                    <span className="font-medium">Available:</span> {ride.seats_available} of {ride.total_seats}
+                  </div>
+                )}
                 <button
                   onClick={() => showConfirmationModal('reject')}
                   disabled={isLoading}
@@ -574,8 +597,9 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
                 </button>
                 <button
                   onClick={() => showConfirmationModal('accept')}
-                  disabled={isLoading}
+                  disabled={isLoading || (ride && ride.seats_available < (confirmation.seats_requested || 0))}
                   className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm"
+                  title={ride && ride.seats_available < (confirmation.seats_requested || 0) ? 'Not enough seats available' : ''}
                 >
                   <Check size={16} />
                   <span>Accept</span>
@@ -894,6 +918,7 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
         onClose={() => setShowRequestAgainModal(false)}
         onConfirm={handleRequestAgainAction}
         confirmation={confirmation}
+        onStartChat={onStartChat}
         userId={user?.id || ''}
         loading={isLoading}
       />

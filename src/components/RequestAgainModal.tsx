@@ -3,6 +3,7 @@ import { RefreshCw, X, Clock, TriangleAlert as AlertTriangle, Car, Plane, Messag
 import { canRequestAgain } from '../utils/confirmationHelpers'
 import { RideConfirmation } from '../types'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
+import { supabase } from '../utils/supabase'
 
 interface RequestAgainModalProps {
   isOpen: boolean
@@ -11,6 +12,7 @@ interface RequestAgainModalProps {
   confirmation: RideConfirmation
   userId: string
   loading: boolean
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
 }
 
 export default function RequestAgainModal({
@@ -19,7 +21,8 @@ export default function RequestAgainModal({
   onConfirm,
   confirmation,
   userId,
-  loading
+  loading,
+  onStartChat
 }: RequestAgainModalProps) {
   const [reason, setReason] = useState('')
   const [eligibility, setEligibility] = useState<{
@@ -29,12 +32,30 @@ export default function RequestAgainModal({
     cooldownMinutes?: number
   }>({ canRequest: false })
   const [showReasonField, setShowReasonField] = useState(false)
+  const [rideOwnerName, setRideOwnerName] = useState<string>('User')
 
   useEffect(() => {
     if (isOpen) {
       checkEligibility()
+      fetchRideOwnerName()
     }
   }, [isOpen, confirmation.id, userId])
+
+  const fetchRideOwnerName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', confirmation.ride_owner_id)
+        .maybeSingle()
+
+      if (!error && data) {
+        setRideOwnerName(data.full_name)
+      }
+    } catch (error) {
+      console.error('Error fetching ride owner name:', error)
+    }
+  }
 
   const checkEligibility = async () => {
     try {
@@ -141,10 +162,20 @@ export default function RequestAgainModal({
             )}
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              onClose()
+              if (onStartChat) {
+                onStartChat(
+                  confirmation.ride_owner_id,
+                  rideOwnerName,
+                  confirmation.car_rides,
+                  confirmation.trips
+                )
+              }
+            }}
             className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
           >
-            Understood
+            Back to Chat
           </button>
         </div>
       </div>

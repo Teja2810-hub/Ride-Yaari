@@ -208,8 +208,35 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
         )}
       </div>
 
-      {/* Rides List */}
-      {filteredRides.length === 0 ? (
+      {/* Accepted Rides */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-green-900 mb-4">Accepted Rides ({filteredRides.filter(c => c.status === 'accepted').length})</h3>
+        {filteredRides.filter(c => c.status === 'accepted').length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">No accepted rides</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredRides.filter(c => c.status === 'accepted').map((confirmation) => renderRideCard(confirmation))}
+          </div>
+        )}
+      </div>
+
+      {/* Rejected Rides */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-red-900 mb-4">Rejected Rides ({filteredRides.filter(c => c.status === 'rejected').length})</h3>
+        {filteredRides.filter(c => c.status === 'rejected').length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">No rejected rides</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredRides.filter(c => c.status === 'rejected').map((confirmation) => renderRideCard(confirmation))}
+          </div>
+        )}
+      </div>
+
+      {filteredRides.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Car size={32} className="text-gray-400" />
@@ -224,162 +251,157 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
             }
           </p>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredRides.map((confirmation) => {
-            const ride = confirmation.car_rides!
-            const driver = confirmation.user_profiles
+      )}
+    </div>
+  )
 
-            return (
-              <div
-                key={confirmation.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
-                      {driver?.profile_image_url ? (
-                        <img
-                          src={driver.profile_image_url}
-                          alt={driver.full_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white font-semibold">
-                          {(driver?.full_name || 'D').charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {driver?.full_name || 'Unknown Driver'}
-                      </h3>
-                      <p className="text-sm text-gray-600">Driver</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
-                      {getStatusIcon(confirmation.status)}
-                      <span className="capitalize">{confirmation.status}</span>
-                    </div>
-                    <Car size={20} className="text-green-600" />
-                  </div>
-                </div>
+  function renderRideCard(confirmation: RideConfirmation) {
+        const ride = confirmation.car_rides!
+        const driver = confirmation.user_profiles
 
-                {/* Ride Details */}
-                <div className="bg-green-50 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">From</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <MapPin size={14} className="mr-1 text-gray-400" />
-                        {ride.from_location}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">To</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <MapPin size={14} className="mr-1 text-gray-400" />
-                        {ride.to_location}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Departure</p>
-                      <div className="font-medium text-gray-900 flex items-center">
-                        <Clock size={14} className="mr-1 text-gray-400" />
-                        {formatDateTime(ride.departure_date_time)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-green-200">
-                      <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ride.intermediate_stops.map((stop, index) => (
-                          <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
-                            <Navigation size={10} className="mr-1" />
-                            {stop.address}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-3 pt-3 border-t border-green-200">
-                    <span className="text-sm font-medium text-green-600">
-                      Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
-                      {ride.negotiable && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                          Negotiable
-                        </span>
-                      )}
+        return (
+          <div
+            key={confirmation.id}
+            className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                  {driver?.profile_image_url ? (
+                    <img
+                      src={driver.profile_image_url}
+                      alt={driver.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold">
+                      {(driver?.full_name || 'D').charAt(0).toUpperCase()}
                     </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {driver?.full_name || 'Unknown Driver'}
+                  </h3>
+                  <p className="text-sm text-gray-600">Driver</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                  {getStatusIcon(confirmation.status)}
+                  <span className="capitalize">{confirmation.status}</span>
+                </div>
+                <Car size={20} className="text-green-600" />
+              </div>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">From</p>
+                  <div className="font-medium text-gray-900 flex items-center">
+                    <MapPin size={14} className="mr-1 text-gray-400" />
+                    {ride.from_location}
                   </div>
                 </div>
-
-                {/* Request Timeline */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-green-600 font-bold text-xs">1</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Request Submitted</p>
-                        <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
-                      </div>
-                    </div>
-                    
-                    {confirmation.confirmed_at && (
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                          confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
-                        }`}>
-                          <span className={`font-bold text-xs ${
-                            confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
-                          }`}>2</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
-                          </p>
-                          <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
-                        </div>
-                      </div>
-                    )}
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">To</p>
+                  <div className="font-medium text-gray-900 flex items-center">
+                    <MapPin size={14} className="mr-1 text-gray-400" />
+                    {ride.to_location}
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => onStartChat(
-                      confirmation.ride_owner_id,
-                      driver?.full_name || 'Driver',
-                      ride,
-                      undefined
-                    )}
-                    className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
-                  >
-                    <MessageCircle size={16} />
-                    <span>Chat with {driver?.full_name || 'Driver'}</span>
-                  </button>
-
-                  <div className="text-xs text-gray-500">
-                    Request ID: {confirmation.id.slice(0, 8)}...
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Departure</p>
+                  <div className="font-medium text-gray-900 flex items-center">
+                    <Clock size={14} className="mr-1 text-gray-400" />
+                    {formatDateTime(ride.departure_date_time)}
                   </div>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      )}
 
-      {/* Summary Information */}
-      <div className="mt-8 bg-green-50 border border-green-200 rounded-xl p-6">
+              {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-green-200">
+                  <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ride.intermediate_stops.map((stop, index) => (
+                      <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
+                        <Navigation size={10} className="mr-1" />
+                        {stop.address}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3 pt-3 border-t border-green-200">
+                <span className="text-sm font-medium text-green-600">
+                  Price: {getCurrencySymbol(ride.currency || 'USD')}{ride.price} per passenger
+                  {ride.negotiable && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
+                      Negotiable
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-bold text-xs">1</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Request Submitted</p>
+                    <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
+                  </div>
+                </div>
+
+                {confirmation.confirmed_at && (
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                      confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
+                    }`}>
+                      <span className={`font-bold text-xs ${
+                        confirmation.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                      }`}>2</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
+                      </p>
+                      <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => onStartChat(
+                  confirmation.ride_owner_id,
+                  driver?.full_name || 'Driver',
+                  ride,
+                  undefined
+                )}
+                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+              >
+                <MessageCircle size={16} />
+                <span>Chat with {driver?.full_name || 'Driver'}</span>
+              </button>
+
+              <div className="text-xs text-gray-500">
+                Request ID: {confirmation.id.slice(0, 8)}...
+              </div>
+            </div>
+          </div>
+        )
+  }
+}
         <h3 className="font-semibold text-green-900 mb-4">📊 Your Ride Activity</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>

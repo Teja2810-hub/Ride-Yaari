@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive, Send } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Car, Plane, MessageCircle, CreditCard as Edit, Trash2, History, Settings, Bell, UserCog, Star, Clock, TriangleAlert as AlertTriangle, Shield, Archive, Send, Activity, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
+import Sidebar from './Sidebar'
 import { CarRide, Trip, RideConfirmation, TripRequest, RideRequest } from '../types'
 import UserConfirmationsContent from './UserConfirmationsContent'
 import PassengerManagement from './PassengerManagement'
@@ -36,8 +37,9 @@ type TripView = 'selector' | 'offered' | 'joined'
 type RideView = 'selector' | 'offered' | 'joined'
 
 export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRide, initialTab }: UserProfileProps) {
-  const { user, userProfile } = useAuth()
+  const { user, userProfile, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab === 'confirmations' ? 'confirmations' : 'overview')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [tripView, setTripView] = useState<TripView>('selector')
   const [rideView, setRideView] = useState<RideView>('selector')
   const [trips, setTrips] = useState<Trip[]>([])
@@ -298,7 +300,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setShowRideHistory(true)
   }
 
-  const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
+  const allTabs: { id: ProfileTab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
     { id: 'overview', label: 'Overview', icon: <User size={16} /> },
     { id: 'trips', label: 'Airport Trips', icon: <Plane size={16} /> },
     { id: 'rides', label: 'Car Rides', icon: <Car size={16} /> },
@@ -307,9 +309,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     { id: 'closure-history', label: 'Closure History', icon: <Archive size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'notification-management', label: 'Manage Alerts', icon: <Settings size={16} /> },
-    { id: 'test', label: 'System Health', icon: <Settings size={16} /> },
+    { id: 'test', label: 'System Health', icon: <Activity size={16} />, adminOnly: true },
     { id: 'reviews', label: 'Submit Review', icon: <Star size={16} /> }
   ]
+
+  const tabs = allTabs.filter(tab => !tab.adminOnly || userProfile?.is_admin)
 
   if (loading) {
     return (
@@ -325,13 +329,20 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg p-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
           >
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
+          </button>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium transition-colors rounded-xl"
+          >
+            <Menu size={20} />
+            <span className="hidden sm:inline">Menu</span>
           </button>
         </div>
 
@@ -391,6 +402,11 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
+                  {tab.adminOnly && userProfile?.is_admin && (
+                    <span className="ml-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                      ADMIN
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -672,49 +688,68 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
             {activeTab === 'test' && (
               <div>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
-                  <p className="text-gray-600">
-                    Test the confirmation flow and system functionality to ensure everything is working correctly.
-                  </p>
-                </div>
-                
-                {/* Debug Section for Requests */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
-                  <h3 className="font-semibold text-yellow-900 mb-4">🔍 Request Data Debug</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-yellow-800 mb-2"><strong>Trip Requests:</strong> {requestedTrips.length}</p>
-                      {requestedTrips.length > 0 && (
-                        <div className="bg-white rounded p-3">
-                          <p className="text-xs text-gray-600">Latest request:</p>
-                          <p className="text-xs text-gray-900">{requestedTrips[0]?.departure_airport} → {requestedTrips[0]?.destination_airport}</p>
-                          <p className="text-xs text-gray-600">Type: {requestedTrips[0]?.request_type}</p>
-                          <p className="text-xs text-gray-600">Active: {requestedTrips[0]?.is_active ? 'Yes' : 'No'}</p>
+                {userProfile?.is_admin ? (
+                  <>
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">System Health Check</h2>
+                          <p className="text-gray-600">
+                            Test the confirmation flow and system functionality to ensure everything is working correctly.
+                          </p>
                         </div>
-                      )}
+                        <span className="px-3 py-1 bg-red-100 text-red-700 text-sm font-semibold rounded-full">
+                          ADMIN ONLY
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-yellow-800 mb-2"><strong>Ride Requests:</strong> {requestedRides.length}</p>
-                      {requestedRides.length > 0 && (
-                        <div className="bg-white rounded p-3">
-                          <p className="text-xs text-gray-600">Latest request:</p>
-                          <p className="text-xs text-gray-900">{requestedRides[0]?.departure_location} → {requestedRides[0]?.destination_location}</p>
-                          <p className="text-xs text-gray-600">Type: {requestedRides[0]?.request_type}</p>
-                          <p className="text-xs text-gray-600">Active: {requestedRides[0]?.is_active ? 'Yes' : 'No'}</p>
+
+                    {/* Debug Section for Requests */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+                      <h3 className="font-semibold text-yellow-900 mb-4">🔍 Request Data Debug</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-yellow-800 mb-2"><strong>Trip Requests:</strong> {requestedTrips.length}</p>
+                          {requestedTrips.length > 0 && (
+                            <div className="bg-white rounded p-3">
+                              <p className="text-xs text-gray-600">Latest request:</p>
+                              <p className="text-xs text-gray-900">{requestedTrips[0]?.departure_airport} → {requestedTrips[0]?.destination_airport}</p>
+                              <p className="text-xs text-gray-600">Type: {requestedTrips[0]?.request_type}</p>
+                              <p className="text-xs text-gray-600">Active: {requestedTrips[0]?.is_active ? 'Yes' : 'No'}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        <div>
+                          <p className="text-yellow-800 mb-2"><strong>Ride Requests:</strong> {requestedRides.length}</p>
+                          {requestedRides.length > 0 && (
+                            <div className="bg-white rounded p-3">
+                              <p className="text-xs text-gray-600">Latest request:</p>
+                              <p className="text-xs text-gray-900">{requestedRides[0]?.departure_location} → {requestedRides[0]?.destination_location}</p>
+                              <p className="text-xs text-gray-600">Type: {requestedRides[0]?.request_type}</p>
+                              <p className="text-xs text-gray-600">Active: {requestedRides[0]?.is_active ? 'Yes' : 'No'}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={fetchUserData}
+                        className="mt-4 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+                      >
+                        Refresh Request Data
+                      </button>
                     </div>
+
+                    <SystemHealthDashboard />
+                  </>
+                ) : (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+                    <Shield size={48} className="text-red-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-red-900 mb-2">Access Denied</h3>
+                    <p className="text-red-700">
+                      This section is restricted to administrators only. You do not have permission to view this content.
+                    </p>
                   </div>
-                  <button
-                    onClick={fetchUserData}
-                    className="mt-4 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
-                  >
-                    Refresh Request Data
-                  </button>
-                </div>
-                
-                <SystemHealthDashboard />
+                )}
               </div>
             )}
 
@@ -816,6 +851,33 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
           </div>
         </div>
       )}
+
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onHelp={() => {
+          setSidebarOpen(false)
+        }}
+        onProfile={() => {
+          setSidebarOpen(false)
+          setActiveTab('overview')
+        }}
+        onNotifications={() => {
+          setSidebarOpen(false)
+          setActiveTab('notifications')
+        }}
+        onMessages={() => {
+          setSidebarOpen(false)
+        }}
+        onRideRequests={() => {
+          setSidebarOpen(false)
+          setActiveTab('confirmations')
+        }}
+        onSignOut={() => {
+          setSidebarOpen(false)
+          signOut()
+        }}
+      />
     </div>
   )
 }
