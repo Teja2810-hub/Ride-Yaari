@@ -112,30 +112,6 @@ export default function Sidebar({
                 <span className="font-medium">Help</span>
               </button>
 
-              <button
-                onClick={() => handleMenuItemClick(onNotifications)}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-              >
-                <Bell size={20} />
-                <span className="font-medium">Notifications</span>
-              </button>
-
-              <button
-                onClick={() => handleMenuItemClick(onMessages)}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-              >
-                <MessageCircle size={20} />
-                <span className="font-medium">Messages</span>
-              </button>
-
-              <button
-                onClick={() => handleMenuItemClick(onRideRequests)}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-              >
-                <Send size={20} />
-                <span className="font-medium">Ride Requests</span>
-              </button>
-
               <div className="border-t border-gray-200 my-2"></div>
 
               <button

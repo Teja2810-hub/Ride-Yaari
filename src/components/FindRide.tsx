@@ -30,7 +30,7 @@ type LocationSearchType = 'manual' | 'nearby'
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindRide({ onBack, onStartChat, isGuest = false }: FindRideProps) {
-  const { user, isGuest: contextIsGuest, signOut } = useAuth()
+  const { user, userProfile, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -673,9 +673,28 @@ export default function FindRide({ onBack, onStartChat, isGuest = false }: FindR
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Ride</h1>
-            <p className="text-gray-600 mb-4">Search for available car rides in your area</p>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Ride</h1>
+              <p className="text-gray-600 mb-4">Search for available car rides in your area</p>
+            </div>
+            {!effectiveIsGuest && userProfile?.profile_image_url && (
+              <button
+                onClick={onBack}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden hover:ring-2 hover:ring-green-600 transition-all cursor-pointer flex-shrink-0 ml-4"
+              >
+                <img
+                  src={userProfile.profile_image_url}
+                  alt={userProfile.full_name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </button>
+            )}
+          </div>
+          <div>
             {effectiveIsGuest && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">

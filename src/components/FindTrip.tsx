@@ -20,7 +20,7 @@ interface FindTripProps {
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
 export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindTripProps) {
-  const { user, isGuest: contextIsGuest, signOut } = useAuth()
+  const { user, userProfile, isGuest: contextIsGuest, signOut } = useAuth()
   const effectiveIsGuest = isGuest || contextIsGuest
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -289,9 +289,28 @@ export default function FindTrip({ onBack, onStartChat, isGuest = false }: FindT
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Trip</h1>
-            <p className="text-gray-600">Search for travelers on your needed route</p>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Find a Trip</h1>
+              <p className="text-gray-600">Search for travelers on your needed route</p>
+            </div>
+            {!effectiveIsGuest && userProfile?.profile_image_url && (
+              <button
+                onClick={onBack}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-600 transition-all cursor-pointer flex-shrink-0 ml-4"
+              >
+                <img
+                  src={userProfile.profile_image_url}
+                  alt={userProfile.full_name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </button>
+            )}
+          </div>
+          <div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
               <p className="font-semibold mb-2">🔍 Smart Search Tips:</p>
               <ul className="text-left space-y-1 text-blue-800 text-sm">

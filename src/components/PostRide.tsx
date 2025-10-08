@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ArrowLeft, Calendar, Clock, DollarSign, Send, MapPin, Plus, X, User, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { UserProfile } from '../types'
 import { supabase } from '../utils/supabase'
 import Sidebar from './Sidebar'
 import LocationAutocomplete from './LocationAutocomplete'
@@ -22,7 +23,7 @@ interface PostRideProps {
 }
 
 export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
-  const { user, setGuestMode, signOut } = useAuth()
+  const { user, userProfile, setGuestMode, signOut } = useAuth()
   const effectiveIsGuest = isGuest || !user
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [fromLocation, setFromLocation] = useState<LocationData | null>(null)
@@ -246,9 +247,28 @@ export default function PostRide({ onBack, isGuest = false }: PostRideProps) {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Ride</h1>
-            <p className="text-gray-600">Share your car ride to help others save money and reduce emissions</p>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Post Your Ride</h1>
+              <p className="text-gray-600">Share your car ride to help others save money and reduce emissions</p>
+            </div>
+            {!effectiveIsGuest && userProfile?.profile_image_url && (
+              <button
+                onClick={onBack}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden hover:ring-2 hover:ring-green-600 transition-all cursor-pointer flex-shrink-0 ml-4"
+              >
+                <img
+                  src={userProfile.profile_image_url}
+                  alt={userProfile.full_name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </button>
+            )}
+          </div>
+          <div>
             {isGuest && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
