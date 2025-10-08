@@ -88,10 +88,18 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
       radiusUnit,
       useCustomRadius,
       customRadius,
-      sortBy
+      sortBy,
+      searched
     }
     localStorage.setItem('findRideFilters', JSON.stringify(filters))
-  }, [locationSearchType, fromLocation, toLocation, userLocation, searchRadius, departureDate, departureMonth, searchByMonth, strictSearch, radiusUnit, useCustomRadius, customRadius, sortBy])
+  }, [locationSearchType, fromLocation, toLocation, userLocation, searchRadius, departureDate, departureMonth, searchByMonth, strictSearch, radiusUnit, useCustomRadius, customRadius, sortBy, searched])
+
+  // Restore results from cache on mount
+  React.useEffect(() => {
+    if (cachedFilters?.searched && rides.length === 0 && !loading) {
+      handleSearch(new Event('submit') as any)
+    }
+  }, [])
 
   // Auto-search on component mount for guests to show available rides
   React.useEffect(() => {
