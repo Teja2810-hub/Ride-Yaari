@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plane, CirclePlus as PlusCircle, Search, ArrowLeft, Menu } from 'lucide-react'
+import { Plane, CirclePlus as PlusCircle, Search, ArrowLeft, Menu, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import ConfirmationExpiryBanner from './ConfirmationExpiryBanner'
 import MessagesNotification from './MessagesNotification'
