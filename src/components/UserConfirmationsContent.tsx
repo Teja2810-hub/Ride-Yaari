@@ -51,6 +51,17 @@ function CollapsibleConfirmationItem({ confirmation, onUpdate, onStartChat }: { 
               <p className="text-xs text-gray-500">
                 {ride ? formatDateTimeSafe(ride.departure_date_time) : formatDateSafe(trip?.travel_date || '')}
               </p>
+              <p className="text-xs font-medium mt-1">
+                {isCurrentUserOwner ? (
+                  <span className={confirmation.status === 'accepted' ? 'text-green-600' : confirmation.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>
+                    You {confirmation.status === 'accepted' ? 'accepted' : confirmation.status === 'rejected' ? 'rejected' : 'have a request from'} {passenger.full_name}
+                  </span>
+                ) : (
+                  <span className={confirmation.status === 'accepted' ? 'text-green-600' : confirmation.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>
+                    {confirmation.status === 'accepted' ? 'You were accepted' : confirmation.status === 'rejected' ? 'You were rejected' : 'Request pending'}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
