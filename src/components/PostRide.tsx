@@ -92,8 +92,8 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
           price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
-          total_seats: parseInt(totalSeats),
-          seats_available: parseInt(totalSeats),
+          total_seats: parseInt(totalSeats, 10),
+          seats_available: parseInt(totalSeats, 10),
           intermediate_stops: intermediateStops.map(stop => ({
             address: stop.address,
             latitude: stop.latitude,

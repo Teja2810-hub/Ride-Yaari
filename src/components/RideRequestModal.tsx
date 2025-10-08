@@ -70,6 +70,11 @@ export default function RideRequestModal({
       return
     }
 
+    if (selectedRide.seats_available === 0) {
+      setError('This ride has no available seats')
+      return
+    }
+
     if (seatsRequested < 1 || seatsRequested > selectedRide.seats_available) {
       setError(`Please select between 1 and ${selectedRide.seats_available} seats`)
       return
@@ -214,7 +219,7 @@ export default function RideRequestModal({
                   <div className="flex items-center space-x-4">
                     <select
                       value={seatsRequested}
-                      onChange={(e) => setSeatsRequested(parseInt(e.target.value))}
+                      onChange={(e) => setSeatsRequested(parseInt(e.target.value, 10))}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                       {Array.from({ length: selectedRide.seats_available }, (_, i) => i + 1).map((num) => (

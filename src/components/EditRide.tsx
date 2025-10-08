@@ -71,7 +71,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
     try {
       console.log('Updating ride with locations:', { fromLocation, toLocation, intermediateStops })
 
-      const newTotalSeats = parseInt(totalSeats)
+      const newTotalSeats = parseInt(totalSeats, 10)
       const currentTotalSeats = ride.total_seats
       const currentSeatsAvailable = ride.seats_available
       const seatsBooked = currentTotalSeats - currentSeatsAvailable
