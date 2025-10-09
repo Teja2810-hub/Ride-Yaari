@@ -67,7 +67,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
   })
 
   const [emailData, setEmailData] = useState<EmailData>({
-    new_email: user?.email || '',
+    new_email: '',
     current_password: ''
   })
 
