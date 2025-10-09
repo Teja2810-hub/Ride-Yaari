@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Circle as HelpCircle, Mail, Phone, MessageSquare, Send } from 'lucide-react'
+import { ArrowLeft, Circle as HelpCircle, Mail, Phone, Send } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 interface HelpPageProps {
   onBack: () => void
@@ -7,6 +8,43 @@ interface HelpPageProps {
 
 export default function HelpPage({ onBack }: HelpPageProps) {
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const { user } = useAuth()
+
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    setErrorMsg('')
+
+    try {
+      const form = e.currentTarget
+      const formData = new FormData(form)
+
+      // Optional extra context for your Freeform dashboard
+      formData.append('page', 'HelpPage')
+      formData.append('source', window.location.href)
+
+      const res = await fetch('https://formspree.io/f/mgvlrlzn', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: formData,
+      })
+
+      if (res.ok) {
+        setSubmitted(true)
+        form.reset()
+      } else {
+        const data = await res.json().catch(() => null)
+        const message = data?.errors?.[0]?.message || 'Failed to send your message. Please try again.'
+        setErrorMsg(message)
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/90 to-indigo-100/90 travel-bg p-2 sm:p-4">
@@ -114,10 +152,7 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                     </a>
                   </div>
                   <form 
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      setSubmitted(true)
-                    }}
+                    onSubmit={handleContactSubmit}
                     className="space-y-4"
                   >
                     <div>
@@ -132,12 +167,29 @@ export default function HelpPage({ onBack }: HelpPageProps) {
 
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
-                        required
-                      />
+                      {user?.email ? (
+                        <>
+                          <input
+                            type="email"
+                            name="email"
+                            value={user.email}
+                            readOnly
+                            aria-readonly="true"
+                            autoComplete="email"
+                            className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:ring-0 focus:border-gray-300 cursor-not-allowed text-sm sm:text-base"
+                            required
+                          />
+                          <p className="mt-1 text-xs text-gray-500">This is your account email. It will be used so support can reply to you.</p>
+                        </>
+                      ) : (
+                        <input
+                          type="email"
+                          name="email"
+                          autoComplete="email"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
+                          required
+                        />
+                      )}
                     </div>
 
                     <div>
@@ -169,11 +221,18 @@ export default function HelpPage({ onBack }: HelpPageProps) {
                       />
                     </div>
 
+                    {errorMsg && (
+                      <div className="text-red-600 text-sm" role="alert">
+                        {errorMsg}
+                      </div>
+                    )}
+
                     <button
                       type="submit"
-                      className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                      className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                      disabled={loading}
                     >
-                      Send Message
+                      {loading ? 'Sending…' : 'Send Message'}
                     </button>
                   </form>
                 </>
