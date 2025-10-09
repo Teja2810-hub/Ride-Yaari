@@ -338,12 +338,12 @@ export const validatePasswordData = (data: PasswordChangeData): { isValid: boole
 export const validateEmailData = (data: EmailChangeData, currentEmail: string): { isValid: boolean; errors: string[] } => {
   const errors: string[] = []
 
-  if (!data.newEmail) {
+  if (!data.newEmail || !data.newEmail.trim()) {
     errors.push('New email address is required')
   }
 
-  if (!data.currentPassword) {
-    errors.push('Current password is required for email changes')
+  if (!data.currentPassword || !data.currentPassword.trim()) {
+    errors.push('Current password is required')
   }
 
   // Email format validation
@@ -352,7 +352,7 @@ export const validateEmailData = (data: EmailChangeData, currentEmail: string): 
     errors.push('Please enter a valid email address')
   }
 
-  if (data.newEmail === currentEmail) {
+  if (data.newEmail && data.newEmail === currentEmail) {
     errors.push('New email must be different from current email')
   }
 
