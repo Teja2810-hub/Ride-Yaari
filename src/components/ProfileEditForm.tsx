@@ -217,8 +217,13 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     e.preventDefault()
     if (!user) return
 
+    console.log('Email data being validated:', emailData)
+    console.log('Current user email:', user.email)
+
     // Validate email data
     const validation = validateEmailData(emailData, user.email!)
+
+    console.log('Validation result:', validation)
 
     if (!validation.isValid) {
       setError(validation.errors.join(', '))
