@@ -139,14 +139,12 @@ export const initiateEmailChange = async (
   emailData: EmailChangeData
 ): Promise<{ success: boolean; error?: string; verificationSent?: boolean }> => {
   return retryWithBackoff(async () => {
-    // Get current user email
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
+
     if (userError || !user?.email) {
       throw new Error('Failed to get current user information')
     }
 
-    // Verify current password
     const { error: verifyError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: emailData.currentPassword
@@ -156,28 +154,7 @@ export const initiateEmailChange = async (
       throw new Error('Current password is incorrect')
     }
 
-    // Generate verification token
-    const verificationToken = Math.random().toString(36).substring(2, 15) + 
-                             Math.random().toString(36).substring(2, 15)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-    // Store email change request
-    const { error: insertError } = await supabase
-      .from('email_change_verification')
-      .insert({
-        user_id: userId,
-        old_email: user.email,
-        new_email: emailData.newEmail,
-        verification_token: verificationToken,
-        expires_at: expiresAt.toISOString()
-      })
-
-    if (insertError) {
-      throw new Error(insertError.message)
-    }
-
-    // Send verification email using Supabase auth
-    const { error: emailError } = await supabase.auth.updateUser({
+    const { data, error: emailError } = await supabase.auth.updateUser({
       email: emailData.newEmail
     })
 
