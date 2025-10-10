@@ -34,7 +34,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   return (
     <div className="min-h-screen bg-neutral-bg travel-bg">
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="flex items-center justify-between mb-4 sm:mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 space-y-2 sm:space-y-0">
           <div>
             {!isGuest && (
               <button
@@ -47,7 +47,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:space-x-6">
             <button
               onClick={onBack}
               className="flex items-center space-x-2 px-4 py-2 text-accent-blue hover:text-accent-blue-hover font-medium transition-colors text-sm rounded-xl"

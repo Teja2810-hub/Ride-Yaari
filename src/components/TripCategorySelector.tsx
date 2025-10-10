@@ -315,40 +315,36 @@ export default function TripCategorySelector({
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                           <Plane size={24} className="text-blue-600" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
-                          <p className="text-xs sm:text-sm text-gray-600 truncate">
+                          <p className="text-gray-600">
                             {formatDate(trip.travel_date)}
                             {trip.departure_time && ` at ${trip.departure_time}`}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium ${tripStatus.color}`}>
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${tripStatus.color}`}>
                           {tripStatus.icon}
                           <span>{tripStatus.label}</span>
                         </div>
                         {trip.price && (
-                          <span className="text-xs sm:text-sm font-medium text-green-600 whitespace-nowrap">
+                          <span className="text-sm font-medium text-green-600">
                             {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
                           </span>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleOfferedTrip(trip.id)
-                          }}
-                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700"
-                        >
-                          <span>{isExpanded ? 'Hide' : 'Details'}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
                           {isExpanded ? (
-                            <ChevronUp size={16} className="text-gray-400" />
+                            <ChevronUp size={20} className="text-gray-400" />
                           ) : (
-                            <ChevronDown size={16} className="text-gray-400" />
+                            <ChevronDown size={20} className="text-gray-400" />
                           )}
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -588,33 +584,29 @@ export default function TripCategorySelector({
                             </span>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
-                          <p className="text-xs sm:text-sm text-gray-600 truncate">
-                            {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown'}
+                          <p className="text-gray-600">
+                            {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium ${getStatusColor(confirmation.status)}`}>
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
                           <span className="capitalize">{confirmation.status}</span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleJoinedTrip(confirmation.id)
-                          }}
-                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700"
-                        >
-                          <span>{isExpanded ? 'Hide' : 'Details'}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {isExpanded ? 'Hide Details' : 'Show Details'}
+                          </span>
                           {isExpanded ? (
-                            <ChevronUp size={16} className="text-gray-400" />
+                            <ChevronUp size={20} className="text-gray-400" />
                           ) : (
-                            <ChevronDown size={16} className="text-gray-400" />
+                            <ChevronDown size={20} className="text-gray-400" />
                           )}
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>

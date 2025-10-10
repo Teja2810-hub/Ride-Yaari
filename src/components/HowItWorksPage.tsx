@@ -40,41 +40,41 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
           {/* Quick Navigation */}
           <div className="grid md:grid-cols-3 gap-4 mb-12">
-            <div
+            <button
               onClick={() => {
                 setExpandedSection(expandedSection === 'airport' ? null : 'airport')
                 scrollToSection('airport-section')
               }}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left cursor-pointer"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left"
             >
               <Plane className="text-blue-600 mb-3" size={32} />
               <h3 className="text-xl font-bold text-gray-900 mb-2">Airport Trips</h3>
               <p className="text-sm text-gray-600">Package delivery, travel assistance, and airport services</p>
-            </div>
+            </button>
 
-            <div
+            <button
               onClick={() => {
                 setExpandedSection(expandedSection === 'car' ? null : 'car')
                 scrollToSection('car-section')
               }}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left cursor-pointer"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left"
             >
               <Car className="text-green-600 mb-3" size={32} />
               <h3 className="text-xl font-bold text-gray-900 mb-2">Car Rides</h3>
               <p className="text-sm text-gray-600">Ridesharing, cost splitting, and local travel</p>
-            </div>
+            </button>
 
-            <div
+            <button
               onClick={() => {
                 setExpandedSection(expandedSection === 'profile' ? null : 'profile')
                 scrollToSection('profile-section')
               }}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left cursor-pointer"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 text-left"
             >
               <User className="text-slate-600 mb-3" size={32} />
               <h3 className="text-xl font-bold text-gray-900 mb-2">Profile & Settings</h3>
               <p className="text-sm text-gray-600">Manage your account, notifications, and preferences</p>
-            </div>
+            </button>
           </div>
 
           {/* Airport Section */}
