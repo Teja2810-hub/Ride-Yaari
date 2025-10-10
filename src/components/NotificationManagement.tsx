@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Trash2, MapPin, Calendar, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Plus, Car, Plane, ChevronDown, ChevronUp } from 'lucide-react'
+import { Bell, Trash2, Clock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, CreditCard as Edit, Car, Plane, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { RideNotification, TripNotification } from '../types'
@@ -330,11 +330,11 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2">
         <div className="flex items-center space-x-3">
-          <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Notification Management</h2>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={fetchNotifications}
             disabled={isLoading}
@@ -343,7 +343,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
-          <span className="text-gray-600">{filteredNotifications.length} of {stats.total} notifications</span>
+          <span className="text-gray-600 text-sm sm:text-base whitespace-nowrap">{filteredNotifications.length} of {stats.total} notifications</span>
         </div>
       </div>
 
@@ -471,7 +471,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                   className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleNotificationExpansion(notification.id)}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         {notification.type === 'ride' ? (
@@ -480,23 +480,24 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                           <Plane size={24} className="text-blue-600" />
                         )}
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                      <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">
                           {getLocationDisplay(notification)}
                         </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-600">
                           <span>{getDateTypeDisplay(notification)}</span>
                           <span className={expiryStatus.color}>{expiryStatus.text}</span>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
+
+                    {/* STACKED type + status (no pointer events so header remains clickable) */}
+                    <div className="flex flex-col items-end space-y-2 pointer-events-none select-none">
                       <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
                         <span>{notification.type === 'ride' ? '🚗' : '✈️'}</span>
                         <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
                       </div>
-                      
+
                       {expiryStatus.isExpired ? (
                         <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
                           <X size={14} />
@@ -513,17 +514,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                           <span>Inactive</span>
                         </div>
                       )}
-                      
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">
-                          {isExpanded ? 'Hide Details' : 'Show Details'}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp size={20} className="text-gray-400" />
-                        ) : (
-                          <ChevronDown size={20} className="text-gray-400" />
-                        )}
-                      </div>
                     </div>
                   </div>
                 </div>

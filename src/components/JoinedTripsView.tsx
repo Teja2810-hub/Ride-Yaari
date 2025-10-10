@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Plane, User, Calendar, Clock, MapPin, MessageCircle, Check, X, TriangleAlert as AlertTriangle, ListFilter as Filter, Search, Globe } from 'lucide-react'
+import { ArrowLeft, Plane, Calendar, Clock, MessageCircle, Check, X, TriangleAlert as AlertTriangle, ListFilter as Filter, Search } from 'lucide-react'
 import { RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 
@@ -13,7 +13,7 @@ interface JoinedTripsViewProps {
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected'
 type SortOption = 'date-desc' | 'date-asc' | 'status' | 'destination'
 
-export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRefresh }: JoinedTripsViewProps) {
+export default function JoinedTripsView({ joinedTrips, onBack, onStartChat }: JoinedTripsViewProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [searchTerm, setSearchTerm] = useState('')
@@ -122,18 +122,18 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2">
         <div className="flex items-center space-x-3">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
           >
             <ArrowLeft size={20} />
-            <span>Back</span>
+            <span className="hidden sm:inline">Back</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">Trips You've Joined</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Trips You've Joined</h2>
         </div>
-        <span className="text-gray-600">{filteredTrips.length} of {joinedTrips.length} trip{joinedTrips.length !== 1 ? 's' : ''}</span>
+        <span className="text-gray-600 text-sm sm:text-base whitespace-nowrap">{filteredTrips.length} of {joinedTrips.length} trip{joinedTrips.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Stats Overview */}
@@ -268,10 +268,10 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
                   </div>
 
                   <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                       <div>
                         <p className="text-sm text-gray-600 mb-1">From</p>
-                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
+                        <div className="font-medium text-gray-900 break-words">{trip.leaving_airport}</div>
                         {trip.departure_time && (
                           <div className="text-sm text-gray-600 flex items-center mt-1">
                             <Clock size={12} className="mr-1" />
@@ -286,7 +286,7 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat, onRe
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 mb-1">To</p>
-                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
+                        <div className="font-medium text-gray-900 break-words">{trip.destination_airport}</div>
                         {trip.landing_time && (
                           <div className="text-sm text-gray-600 flex items-center mt-1">
                             <Clock size={12} className="mr-1" />

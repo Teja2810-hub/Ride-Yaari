@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Clock, DollarSign, Send, Plus, X, Bell, Search, User, Menu } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Send, Plus, X, Bell, Search, User, Menu } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import LocationAutocomplete from './LocationAutocomplete'
 import Sidebar from './Sidebar'
-import { currencies, getCurrencySymbol } from '../utils/currencies'
-import { createRideRequest, createRideNotification } from '../utils/rideRequestHelpers'
+// removed unused currency imports
+import { createRideRequest } from '../utils/rideRequestHelpers'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
@@ -59,16 +59,17 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
       const requestData = {
         passenger_id: user.id,
         departure_location: departureLocation.address,
-        departure_latitude: departureLocation.latitude,
-        departure_longitude: departureLocation.longitude,
+        departure_latitude: departureLocation.latitude ?? undefined,
+        departure_longitude: departureLocation.longitude ?? undefined,
         destination_location: destinationLocation.address,
-        destination_latitude: destinationLocation.latitude,
-        destination_longitude: destinationLocation.longitude,
+        destination_latitude: destinationLocation.latitude ?? undefined,
+        destination_longitude: destinationLocation.longitude ?? undefined,
         search_radius_miles: searchRadius,
         request_type: requestType,
         specific_date: requestType === 'specific_date' ? specificDate : undefined,
         multiple_dates: requestType === 'multiple_dates' ? multipleDates.filter(d => d) : undefined,
         request_month: requestType === 'month' ? requestMonth : undefined,
+        currency: 'USD',
         additional_notes: additionalNotes || undefined,
         is_active: true
       }
@@ -104,11 +105,11 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
             user_id: user.id,
             notification_type: 'passenger_request' as const,
             departure_location: departureLocation.address,
-            departure_latitude: departureLocation.latitude,
-            departure_longitude: departureLocation.longitude,
+            departure_latitude: departureLocation.latitude ?? undefined,
+            departure_longitude: departureLocation.longitude ?? undefined,
             destination_location: destinationLocation.address,
-            destination_latitude: destinationLocation.latitude,
-            destination_longitude: destinationLocation.longitude,
+            destination_latitude: destinationLocation.latitude ?? undefined,
+            destination_longitude: destinationLocation.longitude ?? undefined,
             search_radius_miles: searchRadius,
             date_type: notificationDateType,
             specific_date: notificationDateType === 'specific_date' ? notificationSpecificDate : undefined,
@@ -210,13 +211,13 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
     <>
       <div className="min-h-screen bg-gradient-to-br from-green-50/90 to-emerald-100/90 travel-bg p-4">
         <div className="container mx-auto max-w-2xl">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-2 sm:gap-4 flex-nowrap">
             <button
               onClick={onBack}
               className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
             >
               <ArrowLeft size={20} />
-              <span>Back to Dashboard</span>
+              <span className="hidden sm:inline">Back to Dashboard</span>
             </button>
             {isGuest ? (
               <button
@@ -228,7 +229,7 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
             ) : (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl"
+                className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl shrink-0 whitespace-nowrap"
               >
                 <Menu size={20} />
                 <span className="hidden sm:inline">Menu</span>
@@ -687,15 +688,6 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
           onProfile={() => {
             setSidebarOpen(false)
             onProfile()
-          }}
-          onNotifications={() => {
-            setSidebarOpen(false)
-          }}
-          onMessages={() => {
-            setSidebarOpen(false)
-          }}
-          onRideRequests={() => {
-            setSidebarOpen(false)
           }}
           onSignOut={() => {
             setSidebarOpen(false)

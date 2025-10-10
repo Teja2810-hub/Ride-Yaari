@@ -79,19 +79,16 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
           {/* Airport Section */}
           <div id="airport-section" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 cursor-pointer" onClick={() => setExpandedSection(expandedSection === 'airport' ? null : 'airport')}>
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                   <Plane size={24} className="text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">Airport Trips</h2>
               </div>
-              <button
-                onClick={() => setExpandedSection(expandedSection === 'airport' ? null : 'airport')}
-                className="text-blue-600 hover:text-blue-700"
-              >
+              <div className="text-blue-600 hover:text-blue-700">
                 {expandedSection === 'airport' ? <ChevronUp size={28} /> : <ChevronDown size={28} />}
-              </button>
+              </div>
             </div>
 
             <div className={`space-y-8 ${expandedSection === 'airport' ? 'block' : 'hidden'}`}>
@@ -329,19 +326,16 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
           {/* Car Rides Section */}
           <div id="car-section" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 cursor-pointer" onClick={() => setExpandedSection(expandedSection === 'car' ? null : 'car')}>
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
                   <Car size={24} className="text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">Car Rides</h2>
               </div>
-              <button
-                onClick={() => setExpandedSection(expandedSection === 'car' ? null : 'car')}
-                className="text-green-600 hover:text-green-700"
-              >
+              <div className="text-green-600 hover:text-green-700">
                 {expandedSection === 'car' ? <ChevronUp size={28} /> : <ChevronDown size={28} />}
-              </button>
+              </div>
             </div>
 
             <div className={`space-y-8 ${expandedSection === 'car' ? 'block' : 'hidden'}`}>
@@ -643,19 +637,16 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
           {/* Profile & Settings Section */}
           <div id="profile-section" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 cursor-pointer" onClick={() => setExpandedSection(expandedSection === 'profile' ? null : 'profile')}>
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-slate-600 rounded-full flex items-center justify-center">
                   <User size={24} className="text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">Profile & Settings</h2>
               </div>
-              <button
-                onClick={() => setExpandedSection(expandedSection === 'profile' ? null : 'profile')}
-                className="text-slate-600 hover:text-slate-700"
-              >
+              <div className="text-slate-600 hover:text-slate-700">
                 {expandedSection === 'profile' ? <ChevronUp size={28} /> : <ChevronDown size={28} />}
-              </button>
+              </div>
             </div>
 
             <div className={`space-y-8 ${expandedSection === 'profile' ? 'block' : 'hidden'}`}>

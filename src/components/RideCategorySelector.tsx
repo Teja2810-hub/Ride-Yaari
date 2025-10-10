@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, DollarSign, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send, X } from 'lucide-react'
+import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
 import { CarRide, RideConfirmation, RideRequest } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import { formatDateSafe } from '../utils/dateHelpers'
@@ -295,11 +295,11 @@ export default function RideCategorySelector({
               className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Rides You're Offering</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Rides You're Offering</h2>
           </div>
-          <span className="text-gray-600">{offeredRides.length} ride{offeredRides.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{offeredRides.length} ride{offeredRides.length !== 1 ? 's' : ''}</span>
         </div>
 
         {offeredRides.length === 0 ? (
@@ -312,7 +312,7 @@ export default function RideCategorySelector({
           <div className="space-y-4">
             {offeredRides.map((ride) => {
               const isExpanded = expandedOfferedRide === ride.id
-              const isExpiredSoon = isExpiredOrExpiringSoon(ride)
+              // const isExpiredSoon = isExpiredOrExpiringSoon(ride)
               const rideStatus = getRideStatus(ride)
               
               return (
@@ -322,21 +322,41 @@ export default function RideCategorySelector({
                     className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleOfferedRide(ride.id)}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                           <Car size={24} className="text-green-600" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                             {ride.from_location} → {ride.to_location}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-gray-600 text-sm">
                             {formatDateTime(ride.departure_date_time)}
                           </p>
+                          {/* Mobile-only stacked status/price and Show Details */}
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${rideStatus.color}`}>
+                              {rideStatus.icon}
+                              <span>{rideStatus.label}</span>
+                            </div>
+                            <span className="text-sm font-medium text-green-600">
+                              {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
+                            </span>
+                            <div className="flex items-center space-x-2 whitespace-nowrap">
+                              <span className="text-xs sm:text-sm text-gray-500">
+                                {isExpanded ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="hidden sm:flex items-center space-x-3">
                         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${rideStatus.color}`}>
                           {rideStatus.icon}
                           <span>{rideStatus.label}</span>
@@ -344,8 +364,8 @@ export default function RideCategorySelector({
                         <span className="text-sm font-medium text-green-600">
                           {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
                         </span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
+                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                          <span className="text-xs sm:text-sm text-gray-500">
                             {isExpanded ? 'Hide Details' : 'Show Details'}
                           </span>
                           {isExpanded ? (
@@ -365,7 +385,7 @@ export default function RideCategorySelector({
                         {/* Ride Details */}
                         <div className="bg-green-50 rounded-lg p-4">
                           <h4 className="font-semibold text-green-900 mb-3">Ride Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                             <div>
                               <p className="text-gray-600 mb-1">From</p>
                               <div className="font-medium text-gray-900 flex items-center">
@@ -416,7 +436,8 @@ export default function RideCategorySelector({
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center justify-between">
+                        {/* Desktop/Laptop layout (unchanged) */}
+                        <div className="hidden sm:flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             {rideStatus.status !== 'expired' && (
                               <TripClosureControls
@@ -463,6 +484,59 @@ export default function RideCategorySelector({
                               <Trash2 size={16} />
                               <span>Delete</span>
                             </button>
+                          </div>
+                        </div>
+
+                        {/* Mobile layout: two columns, left = Close + View History, right = Edit + Delete stacked */}
+                        <div className="sm:hidden mt-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col space-y-2">
+                              {rideStatus.status !== 'expired' && (
+                                <TripClosureControls
+                                  ride={ride}
+                                  onUpdate={onRefresh}
+                                />
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onViewRideHistory(ride)
+                                }}
+                                className="flex items-center justify-start space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                              >
+                                <History size={16} />
+                                <span>View History</span>
+                              </button>
+                            </div>
+                            <div className="flex flex-col items-end space-y-2">
+                              {rideStatus.status === 'open' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditRide(ride)
+                                  }}
+                                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                                >
+                                  <Edit size={16} />
+                                  <span>Edit</span>
+                                </button>
+                              ) : (
+                                <div className="flex items-center space-x-2 text-gray-400">
+                                  <Edit size={16} />
+                                  <span className="text-sm">{rideStatus.label}</span>
+                                </div>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onDeleteRide(ride.id)
+                                }}
+                                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                              >
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
@@ -540,11 +614,11 @@ export default function RideCategorySelector({
               className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Rides You've Joined</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Rides You've Joined</h2>
           </div>
-          <span className="text-gray-600">{joinedRides.length} ride{joinedRides.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{joinedRides.length} ride{joinedRides.length !== 1 ? 's' : ''}</span>
         </div>
 
         {joinedRides.length === 0 ? (
@@ -559,7 +633,7 @@ export default function RideCategorySelector({
               const ride = confirmation.car_rides!
               const driver = confirmation.user_profiles
               const isExpanded = expandedJoinedRide === confirmation.id
-              const isExpiredSoon = isExpiredOrExpiringSoon(ride)
+              // const isExpiredSoon = isExpiredOrExpiringSoon(ride)
               
               return (
                 <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
@@ -590,9 +664,25 @@ export default function RideCategorySelector({
                           <p className="text-gray-600">
                             {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
                           </p>
+                          {/* Mobile-only stacked status and Show Details */}
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${getStatusColor(confirmation.status)}`}>
+                              <span className="capitalize">{confirmation.status}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">
+                                {isExpanded ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="hidden sm:flex items-center space-x-3">
                         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
                           <span className="capitalize">{confirmation.status}</span>
                         </div>
@@ -744,11 +834,11 @@ export default function RideCategorySelector({
               className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Your Ride Requests</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Your Ride Requests</h2>
           </div>
-          <span className="text-gray-600">{requestedRides.length} request{requestedRides.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{requestedRides.length} request{requestedRides.length !== 1 ? 's' : ''}</span>
         </div>
 
         {requestedRides.length === 0 ? (
@@ -766,7 +856,7 @@ export default function RideCategorySelector({
                   className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleRequestedRide(request.id)}
                 >
-                  <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
                         <Send size={24} className="text-white" />
@@ -781,15 +871,33 @@ export default function RideCategorySelector({
                             <span> • {request.departure_time_preference}</span>
                           )}
                         </p>
+                        {/* Mobile-only stacked status and Show Details */}
+                        {(() => { const isExpired = !!(request.expires_at && new Date(request.expires_at) <= new Date()); return (
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              <span>{isExpired ? 'Expired' : request.is_active ? 'Active' : 'Inactive'}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">
+                                {expandedRequestedRide === request.id ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {expandedRequestedRide === request.id ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+                        )})()}
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        <span>{request.is_active ? 'Active' : 'Inactive'}</span>
-                      </div>
+                    <div className="hidden sm:flex items-center space-x-3">
+                      {(() => { const isExpired = !!(request.expires_at && new Date(request.expires_at) <= new Date()); return (
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          <span>{isExpired ? 'Expired' : request.is_active ? 'Active' : 'Inactive'}</span>
+                        </div>
+                      )})()}
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-500">
                           {expandedRequestedRide === request.id ? 'Hide Details' : 'Show Details'}
@@ -933,7 +1041,7 @@ export default function RideCategorySelector({
                           Request ID: {request.id.slice(0, 8)}...
                         </div>
                         
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between sm:justify-start space-x-3">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

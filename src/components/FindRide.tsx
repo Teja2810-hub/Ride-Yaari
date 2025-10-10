@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, DollarSign, ListFilter as Filter, Import as SortAsc, Dessert as SortDesc, Search, Send, MapPin, Navigation, Circle as HelpCircle, Menu } from 'lucide-react'
+import { ArrowLeft, Calendar, MessageCircle, User, Car, TriangleAlert as AlertTriangle, Clock, ListFilter as Filter, Search, Send, MapPin, Navigation, Circle as HelpCircle, Menu } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import Sidebar from './Sidebar'
@@ -8,7 +8,7 @@ import LocationAutocomplete from './LocationAutocomplete'
 import DisclaimerModal from './DisclaimerModal'
 import { getCurrencySymbol } from '../utils/currencies'
 import { haversineDistance } from '../utils/distance'
-import { locationsMatch, normalizeLocationString } from '../utils/locationUtils'
+import { locationsMatch } from '../utils/locationUtils'
 import { popupManager } from '../utils/popupManager'
 import { getDisplayRideRequests, formatRequestDateDisplay } from '../utils/requestDisplayHelpers'
 import { formatDateTimeSafe } from '../utils/dateHelpers'
@@ -26,7 +26,7 @@ interface FindRideProps {
   isGuest?: boolean
 }
 
-type SearchType = 'from-to' | 'from-only' | 'to-only'
+// type SearchType = 'from-to' | 'from-only' | 'to-only'
 type LocationSearchType = 'manual' | 'nearby'
 type SortOption = 'date-asc' | 'date-desc' | 'price-asc' | 'price-desc' | 'created-asc' | 'created-desc'
 
@@ -109,54 +109,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
     // }
   }, [effectiveIsGuest, searched, loading])
 
-  const handleAutoSearch = async () => {
-    setLoading(true)
-
-    try {
-      console.log('=== AUTO SEARCH FOR GUEST RIDES ===')
-      
-      // Get current date to filter out past rides
-      const now = new Date().toISOString()
-      console.log('Filtering rides after:', now)
-      
-      const { data, error } = await supabase
-        .from('car_rides')
-        .select(`
-          *,
-          user_profiles:user_id (
-            id,
-            full_name
-          )
-        `)
-        .eq('is_closed', false)
-        .gte('departure_date_time', now)
-        .order('departure_date_time')
-        .limit(20) // Limit results for better performance
-
-      if (error) throw error
-
-      console.log('Auto search results:', data?.length || 0, 'rides')
-      setRides(data || [])
-
-      // Also fetch matching ride requests
-      const requests = await getDisplayRideRequests(
-        departureLocation,
-        destinationLocation,
-        travelDate,
-        travelMonth,
-        searchByMonth,
-        user?.id
-      )
-      setRideRequests(requests)
-      setSearched(true)
-    } catch (error) {
-      console.error('Auto search error:', error)
-      // If there's an error, still set searched to true to prevent infinite retries
-      setSearched(true)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // removed unused auto-search helper
 
   const getCurrentLocation = async () => {
     setGettingLocation(true)
@@ -330,16 +283,9 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
       if (error) throw error
 
       console.log('Raw database results:', data?.length || 0, 'rides')
-      if (data && data.length > 0) {
-        console.log('Sample ride:', {
-          from: data[0].from_location,
-          to: data[0].to_location,
-          departure: data[0].departure_date_time,
-          intermediate_stops: data[0].intermediate_stops
-        })
-      }
+      // sample logging removed
 
-      let filteredRides = data || []
+  let filteredRides: CarRide[] = (data || []) as unknown as CarRide[]
 
       // Apply location filtering only if we have search criteria
       if (fromLocation || toLocation || (locationSearchType === 'nearby' && userLocation)) {
@@ -645,17 +591,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
     onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined, undefined)
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    return new Date(dateTimeString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
+  // using shared formatDateTimeSafe instead
 
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0]
@@ -668,13 +604,13 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <div className="container mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between gap-2 sm:gap-4 flex-nowrap">
           <button
             onClick={onBack}
             className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
           >
             <ArrowLeft size={20} />
-            <span>Back to Dashboard</span>
+            <span className="hidden sm:inline">Back to Dashboard</span>
           </button>
           {effectiveIsGuest ? (
             <button
@@ -689,7 +625,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
           ) : (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl"
+              className="flex items-center space-x-2 px-4 py-2 text-green-600 hover:text-green-700 font-medium transition-colors rounded-xl shrink-0 whitespace-nowrap"
             >
               <Menu size={20} />
               <span className="hidden sm:inline">Menu</span>
