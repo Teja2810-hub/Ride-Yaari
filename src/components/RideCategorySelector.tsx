@@ -327,33 +327,37 @@ export default function RideCategorySelector({
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                           <Car size={24} className="text-green-600" />
                         </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                             {ride.from_location} → {ride.to_location}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-xs sm:text-sm text-gray-600 truncate">
                             {formatDateTime(ride.departure_date_time)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${rideStatus.color}`}>
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium ${rideStatus.color}`}>
                           {rideStatus.icon}
                           <span>{rideStatus.label}</span>
                         </div>
-                        <span className="text-sm font-medium text-green-600">
+                        <span className="text-xs sm:text-sm font-medium text-green-600 whitespace-nowrap">
                           {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
                         </span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
-                            {isExpanded ? 'Hide Details' : 'Show Details'}
-                          </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleOfferedRide(ride.id)
+                          }}
+                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          <span>{isExpanded ? 'Hide' : 'Details'}</span>
                           {isExpanded ? (
-                            <ChevronUp size={20} className="text-gray-400" />
+                            <ChevronUp size={16} className="text-gray-400" />
                           ) : (
-                            <ChevronDown size={20} className="text-gray-400" />
+                            <ChevronDown size={16} className="text-gray-400" />
                           )}
-                        </div>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -583,29 +587,33 @@ export default function RideCategorySelector({
                             </span>
                           )}
                         </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                             {ride.from_location} → {ride.to_location}
                           </h3>
-                          <p className="text-gray-600">
-                            {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
+                          <p className="text-xs sm:text-sm text-gray-600 truncate">
+                            {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium ${getStatusColor(confirmation.status)}`}>
                           <span className="capitalize">{confirmation.status}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">
-                            {isExpanded ? 'Hide Details' : 'Show Details'}
-                          </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleJoinedRide(confirmation.id)
+                          }}
+                          className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          <span>{isExpanded ? 'Hide' : 'Details'}</span>
                           {isExpanded ? (
-                            <ChevronUp size={20} className="text-gray-400" />
+                            <ChevronUp size={16} className="text-gray-400" />
                           ) : (
-                            <ChevronDown size={20} className="text-gray-400" />
+                            <ChevronDown size={16} className="text-gray-400" />
                           )}
-                        </div>
+                        </button>
                       </div>
                     </div>
                   </div>

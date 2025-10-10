@@ -480,50 +480,54 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                           <Plane size={24} className="text-blue-600" />
                         )}
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
                           {getLocationDisplay(notification)}
                         </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span>{getDateTypeDisplay(notification)}</span>
-                          <span className={expiryStatus.color}>{expiryStatus.text}</span>
+                        <div className="flex items-center space-x-2 text-xs text-gray-600 truncate">
+                          <span className="truncate">{getDateTypeDisplay(notification)}</span>
+                          <span className={`${expiryStatus.color} whitespace-nowrap`}>{expiryStatus.text}</span>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
+
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
+                      <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border text-xs font-medium ${getNotificationTypeColor((notification as RideNotification).notification_type || (notification as TripNotification).notification_type)}`}>
                         <span>{notification.type === 'ride' ? '🚗' : '✈️'}</span>
-                        <span>{notification.type === 'ride' ? 'Car Ride' : 'Airport Trip'}</span>
+                        <span className="hidden sm:inline">{notification.type === 'ride' ? 'Car' : 'Trip'}</span>
                       </div>
-                      
+
                       {expiryStatus.isExpired ? (
-                        <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <X size={14} />
+                        <div className="flex items-center space-x-1 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                          <X size={12} />
                           <span>Expired</span>
                         </div>
                       ) : notification.is_active ? (
-                        <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <CheckCircle size={14} />
+                        <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                          <CheckCircle size={12} />
                           <span>Active</span>
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-                          <X size={14} />
+                        <div className="flex items-center space-x-1 bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                          <X size={12} />
                           <span>Inactive</span>
                         </div>
                       )}
-                      
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">
-                          {isExpanded ? 'Hide Details' : 'Show Details'}
-                        </span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleNotificationExpansion(notification.id)
+                        }}
+                        className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        <span>{isExpanded ? 'Hide' : 'Details'}</span>
                         {isExpanded ? (
-                          <ChevronUp size={20} className="text-gray-400" />
+                          <ChevronUp size={16} className="text-gray-400" />
                         ) : (
-                          <ChevronDown size={20} className="text-gray-400" />
+                          <ChevronDown size={16} className="text-gray-400" />
                         )}
-                      </div>
+                      </button>
                     </div>
                   </div>
                 </div>
