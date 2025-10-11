@@ -773,7 +773,27 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                       : 'bg-gray-200 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words">{message.message_content}</p>
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    {message.message_content.split('rideyaari://chat/').map((part, idx) => {
+                      if (idx === 0) return part
+                      const userId = part.split(' ')[0]
+                      const rest = part.substring(userId.length)
+                      return (
+                        <React.Fragment key={idx}>
+                          <button
+                            onClick={() => {
+                              window.location.hash = `#chat/${userId}`
+                              window.location.reload()
+                            }}
+                            className="underline font-semibold hover:opacity-80"
+                          >
+                            Chat Now
+                          </button>
+                          {rest}
+                        </React.Fragment>
+                      )
+                    })}
+                  </p>
                   <p className={`text-xs mt-1 ${
                     message.sender_id === user?.id
                       ? 'text-blue-200'
@@ -838,8 +858,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && (
+        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages, but NOT for system messages from system user */}
+        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && (
           <div className="flex gap-2 mb-3">
             {(preSelectedRide || showRequestButtons || fromMessages) && (
               <button

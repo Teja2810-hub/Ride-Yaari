@@ -450,8 +450,8 @@ const sendRideMatchNotification = async (
 
   if (error) throw error
 
-  // Also send a system chat message
-  const chatMessage = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}.`
+  // Also send a system chat message with clickable link
+  const chatMessage = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. Click here to message ${driverName}: rideyaari://chat/${ride.user_id}`
 
   await supabase
     .from('chat_messages')
@@ -494,8 +494,8 @@ const sendTripMatchNotification = async (
 
   if (error) throw error
 
-  // Also send a system chat message
-  const chatMessage = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}.`
+  // Also send a system chat message with clickable link
+  const chatMessage = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. Click here to message ${travelerName}: rideyaari://chat/${trip.user_id}`
 
   await supabase
     .from('chat_messages')
