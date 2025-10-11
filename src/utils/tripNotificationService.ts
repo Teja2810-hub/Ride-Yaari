@@ -220,6 +220,7 @@ export const notifyMatchingPassengers = async (tripId: string): Promise<{
         )
       `)
       .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
       .eq('departure_airport', trip.leaving_airport)
       .eq('destination_airport', trip.destination_airport)
 
