@@ -165,7 +165,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             profile_image_url
           )
         `)
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}),and(sender_id.eq.system,receiver_id.eq.${user.id})`)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true })
         .limit(100)
 
