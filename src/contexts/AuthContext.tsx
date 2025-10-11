@@ -52,6 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignore USER_UPDATED events to prevent disrupting email change flow
+      if (event === 'USER_UPDATED') {
+        setUser(session?.user ?? null)
+        return
+      }
+
       setUser(session?.user ?? null)
       if (session?.user) {
         fetchUserProfile(session.user.id)
