@@ -156,32 +156,14 @@ export const initiateEmailChange = async (
       throw new Error('Failed to get user information')
     }
 
-    // Verify password by creating a new client and signing in
-    // This prevents triggering auth state changes in the main app
-    const { createClient } = await import('@supabase/supabase-js')
-    const tempClient = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    )
-
-    const { error: verifyError } = await tempClient.auth.signInWithPassword({
-      email: user.email!,
-      password: emailData.currentPassword
-    })
-
-    // Sign out the temp client immediately
-    await tempClient.auth.signOut()
-
-    if (verifyError) {
-      throw new Error('Current password is incorrect')
-    }
-
     lastEmailChangeAttempt = now
 
-    // Initiate email change
-    const { error: emailError } = await supabase.auth.updateUser({
-      email: emailData.newEmail
-    })
+    // Initiate email change - this requires an active authenticated session
+    // Supabase will handle sending verification email to the new address
+    const { error: emailError } = await supabase.auth.updateUser(
+      { email: emailData.newEmail },
+      { emailRedirectTo: window.location.origin }
+    )
 
     if (emailError) {
       if (emailError.message.includes('For security purposes') || emailError.message.includes('only request this after')) {
