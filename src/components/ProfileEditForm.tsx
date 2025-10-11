@@ -245,18 +245,31 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email!,
-        password: emailChange.currentPassword
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !sessionData.session) {
+        throw new Error('Session not found')
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify({
+          type: 'password',
+          email: user?.email,
+          password: emailChange.currentPassword
+        })
       })
 
-      if (signInError) {
+      if (!response.ok) {
         throw new Error('Current password is incorrect')
       }
 
       const { error: updateError } = await supabase.auth.updateUser(
-        { email: emailChange.newEmail },
-        { emailRedirectTo: window.location.origin }
+        { email: emailChange.newEmail }
       )
 
       if (updateError) {
@@ -283,7 +296,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email: user?.email!,
         token: emailChange.otp,
         type: 'email_change'
@@ -293,15 +306,19 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
         throw new Error(verifyError.message)
       }
 
+      if (!data?.user) {
+        throw new Error('Verification failed')
+      }
+
       setSuccess('Email updated successfully!')
-      setEmailChange({ step: 'idle', newEmail: '', currentPassword: '', otp: '' })
       await refreshUserProfile()
+
       setTimeout(() => {
+        setEmailChange({ step: 'idle', newEmail: '', currentPassword: '', otp: '' })
         if (onSuccess) onSuccess()
       }, 2000)
     } catch (error: any) {
       setError(error.message || 'Invalid or expired verification code')
-    } finally {
       setLoading(false)
     }
   }
