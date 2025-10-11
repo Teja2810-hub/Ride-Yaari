@@ -46,11 +46,12 @@ export default function NotificationCenter({
     try {
       const notifications: Notification[] = []
 
-      // Fetch persistent notifications
+      // Fetch persistent notifications (exclude ride/trip confirmation and message types)
       const { data: persistentNotifications } = await supabase
         .from('user_notifications')
         .select('*')
         .eq('user_id', user.id)
+        .not('notification_type', 'in', '(confirmation_request,confirmation_update,message)')
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -73,158 +74,16 @@ export default function NotificationCenter({
         })
       }
 
-      // Fetch pending confirmations (high priority)
-      const { data: pendingConfirmations } = await supabase
-        .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_passenger_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time,
-            price,
-            currency
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date,
-            price,
-            currency
-          )
-        `)
-        .eq('ride_owner_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
+      // Skip pending confirmations - they should only show in confirmations tab
+      // const { data: pendingConfirmations } = ...
 
-      if (pendingConfirmations) {
-        pendingConfirmations.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
+      // Removed - confirmations should only show in confirmations tab
 
-          notifications.push({
-            id: `confirmation-${confirmation.id}`,
-            type: 'confirmation_request',
-            title: `🚨 New ${rideType} request`,
-            message: `${confirmation.user_profiles.full_name} is requesting to join your ${route}. Action required.`,
-            timestamp: confirmation.created_at,
-            read: false,
-            priority: 'high',
-            actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.passenger_id,
-              userName: confirmation.user_profiles.full_name,
-              ride: ride,
-              trip: trip
-            }
-          })
-        })
-      }
+      // Skip confirmation updates - they should only show in confirmations tab
+      // const { data: confirmationUpdates } = ...
 
-      // Fetch recent confirmation updates (medium priority)
-      const { data: confirmationUpdates } = await supabase
-        .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_ride_owner_id_fkey (
-            id,
-            full_name
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date
-          )
-        `)
-        .eq('passenger_id', user.id)
-        .in('status', ['accepted', 'rejected'])
-        .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Last 48 hours
-        .order('updated_at', { ascending: false })
-
-      if (confirmationUpdates) {
-        confirmationUpdates.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
-          const isAccepted = confirmation.status === 'accepted'
-
-          notifications.push({
-            id: `update-${confirmation.id}`,
-            type: 'confirmation_update',
-            title: isAccepted ? `🎉 Ride Confirmed!` : `😔 Request Declined`,
-            message: isAccepted 
-              ? `Your request for the ${route} has been accepted! Coordinate pickup details now.`
-              : `Your request for the ${route} was declined. You can request again or find other rides.`,
-            timestamp: confirmation.updated_at,
-            read: false,
-            priority: confirmation.status === 'accepted' ? 'high' : 'medium',
-            actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.ride_owner_id,
-              userName: confirmation.user_profiles?.full_name || 'Ride Owner',
-              ride: ride,
-              trip: trip
-            }
-          })
-        })
-      }
-
-      // Fetch unread messages (medium priority)
-      const { data: unreadMessages } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          sender:user_profiles!chat_messages_sender_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          )
-        `)
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (unreadMessages) {
-        unreadMessages.forEach(message => {
-          notifications.push({
-            id: `message-${message.id}`,
-            type: 'message',
-            title: `New message from ${message.sender.full_name}`,
-            message: message.message_content.length > 80 
-              ? `${message.message_content.substring(0, 80)}...`
-              : message.message_content,
-            timestamp: message.created_at,
-            read: false,
-            priority: 'medium',
-            actionData: {
-              userId: message.sender_id,
-              userName: message.sender.full_name
-            }
-          })
-        })
-      }
+      // Skip unread messages - they should show in messages tab only
+      // const { data: unreadMessages } = ...
 
       // Sort all notifications by priority and timestamp
       notifications.sort((a, b) => {

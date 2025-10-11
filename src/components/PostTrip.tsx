@@ -436,6 +436,7 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
               onChange={setNotificationPreferences}
               type="trip"
               className="mb-6"
+              defaultDate={travelDate}
             />
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

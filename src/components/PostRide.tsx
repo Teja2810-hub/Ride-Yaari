@@ -429,6 +429,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
               onChange={setNotificationPreferences}
               type="ride"
               className="mb-6"
+              defaultDate={departureDateTime ? departureDateTime.split('T')[0] : ''}
             />
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">

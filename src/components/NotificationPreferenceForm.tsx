@@ -14,14 +14,25 @@ interface NotificationPreferenceFormProps {
   onChange: (data: NotificationPreferenceData) => void
   type: 'ride' | 'trip'
   className?: string
+  defaultDate?: string
 }
 
 export default function NotificationPreferenceForm({
   value,
   onChange,
   type,
-  className = ''
+  className = '',
+  defaultDate
 }: NotificationPreferenceFormProps) {
+  // Set default date when enabled if not already set
+  React.useEffect(() => {
+    if (value.enabled && defaultDate && !value.specificDate && value.dateType === 'specific_date') {
+      onChange({
+        ...value,
+        specificDate: defaultDate
+      })
+    }
+  }, [value.enabled, defaultDate])
   const addMultipleDate = () => {
     if (value.multipleDates.length < 5) {
       onChange({
