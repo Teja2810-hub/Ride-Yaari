@@ -244,7 +244,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
       if (!result.success) {
         if (result.error?.includes('wait')) {
           setEmailChangeDisabled(true)
-          setCooldownSeconds(15)
+          setCooldownSeconds(20)
           const countdown = setInterval(() => {
             setCooldownSeconds(prev => {
               if (prev <= 1) {
