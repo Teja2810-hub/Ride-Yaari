@@ -77,7 +77,9 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
 
     try {
       console.log('Posting ride with locations:', { fromLocation, toLocation, intermediateStops })
-      
+
+      const departureDateTimeUTC = new Date(departureDateTime).toISOString()
+
       const { data, error } = await supabase
         .from('car_rides')
         .insert({
@@ -88,7 +90,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
           from_longitude: fromLocation.longitude,
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
-          departure_date_time: departureDateTime,
+          departure_date_time: departureDateTimeUTC,
           price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
