@@ -245,9 +245,12 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser(
+      console.log('Updating email to:', emailChange.newEmail)
+      const { data, error: updateError } = await supabase.auth.updateUser(
         { email: emailChange.newEmail }
       )
+
+      console.log('Update result:', { data, error: updateError })
 
       if (updateError) {
         throw new Error(updateError.message)
@@ -256,6 +259,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
       setEmailChange(prev => ({ ...prev, step: 'otp' }))
       setSuccess('Verification code sent to your current email!')
     } catch (error: any) {
+      console.error('Email change error:', error)
       setError(error.message || 'Failed to initiate email change')
     } finally {
       setLoading(false)
