@@ -5,9 +5,10 @@ import { supabase } from '../utils/supabase'
 import LoadingSpinner from './LoadingSpinner'
 import ErrorMessage from './ErrorMessage'
 import PasswordStrengthIndicator from './PasswordStrengthIndicator'
-import { 
-  updateUserProfile, 
-  changeUserPassword, 
+import EmailOTPModal from './EmailOTPModal'
+import {
+  updateUserProfile,
+  changeUserPassword,
   initiateEmailChange,
   uploadProfileImage,
   deleteProfileImage,
@@ -71,7 +72,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     current_password: ''
   })
 
-  const [emailVerificationSent, setEmailVerificationSent] = useState(false)
+  const [showOTPModal, setShowOTPModal] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -217,7 +219,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     e.preventDefault()
     if (!user) return
 
-    // Validate email data
     const validation = validateEmailData({
       newEmail: emailData.new_email.trim(),
       currentPassword: emailData.current_password.trim()
@@ -242,8 +243,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
         throw new Error(result.error || 'Failed to initiate email change')
       }
 
-      setEmailVerificationSent(true)
-      setSuccess('Verification email sent to your new email address. Please check your inbox and verify to complete the change.')
+      setPendingEmail(emailData.new_email.trim())
+      setShowOTPModal(true)
       setEmailData({
         new_email: '',
         current_password: ''
@@ -254,6 +255,20 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleOTPSuccess = async () => {
+    setShowOTPModal(false)
+    setSuccess('Email updated successfully!')
+    await refreshUserProfile()
+    setTimeout(() => {
+      if (onSuccess) onSuccess()
+    }, 2000)
+  }
+
+  const handleOTPClose = () => {
+    setShowOTPModal(false)
+    setPendingEmail('')
   }
 
   const removeProfileImage = () => {
@@ -619,25 +634,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
 
           {/* Email Tab */}
           {activeTab === 'email' && (
-            <div className="space-y-6">
-              {emailVerificationSent ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail size={32} className="text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Verification Email Sent</h3>
-                  <p className="text-gray-600 mb-4">
-                    We've sent a verification email to your new email address. Please check your inbox and click the verification link to complete the email change.
-                  </p>
-                  <button
-                    onClick={() => setEmailVerificationSent(false)}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Change Email Again
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleEmailUpdate} className="space-y-6">
+            <form onSubmit={handleEmailUpdate} className="space-y-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start space-x-3">
                       <Mail size={20} className="text-blue-600 mt-0.5" />
@@ -736,12 +733,18 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                       {loading ? 'Sending Verification...' : 'Change Email'}
                     </button>
                   </div>
-                </form>
-              )}
-            </div>
+            </form>
           )}
         </div>
       </div>
+
+      {showOTPModal && (
+        <EmailOTPModal
+          newEmail={pendingEmail}
+          onClose={handleOTPClose}
+          onSuccess={handleOTPSuccess}
+        />
+      )}
     </div>
   )
 }
