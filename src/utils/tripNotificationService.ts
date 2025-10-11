@@ -385,6 +385,7 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       .eq('is_active', true)
       .eq('departure_airport', request.departure_airport)
       .eq('destination_airport', request.destination_airport)
+      .neq('user_id', request.passenger_id)
 
     if (!notificationsError) {
       console.log('Found traveler passenger_request notifications to check:', travelerNotifications?.length || 0)
@@ -396,24 +397,36 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
         // Skip if it's the passenger's own notification
         if (notification.user_id === request.passenger_id) continue
 
-        // Check date matching
+        // Check date matching with normalized dates
         let dateMatches = false
 
         if (notification.date_type === 'specific_date' && notification.specific_date) {
           if (request.request_type === 'specific_date' && request.specific_date) {
-            dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+            const notifDate = new Date(notification.specific_date)
+            const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notifDateOnly.getTime() === reqDateOnly.getTime()
           }
         } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
           if (request.request_type === 'specific_date' && request.specific_date) {
-            dateMatches = notification.multiple_dates.some(date =>
-              new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
-            )
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notification.multiple_dates.some(date => {
+              const notifDate = new Date(date)
+              const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+              return notifDateOnly.getTime() === reqDateOnly.getTime()
+            })
           } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-            dateMatches = notification.multiple_dates.some(notifDate =>
-              request.multiple_dates!.some(reqDate =>
-                new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
-              )
-            )
+            dateMatches = notification.multiple_dates.some(notifDate => {
+              const nDate = new Date(notifDate)
+              const nDateOnly = new Date(nDate.getFullYear(), nDate.getMonth(), nDate.getDate())
+              return request.multiple_dates!.some(reqDate => {
+                const rDate = new Date(reqDate)
+                const rDateOnly = new Date(rDate.getFullYear(), rDate.getMonth(), rDate.getDate())
+                return nDateOnly.getTime() === rDateOnly.getTime()
+              })
+            })
           }
         } else if (notification.date_type === 'month' && notification.notification_month) {
           if (request.request_type === 'month' && request.request_month) {
@@ -458,6 +471,7 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       .eq('is_active', true)
       .eq('departure_airport', request.departure_airport)
       .eq('destination_airport', request.destination_airport)
+      .neq('user_id', request.passenger_id)
 
     if (!postNotificationsError) {
       console.log('Found traveler_post notifications to check:', postNotifications?.length || 0)
@@ -466,27 +480,36 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
 
       // Check each post notification for date matching
       for (const notification of postNotifications || []) {
-        // Skip if it's the passenger's own notification
-        if (notification.user_id === request.passenger_id) continue
-
-        // Check date matching
+        // Check date matching with normalized dates
         let dateMatches = false
 
         if (notification.date_type === 'specific_date' && notification.specific_date) {
           if (request.request_type === 'specific_date' && request.specific_date) {
-            dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+            const notifDate = new Date(notification.specific_date)
+            const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notifDateOnly.getTime() === reqDateOnly.getTime()
           }
         } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
           if (request.request_type === 'specific_date' && request.specific_date) {
-            dateMatches = notification.multiple_dates.some(date =>
-              new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
-            )
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notification.multiple_dates.some(date => {
+              const notifDate = new Date(date)
+              const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+              return notifDateOnly.getTime() === reqDateOnly.getTime()
+            })
           } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-            dateMatches = notification.multiple_dates.some(notifDate =>
-              request.multiple_dates!.some(reqDate =>
-                new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
-              )
-            )
+            dateMatches = notification.multiple_dates.some(notifDate => {
+              const nDate = new Date(notifDate)
+              const nDateOnly = new Date(nDate.getFullYear(), nDate.getMonth(), nDate.getDate())
+              return request.multiple_dates!.some(reqDate => {
+                const rDate = new Date(reqDate)
+                const rDateOnly = new Date(rDate.getFullYear(), rDate.getMonth(), rDate.getDate())
+                return nDateOnly.getTime() === rDateOnly.getTime()
+              })
+            })
           }
         } else if (notification.date_type === 'month' && notification.notification_month) {
           if (request.request_type === 'month' && request.request_month) {
