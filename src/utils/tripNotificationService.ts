@@ -239,14 +239,19 @@ export const notifyMatchingPassengers = async (tripId: string): Promise<{
 
       // Check date matching
       const tripDate = new Date(trip.travel_date)
+      const tripDateOnly = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate())
       let dateMatches = false
 
       if (request.request_type === 'specific_date' && request.specific_date) {
-        dateMatches = tripDate.toDateString() === new Date(request.specific_date).toDateString()
+        const requestDate = new Date(request.specific_date)
+        const requestDateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate())
+        dateMatches = tripDateOnly.getTime() === requestDateOnly.getTime()
       } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-        dateMatches = request.multiple_dates.some(date => 
-          tripDate.toDateString() === new Date(date).toDateString()
-        )
+        dateMatches = request.multiple_dates.some(date => {
+          const reqDate = new Date(date)
+          const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+          return tripDateOnly.getTime() === reqDateOnly.getTime()
+        })
       } else if (request.request_type === 'month' && request.request_month) {
         const tripMonth = `${tripDate.getFullYear()}-${String(tripDate.getMonth() + 1).padStart(2, '0')}`
         dateMatches = tripMonth === request.request_month
