@@ -67,6 +67,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     }
   }, [user])
 
+  // If a re-render happens due to auth changes while editing, keep the edit modal open
+  useEffect(() => {
+    try {
+      const keep = sessionStorage.getItem('keepProfileEditOpen')
+      if (keep === '1') {
+        setShowProfileEdit(true)
+      }
+    } catch {}
+  }, [user])
+
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab === 'confirmations' ? 'confirmations' : 'overview')
@@ -315,7 +325,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
   const tabs = allTabs.filter(tab => !tab.adminOnly || userProfile?.is_admin)
 
-  if (loading) {
+  // Skip full-screen loader if we’re in the persisted email-change flow
+  const keepEditingOpen = (() => {
+    try {
+      return sessionStorage.getItem('keepProfileEditOpen') === '1'
+    } catch {
+      return false
+    }
+  })()
+
+  if (loading && !keepEditingOpen) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -791,9 +810,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       {/* Profile Edit Modal */}
       {showProfileEdit && (
         <ProfileEditForm
-          onClose={() => setShowProfileEdit(false)}
+          onClose={() => {
+            setShowProfileEdit(false)
+            try { sessionStorage.removeItem('keepProfileEditOpen') } catch {}
+          }}
           onSuccess={() => {
             setShowProfileEdit(false)
+            try { sessionStorage.removeItem('keepProfileEditOpen') } catch {}
             fetchUserData()
           }}
         />
