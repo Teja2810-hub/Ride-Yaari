@@ -166,6 +166,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           )
         `)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+        .eq('message_type', 'user')
         .order('created_at', { ascending: true })
         .limit(100)
 
@@ -177,19 +178,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       console.log('Chat: Fetched', data?.length || 0, 'messages')
       setMessages(data || [])
 
-      // Mark ALL messages as read (both user and system messages)
+      // Mark messages as read
       if (data && data.length > 0) {
         const unreadMessages = data.filter((msg: ChatMessage) =>
           msg.receiver_id === user.id && !msg.is_read
         )
 
         if (unreadMessages.length > 0) {
-          console.log('Chat: Marking', unreadMessages.length, 'messages as read (including system messages)')
+          console.log('Chat: Marking', unreadMessages.length, 'messages as read')
           await supabase
             .from('chat_messages')
             .update({ is_read: true })
             .eq('receiver_id', user.id)
-            .or(`sender_id.eq.${otherUserId},message_type.eq.system`)
+            .eq('sender_id', otherUserId)
             .eq('is_read', false)
         }
       }
@@ -767,24 +768,14 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             >
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.message_type === 'system'
-                    ? 'bg-yellow-100 border border-yellow-200 text-yellow-800 mx-auto text-center'
-                    : message.sender_id === user?.id
+                  message.sender_id === user?.id
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 text-gray-900'
                 }`}
               >
-                {message.message_type === 'system' && (
-                  <div className="flex items-center justify-center space-x-2 mb-2">
-                    <AlertTriangle size={16} className="text-yellow-600" />
-                    <span className="font-semibold text-xs">SYSTEM MESSAGE</span>
-                  </div>
-                )}
                 <p className="text-sm whitespace-pre-wrap break-words">{message.message_content}</p>
                 <p className={`text-xs mt-1 ${
-                  message.message_type === 'system'
-                    ? 'text-yellow-600'
-                    : message.sender_id === user?.id
+                  message.sender_id === user?.id
                     ? 'text-blue-200'
                     : 'text-gray-500'
                 }`}>

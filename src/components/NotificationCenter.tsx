@@ -46,6 +46,33 @@ export default function NotificationCenter({
     try {
       const notifications: Notification[] = []
 
+      // Fetch persistent notifications
+      const { data: persistentNotifications } = await supabase
+        .from('user_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (persistentNotifications) {
+        persistentNotifications.forEach(notif => {
+          notifications.push({
+            id: `persistent-${notif.id}`,
+            type: notif.notification_type as any,
+            title: notif.title,
+            message: notif.message,
+            timestamp: notif.created_at,
+            read: notif.is_read,
+            priority: notif.priority as any,
+            actionData: {
+              ...notif.action_data,
+              userId: notif.related_user_id,
+              userName: notif.related_user_name
+            }
+          })
+        })
+      }
+
       // Fetch pending confirmations (high priority)
       const { data: pendingConfirmations } = await supabase
         .from('ride_confirmations')
@@ -199,7 +226,7 @@ export default function NotificationCenter({
         })
       }
 
-      // Sort notifications by priority and timestamp
+      // Sort all notifications by priority and timestamp
       notifications.sort((a, b) => {
         const priorityOrder = { high: 0, medium: 1, low: 2 }
         const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -228,31 +255,46 @@ export default function NotificationCenter({
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Mark this notification as read immediately
-    if (!notification.read && notification.type === 'message' && user) {
+    // Mark notification as read
+    if (!notification.read && user) {
       try {
-        // Extract message ID from notification ID (format: "message-{messageId}")
-        const messageId = notification.id.replace('message-', '')
-        await supabase
-          .from('chat_messages')
-          .update({ is_read: true })
-          .eq('id', messageId)
+        if (notification.id.startsWith('persistent-')) {
+          const notifId = notification.id.replace('persistent-', '')
+          await supabase
+            .from('user_notifications')
+            .update({ is_read: true })
+            .eq('id', notifId)
+        } else if (notification.type === 'message') {
+          const messageId = notification.id.replace('message-', '')
+          await supabase
+            .from('chat_messages')
+            .update({ is_read: true })
+            .eq('id', messageId)
+        }
       } catch (error) {
         console.error('Error marking notification as read:', error)
       }
     }
 
-    // Close notification center after marking as read
+    // Close notification center
     onClose()
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
         onViewConfirmations()
       }
-    } else if (notification.type === 'message' && onStartChat) {
+    } else if (
+      (notification.type === 'message' ||
+       notification.type === 'ride_match' ||
+       notification.type === 'trip_match' ||
+       notification.type === 'ride_request_alert' ||
+       notification.type === 'trip_request_alert') &&
+      onStartChat &&
+      notification.actionData?.userId
+    ) {
       onStartChat(
         notification.actionData.userId,
-        notification.actionData.userName
+        notification.actionData.userName || 'User'
       )
     }
   }
@@ -261,48 +303,21 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
-      console.log('NotificationCenter: Marking all messages as read for user:', user.id)
-
-      // Get count of unread messages before marking
-      const { count: beforeCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
+      // Mark all persistent notifications as read
+      await supabase
+        .from('user_notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
         .eq('is_read', false)
 
-      console.log('NotificationCenter: Unread messages before:', beforeCount)
-
-      // Mark all unread messages as read (including system messages)
-      const { error, count } = await supabase
+      // Mark all unread messages as read
+      await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
-        .select('*', { count: 'exact', head: true })
 
-      if (error) {
-        console.error('NotificationCenter: Error marking messages as read:', error)
-        throw error
-      }
-
-      console.log('NotificationCenter: Marked', count, 'messages as read')
-
-      // Verify the update
-      const { count: afterCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-
-      console.log('NotificationCenter: Unread messages after:', afterCount)
-
-      // Clear all notifications immediately
-      setNotifications([])
-
-      // Wait a moment before refreshing to ensure DB is updated
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Refresh notifications from server
+      // Refresh notifications
       await fetchNotifications()
     } catch (error) {
       console.error('NotificationCenter: Error in markAllAsRead:', error)
@@ -447,8 +462,7 @@ export default function NotificationCenter({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${getPriorityColor(notification.priority)} ${
+                  className={`p-4 border-l-4 ${getPriorityColor(notification.priority)} ${
                     !notification.read ? 'bg-blue-50' : ''
                   }`}
                 >
@@ -470,33 +484,69 @@ export default function NotificationCenter({
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         {notification.message}
                       </p>
-                      
-                      {/* Action indicators */}
-                      <div className="flex items-center space-x-2">
-                        {notification.type === 'confirmation_request' && (
-                          <span className="inline-flex items-center text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            <Clock size={10} className="mr-1" />
-                            Action Required
-                          </span>
+
+                      {/* Action indicators and buttons */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {notification.type === 'confirmation_request' && (
+                            <span className="inline-flex items-center text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                              <Clock size={10} className="mr-1" />
+                              Action Required
+                            </span>
+                          )}
+                          {notification.priority === 'high' && (
+                            <span className="inline-flex items-center text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                              <AlertTriangle size={10} className="mr-1" />
+                              High Priority
+                            </span>
+                          )}
+                          {notification.type.includes('confirmation') && (
+                            <span className="inline-flex items-center text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {notification.actionData?.ride ? (
+                                <Car size={10} className="mr-1" />
+                              ) : (
+                                <Plane size={10} className="mr-1" />
+                              )}
+                              {notification.actionData?.ride ? 'Car Ride' : 'Airport Trip'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Action button for ride/trip match and request alerts */}
+                        {(notification.type === 'ride_match' ||
+                          notification.type === 'trip_match' ||
+                          notification.type === 'ride_request_alert' ||
+                          notification.type === 'trip_request_alert' ||
+                          notification.type === 'message') &&
+                          notification.actionData?.userId && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleNotificationClick(notification)
+                            }}
+                            className="inline-flex items-center space-x-1 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <MessageCircle size={12} />
+                            <span>Chat with {notification.actionData.userName || 'User'}</span>
+                          </button>
                         )}
-                        {notification.priority === 'high' && (
-                          <span className="inline-flex items-center text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                            <AlertTriangle size={10} className="mr-1" />
-                            High Priority
-                          </span>
-                        )}
-                        {notification.type.includes('confirmation') && (
-                          <span className="inline-flex items-center text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {notification.actionData?.ride ? (
-                              <Car size={10} className="mr-1" />
-                            ) : (
-                              <Plane size={10} className="mr-1" />
-                            )}
-                            {notification.actionData?.ride ? 'Car Ride' : 'Airport Trip'}
-                          </span>
+
+                        {/* Action button for confirmations */}
+                        {(notification.type === 'confirmation_request' ||
+                          notification.type === 'confirmation_update') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleNotificationClick(notification)
+                            }}
+                            className="inline-flex items-center space-x-1 text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Check size={12} />
+                            <span>View Details</span>
+                          </button>
                         )}
                       </div>
                     </div>

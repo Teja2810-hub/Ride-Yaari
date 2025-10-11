@@ -135,6 +135,7 @@ export const getNotificationStats = async (userId: string) => {
       .from('chat_messages')
       .select('*', { count: 'exact', head: true })
       .eq('receiver_id', userId)
+      .eq('message_type', 'user')
       .eq('is_read', false)
 
     // Count recent confirmation updates (last 24 hours)
@@ -145,11 +146,19 @@ export const getNotificationStats = async (userId: string) => {
       .in('status', ['accepted', 'rejected'])
       .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
+    // Count unread persistent notifications
+    const { count: unreadNotifications } = await supabase
+      .from('user_notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_read', false)
+
     return {
       pendingConfirmations: pendingConfirmations || 0,
       unreadMessages: unreadMessages || 0,
       recentUpdates: recentUpdates || 0,
-      total: (pendingConfirmations || 0) + (unreadMessages || 0) + (recentUpdates || 0)
+      unreadNotifications: unreadNotifications || 0,
+      total: (pendingConfirmations || 0) + (unreadMessages || 0) + (recentUpdates || 0) + (unreadNotifications || 0)
     }
   } catch (error) {
     console.error('Error fetching notification stats:', error)
@@ -157,6 +166,7 @@ export const getNotificationStats = async (userId: string) => {
       pendingConfirmations: 0,
       unreadMessages: 0,
       recentUpdates: 0,
+      unreadNotifications: 0,
       total: 0
     }
   }

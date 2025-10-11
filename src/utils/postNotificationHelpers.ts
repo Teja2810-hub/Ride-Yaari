@@ -257,38 +257,30 @@ const sendRideRequestNotificationMessage = async (
   request: any,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date' 
-    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}`
+  const dateInfo = request.request_type === 'specific_date'
+    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
     : request.request_type === 'month'
       ? `in ${request.request_month}`
       : 'on multiple dates'
 
-  const message = `🔔 **Ride Request Alert!**
-
-You have notifications enabled for this route and someone is looking for a ride!
-
-👤 **Passenger:** ${passengerName}
-📍 **Route:** ${request.departure_location} → ${request.destination_location}
-📅 **When:** ${dateInfo}
-🔍 **Search Radius:** ${request.search_radius_miles} miles
-
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this ride, contact ${passengerName} or post a matching ride!
-
-📱 **Manage Notifications:** You can manage your notification preferences in Profile → Manage Alerts.`
+  const title = '🔔 Ride Request Alert!'
+  const message = `${passengerName} is looking for a ride: ${request.departure_location} → ${request.destination_location} ${dateInfo}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000', // System user
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'ride_request_alert',
+      title,
+      message,
+      priority: 'medium',
+      is_read: false,
+      related_user_id: request.passenger_id,
+      related_user_name: passengerName,
+      action_data: {
+        request_id: request.id,
+        passenger_id: request.passenger_id
+      }
     })
 
   if (error) {
@@ -304,37 +296,30 @@ const sendTripRequestNotificationMessage = async (
   request: any,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date' 
-    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}`
+  const dateInfo = request.request_type === 'specific_date'
+    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
     : request.request_type === 'month'
       ? `in ${request.request_month}`
       : 'on multiple dates'
 
-  const message = `🔔 **Trip Request Alert!**
-
-You have notifications enabled for this route and someone needs assistance!
-
-👤 **Passenger:** ${passengerName}
-📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
-📅 **When:** ${dateInfo}
-
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide assistance, contact ${passengerName} or post a matching trip!
-
-📱 **Manage Notifications:** You can manage your notification preferences in Profile → Manage Alerts.`
+  const title = '🔔 Trip Request Alert!'
+  const message = `${passengerName} is looking for assistance: ${request.departure_airport} → ${request.destination_airport} ${dateInfo}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000', // System user
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'trip_request_alert',
+      title,
+      message,
+      priority: 'medium',
+      is_read: false,
+      related_user_id: request.passenger_id,
+      related_user_name: passengerName,
+      action_data: {
+        request_id: request.id,
+        passenger_id: request.passenger_id
+      }
     })
 
   if (error) {
