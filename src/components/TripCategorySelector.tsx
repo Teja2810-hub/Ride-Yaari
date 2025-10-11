@@ -53,7 +53,10 @@ export default function TripCategorySelector({
   }, [offeredTrips, joinedTrips, requestedTrips])
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return ''
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -75,11 +78,12 @@ export default function TripCategorySelector({
 
   const isExpiredOrExpiringSoon = (trip: Trip): boolean => {
     const now = new Date()
-    const travelDate = new Date(trip.travel_date)
-    
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const travelDate = new Date(year, month - 1, day)
+
     // Check if trip is in the past
     if (travelDate < now) return true
-    
+
     // Check if trip is within 1 hour (for same-day trips)
     const hoursUntilTravel = (travelDate.getTime() - now.getTime()) / (1000 * 60 * 60)
     return hoursUntilTravel <= 1
@@ -87,7 +91,8 @@ export default function TripCategorySelector({
 
   const getTripStatus = (trip: Trip): { status: 'open' | 'closed' | 'expired'; color: string; icon: React.ReactNode; label: string } => {
     const now = new Date()
-    const travelDate = new Date(trip.travel_date)
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const travelDate = new Date(year, month - 1, day)
     
     if (trip.is_closed) {
       return {

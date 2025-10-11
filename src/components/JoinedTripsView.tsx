@@ -89,15 +89,24 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat }: Jo
       const tripB = b.trips!
 
       switch (sortBy) {
-        case 'date-asc':
-          return new Date(tripA.travel_date).getTime() - new Date(tripB.travel_date).getTime()
-        case 'date-desc':
-          return new Date(tripB.travel_date).getTime() - new Date(tripA.travel_date).getTime()
-        case 'status':
+        case 'date-asc': {
+          const [yearA, monthA, dayA] = tripA.travel_date.split('-').map(Number)
+          const [yearB, monthB, dayB] = tripB.travel_date.split('-').map(Number)
+          return new Date(yearA, monthA - 1, dayA).getTime() - new Date(yearB, monthB - 1, dayB).getTime()
+        }
+        case 'date-desc': {
+          const [yearA, monthA, dayA] = tripA.travel_date.split('-').map(Number)
+          const [yearB, monthB, dayB] = tripB.travel_date.split('-').map(Number)
+          return new Date(yearB, monthB - 1, dayB).getTime() - new Date(yearA, monthA - 1, dayA).getTime()
+        }
+        case 'status': {
           const statusOrder = { 'pending': 0, 'accepted': 1, 'rejected': 2 }
           const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
           if (statusDiff !== 0) return statusDiff
-          return new Date(tripB.travel_date).getTime() - new Date(tripA.travel_date).getTime()
+          const [yearA, monthA, dayA] = tripA.travel_date.split('-').map(Number)
+          const [yearB, monthB, dayB] = tripB.travel_date.split('-').map(Number)
+          return new Date(yearB, monthB - 1, dayB).getTime() - new Date(yearA, monthA - 1, dayA).getTime()
+        }
         case 'destination':
           return tripA.destination_airport.localeCompare(tripB.destination_airport)
         default:
@@ -616,7 +625,9 @@ export default function JoinedTripsView({ joinedTrips, onBack, onStartChat }: Jo
     const now = new Date()
     return joinedTrips.filter(c => {
       const trip = c.trips
-      return trip && new Date(trip.travel_date) > now && c.status === 'accepted'
+      if (!trip) return false
+      const [year, month, day] = trip.travel_date.split('-').map(Number)
+      return new Date(year, month - 1, day) > now && c.status === 'accepted'
     }).length
   }
 

@@ -22,10 +22,13 @@ export default function TripClosureControls({ ride, trip, onUpdate }: TripClosur
 
   const isOwner = (ride && ride.user_id === user?.id) || (trip && trip.user_id === user?.id)
   const isClosed = (ride && ride.is_closed) || (trip && trip.is_closed)
-  const isPast = ride 
+  const isPast = ride
     ? new Date(ride.departure_date_time) <= new Date()
-    : trip 
-      ? new Date(trip.travel_date) <= new Date()
+    : trip
+      ? (() => {
+          const [year, month, day] = trip.travel_date.split('-').map(Number)
+          return new Date(year, month - 1, day) <= new Date()
+        })()
       : false
 
   const handleClose = async () => {
