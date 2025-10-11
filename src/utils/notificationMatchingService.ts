@@ -456,7 +456,16 @@ const sendRideMatchNotification = async (
     .insert({
       sender_id: 'system',
       receiver_id: userId,
-      message_content: `🚗 ${driverName} has posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. Click the Chat button below to contact them!`,
+      message_content: JSON.stringify({
+        type: 'ride_match',
+        driverId: ride.user_id,
+        driverName,
+        rideId: ride.id,
+        route: `${ride.from_location} → ${ride.to_location}`,
+        departureDate: new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        departureTime: new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+        price: `${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}`
+      }),
       message_type: 'system',
       is_read: false
     })
@@ -498,7 +507,16 @@ const sendTripMatchNotification = async (
     .insert({
       sender_id: 'system',
       receiver_id: userId,
-      message_content: `✈️ ${travelerName} has posted an airport trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. Click the Chat button below to contact them!`,
+      message_content: JSON.stringify({
+        type: 'trip_match',
+        travelerId: trip.user_id,
+        travelerName,
+        tripId: trip.id,
+        route: `${trip.leaving_airport} → ${trip.destination_airport}`,
+        travelDate: new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        departureTime: trip.departure_time || null,
+        price: trip.price ? `${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'
+      }),
       message_type: 'system',
       is_read: false
     })

@@ -59,7 +59,8 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     type: 'trip' | 'ride'
     id: string
     name: string
-  }>({ show: false, type: 'trip', id: '', name: '' })
+    hasAlerts?: boolean
+  }>({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })
 
   useEffect(() => {
     if (user) {
@@ -262,9 +263,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }
 
   const handleDeleteTrip = async (tripId: string) => {
-    setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })
+    setShowDeleteModal({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })
 
     try {
+      // Check for associated alerts first - delete notifications table
+      const { data: alertData } = await supabase
+        .from('trip_notifications')
+        .select('id')
+        .eq('trip_id', tripId)
+
+      // Delete trip (cascades will handle notifications)
       const { error } = await supabase
         .from('trips')
         .delete()
@@ -279,9 +287,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }
 
   const handleDeleteRide = async (rideId: string) => {
-    setShowDeleteModal({ show: false, type: 'ride', id: '', name: '' })
+    setShowDeleteModal({ show: false, type: 'ride', id: '', name: '', hasAlerts: false })
 
     try {
+      // Check for associated alerts first - delete notifications table
+      const { data: alertData } = await supabase
+        .from('ride_notifications')
+        .select('id')
+        .eq('ride_id', rideId)
+
+      // Delete ride (cascades will handle notifications)
       const { error } = await supabase
         .from('car_rides')
         .delete()
@@ -295,8 +310,30 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     }
   }
 
-  const showDeleteConfirmation = (type: 'trip' | 'ride', id: string, name: string) => {
-    setShowDeleteModal({ show: true, type, id, name })
+  const showDeleteConfirmation = async (type: 'trip' | 'ride', id: string, name: string) => {
+    // Check if there are associated alerts
+    let hasAlerts = false
+    try {
+      if (type === 'trip') {
+        const { data } = await supabase
+          .from('trip_notifications')
+          .select('id')
+          .eq('trip_id', id)
+          .limit(1)
+        hasAlerts = !!data && data.length > 0
+      } else {
+        const { data } = await supabase
+          .from('ride_notifications')
+          .select('id')
+          .eq('ride_id', id)
+          .limit(1)
+        hasAlerts = !!data && data.length > 0
+      }
+    } catch (e) {
+      console.error('Error checking for alerts:', e)
+    }
+
+    setShowDeleteModal({ show: true, type, id, name, hasAlerts })
   }
 
 
@@ -846,6 +883,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <li>• All associated confirmations will be removed</li>
                     <li>• Chat conversations will remain but the {showDeleteModal.type} reference will be lost</li>
                     <li>• Passengers will be notified if they had confirmed requests</li>
+                    {showDeleteModal.hasAlerts && (
+                      <li className="font-bold text-red-900">• This {showDeleteModal.type} has active notification alerts that will be deleted</li>
+                    )}
                   </ul>
                 </div>
               </div>
@@ -853,7 +893,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             
             <div className="flex space-x-3">
               <button
-                onClick={() => setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })}
+                onClick={() => setShowDeleteModal({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })}
                 className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel

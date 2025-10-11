@@ -165,8 +165,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             profile_image_url
           )
         `)
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-        .eq('message_type', 'user')
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}),and(sender_id.eq.system,receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true })
         .limit(100)
 
@@ -761,29 +760,71 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+          messages.map((message) => {
+            // Check if it's a system message with JSON content
+            if (message.message_type === 'system' && message.sender_id === 'system') {
+              try {
+                const data = JSON.parse(message.message_content)
+                if (data.type === 'ride_match' || data.type === 'trip_match') {
+                  const isRide = data.type === 'ride_match'
+                  return (
+                    <div key={message.id} className="flex justify-center my-4">
+                      <div className="max-w-md w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
+                        <div className="flex items-center space-x-2 mb-3">
+                          {isRide ? <Car size={20} className="text-green-600" /> : <Plane size={20} className="text-blue-600" />}
+                          <h4 className="font-bold text-gray-900">{isRide ? '🎉 Matching Ride Found!' : '🎉 Matching Trip Found!'}</h4>
+                        </div>
+                        <p className="text-sm text-gray-800 mb-3">
+                          <strong>{isRide ? data.driverName : data.travelerName}</strong> posted a {isRide ? 'ride' : 'trip'} matching your request:
+                        </p>
+                        <div className="bg-white rounded-lg p-3 mb-3 space-y-2 text-sm">
+                          <p><strong>Route:</strong> {data.route}</p>
+                          <p><strong>{isRide ? 'Departure' : 'Travel Date'}:</strong> {data.departureDate} {data.departureTime ? `at ${data.departureTime}` : ''}</p>
+                          <p><strong>Price:</strong> {data.price}</p>
+                        </div>
+                        <button
+                          onClick={() => onStartChat(isRide ? data.driverId : data.travelerId, isRide ? data.driverName : data.travelerName)}
+                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <MessageCircle size={16} />
+                          <span>Chat with {isRide ? data.driverName : data.travelerName}</span>
+                        </button>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                          {formatMessageTime(message.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+              } catch (e) {
+                // Fall through to regular rendering if JSON parse fails
+              }
+            }
+
+            return (
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.sender_id === user?.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-900'
-                }`}
+                key={message.id}
+                className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm whitespace-pre-wrap break-words">{message.message_content}</p>
-                <p className={`text-xs mt-1 ${
-                  message.sender_id === user?.id
-                    ? 'text-blue-200'
-                    : 'text-gray-500'
-                }`}>
-                  {formatMessageTime(message.created_at)}
-                </p>
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    message.sender_id === user?.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-900'
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words">{message.message_content}</p>
+                  <p className={`text-xs mt-1 ${
+                    message.sender_id === user?.id
+                      ? 'text-blue-200'
+                      : 'text-gray-500'
+                  }`}>
+                    {formatMessageTime(message.created_at)}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
