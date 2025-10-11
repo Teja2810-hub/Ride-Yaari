@@ -245,26 +245,12 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !sessionData.session) {
-        throw new Error('Session not found')
-      }
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${sessionData.session.access_token}`
-        },
-        body: JSON.stringify({
-          type: 'password',
-          email: user?.email,
-          password: emailChange.currentPassword
-        })
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user?.email!,
+        password: emailChange.currentPassword
       })
 
-      if (!response.ok) {
+      if (verifyError) {
         throw new Error('Current password is incorrect')
       }
 
