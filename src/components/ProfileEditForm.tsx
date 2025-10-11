@@ -224,8 +224,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
   }
 
   const handleInitiateEmailChange = async () => {
-    if (!emailChange.newEmail || !emailChange.currentPassword) {
-      setError('Please fill in all fields')
+    if (!emailChange.newEmail) {
+      setError('Please enter a new email address')
       return
     }
 
@@ -245,15 +245,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: user?.email!,
-        password: emailChange.currentPassword
-      })
-
-      if (verifyError) {
-        throw new Error('Current password is incorrect')
-      }
-
       const { error: updateError } = await supabase.auth.updateUser(
         { email: emailChange.newEmail }
       )
@@ -715,22 +706,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={emailChange.currentPassword}
-                        onChange={(e) => setEmailChange(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Enter current password"
-                      />
-                    </div>
-                  </div>
-
                   <div className="flex space-x-3">
                     <button
                       type="button"
@@ -742,7 +717,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                     <button
                       type="button"
                       onClick={handleInitiateEmailChange}
-                      disabled={loading || !emailChange.newEmail || !emailChange.currentPassword}
+                      disabled={loading || !emailChange.newEmail}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? 'Processing...' : 'Change Email'}
