@@ -266,13 +266,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setShowDeleteModal({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })
 
     try {
-      // Check for associated alerts first - delete notifications table
-      const { data: alertData } = await supabase
+      // Delete associated alerts first
+      await supabase
         .from('trip_notifications')
-        .select('id')
+        .delete()
         .eq('trip_id', tripId)
 
-      // Delete trip (cascades will handle notifications)
+      // Delete trip (cascades will handle confirmations)
       const { error } = await supabase
         .from('trips')
         .delete()
@@ -281,6 +281,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       if (error) throw error
 
       setTrips(trips.filter(trip => trip.id !== tripId))
+      await fetchUserData()
     } catch (error: any) {
       setError('Failed to delete trip: ' + error.message)
     }
@@ -290,13 +291,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     setShowDeleteModal({ show: false, type: 'ride', id: '', name: '', hasAlerts: false })
 
     try {
-      // Check for associated alerts first - delete notifications table
-      const { data: alertData } = await supabase
+      // Delete associated alerts first
+      await supabase
         .from('ride_notifications')
-        .select('id')
+        .delete()
         .eq('ride_id', rideId)
 
-      // Delete ride (cascades will handle notifications)
+      // Delete ride (cascades will handle confirmations)
       const { error } = await supabase
         .from('car_rides')
         .delete()
@@ -305,6 +306,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       if (error) throw error
 
       setRides(rides.filter(ride => ride.id !== rideId))
+      await fetchUserData()
     } catch (error: any) {
       setError('Failed to delete ride: ' + error.message)
     }

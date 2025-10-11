@@ -761,46 +761,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           </div>
         ) : (
           messages.map((message) => {
-            // Check if it's a system message with JSON content
-            if (message.message_type === 'system' && message.sender_id === 'system') {
-              try {
-                const data = JSON.parse(message.message_content)
-                if (data.type === 'ride_match' || data.type === 'trip_match') {
-                  const isRide = data.type === 'ride_match'
-                  return (
-                    <div key={message.id} className="flex justify-center my-4">
-                      <div className="max-w-md w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center space-x-2 mb-3">
-                          {isRide ? <Car size={20} className="text-green-600" /> : <Plane size={20} className="text-blue-600" />}
-                          <h4 className="font-bold text-gray-900">{isRide ? '🎉 Matching Ride Found!' : '🎉 Matching Trip Found!'}</h4>
-                        </div>
-                        <p className="text-sm text-gray-800 mb-3">
-                          <strong>{isRide ? data.driverName : data.travelerName}</strong> posted a {isRide ? 'ride' : 'trip'} matching your request:
-                        </p>
-                        <div className="bg-white rounded-lg p-3 mb-3 space-y-2 text-sm">
-                          <p><strong>Route:</strong> {data.route}</p>
-                          <p><strong>{isRide ? 'Departure' : 'Travel Date'}:</strong> {data.departureDate} {data.departureTime ? `at ${data.departureTime}` : ''}</p>
-                          <p><strong>Price:</strong> {data.price}</p>
-                        </div>
-                        <button
-                          onClick={() => onStartChat(isRide ? data.driverId : data.travelerId, isRide ? data.driverName : data.travelerName)}
-                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-                        >
-                          <MessageCircle size={16} />
-                          <span>Chat with {isRide ? data.driverName : data.travelerName}</span>
-                        </button>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                          {formatMessageTime(message.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                }
-              } catch (e) {
-                // Fall through to regular rendering if JSON parse fails
-              }
-            }
-
             return (
               <div
                 key={message.id}
@@ -878,8 +838,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages - BUT NOT for system user */}
-        {otherUserId !== 'system' && (preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && (
+        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages */}
+        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && (
           <div className="flex gap-2 mb-3">
             {(preSelectedRide || showRequestButtons || fromMessages) && (
               <button
