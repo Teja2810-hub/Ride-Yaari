@@ -338,6 +338,7 @@ ${request.additional_notes ? `📝 Notes: ${request.additional_notes}` : ''}
 
 /**
  * Process traveler notification preferences when a passenger requests a trip
+ * ALSO checks for post notification preferences (users who posted trips with future notifications)
  */
 export const processTravelerNotifications = async (requestId: string): Promise<{
   success: boolean
@@ -346,7 +347,7 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
 }> => {
   return retryWithBackoff(async () => {
     console.log('Processing traveler notifications for request:', requestId)
-    
+
     // Get the trip request details
     const { data: request, error: requestError } = await supabase
       .from('trip_requests')
@@ -363,8 +364,83 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       throw new Error('Trip request not found')
     }
 
-    // Find matching traveler notification preferences
+    let notifiedTravelers = 0
+
+    // PART 1: Find matching traveler notification preferences (passenger_request type)
     const { data: travelerNotifications, error: notificationsError } = await supabase
+      .from('trip_notifications')
+      .select(`
+        *,
+        user_profiles!trip_notifications_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('notification_type', 'passenger_request')
+      .eq('is_active', true)
+      .eq('departure_airport', request.departure_airport)
+      .eq('destination_airport', request.destination_airport)
+
+    if (!notificationsError) {
+      console.log('Found traveler passenger_request notifications to check:', travelerNotifications?.length || 0)
+
+      const matchingNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
+
+      // Check each notification for date matching
+      for (const notification of travelerNotifications || []) {
+        // Skip if it's the passenger's own notification
+        if (notification.user_id === request.passenger_id) continue
+
+        // Check date matching
+        let dateMatches = false
+
+        if (notification.date_type === 'specific_date' && notification.specific_date) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+          }
+        } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = notification.multiple_dates.some(date =>
+              new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
+            )
+          } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(notifDate =>
+              request.multiple_dates!.some(reqDate =>
+                new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
+              )
+            )
+          }
+        } else if (notification.date_type === 'month' && notification.notification_month) {
+          if (request.request_type === 'month' && request.request_month) {
+            dateMatches = notification.notification_month === request.request_month
+          } else if (request.request_type === 'specific_date' && request.specific_date) {
+            const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === requestMonth
+          }
+        }
+
+        if (dateMatches) {
+          matchingNotifications.push(notification)
+        }
+      }
+
+      console.log('Found matching traveler passenger_request notifications:', matchingNotifications.length)
+
+      // Send notifications to matching travelers
+      for (const notification of matchingNotifications) {
+        try {
+          await sendTravelerNotificationAlert(
+            notification.user_id,
+            request
+          )
+          notifiedTravelers++
+        } catch (error) {
+          console.error('Error notifying traveler via notification preference:', notification.user_id, error)
+        }
+      }
+    }
+
+    // PART 2: Find matching post notification preferences (traveler_post type)
+    const { data: postNotifications, error: postNotificationsError } = await supabase
       .from('trip_notifications')
       .select(`
         *,
@@ -377,69 +453,66 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       .eq('departure_airport', request.departure_airport)
       .eq('destination_airport', request.destination_airport)
 
-    if (notificationsError) {
-      throw new Error(notificationsError.message)
-    }
+    if (!postNotificationsError) {
+      console.log('Found traveler_post notifications to check:', postNotifications?.length || 0)
 
-    console.log('Found traveler notifications to check:', travelerNotifications?.length || 0)
+      const matchingPostNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
 
-    const matchingNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
+      // Check each post notification for date matching
+      for (const notification of postNotifications || []) {
+        // Skip if it's the passenger's own notification
+        if (notification.user_id === request.passenger_id) continue
 
-    // Check each notification for date matching
-    for (const notification of travelerNotifications || []) {
-      // Skip if it's the passenger's own notification
-      if (notification.user_id === request.passenger_id) continue
+        // Check date matching
+        let dateMatches = false
 
-      // Check date matching
-      let dateMatches = false
-
-      if (notification.date_type === 'specific_date' && notification.specific_date) {
-        if (request.request_type === 'specific_date' && request.specific_date) {
-          dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
-        }
-      } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
-        if (request.request_type === 'specific_date' && request.specific_date) {
-          dateMatches = notification.multiple_dates.some(date => 
-            new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
-          )
-        } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-          dateMatches = notification.multiple_dates.some(notifDate =>
-            request.multiple_dates!.some(reqDate =>
-              new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
+        if (notification.date_type === 'specific_date' && notification.specific_date) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+          }
+        } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = notification.multiple_dates.some(date =>
+              new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
             )
+          } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(notifDate =>
+              request.multiple_dates!.some(reqDate =>
+                new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
+              )
+            )
+          }
+        } else if (notification.date_type === 'month' && notification.notification_month) {
+          if (request.request_type === 'month' && request.request_month) {
+            dateMatches = notification.notification_month === request.request_month
+          } else if (request.request_type === 'specific_date' && request.specific_date) {
+            const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === requestMonth
+          }
+        }
+
+        if (dateMatches) {
+          matchingPostNotifications.push(notification)
+        }
+      }
+
+      console.log('Found matching traveler_post notifications:', matchingPostNotifications.length)
+
+      // Send notifications to matching travelers with post notifications
+      for (const notification of matchingPostNotifications) {
+        try {
+          await sendTravelerNotificationAlert(
+            notification.user_id,
+            request
           )
+          notifiedTravelers++
+        } catch (error) {
+          console.error('Error notifying traveler via post notification preference:', notification.user_id, error)
         }
-      } else if (notification.date_type === 'month' && notification.notification_month) {
-        if (request.request_type === 'month' && request.request_month) {
-          dateMatches = notification.notification_month === request.request_month
-        } else if (request.request_type === 'specific_date' && request.specific_date) {
-          const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
-          dateMatches = notification.notification_month === requestMonth
-        }
-      }
-
-      if (dateMatches) {
-        matchingNotifications.push(notification)
       }
     }
 
-    console.log('Found matching traveler notifications:', matchingNotifications.length)
-
-    // Send notifications to matching travelers
-    let notifiedTravelers = 0
-    for (const notification of matchingNotifications) {
-      try {
-        await sendTravelerNotificationAlert(
-          notification.user_id,
-          request
-        )
-        notifiedTravelers++
-      } catch (error) {
-        console.error('Error notifying traveler via notification preference:', notification.user_id, error)
-      }
-    }
-
-    console.log('Notified travelers via notifications:', notifiedTravelers)
+    console.log('Total notified travelers via notifications:', notifiedTravelers)
 
     return {
       success: true,
