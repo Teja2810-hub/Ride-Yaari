@@ -131,6 +131,9 @@ export const changeUserPassword = async (
   })
 }
 
+let lastEmailChangeAttempt = 0
+const EMAIL_CHANGE_COOLDOWN = 15000
+
 /**
  * Initiate email change process with verification
  */
@@ -139,40 +142,45 @@ export const initiateEmailChange = async (
   emailData: EmailChangeData
 ): Promise<{ success: boolean; error?: string; verificationSent?: boolean }> => {
   try {
-    console.log('Starting email change process...')
+    const now = Date.now()
+    const timeSinceLastAttempt = now - lastEmailChangeAttempt
+
+    if (timeSinceLastAttempt < EMAIL_CHANGE_COOLDOWN) {
+      const waitTime = Math.ceil((EMAIL_CHANGE_COOLDOWN - timeSinceLastAttempt) / 1000)
+      throw new Error(`Please wait ${waitTime} seconds before trying again`)
+    }
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user?.email) {
-      console.error('Failed to get user:', userError)
       throw new Error('Failed to get current user information')
     }
 
-    console.log('Verifying current password...')
     const { error: verifyError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: emailData.currentPassword
     })
 
     if (verifyError) {
-      console.error('Password verification failed:', verifyError)
       throw new Error('Current password is incorrect')
     }
 
-    console.log('Initiating email update...')
+    lastEmailChangeAttempt = now
+
     const { data, error: emailError } = await supabase.auth.updateUser({
       email: emailData.newEmail
     })
 
     if (emailError) {
-      console.error('Email update error:', emailError)
+      if (emailError.message.includes('For security purposes')) {
+        lastEmailChangeAttempt = now
+        throw new Error('Please wait 15 seconds before trying again')
+      }
       throw new Error(emailError.message)
     }
 
-    console.log('Email change initiated successfully:', data)
     return { success: true, verificationSent: true }
   } catch (error: any) {
-    console.error('Email change error:', error)
     return { success: false, error: error.message }
   }
 }

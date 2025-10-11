@@ -74,6 +74,8 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
 
   const [showOTPModal, setShowOTPModal] = useState(false)
   const [pendingEmail, setPendingEmail] = useState('')
+  const [emailChangeDisabled, setEmailChangeDisabled] = useState(false)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -217,7 +219,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || emailChangeDisabled) return
 
     const validation = validateEmailData({
       newEmail: emailData.new_email.trim(),
@@ -240,6 +242,20 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
       })
 
       if (!result.success) {
+        if (result.error?.includes('wait')) {
+          setEmailChangeDisabled(true)
+          setCooldownSeconds(15)
+          const countdown = setInterval(() => {
+            setCooldownSeconds(prev => {
+              if (prev <= 1) {
+                clearInterval(countdown)
+                setEmailChangeDisabled(false)
+                return 0
+              }
+              return prev - 1
+            })
+          }, 1000)
+        }
         throw new Error(result.error || 'Failed to initiate email change')
       }
 
@@ -250,7 +266,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
         current_password: ''
       })
     } catch (error: any) {
-      console.error('Error updating email:', error)
       setError(error.message || 'Failed to update email')
     } finally {
       setLoading(false)
@@ -726,11 +741,11 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || !emailData.new_email || !emailData.current_password || 
-                               emailData.new_email === user?.email}
+                      disabled={loading || !emailData.new_email || !emailData.current_password ||
+                               emailData.new_email === user?.email || emailChangeDisabled}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Sending Verification...' : 'Change Email'}
+                      {loading ? 'Sending Verification...' : emailChangeDisabled ? `Wait ${cooldownSeconds}s` : 'Change Email'}
                     </button>
                   </div>
             </form>
