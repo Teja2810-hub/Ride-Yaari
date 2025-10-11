@@ -138,32 +138,43 @@ export const initiateEmailChange = async (
   userId: string,
   emailData: EmailChangeData
 ): Promise<{ success: boolean; error?: string; verificationSent?: boolean }> => {
-  return retryWithBackoff(async () => {
+  try {
+    console.log('Starting email change process...')
+
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user?.email) {
+      console.error('Failed to get user:', userError)
       throw new Error('Failed to get current user information')
     }
 
+    console.log('Verifying current password...')
     const { error: verifyError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: emailData.currentPassword
     })
 
     if (verifyError) {
+      console.error('Password verification failed:', verifyError)
       throw new Error('Current password is incorrect')
     }
 
+    console.log('Initiating email update...')
     const { data, error: emailError } = await supabase.auth.updateUser({
       email: emailData.newEmail
     })
 
     if (emailError) {
+      console.error('Email update error:', emailError)
       throw new Error(emailError.message)
     }
 
+    console.log('Email change initiated successfully:', data)
     return { success: true, verificationSent: true }
-  })
+  } catch (error: any) {
+    console.error('Email change error:', error)
+    return { success: false, error: error.message }
+  }
 }
 
 /**
