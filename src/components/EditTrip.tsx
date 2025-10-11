@@ -52,15 +52,18 @@ export default function EditTrip({ onBack, trip }: EditTripProps) {
     setError('')
 
     try {
+      const normalizedTravelDate = travelDate ? new Date(travelDate + 'T12:00:00').toISOString().split('T')[0] : travelDate
+      const normalizedLandingDate = landingDate ? new Date(landingDate + 'T12:00:00').toISOString().split('T')[0] : null
+
       const { error } = await supabase
         .from('trips')
         .update({
           leaving_airport: leavingAirport,
           destination_airport: destinationAirport,
-          travel_date: travelDate,
+          travel_date: normalizedTravelDate,
           departure_time: departureTime || null,
           departure_timezone: departureTime ? departureTimezone : null,
-          landing_date: landingDate || null,
+          landing_date: normalizedLandingDate,
           landing_time: landingTime || null,
           landing_timezone: landingTime ? landingTimezone : null,
           price: price ? parseFloat(price) : null,

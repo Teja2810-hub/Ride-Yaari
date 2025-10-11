@@ -75,16 +75,19 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
     popupManager.markDisclaimerShown('trip', user.id)
 
     try {
+      const normalizedTravelDate = travelDate ? new Date(travelDate + 'T12:00:00').toISOString().split('T')[0] : travelDate
+      const normalizedLandingDate = landingDate ? new Date(landingDate + 'T12:00:00').toISOString().split('T')[0] : null
+
       const { data, error } = await supabase
         .from('trips')
         .insert({
           user_id: user.id,
           leaving_airport: leavingAirport,
           destination_airport: destinationAirport,
-          travel_date: travelDate,
+          travel_date: normalizedTravelDate,
           departure_time: departureTime,
           departure_timezone: departureTime ? departureTimezone : null,
-          landing_date: landingDate || null,
+          landing_date: normalizedLandingDate,
           landing_time: landingTime || null,
           landing_timezone: landingTime ? landingTimezone : null,
           price: price ? parseFloat(price) : null,
