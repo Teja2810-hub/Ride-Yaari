@@ -158,11 +158,9 @@ export const initiateEmailChange = async (
 
     lastEmailChangeAttempt = now
 
-    // Initiate email change - this requires an active authenticated session
-    // Supabase will handle sending verification email to the new address
-    const { error: emailError } = await supabase.auth.updateUser(
-      { email: emailData.newEmail },
-      { emailRedirectTo: window.location.origin }
+    // Initiate email change with OTP - this requires an active authenticated session
+    const { data, error: emailError } = await supabase.auth.updateUser(
+      { email: emailData.newEmail }
     )
 
     if (emailError) {
@@ -172,6 +170,7 @@ export const initiateEmailChange = async (
       throw new Error(emailError.message)
     }
 
+    console.log('Email change initiated:', data)
     return { success: true, verificationSent: true }
   } catch (error: any) {
     return { success: false, error: error.message }
