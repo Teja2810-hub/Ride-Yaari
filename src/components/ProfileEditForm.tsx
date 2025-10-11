@@ -720,7 +720,11 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
                     </button>
                     <button
                       type="button"
-                      onClick={handleInitiateEmailChange}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleInitiateEmailChange()
+                      }}
                       disabled={loading || !emailChange.newEmail}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
