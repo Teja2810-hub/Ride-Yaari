@@ -35,19 +35,27 @@ export default function EmailOTPModal({ newEmail, onClose, onSuccess }: EmailOTP
     setError('')
 
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email: newEmail,
         token: otp,
         type: 'email_change'
       })
 
       if (verifyError) {
+        if (verifyError.message.includes('expired')) {
+          throw new Error('Verification code has expired. Please request a new one.')
+        } else if (verifyError.message.includes('invalid')) {
+          throw new Error('Invalid verification code. Please check and try again.')
+        }
         throw new Error(verifyError.message)
+      }
+
+      if (!data.user) {
+        throw new Error('Verification failed. Please try again.')
       }
 
       onSuccess()
     } catch (err: any) {
-      console.error('OTP verification error:', err)
       setError(err.message || 'Invalid or expired code. Please try again.')
     } finally {
       setLoading(false)

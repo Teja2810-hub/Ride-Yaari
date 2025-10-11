@@ -150,18 +150,32 @@ export const initiateEmailChange = async (
       throw new Error(`Please wait ${waitTime} seconds before trying again`)
     }
 
+    // Get current user email
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+    if (getUserError || !user) {
+      throw new Error('Failed to get user information')
+    }
+
+    // Verify password by signing in
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: emailData.currentPassword
+    })
+
+    if (verifyError) {
+      throw new Error('Current password is incorrect')
+    }
+
     lastEmailChangeAttempt = now
 
-    const { data, error: emailError } = await supabase.auth.updateUser({
+    // Initiate email change
+    const { error: emailError } = await supabase.auth.updateUser({
       email: emailData.newEmail
     })
 
     if (emailError) {
       if (emailError.message.includes('For security purposes') || emailError.message.includes('only request this after')) {
         throw new Error('Please wait 20 seconds before trying again')
-      }
-      if (emailError.message.includes('password')) {
-        throw new Error('Password verification failed. Please check your password.')
       }
       throw new Error(emailError.message)
     }

@@ -228,7 +228,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
 
     if (!validation.isValid) {
       const errorMsg = validation.errors.join(', ')
-      console.log('Validation error:', errorMsg)
       setError(errorMsg)
       return
     }
@@ -238,17 +237,13 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     setSuccess('')
 
     try {
-      console.log('Attempting email change...')
       const result = await initiateEmailChange(user.id, {
         newEmail: emailData.new_email.trim(),
         currentPassword: emailData.current_password.trim()
       })
 
-      console.log('Email change result:', result)
-
       if (!result.success) {
         const errorMsg = result.error || 'Failed to initiate email change'
-        console.log('Email change failed:', errorMsg)
 
         if (result.error?.includes('wait')) {
           setEmailChangeDisabled(true)
@@ -269,7 +264,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
         return
       }
 
-      console.log('Email change successful, showing OTP modal')
       setPendingEmail(emailData.new_email.trim())
       setShowOTPModal(true)
       setEmailData({
@@ -278,7 +272,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
       })
     } catch (error: any) {
       const errorMsg = error.message || 'Failed to update email'
-      console.error('Email change exception:', errorMsg)
       setError(errorMsg)
     } finally {
       setLoading(false)
