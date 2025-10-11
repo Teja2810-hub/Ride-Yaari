@@ -14,10 +14,6 @@ export interface PasswordChangeData {
   newPassword: string
 }
 
-export interface EmailChangeData {
-  newEmail: string
-  currentPassword: string
-}
 
 /**
  * Update user profile information
@@ -131,51 +127,6 @@ export const changeUserPassword = async (
   })
 }
 
-let lastEmailChangeAttempt = 0
-const EMAIL_CHANGE_COOLDOWN = 20000
-
-/**
- * Initiate email change process with verification
- */
-export const initiateEmailChange = async (
-  userId: string,
-  emailData: EmailChangeData
-): Promise<{ success: boolean; error?: string; verificationSent?: boolean }> => {
-  try {
-    const now = Date.now()
-    const timeSinceLastAttempt = now - lastEmailChangeAttempt
-
-    if (timeSinceLastAttempt < EMAIL_CHANGE_COOLDOWN) {
-      const waitTime = Math.ceil((EMAIL_CHANGE_COOLDOWN - timeSinceLastAttempt) / 1000)
-      throw new Error(`Please wait ${waitTime} seconds before trying again`)
-    }
-
-    // Get current user
-    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
-    if (getUserError || !user) {
-      throw new Error('Failed to get user information')
-    }
-
-    lastEmailChangeAttempt = now
-
-    // Initiate email change with OTP - this requires an active authenticated session
-    const { data, error: emailError } = await supabase.auth.updateUser(
-      { email: emailData.newEmail }
-    )
-
-    if (emailError) {
-      if (emailError.message.includes('For security purposes') || emailError.message.includes('only request this after')) {
-        throw new Error('Please wait 20 seconds before trying again')
-      }
-      throw new Error(emailError.message)
-    }
-
-    console.log('Email change initiated:', data)
-    return { success: true, verificationSent: true }
-  } catch (error: any) {
-    return { success: false, error: error.message }
-  }
-}
 
 /**
  * Upload profile image to Supabase Storage
@@ -320,35 +271,6 @@ export const validatePasswordData = (data: PasswordChangeData): { isValid: boole
   }
 }
 
-/**
- * Validate email data
- */
-export const validateEmailData = (data: EmailChangeData, currentEmail: string): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = []
-
-  if (!data.newEmail?.trim()) {
-    errors.push('New email address is required')
-  }
-
-  if (!data.currentPassword?.trim()) {
-    errors.push('Current password is required')
-  }
-
-  // Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (data.newEmail?.trim() && !emailRegex.test(data.newEmail.trim())) {
-    errors.push('Please enter a valid email address')
-  }
-
-  if (data.newEmail?.trim() && data.newEmail.trim() === currentEmail) {
-    errors.push('New email must be different from current email')
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
-}
 
 /**
  * Get password strength indicator

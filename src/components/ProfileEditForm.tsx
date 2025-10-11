@@ -1,20 +1,17 @@
 import React, { useState, useRef } from 'react'
-import { User, Mail, Lock, Eye, EyeOff, Camera, Save, X, Check, AlertTriangle, Upload, Trash2 } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, Camera, X, Check, AlertTriangle, Upload, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import LoadingSpinner from './LoadingSpinner'
 import ErrorMessage from './ErrorMessage'
 import PasswordStrengthIndicator from './PasswordStrengthIndicator'
-import EmailOTPModal from './EmailOTPModal'
 import {
   updateUserProfile,
   changeUserPassword,
-  initiateEmailChange,
   uploadProfileImage,
   deleteProfileImage,
   validateProfileData,
-  validatePasswordData,
-  validateEmailData
+  validatePasswordData
 } from '../utils/profileHelpers'
 import { getDefaultAvatarUrl } from '../utils/avatarHelpers'
 
@@ -36,14 +33,10 @@ interface PasswordData {
   confirm_password: string
 }
 
-interface EmailData {
-  new_email: string
-  current_password: string
-}
 
 export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormProps) {
   const { user, userProfile, refreshUserProfile } = useAuth()
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'email'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
@@ -67,15 +60,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     confirm_password: ''
   })
 
-  const [emailData, setEmailData] = useState<EmailData>({
-    new_email: '',
-    current_password: ''
-  })
-
-  const [showOTPModal, setShowOTPModal] = useState(false)
-  const [pendingEmail, setPendingEmail] = useState('')
-  const [emailChangeDisabled, setEmailChangeDisabled] = useState(false)
-  const [cooldownSeconds, setCooldownSeconds] = useState(0)
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -217,86 +201,6 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
     }
   }
 
-  const handleEmailUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || emailChangeDisabled) return
-
-    const validation = validateEmailData({
-      newEmail: emailData.new_email.trim(),
-      currentPassword: emailData.current_password.trim()
-    }, user.email!)
-
-    if (!validation.isValid) {
-      const errorMsg = validation.errors.join(', ')
-      setError(errorMsg)
-      return
-    }
-
-    setLoading(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      console.log('Starting email change process...')
-      const result = await initiateEmailChange(user.id, {
-        newEmail: emailData.new_email.trim(),
-        currentPassword: emailData.current_password.trim()
-      })
-
-      console.log('Email change result:', result)
-
-      if (!result.success) {
-        const errorMsg = result.error || 'Failed to initiate email change'
-        console.error('Email change failed:', errorMsg)
-
-        if (result.error?.includes('wait')) {
-          setEmailChangeDisabled(true)
-          setCooldownSeconds(20)
-          const countdown = setInterval(() => {
-            setCooldownSeconds(prev => {
-              if (prev <= 1) {
-                clearInterval(countdown)
-                setEmailChangeDisabled(false)
-                return 0
-              }
-              return prev - 1
-            })
-          }, 1000)
-        }
-        setError(errorMsg)
-        setLoading(false)
-        return
-      }
-
-      console.log('Email change successful, showing OTP modal')
-      setPendingEmail(emailData.new_email.trim())
-      setShowOTPModal(true)
-      setEmailData({
-        new_email: '',
-        current_password: ''
-      })
-    } catch (error: any) {
-      const errorMsg = error.message || 'Failed to update email'
-      console.error('Email change exception:', error)
-      setError(errorMsg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleOTPSuccess = async () => {
-    setShowOTPModal(false)
-    setSuccess('Email updated successfully!')
-    await refreshUserProfile()
-    setTimeout(() => {
-      if (onSuccess) onSuccess()
-    }, 2000)
-  }
-
-  const handleOTPClose = () => {
-    setShowOTPModal(false)
-    setPendingEmail('')
-  }
 
   const removeProfileImage = () => {
     if (profileData.profile_image_url) {
@@ -326,8 +230,7 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
           <nav className="flex">
             {[
               { id: 'profile', label: 'Profile Info', icon: <User size={16} /> },
-              { id: 'password', label: 'Password', icon: <Lock size={16} /> },
-              { id: 'email', label: 'Email', icon: <Mail size={16} /> }
+              { id: 'password', label: 'Password', icon: <Lock size={16} /> }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -659,119 +562,9 @@ export default function ProfileEditForm({ onClose, onSuccess }: ProfileEditFormP
             </form>
           )}
 
-          {/* Email Tab */}
-          {activeTab === 'email' && (
-            <form onSubmit={handleEmailUpdate} className="space-y-6">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <Mail size={20} className="text-blue-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-blue-900 mb-1">Email Change Process</h4>
-                        <p className="text-sm text-blue-800">
-                          Changing your email requires verification. We'll send a verification link to your new email address. 
-                          You'll need to verify the new email before the change takes effect.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Current Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                      <input
-                        type="email"
-                        value={user?.email || ''}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-                        disabled
-                      />
-                    </div>
-                  </div>
-
-                  {/* New Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      New Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                      <input
-                        type="email"
-                        value={emailData.new_email}
-                        onChange={(e) => setEmailData(prev => ({ ...prev, new_email: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Enter new email address"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Current Password for Verification */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={emailData.current_password}
-                        onChange={(e) => setEmailData(prev => ({ ...prev, current_password: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Enter current password to verify"
-                      />
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Required to verify your identity before changing email
-                    </p>
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <AlertTriangle size={16} className="text-yellow-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-yellow-900 mb-1">Important</h4>
-                        <ul className="text-sm text-yellow-800 space-y-1">
-                          <li>• You'll receive a verification email at your new address</li>
-                          <li>• Your email won't change until you verify the new address</li>
-                          <li>• The verification link expires in 24 hours</li>
-                          <li>• You can still use your current email until verification is complete</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading || !emailData.new_email || !emailData.current_password ||
-                               emailData.new_email === user?.email || emailChangeDisabled}
-                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? 'Sending Verification...' : emailChangeDisabled ? `Wait ${cooldownSeconds}s` : 'Change Email'}
-                    </button>
-                  </div>
-            </form>
-          )}
         </div>
       </div>
 
-      {showOTPModal && (
-        <EmailOTPModal
-          newEmail={pendingEmail}
-          onClose={handleOTPClose}
-          onSuccess={handleOTPSuccess}
-        />
-      )}
     </div>
   )
 }
