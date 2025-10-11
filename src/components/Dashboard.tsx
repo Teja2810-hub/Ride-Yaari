@@ -17,10 +17,11 @@ interface DashboardProps {
   onHelp: () => void
   onStartChat?: (userId: string, userName: string) => void
   onViewConfirmations: () => void
+  onNotificationHistory?: () => void
   isGuest?: boolean
 }
 
-export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, isGuest = false }: DashboardProps) {
+export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onProfile, onBack, onHelp, onStartChat, onViewConfirmations, onNotificationHistory, isGuest = false }: DashboardProps) {
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
@@ -299,6 +300,10 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             setSidebarOpen(false)
             signOut()
           }}
+          onNotificationHistory={onNotificationHistory ? () => {
+            setSidebarOpen(false)
+            onNotificationHistory()
+          } : undefined}
         />
       )}
     </div>

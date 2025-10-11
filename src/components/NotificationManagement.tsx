@@ -203,13 +203,13 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const getDateTypeDisplay = (notification: NotificationItem) => {
     switch (notification.date_type) {
       case 'specific_date':
-        return notification.specific_date ? `📅 ${formatDateWithWeekday(notification.specific_date)}` : 'Specific date'
+        return notification.specific_date ? formatDateWithWeekday(notification.specific_date) : 'Specific date'
       case 'multiple_dates':
         return notification.multiple_dates && notification.multiple_dates.length > 0
-          ? `📅 ${notification.multiple_dates.length} selected dates`
+          ? `${notification.multiple_dates.length} selected dates`
           : 'Multiple dates'
       case 'month':
-        return (notification as RideNotification).notification_month ? `📅 ${(notification as RideNotification).notification_month}` : 'Month'
+        return (notification as RideNotification).notification_month ? (notification as RideNotification).notification_month : 'Month'
       default:
         return 'Unknown'
     }
@@ -485,7 +485,7 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                           {getLocationDisplay(notification)}
                         </h3>
                         <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-600">
-                          <span>{getDateTypeDisplay(notification)}</span>
+                          <span>📅 {getDateTypeDisplay(notification)}</span>
                           <span className={expiryStatus.color}>{expiryStatus.text}</span>
                         </div>
                       </div>
@@ -533,9 +533,9 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
                             </div>
                           </div>
                           <div>
-                            <p className="text-gray-600 mb-1">Created</p>
+                            <p className="text-gray-600 mb-1">For Date</p>
                             <div className="font-medium text-gray-900">
-                              {formatDateTime(notification.created_at)}
+                              {getDateTypeDisplay(notification)}
                             </div>
                           </div>
                           <div>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { X, HelpCircle, User, LogOut } from 'lucide-react'
+import { X, HelpCircle, User, LogOut, Bell } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface SidebarProps {
@@ -8,6 +8,7 @@ interface SidebarProps {
   onHelp: () => void
   onProfile: () => void
   onSignOut: () => void
+  onNotificationHistory?: () => void
 }
 
 export default function Sidebar({
@@ -15,7 +16,8 @@ export default function Sidebar({
   onClose,
   onHelp,
   onProfile,
-  onSignOut
+  onSignOut,
+  onNotificationHistory
 }: SidebarProps) {
   const { userProfile } = useAuth()
 
@@ -115,6 +117,16 @@ export default function Sidebar({
                 <User size={20} />
                 <span className="font-medium">Profile</span>
               </button>
+
+              {onNotificationHistory && (
+                <button
+                  onClick={() => handleMenuItemClick(onNotificationHistory)}
+                  className="flex items-center space-x-3 w-full px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                >
+                  <Bell size={20} />
+                  <span className="font-medium">Notification History</span>
+                </button>
+              )}
 
               <div className="border-t border-gray-200 my-2"></div>
 

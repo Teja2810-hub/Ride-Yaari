@@ -449,6 +449,17 @@ const sendRideMatchNotification = async (
     })
 
   if (error) throw error
+
+  // Also send a system chat message
+  await supabase
+    .from('chat_messages')
+    .insert({
+      sender_id: 'system',
+      receiver_id: userId,
+      message_content: `🚗 ${driverName} has posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. Click the Chat button below to contact them!`,
+      message_type: 'system',
+      is_read: false
+    })
 }
 
 /**
@@ -480,6 +491,17 @@ const sendTripMatchNotification = async (
     })
 
   if (error) throw error
+
+  // Also send a system chat message
+  await supabase
+    .from('chat_messages')
+    .insert({
+      sender_id: 'system',
+      receiver_id: userId,
+      message_content: `✈️ ${travelerName} has posted an airport trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. Click the Chat button below to contact them!`,
+      message_type: 'system',
+      is_read: false
+    })
 }
 
 /**
