@@ -352,6 +352,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
+  const handleBackClick = () => {
+    // Clean up subscription before going back
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    onBack()
+  }
+
   const handleSkipLoading = () => {
     console.log('Chat: User chose to skip loading')
     setLoading(false)
@@ -653,7 +662,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={onBack}
+              onClick={handleBackClick}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowLeft size={20} />
@@ -786,7 +795,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                     <p className="text-sm text-gray-800 whitespace-pre-wrap break-words text-center font-medium">
                       {formattedMessage}
                     </p>
-                    {userIdMatch && userIdMatch[1] && (
+                    {userIdMatch && userIdMatch[1] && onStartChat && (
                       <button
                         onClick={async () => {
                           const userId = userIdMatch[1]
@@ -796,9 +805,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                             .eq('id', userId)
                             .maybeSingle()
 
-                          if (onStartChat) {
-                            onStartChat(userId, profile?.full_name || 'User')
+                          // Clean up current chat subscription before switching
+                          if (subscriptionRef.current) {
+                            subscriptionRef.current.unsubscribe()
+                            subscriptionRef.current = null
                           }
+
+                          onStartChat(userId, profile?.full_name || 'User')
                         }}
                         className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
                       >
