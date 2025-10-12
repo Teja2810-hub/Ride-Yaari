@@ -301,7 +301,8 @@ export const sendMatchingTripNotification = async (
 ): Promise<void> => {
   try {
     const travelerName = trip.user_profiles?.full_name || await getUserDisplayName(trip.user_id)
-    const tripDate = new Date(trip.travel_date)
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const tripDate = new Date(year, month - 1, day)
 
     const notificationMessage = `🎉 **Matching Trip Found!**
 
@@ -313,8 +314,8 @@ export const sendMatchingTripNotification = async (
   month: 'long',
   day: 'numeric'
 })}
-${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}${trip.departure_timezone ? ` (${trip.departure_timezone})` : ''}` : ''}
-${trip.landing_time ? `🛬 **Landing:** ${trip.landing_time}${trip.landing_timezone ? ` (${trip.landing_timezone})` : ''}` : ''}
+${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}${trip.departure_timezone ? ` ${trip.departure_timezone}` : ''}` : ''}
+${trip.landing_time ? `🛬 **Landing:** ${trip.landing_time}${trip.landing_timezone ? ` ${trip.landing_timezone}` : ''}` : ''}
 ${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 **Free assistance**'}
 
 **Your Request:**
