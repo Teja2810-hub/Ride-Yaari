@@ -7,7 +7,7 @@ import { getSystemMessageTemplate } from '../utils/messageTemplates'
 interface NotificationCenterProps {
   isOpen: boolean
   onClose: () => void
-  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any, showRequestButtons?: boolean) => void
   onViewConfirmations?: () => void
 }
 
@@ -161,9 +161,13 @@ export default function NotificationCenter({
       onStartChat &&
       notification.actionData?.userId
     ) {
+      const showRequestButtons = notification.type === 'ride_match' || notification.type === 'trip_match'
       onStartChat(
         notification.actionData.userId,
-        notification.actionData.userName || 'User'
+        notification.actionData.userName || 'User',
+        undefined,
+        undefined,
+        showRequestButtons
       )
     }
   }

@@ -20,7 +20,7 @@ interface ChatProps {
   preSelectedTrip?: Trip
   showRequestButtons?: boolean
   fromMessages?: boolean
-  onStartChat?: (userId: string, userName: string) => void
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
 }
 
 export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false, onStartChat }: ChatProps) {
@@ -811,7 +811,29 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                             subscriptionRef.current = null
                           }
 
-                          onStartChat(userId, profile?.full_name || 'User')
+                          // Get ride or trip data if available
+                          let ride = null
+                          let trip = null
+
+                          if (rideIdMatch && rideIdMatch[1]) {
+                            const { data: rideData } = await supabase
+                              .from('car_rides')
+                              .select('*')
+                              .eq('id', rideIdMatch[1])
+                              .maybeSingle()
+                            ride = rideData
+                          }
+
+                          if (tripIdMatch && tripIdMatch[1]) {
+                            const { data: tripData } = await supabase
+                              .from('trips')
+                              .select('*')
+                              .eq('id', tripIdMatch[1])
+                              .maybeSingle()
+                            trip = tripData
+                          }
+
+                          onStartChat(userId, profile?.full_name || 'User', ride, trip)
                         }}
                         className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
                       >
