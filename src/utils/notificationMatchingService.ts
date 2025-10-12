@@ -429,8 +429,8 @@ const sendRideMatchNotification = async (
   driverName: string
 ): Promise<void> => {
   const rideDate = new Date(ride.departure_date_time)
-  const dateStr = rideDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
-  const timeStr = rideDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })
+  const dateStr = rideDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const timeStr = rideDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 
   const title = '🎉 Matching Ride Found!'
   const message = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}.`
@@ -455,7 +455,7 @@ const sendRideMatchNotification = async (
   if (error) throw error
 
   // Send a system chat message with embedded user ID
-  const chatMessage = `🎉 Matching Ride Found! ${driverName} posted a ride: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. [user_id:${ride.user_id}][ride_id:${ride.id}]`
+  const chatMessage = `🎉 ${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. [user_id:${ride.user_id}][ride_id:${ride.id}]`
 
   await supabase
     .from('chat_messages')
@@ -477,7 +477,7 @@ const sendTripMatchNotification = async (
   travelerName: string
 ): Promise<void> => {
   const tripDate = new Date(trip.travel_date)
-  const dateStr = tripDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+  const dateStr = tripDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 
   const title = '🎉 Matching Trip Found!'
   const message = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}.`
@@ -502,7 +502,7 @@ const sendTripMatchNotification = async (
   if (error) throw error
 
   // Send a system chat message with embedded user ID
-  const chatMessage = `🎉 Matching Trip Found! ${travelerName} posted a trip: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. [user_id:${trip.user_id}][trip_id:${trip.id}]`
+  const chatMessage = `🎉 ${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. [user_id:${trip.user_id}][trip_id:${trip.id}]`
 
   await supabase
     .from('chat_messages')

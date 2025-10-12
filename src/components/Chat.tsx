@@ -764,11 +764,15 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           messages.map((message) => {
             const isSystemMessage = message.message_type === 'system'
             const userIdMatch = message.message_content.match(/\[user_id:([^\]]+)\]/)
-            const cleanedMessage = message.message_content.replace(/\[user_id:[^\]]+\]/, '')
+            const rideIdMatch = message.message_content.match(/\[ride_id:([^\]]+)\]/)
+            const tripIdMatch = message.message_content.match(/\[trip_id:([^\]]+)\]/)
+            let cleanedMessage = message.message_content
+              .replace(/\[user_id:[^\]]+\]/, '')
+              .replace(/\[ride_id:[^\]]+\]/, '')
+              .replace(/\[trip_id:[^\]]+\]/, '')
+              .trim()
 
             if (isSystemMessage) {
-              const rideIdMatch = message.message_content.match(/\[ride_id:([^\]]+)\]/)
-              const tripIdMatch = message.message_content.match(/\[trip_id:([^\]]+)\]/)
               const rideId = rideIdMatch ? rideIdMatch[1] : null
               const tripId = tripIdMatch ? tripIdMatch[1] : null
 
