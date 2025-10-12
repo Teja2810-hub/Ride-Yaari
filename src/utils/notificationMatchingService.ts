@@ -429,8 +429,8 @@ const sendRideMatchNotification = async (
   driverName: string
 ): Promise<void> => {
   const rideDate = new Date(ride.departure_date_time)
-  const dateStr = rideDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
-  const timeStr = rideDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })
+  const dateStr = rideDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const timeStr = rideDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 
   const title = '🎉 Matching Ride Found!'
   const message = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}.`
@@ -476,8 +476,9 @@ const sendTripMatchNotification = async (
   trip: Trip,
   travelerName: string
 ): Promise<void> => {
-  const tripDate = new Date(trip.travel_date)
-  const dateStr = tripDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+  const [year, month, day] = trip.travel_date.split('-').map(Number)
+  const tripDate = new Date(year, month - 1, day)
+  const dateStr = tripDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 
   const title = '🎉 Matching Trip Found!'
   const message = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}.`
