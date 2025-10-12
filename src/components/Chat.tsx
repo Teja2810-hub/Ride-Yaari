@@ -767,18 +767,33 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             const cleanedMessage = message.message_content.replace(/\[user_id:[^\]]+\]/, '')
 
             if (isSystemMessage) {
+              const rideIdMatch = message.message_content.match(/\[ride_id:([^\]]+)\]/)
+              const tripIdMatch = message.message_content.match(/\[trip_id:([^\]]+)\]/)
+              const rideId = rideIdMatch ? rideIdMatch[1] : null
+              const tripId = tripIdMatch ? tripIdMatch[1] : null
+
+              const formattedMessage = cleanedMessage.split('**').map((part, i) =>
+                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+              )
+
               return (
                 <div key={message.id} className="flex justify-center my-4">
                   <div className="max-w-lg w-full bg-amber-50 border-2 border-amber-200 px-6 py-4 rounded-xl shadow-md">
                     <p className="text-sm text-gray-800 whitespace-pre-wrap break-words text-center font-medium">
-                      {cleanedMessage}
+                      {formattedMessage}
                     </p>
                     {userIdMatch && userIdMatch[1] && (
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const userId = userIdMatch[1]
+                          const { data: profile } = await supabase
+                            .from('user_profiles')
+                            .select('full_name')
+                            .eq('id', userId)
+                            .maybeSingle()
+
                           if (onStartChat) {
-                            onStartChat(userId, 'User')
+                            onStartChat(userId, profile?.full_name || 'User')
                           }
                         }}
                         className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
