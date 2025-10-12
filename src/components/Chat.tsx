@@ -931,27 +931,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages, but NEVER for system user */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
+        {/* Request Buttons - Always show except for system user */}
+        {otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
           <div className="flex gap-2 mb-3">
-            {(preSelectedRide || showRequestButtons || fromMessages) && (
-              <button
-                onClick={() => setShowRideRequestModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
-              >
-                <Car size={18} />
-                <span>Request Ride</span>
-              </button>
-            )}
-            {(preSelectedTrip || showRequestButtons || fromMessages) && (
-              <button
-                onClick={() => setShowTripRequestModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-              >
-                <Plane size={18} />
-                <span>Request Trip</span>
-              </button>
-            )}
+            <button
+              onClick={() => setShowRideRequestModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
+            >
+              <Car size={18} />
+              <span>Request Ride</span>
+            </button>
+            <button
+              onClick={() => setShowTripRequestModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+            >
+              <Plane size={18} />
+              <span>Request Trip</span>
+            </button>
           </div>
         )}
 
