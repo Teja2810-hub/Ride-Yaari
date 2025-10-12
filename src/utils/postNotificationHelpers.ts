@@ -257,11 +257,14 @@ const sendRideRequestNotificationMessage = async (
   request: any,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date'
-    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
-    : request.request_type === 'month'
-      ? `in ${request.request_month}`
-      : 'on multiple dates'
+  let dateInfo = 'on multiple dates'
+  if (request.request_type === 'specific_date' && request.specific_date) {
+    const [year, month, day] = request.specific_date.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    dateInfo = `on ${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
+  } else if (request.request_type === 'month') {
+    dateInfo = `in ${request.request_month}`
+  }
 
   const title = '🔔 Ride Request Alert!'
   const message = `${passengerName} is looking for a ride: ${request.departure_location} → ${request.destination_location} ${dateInfo}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`
@@ -296,11 +299,14 @@ const sendTripRequestNotificationMessage = async (
   request: any,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date'
-    ? `on ${new Date(request.specific_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
-    : request.request_type === 'month'
-      ? `in ${request.request_month}`
-      : 'on multiple dates'
+  let dateInfo = 'on multiple dates'
+  if (request.request_type === 'specific_date' && request.specific_date) {
+    const [year, month, day] = request.specific_date.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    dateInfo = `on ${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
+  } else if (request.request_type === 'month') {
+    dateInfo = `in ${request.request_month}`
+  }
 
   const title = '🔔 Trip Request Alert!'
   const message = `${passengerName} is looking for assistance: ${request.departure_airport} → ${request.destination_airport} ${dateInfo}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`

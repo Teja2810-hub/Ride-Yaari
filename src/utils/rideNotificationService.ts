@@ -156,17 +156,20 @@ export const sendRideRequestNotification = async (
 ): Promise<void> => {
   try {
     const passengerName = request.user_profiles?.full_name || await getUserDisplayName(request.passenger_id)
-    
-    const dateInfo = request.request_type === 'specific_date' 
-      ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}`
-      : request.request_type === 'month'
-        ? `in ${request.request_month}`
-        : 'on multiple dates'
+
+    let dateInfo = 'on multiple dates'
+    if (request.request_type === 'specific_date' && request.specific_date) {
+      const [year, month, day] = request.specific_date.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      dateInfo = `on ${date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}`
+    } else if (request.request_type === 'month') {
+      dateInfo = `in ${request.request_month}`
+    }
 
     const timeInfo = request.departure_time_preference 
       ? ` at ${request.departure_time_preference}`
@@ -677,18 +680,21 @@ export const sendDriverNotificationAlert = async (
   try {
     const passengerName = request.user_profiles?.full_name || await getUserDisplayName(request.passenger_id)
     
-    const dateInfo = request.request_type === 'specific_date' 
-      ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}`
-      : request.request_type === 'month'
-        ? `in ${request.request_month}`
-        : 'on multiple dates'
+    let dateInfo = 'on multiple dates'
+    if (request.request_type === 'specific_date' && request.specific_date) {
+      const [year, month, day] = request.specific_date.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      dateInfo = `on ${date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}`
+    } else if (request.request_type === 'month') {
+      dateInfo = `in ${request.request_month}`
+    }
 
-    const timeInfo = request.departure_time_preference 
+    const timeInfo = request.departure_time_preference
       ? ` at ${request.departure_time_preference}`
       : ''
 

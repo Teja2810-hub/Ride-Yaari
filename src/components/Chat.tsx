@@ -359,8 +359,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       subscriptionRef.current = null
     }
 
-    // Reset URL to dashboard when going back
-    window.location.hash = ''
+    // Reset URL and go back
+    if (fromMessages) {
+      window.location.hash = 'messages'
+    } else {
+      window.location.hash = ''
+    }
     onBack()
   }
 

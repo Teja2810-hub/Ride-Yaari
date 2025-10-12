@@ -48,16 +48,26 @@ export const formatDateWithoutTimezone = (dateString: string): string => {
  */
 export const formatDateShort = (dateString: string): string => {
   if (!dateString) return ''
-  
+
   try {
-    // Handle both date strings and ISO datetime strings
-    const date = new Date(dateString)
-    
-    // Check if the date is valid
-    if (isNaN(date.getTime())) {
-      return dateString
+    // Parse date string to avoid timezone conversion
+    const [year, month, day] = dateString.split(/[-T]/)
+    if (!year || !month || !day) {
+      // Fallback for other formats
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return dateString
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
     }
-    
+
+    // Create date in local timezone
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
