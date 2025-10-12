@@ -450,13 +450,13 @@ const sendRideMatchNotification = async (
 
   if (error) throw error
 
-  // Also send a system chat message with clickable link
-  const chatMessage = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. Click here to message ${driverName}: rideyaari://chat/${ride.user_id}`
+  // Send a system chat message with clickable chat link
+  const chatMessage = `🎉 Matching Ride Found! ${driverName} posted a ride: ${ride.from_location} → ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. rideyaari://chat/${ride.user_id} Click to chat with ${driverName}`
 
   await supabase
     .from('chat_messages')
     .insert({
-      sender_id: ride.user_id,
+      sender_id: 'SYSTEM_USER',
       receiver_id: userId,
       message_content: chatMessage,
       message_type: 'system',
@@ -494,13 +494,13 @@ const sendTripMatchNotification = async (
 
   if (error) throw error
 
-  // Also send a system chat message with clickable link
-  const chatMessage = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. Click here to message ${travelerName}: rideyaari://chat/${trip.user_id}`
+  // Send a system chat message with clickable chat link
+  const chatMessage = `🎉 Matching Trip Found! ${travelerName} posted a trip: ${trip.leaving_airport} → ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. rideyaari://chat/${trip.user_id} Click to chat with ${travelerName}`
 
   await supabase
     .from('chat_messages')
     .insert({
-      sender_id: trip.user_id,
+      sender_id: 'SYSTEM_USER',
       receiver_id: userId,
       message_content: chatMessage,
       message_type: 'system',

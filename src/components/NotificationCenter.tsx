@@ -31,7 +31,8 @@ export default function NotificationCenter({
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages' | 'history'>('all')
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     if (isOpen && user) {
@@ -46,14 +47,18 @@ export default function NotificationCenter({
     try {
       const notifications: Notification[] = []
 
-      // Fetch persistent notifications (exclude ride/trip confirmation and message types)
-      const { data: persistentNotifications } = await supabase
+      // Fetch persistent notifications
+      const query = supabase
         .from('user_notifications')
         .select('*')
         .eq('user_id', user.id)
         .not('notification_type', 'in', '(confirmation_request,confirmation_update,message)')
         .order('created_at', { ascending: false })
-        .limit(50)
+
+      // Show all in history view, limit to 50 unread in normal view
+      const { data: persistentNotifications } = showHistory
+        ? await query.limit(200)
+        : await query.eq('is_read', false).limit(50)
 
       if (persistentNotifications) {
         persistentNotifications.forEach(notif => {
@@ -98,11 +103,14 @@ export default function NotificationCenter({
       if (filter === 'unread') {
         filteredNotifications = notifications.filter(n => !n.read)
       } else if (filter === 'confirmations') {
-        filteredNotifications = notifications.filter(n => 
+        filteredNotifications = notifications.filter(n =>
           n.type === 'confirmation_request' || n.type === 'confirmation_update'
         )
       } else if (filter === 'messages') {
         filteredNotifications = notifications.filter(n => n.type === 'message')
+      } else if (filter === 'history') {
+        // Show all notifications in history
+        filteredNotifications = notifications
       }
 
       setNotifications(filteredNotifications)
@@ -175,6 +183,10 @@ export default function NotificationCenter({
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
+
+      // Switch to history view after marking all as read
+      setShowHistory(true)
+      setFilter('history')
 
       // Refresh notifications
       await fetchNotifications()
@@ -264,24 +276,26 @@ export default function NotificationCenter({
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center space-x-1 p-4 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-1 p-4 border-b border-gray-200 bg-gray-50 overflow-x-auto">
           {[
             { key: 'all', label: 'All', count: notifications.length },
             { key: 'unread', label: 'Unread', count: notifications.filter(n => !n.read).length },
-            { key: 'confirmations', label: 'Confirmations', count: notifications.filter(n => n.type.includes('confirmation')).length },
-            { key: 'messages', label: 'Messages', count: notifications.filter(n => n.type === 'message').length }
+            { key: 'history', label: 'History', count: 0 }
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setFilter(tab.key as any)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => {
+                setFilter(tab.key as any)
+                setShowHistory(tab.key === 'history')
+              }}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 filter === tab.key
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               {tab.label}
-              {tab.count > 0 && (
+              {tab.count > 0 && tab.key !== 'history' && (
                 <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
                   filter === tab.key
                     ? 'bg-blue-500 text-white'
