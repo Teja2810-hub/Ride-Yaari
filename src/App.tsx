@@ -46,6 +46,8 @@ function AppContent() {
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
   const [previousView, setPreviousView] = useState<AppView>('platform-selector')
+  const [previousChatUserId, setPreviousChatUserId] = useState<string>('')
+  const [previousChatUserName, setPreviousChatUserName] = useState<string>('')
 
   // Set up global error handling with user context
   React.useEffect(() => {
@@ -88,9 +90,16 @@ function AppContent() {
 
     console.log('Opening chat with user:', userId, userName)
 
-    // Store the current view before switching to chat ONLY if not already in chat
-    if (currentView !== 'chat') {
+    // If we're already in chat, store the current chat user as previous
+    if (currentView === 'chat' && chatUserId) {
+      setPreviousChatUserId(chatUserId)
+      setPreviousChatUserName(chatUserName)
+    } else if (currentView !== 'chat') {
+      // If we're not in chat, store the current view
       setPreviousView(currentView)
+      // Clear previous chat user since we're coming from a non-chat view
+      setPreviousChatUserId('')
+      setPreviousChatUserName('')
     }
 
     // Check if third parameter is boolean (showRequestButtons from messages)
@@ -370,13 +379,25 @@ function AppContent() {
                       <Chat
                         key={`chat-${chatUserId}`}
                         onBack={() => {
-                          // Go back to the view where chat was opened from
-                          setChatUserId('')
-                          setChatUserName('')
-                          setSelectedRideForChat(null)
-                          setSelectedTripForChat(null)
-                          setShowRequestButtonsInChat(false)
-                          setCurrentView(previousView)
+                          // If there's a previous chat user, go back to that chat
+                          if (previousChatUserId) {
+                            setChatUserId(previousChatUserId)
+                            setChatUserName(previousChatUserName)
+                            setPreviousChatUserId('')
+                            setPreviousChatUserName('')
+                            setSelectedRideForChat(null)
+                            setSelectedTripForChat(null)
+                            setShowRequestButtonsInChat(false)
+                            // Stay in chat view
+                          } else {
+                            // Otherwise go back to the previous view
+                            setChatUserId('')
+                            setChatUserName('')
+                            setSelectedRideForChat(null)
+                            setSelectedTripForChat(null)
+                            setShowRequestButtonsInChat(false)
+                            setCurrentView(previousView)
+                          }
                         }}
                         otherUserId={chatUserId}
                         otherUserName={chatUserName}
