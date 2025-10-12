@@ -189,9 +189,8 @@ export default function NotificationCenter({
         .eq('receiver_id', user.id)
         .eq('is_read', false)
 
-      // Switch to history view after marking all as read
-      setShowHistory(true)
-      setFilter('history')
+      // Clear notifications immediately
+      setNotifications([])
 
       // Refresh notifications
       await fetchNotifications()
