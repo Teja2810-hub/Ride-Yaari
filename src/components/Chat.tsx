@@ -359,12 +359,6 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       subscriptionRef.current = null
     }
 
-    // Reset URL and go back
-    if (fromMessages) {
-      window.location.hash = 'messages'
-    } else {
-      window.location.hash = ''
-    }
     onBack()
   }
 

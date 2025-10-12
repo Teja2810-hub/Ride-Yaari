@@ -88,8 +88,10 @@ function AppContent() {
 
     console.log('Opening chat with user:', userId, userName)
 
-    // Store the current view before switching to chat
-    setPreviousView(currentView)
+    // Store the current view before switching to chat ONLY if not already in chat
+    if (currentView !== 'chat') {
+      setPreviousView(currentView)
+    }
 
     // Check if third parameter is boolean (showRequestButtons from messages)
     const showRequestButtons = typeof rideOrShowButtons === 'boolean' ? rideOrShowButtons : false
