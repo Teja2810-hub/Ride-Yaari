@@ -3,6 +3,7 @@ import { retryWithBackoff } from './errorUtils'
 import { CarRide, Trip, RideRequest, TripRequest } from '../types'
 import { haversineDistance } from './distance'
 import { getUserDisplayName } from './messageTemplates'
+import { formatDateWithoutTimezone } from './dateHelpers'
 
 /**
  * Find and notify users when new rides match their requests
@@ -476,9 +477,7 @@ const sendTripMatchNotification = async (
   trip: Trip,
   travelerName: string
 ): Promise<void> => {
-  const [year, month, day] = trip.travel_date.split('-').map(Number)
-  const tripDate = new Date(year, month - 1, day)
-  const dateStr = tripDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const dateStr = formatDateWithoutTimezone(trip.travel_date)
 
   const title = '🎉 Matching Trip Found!'
   const message = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}.`

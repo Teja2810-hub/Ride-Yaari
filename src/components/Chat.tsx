@@ -836,7 +836,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                             trip = tripData
                           }
 
-                          onStartChat(userId, profile?.full_name || 'User', ride, trip)
+                          // Call onStartChat with ride/trip data
+                          onStartChat(userId, profile?.full_name || 'User', ride || false, trip)
                         }}
                         className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
                       >
