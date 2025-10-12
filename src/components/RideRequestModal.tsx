@@ -46,7 +46,7 @@ export default function RideRequestModal({
         .select('*')
         .eq('user_id', driverId)
         .eq('is_closed', false)
-        .eq('is_ride_request', false)
+        .is('is_ride_request', false)
         .gte('departure_date_time', now)
         .order('departure_date_time', { ascending: true })
 
@@ -99,7 +99,7 @@ export default function RideRequestModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex-shrink-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Request a Ride</h2>
