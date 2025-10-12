@@ -38,7 +38,7 @@ export default function NotificationCenter({
     if (isOpen && user) {
       fetchNotifications()
     }
-  }, [isOpen, user, filter])
+  }, [isOpen, user, filter, showHistory])
 
   const fetchNotifications = async () => {
     if (!user) return
