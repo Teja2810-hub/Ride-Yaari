@@ -20,9 +20,10 @@ interface ChatProps {
   preSelectedTrip?: Trip
   showRequestButtons?: boolean
   fromMessages?: boolean
+  onStartChat?: (userId: string, userName: string) => void
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false, onStartChat }: ChatProps) {
   const { user, userProfile } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -761,6 +762,38 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
           </div>
         ) : (
           messages.map((message) => {
+            const isSystemMessage = message.message_type === 'system'
+            const userIdMatch = message.message_content.match(/\[user_id:([^\]]+)\]/)
+            const cleanedMessage = message.message_content.replace(/\[user_id:[^\]]+\]/, '')
+
+            if (isSystemMessage) {
+              return (
+                <div key={message.id} className="flex justify-center my-4">
+                  <div className="max-w-lg w-full bg-amber-50 border-2 border-amber-200 px-6 py-4 rounded-xl shadow-md">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap break-words text-center font-medium">
+                      {cleanedMessage}
+                    </p>
+                    {userIdMatch && userIdMatch[1] && (
+                      <button
+                        onClick={() => {
+                          const userId = userIdMatch[1]
+                          if (onStartChat) {
+                            onStartChat(userId, 'User')
+                          }
+                        }}
+                        className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                      >
+                        Chat with User
+                      </button>
+                    )}
+                    <p className="text-xs mt-2 text-gray-500 text-center">
+                      {formatMessageTime(message.created_at)}
+                    </p>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={message.id}
@@ -774,22 +807,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap break-words">
-                    {message.message_content.replace(/\[user_id:[^\]]+\]/, '')}
+                    {cleanedMessage}
                   </p>
-                  {message.message_type === 'system' && /\[user_id:([^\]]+)\]/.test(message.message_content) && (
-                    <button
-                      onClick={() => {
-                        const match = message.message_content.match(/\[user_id:([^\]]+)\]/)
-                        if (match && match[1]) {
-                          window.location.hash = `#chat/${match[1]}`
-                          window.location.reload()
-                        }
-                      }}
-                      className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
-                    >
-                      Chat with User
-                    </button>
-                  )}
                   <p className={`text-xs mt-1 ${
                     message.sender_id === user?.id
                       ? 'text-blue-200'
@@ -855,7 +874,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
         {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages, but NEVER for system user */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && otherUserName !== 'System' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
+        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
           <div className="flex gap-2 mb-3">
             {(preSelectedRide || showRequestButtons || fromMessages) && (
               <button

@@ -381,6 +381,7 @@ function AppContent() {
                         preSelectedRide={selectedRideForChat}
                         preSelectedTrip={selectedTripForChat}
                         fromMessages={showRequestButtonsInChat}
+                        onStartChat={handleStartChat}
                       />
                     </ErrorBoundary>
                   ) : (
