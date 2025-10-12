@@ -190,18 +190,47 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
       if (error) throw error
 
-      // Send system message to passenger
-      const userRole = showConfirmModal.type === 'cancel' ? 'owner' : 'owner'
+      // Create persistent notification for passenger
       const action = showConfirmModal.type === 'cancel' ? 'cancel' : showConfirmModal.type
-      
-      console.log('PassengerManagement: Sending enhanced system message:', { action, userRole, confirmationId: showConfirmModal.confirmation.id })
-      await sendEnhancedSystemMessage(
-        action as 'accept' | 'reject' | 'cancel',
-        userRole,
-        user.id,
-        showConfirmModal.confirmation.passenger_id,
-        showConfirmModal.confirmation
-      )
+      const ride = showConfirmModal.confirmation.car_rides
+      const trip = showConfirmModal.confirmation.trips
+
+      const rideDetails = ride
+        ? `${ride.from_location} → ${ride.to_location}`
+        : trip
+          ? `${trip.leaving_airport} → ${trip.destination_airport}`
+          : 'ride'
+
+      let title = ''
+      let message = ''
+
+      if (action === 'accept') {
+        title = '🎉 Ride Confirmed!'
+        message = `Your request for the ${rideDetails} has been accepted! Coordinate pickup details now.`
+      } else if (action === 'reject') {
+        title = '😔 Request Declined'
+        message = `Your request for the ${rideDetails} was declined. You can request again or find other rides.`
+      } else if (action === 'cancel') {
+        title = '🚫 Ride Cancelled'
+        message = `Your confirmed ride for ${rideDetails} has been cancelled by the driver.`
+      }
+
+      await supabase
+        .from('user_notifications')
+        .insert({
+          user_id: showConfirmModal.confirmation.passenger_id,
+          notification_type: 'confirmation_update',
+          title,
+          message,
+          priority: 'high',
+          is_read: false,
+          related_user_id: user.id,
+          action_data: {
+            confirmation_id: showConfirmModal.confirmation.id,
+            ride_id: showConfirmModal.confirmation.ride_id,
+            trip_id: showConfirmModal.confirmation.trip_id
+          }
+        })
 
       console.log('PassengerManagement: Action completed, refreshing data')
       fetchConfirmations()
@@ -249,17 +278,47 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
       if (error) throw error
 
-      // Send system message to passenger
-      const userRole = disclaimerAction === 'cancel' ? 'owner' : 'owner'
+      // Create persistent notification for passenger
       const action = disclaimerAction === 'cancel' ? 'cancel' : disclaimerAction
-      
-      await sendEnhancedSystemMessage(
-        action as 'accept' | 'reject' | 'cancel',
-        userRole,
-        user.id,
-        selectedConfirmation.passenger_id,
-        selectedConfirmation
-      )
+      const ride = selectedConfirmation.car_rides
+      const trip = selectedConfirmation.trips
+
+      const rideDetails = ride
+        ? `${ride.from_location} → ${ride.to_location}`
+        : trip
+          ? `${trip.leaving_airport} → ${trip.destination_airport}`
+          : 'ride'
+
+      let title = ''
+      let message = ''
+
+      if (action === 'accept') {
+        title = '🎉 Ride Confirmed!'
+        message = `Your request for the ${rideDetails} has been accepted! Coordinate pickup details now.`
+      } else if (action === 'reject') {
+        title = '😔 Request Declined'
+        message = `Your request for the ${rideDetails} was declined. You can request again or find other rides.`
+      } else if (action === 'cancel') {
+        title = '🚫 Ride Cancelled'
+        message = `Your confirmed ride for ${rideDetails} has been cancelled by the driver.`
+      }
+
+      await supabase
+        .from('user_notifications')
+        .insert({
+          user_id: selectedConfirmation.passenger_id,
+          notification_type: 'confirmation_update',
+          title,
+          message,
+          priority: 'high',
+          is_read: false,
+          related_user_id: user.id,
+          action_data: {
+            confirmation_id: selectedConfirmation.id,
+            ride_id: selectedConfirmation.ride_id,
+            trip_id: selectedConfirmation.trip_id
+          }
+        })
 
       fetchConfirmations()
       if (onUpdate) onUpdate()
