@@ -194,7 +194,7 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 })}
 💰 ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}
 
-💡 **Action:** Contact ${passengerName} if you can provide this ride!`
+[user_id:${request.passenger_id}]`
 
     // Send system message to driver
     const { error } = await supabase
@@ -392,7 +392,7 @@ export const sendMatchingRideNotification = async (
 📍 ${request.departure_location} → ${request.destination_location}
 🔍 Search radius: ${request.search_radius_miles} miles
 
-💡 **Action:** Contact ${driverName} to request this ride!`
+[user_id:${ride.user_id}]`
 
     // Send system message to passenger
     const { error } = await supabase

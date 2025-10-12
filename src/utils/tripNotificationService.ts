@@ -152,7 +152,7 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}
 ${trip.price ? `💰 ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 Free assistance'}
 
-💡 **Action:** Contact ${passengerName} if you can provide this assistance!`
+[user_id:${request.passenger_id}]`
 
     // Send system message to traveler
     const { error } = await supabase
@@ -318,7 +318,7 @@ ${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${t
 📍 ${request.departure_airport} → ${request.destination_airport}
 ${request.additional_notes ? `📝 Notes: ${request.additional_notes}` : ''}
 
-💡 **Action:** Contact ${travelerName} to request assistance on this trip!`
+[user_id:${trip.user_id}]`
 
     // Send system message to passenger
     const { error } = await supabase
@@ -583,7 +583,7 @@ You have a notification set up for this route and a passenger is looking for ass
 📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
 📅 **When:** ${dateInfo}${timeInfo}
 
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this assistance, post a matching trip or contact ${passengerName} directly!
+${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}[user_id:${request.passenger_id}]
 
 📱 **Manage Notifications:** You can manage your trip notification preferences in your Profile → Notifications tab.`
 

@@ -445,7 +445,7 @@ A driver has posted a ride matching your notification preferences!
 })}
 💰 **Price:** ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}
 
-💡 **Action:** Contact ${driverName} to request this ride!
+[user_id:${ride.user_id}]
 
 📱 **Manage Notifications:** You can manage your notification preferences in Profile → Manage Alerts.`
 
@@ -487,7 +487,7 @@ A traveler has posted a trip matching your notification preferences!
 ${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}${trip.departure_timezone ? ` (${trip.departure_timezone})` : ''}` : ''}
 ${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 **Free assistance**'}
 
-💡 **Action:** Contact ${travelerName} to request assistance on this trip!
+[user_id:${trip.user_id}]
 
 📱 **Manage Notifications:** You can manage your notification preferences in Profile → Manage Alerts.`
 

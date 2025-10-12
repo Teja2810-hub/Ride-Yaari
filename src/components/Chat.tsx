@@ -855,7 +855,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
         {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages, but NEVER for system user */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && otherUserName !== 'System' && (
+        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && otherUserId !== 'SYSTEM_USER' && otherUserName !== 'System' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
           <div className="flex gap-2 mb-3">
             {(preSelectedRide || showRequestButtons || fromMessages) && (
               <button
