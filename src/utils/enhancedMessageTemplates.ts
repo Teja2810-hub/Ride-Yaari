@@ -146,52 +146,54 @@ export const getEnhancedSystemMessageTemplate = (
 
 export const getDetailedRideOrTripInfo = (ride?: CarRide, trip?: Trip) => {
   if (ride) {
-    const date = new Date(ride.departure_date_time)
+    const dateStr = ride.departure_date_time.split('T')[0]
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     const formattedDate = date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC'
+      day: 'numeric'
     })
-    const formattedTime = date.toLocaleTimeString('en-US', {
+    const time = new Date(ride.departure_date_time)
+    const formattedTime = time.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true,
-      timeZone: 'UTC'
+      hour12: true
     })
-    
-    const pricing = ride.price 
+    const timezone = ride.departure_timezone || 'EST'
+
+    const pricing = ride.price
       ? `${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}`
       : 'Free'
 
     return {
       route: `${ride.from_location} → ${ride.to_location}`,
-      timing: `${formattedDate} at ${formattedTime}`,
+      timing: `${formattedDate} at ${formattedTime} ${timezone}`,
       pricing: pricing,
       type: 'car ride'
     }
   }
-  
+
   if (trip) {
-    const date = new Date(trip.travel_date)
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     const formattedDate = date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC'
+      day: 'numeric'
     })
-    
+
     let timing = formattedDate
     if (trip.departure_time) {
       timing += ` departing at ${trip.departure_time}`
       if (trip.departure_timezone) {
-        timing += ` (${trip.departure_timezone})`
+        timing += ` ${trip.departure_timezone}`
       }
     }
-    
-    const pricing = trip.price 
+
+    const pricing = trip.price
       ? `${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''} service fee`
       : 'Free assistance'
 
@@ -202,7 +204,7 @@ export const getDetailedRideOrTripInfo = (ride?: CarRide, trip?: Trip) => {
       type: 'airport trip'
     }
   }
-  
+
   return {
     route: 'Unknown route',
     timing: 'Unknown timing',

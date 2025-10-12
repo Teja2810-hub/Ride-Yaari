@@ -145,7 +145,10 @@ export const getSystemMessageTemplate = (
 
 export const getRideOrTripDetails = (ride?: CarRide, trip?: Trip): string => {
   if (ride) {
-    const date = new Date(ride.departure_date_time).toLocaleDateString('en-US', {
+    const dateStr = ride.departure_date_time.split('T')[0]
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    const formattedDate = date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
@@ -155,21 +158,24 @@ export const getRideOrTripDetails = (ride?: CarRide, trip?: Trip): string => {
       minute: '2-digit',
       hour12: true
     })
-    return `car ride from ${ride.from_location} to ${ride.to_location} on ${date} at ${time}`
+    const timezone = ride.departure_timezone || 'EST'
+    return `car ride from ${ride.from_location} to ${ride.to_location} on ${formattedDate} at ${time} ${timezone}`
   }
-  
+
   if (trip) {
-    const date = new Date(trip.travel_date).toLocaleDateString('en-US', {
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    const formattedDate = date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
     })
-    const timeInfo = trip.departure_time 
-      ? ` departing at ${trip.departure_time}${trip.departure_timezone ? ` (${trip.departure_timezone})` : ''}`
+    const timeInfo = trip.departure_time
+      ? ` departing at ${trip.departure_time}${trip.departure_timezone ? ` ${trip.departure_timezone}` : ''}`
       : ''
-    return `airport trip from ${trip.leaving_airport} to ${trip.destination_airport} on ${date}${timeInfo}`
+    return `airport trip from ${trip.leaving_airport} to ${trip.destination_airport} on ${formattedDate}${timeInfo}`
   }
-  
+
   return 'ride'
 }
 
