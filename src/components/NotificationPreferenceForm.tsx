@@ -26,13 +26,20 @@ export default function NotificationPreferenceForm({
 }: NotificationPreferenceFormProps) {
   // Set default date when enabled if not already set
   React.useEffect(() => {
-    if (value.enabled && defaultDate && !value.specificDate && value.dateType === 'specific_date') {
-      onChange({
-        ...value,
-        specificDate: defaultDate
-      })
+    if (value.enabled && defaultDate) {
+      if (value.dateType === 'specific_date' && !value.specificDate) {
+        onChange({
+          ...value,
+          specificDate: defaultDate
+        })
+      } else if (value.dateType === 'multiple_dates' && value.multipleDates.length === 1 && !value.multipleDates[0]) {
+        onChange({
+          ...value,
+          multipleDates: [defaultDate]
+        })
+      }
     }
-  }, [value.enabled, defaultDate])
+  }, [value.enabled, defaultDate, value.dateType])
   const addMultipleDate = () => {
     if (value.multipleDates.length < 5) {
       onChange({

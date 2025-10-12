@@ -87,8 +87,8 @@ export default function TripRequestModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Request Trip Assistance</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -103,7 +103,7 @@ export default function TripRequestModal({
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
               {error}
@@ -225,31 +225,34 @@ export default function TripRequestModal({
                 </div>
               )}
 
-              <div className="flex space-x-4">
-                <button
-                  onClick={onClose}
-                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={!selectedTrip || submitting}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <span className="flex items-center justify-center">
-                      <Loader className="animate-spin mr-2" size={16} />
-                      Sending Request...
-                    </span>
-                  ) : (
-                    'Send Request'
-                  )}
-                </button>
-              </div>
             </>
           )}
         </div>
+
+        {!loading && trips.length > 0 && (
+          <div className="flex-shrink-0 bg-white border-t border-gray-200 p-6 flex space-x-4">
+            <button
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!selectedTrip || submitting}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center">
+                  <Loader className="animate-spin mr-2" size={16} />
+                  Sending Request...
+                </span>
+              ) : (
+                'Send Request'
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

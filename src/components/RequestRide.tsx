@@ -540,7 +540,7 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
                         </label>
                         <input
                           type="date"
-                          value={notificationSpecificDate}
+                          value={notificationSpecificDate || (requestType === 'specific_date' ? specificDate : '')}
                           onChange={(e) => setNotificationSpecificDate(e.target.value)}
                           min={getTomorrowDate()}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
