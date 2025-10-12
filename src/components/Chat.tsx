@@ -774,26 +774,22 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap break-words">
-                    {message.message_content.split('rideyaari://chat/').map((part, idx) => {
-                      if (idx === 0) return part
-                      const userId = part.split(' ')[0]
-                      const rest = part.substring(userId.length)
-                      return (
-                        <React.Fragment key={idx}>
-                          <button
-                            onClick={() => {
-                              window.location.hash = `#chat/${userId}`
-                              window.location.reload()
-                            }}
-                            className="underline font-semibold hover:opacity-80"
-                          >
-                            Chat Now
-                          </button>
-                          {rest}
-                        </React.Fragment>
-                      )
-                    })}
+                    {message.message_content.replace(/\[user_id:[^\]]+\]/, '')}
                   </p>
+                  {message.message_type === 'system' && /\[user_id:([^\]]+)\]/.test(message.message_content) && (
+                    <button
+                      onClick={() => {
+                        const match = message.message_content.match(/\[user_id:([^\]]+)\]/)
+                        if (match && match[1]) {
+                          window.location.hash = `#chat/${match[1]}`
+                          window.location.reload()
+                        }
+                      }}
+                      className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                      Chat with User
+                    </button>
+                  )}
                   <p className={`text-xs mt-1 ${
                     message.sender_id === user?.id
                       ? 'text-blue-200'

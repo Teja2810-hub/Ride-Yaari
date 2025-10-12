@@ -31,7 +31,7 @@ export default function NotificationCenter({
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages' | 'history'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages' | 'history'>('unread')
   const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
@@ -55,10 +55,12 @@ export default function NotificationCenter({
         .not('notification_type', 'in', '(confirmation_request,confirmation_update,message)')
         .order('created_at', { ascending: false })
 
-      // Show all in history view, limit to 50 unread in normal view
+      // Show all in history view, apply filter in normal view
       const { data: persistentNotifications } = showHistory
         ? await query.limit(200)
-        : await query.eq('is_read', false).limit(50)
+        : filter === 'unread'
+          ? await query.eq('is_read', false).limit(50)
+          : await query.limit(50)
 
       if (persistentNotifications) {
         persistentNotifications.forEach(notif => {
