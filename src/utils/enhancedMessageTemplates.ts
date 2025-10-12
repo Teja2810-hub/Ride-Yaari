@@ -151,12 +151,14 @@ export const getDetailedRideOrTripInfo = (ride?: CarRide, trip?: Trip) => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     })
     const formattedTime = date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZone: 'UTC'
     })
     
     const pricing = ride.price 
@@ -177,7 +179,8 @@ export const getDetailedRideOrTripInfo = (ride?: CarRide, trip?: Trip) => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     })
     
     let timing = formattedDate

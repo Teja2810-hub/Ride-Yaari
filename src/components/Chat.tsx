@@ -358,6 +358,9 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       subscriptionRef.current.unsubscribe()
       subscriptionRef.current = null
     }
+
+    // Reset URL to dashboard when going back
+    window.location.hash = ''
     onBack()
   }
 
