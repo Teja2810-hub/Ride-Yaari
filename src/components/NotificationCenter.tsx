@@ -52,7 +52,6 @@ export default function NotificationCenter({
         .from('user_notifications')
         .select('*')
         .eq('user_id', user.id)
-        .not('notification_type', 'in', '(confirmation_request,confirmation_update,message)')
         .order('created_at', { ascending: false })
 
       // Show all in history view, apply filter in normal view
