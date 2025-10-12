@@ -58,9 +58,9 @@ export class NotificationService {
         receiverId: receiverId.slice(0, 8),
         additionalContext
       })
-      
+
       const template = getSystemMessageTemplate(action, userRole, ride, trip)
-      
+
       // Enhanced message with ride details and context
       let enhancedMessage = template.message
       if (additionalContext) {
@@ -77,24 +77,13 @@ export class NotificationService {
           message_type: 'system',
           is_read: false
         })
-      
+
       if (error) {
         console.error('Error sending enhanced system message:', error)
         throw error
       }
 
       console.log('NotificationService: System message sent successfully')
-
-      // Queue browser notification
-      await this.queueBrowserNotification({
-        userId: receiverId,
-        title: template.title,
-        message: template.message,
-        type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
-        priority: action === 'accept' ? 'high' : action === 'request' ? 'high' : 'medium',
-        rideData: ride,
-        tripData: trip
-      })
 
       console.log(`Enhanced system message sent: ${template.title}`)
     } catch (error) {

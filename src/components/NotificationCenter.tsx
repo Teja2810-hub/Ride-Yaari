@@ -176,21 +176,15 @@ export default function NotificationCenter({
 
     try {
       // Mark all persistent notifications as read
-      await supabase
+      const { error: notifError } = await supabase
         .from('user_notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
         .eq('is_read', false)
 
-      // Mark all unread messages as read
-      await supabase
-        .from('chat_messages')
-        .update({ is_read: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-
-      // Clear notifications immediately
-      setNotifications([])
+      if (notifError) {
+        console.error('Error marking notifications as read:', notifError)
+      }
 
       // Refresh notifications
       await fetchNotifications()
