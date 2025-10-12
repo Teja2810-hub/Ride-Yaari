@@ -171,7 +171,6 @@ export function useConfirmationFlow({
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
-        // Send system chat message visible to both parties
         const rideDetails = ride
           ? `car ride from ${ride.from_location} to ${ride.to_location}`
           : trip
@@ -188,7 +187,6 @@ export function useConfirmationFlow({
             is_read: false
           })
 
-        // Send comprehensive notification to passenger (browser notification only)
         await notificationService.sendComprehensiveNotification(
           'accept',
           'owner',
@@ -242,7 +240,6 @@ export function useConfirmationFlow({
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
-        // Send system chat message visible to both parties
         const rideDetails = ride
           ? `car ride from ${ride.from_location} to ${ride.to_location}`
           : trip
@@ -259,7 +256,6 @@ export function useConfirmationFlow({
             is_read: false
           })
 
-        // Send comprehensive notification to passenger (browser notification only)
         await notificationService.sendComprehensiveNotification(
           'reject',
           'owner',

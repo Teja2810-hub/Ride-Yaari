@@ -208,29 +208,26 @@ export class NotificationService {
     additionalContext?: string
   ): Promise<void> {
     try {
-      // Get enhanced template for browser notification
       const template = getSystemMessageTemplate(action, userRole, ride, trip, true)
-      
-      // Get user names for personalized notifications
+
       const { data: senderProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', senderId)
         .single()
-      
+
       const { data: receiverProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', receiverId)
         .single()
-      
+
       const senderName = senderProfile?.full_name || 'User'
       const receiverName = receiverProfile?.full_name || 'User'
-      
-      // Create personalized notification title and message
+
       let notificationTitle = template.title
       let notificationMessage = template.message
-      
+
       if (action === 'request' && userRole === 'owner') {
         notificationTitle = `🚨 New ${ride ? 'car ride' : 'airport trip'} request`
         notificationMessage = `${senderName} wants to join your ${ride ? 'car ride' : 'airport trip'}. Tap to review and respond.`
@@ -241,8 +238,7 @@ export class NotificationService {
         notificationTitle = '😔 Request Declined'
         notificationMessage = `Your request was declined. You can try requesting again or find other options.`
       }
-      
-      // Queue browser notification
+
       await this.queueBrowserNotification({
         userId: receiverId,
         title: notificationTitle,
@@ -252,11 +248,10 @@ export class NotificationService {
         rideData: ride,
         tripData: trip
       })
-      
+
       console.log(`Comprehensive notification queued for ${action} by ${userRole}`)
     } catch (error) {
       console.error('Failed to send comprehensive notification:', error)
-      // Don't throw - we don't want to break the main flow if notifications fail
     }
   }
 

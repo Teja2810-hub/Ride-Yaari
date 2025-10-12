@@ -175,7 +175,6 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
-      // Mark all persistent notifications as read
       const { error: notifError } = await supabase
         .from('user_notifications')
         .update({ is_read: true })
@@ -184,9 +183,9 @@ export default function NotificationCenter({
 
       if (notifError) {
         console.error('Error marking notifications as read:', notifError)
+        return
       }
 
-      // Refresh notifications
       await fetchNotifications()
     } catch (error) {
       console.error('NotificationCenter: Error in markAllAsRead:', error)
