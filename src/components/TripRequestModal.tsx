@@ -38,15 +38,12 @@ export default function TripRequestModal({
     setError('')
 
     try {
-      const now = new Date().toISOString().split('T')[0]
-
       const { data, error } = await supabase
         .from('trips')
         .select('*')
         .eq('user_id', travelerId)
         .eq('is_closed', false)
         .eq('is_trip_request', false)
-        .gte('travel_date', now)
         .order('travel_date', { ascending: true })
 
       if (error) throw error

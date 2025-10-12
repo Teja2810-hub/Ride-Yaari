@@ -39,15 +39,12 @@ export default function RideRequestModal({
     setError('')
 
     try {
-      const now = new Date().toISOString()
-
       const { data, error } = await supabase
         .from('car_rides')
         .select('*')
         .eq('user_id', driverId)
         .eq('is_closed', false)
         .eq('is_ride_request', false)
-        .gte('departure_date_time', now)
         .order('departure_date_time', { ascending: true })
 
       if (error) throw error
