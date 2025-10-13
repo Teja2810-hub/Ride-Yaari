@@ -306,7 +306,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       console.log('Chat: Message sent successfully')
       setNewMessage('')
-      
+
+      // Add notification history entry for receiver
+      try {
+        await supabase.from('user_notifications').insert({
+          user_id: otherUserId,
+          notification_type: 'message',
+          title: `New message from ${userProfile?.full_name || 'User'}`,
+          message: newMessage.trim().substring(0, 100) + (newMessage.trim().length > 100 ? '...' : ''),
+          priority: 'low',
+          is_read: false,
+          related_user_id: user.id,
+          related_user_name: userProfile?.full_name || 'User'
+        })
+      } catch (notifError) {
+        console.warn('Failed to create notification history:', notifError)
+      }
+
       // The message will be added via realtime subscription
       // But add it immediately for better UX
       if (data) {

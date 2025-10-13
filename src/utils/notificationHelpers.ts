@@ -40,6 +40,34 @@ export const sendEnhancedSystemMessage = async (
       throw error
     }
 
+    // Add notification history entry for receiver
+    try {
+      const { data: senderProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', senderId)
+        .single()
+
+      await supabase.from('user_notifications').insert({
+        user_id: receiverId,
+        notification_type: 'system',
+        title: template.title,
+        message: template.message,
+        priority: template.priority,
+        is_read: false,
+        related_user_id: senderId,
+        related_user_name: senderProfile?.full_name || 'User',
+        action_data: {
+          action,
+          userRole,
+          rideId: ride?.id,
+          tripId: trip?.id
+        }
+      })
+    } catch (notifError) {
+      console.warn('Failed to create notification history:', notifError)
+    }
+
     console.log(`Enhanced system message sent: ${template.title}`)
   } catch (error) {
     console.error('Failed to send enhanced system message:', error)
