@@ -55,7 +55,7 @@ export default function NotificationCenter({
         .order('created_at', { ascending: false })
 
       // Show all in history view, apply filter in normal view
-      const { data: persistentNotifications } = showHistory
+      const { data: persistentNotifications } = showHistory || filter === 'history'
         ? await query.limit(200)
         : filter === 'unread'
           ? await query.eq('is_read', false).limit(50)
