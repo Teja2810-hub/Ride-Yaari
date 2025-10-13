@@ -211,37 +211,37 @@ export default function RideRequestModal({
                 })}
               </div>
 
-              {selectedRide && selectedRide.seats_available > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    How many seats do you need?
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <select
-                      value={seatsRequested}
-                      onChange={(e) => setSeatsRequested(parseInt(e.target.value, 10))}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    >
-                      {Array.from({ length: selectedRide.seats_available }, (_, i) => i + 1).map((num) => (
-                        <option key={num} value={num}>
-                          {num} seat{num > 1 ? 's' : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="text-sm text-gray-600">
-                      Available: {selectedRide.seats_available}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 mt-2">
-                    Total price: {getCurrencySymbol(selectedRide.currency || 'USD')}
-                    {(selectedRide.price * seatsRequested).toFixed(2)}
-                  </p>
-                </div>
-              )}
-
             </>
           )}
         </div>
+
+        {!loading && rides.length > 0 && selectedRide && selectedRide.seats_available > 0 && (
+          <div className="flex-shrink-0 bg-blue-50 border-t-2 border-blue-200 p-4 sticky bottom-20 z-10">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              How many seats do you need?
+            </label>
+            <div className="flex items-center space-x-4">
+              <select
+                value={seatsRequested}
+                onChange={(e) => setSeatsRequested(parseInt(e.target.value, 10))}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {Array.from({ length: selectedRide.seats_available }, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num}>
+                    {num} seat{num > 1 ? 's' : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="text-sm text-gray-600">
+                Available: {selectedRide.seats_available}
+              </div>
+            </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Total price: {getCurrencySymbol(selectedRide.currency || 'USD')}
+              {(selectedRide.price * seatsRequested).toFixed(2)}
+            </p>
+          </div>
+        )}
 
         {!loading && rides.length > 0 && (
           <div className="flex-shrink-0 bg-white border-t border-gray-200 p-6 flex space-x-4 sticky bottom-0 z-10">
