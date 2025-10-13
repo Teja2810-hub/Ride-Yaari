@@ -220,39 +220,6 @@ export default function EnhancedNotificationBadge({
         .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Last 48 hours
         .order('updated_at', { ascending: false })
 
-      if (statusUpdates) {
-        statusUpdates.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
-
-          const isAccepted = confirmation.status === 'accepted'
-          
-          notifications.push({
-            id: `status-${confirmation.id}`,
-            type: 'confirmation_update',
-            title: isAccepted ? `🎉 Ride Confirmed!` : `😔 Request Declined`,
-            message: isAccepted 
-              ? `Your request for the ${route} has been accepted! Coordinate pickup details now.`
-              : `Your request for the ${route} was declined. You can request again or find other rides.`,
-            timestamp: confirmation.updated_at,
-            read: false,
-            priority: isAccepted ? 'high' : 'medium',
-            actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.ride_owner_id,
-              userName: confirmation.user_profiles?.full_name || 'Ride Owner',
-              ride: ride,
-              trip: trip
-            },
-            rideData: ride,
-            tripData: trip
-          })
-        })
-      }
 
       // Fetch recent unread messages (MEDIUM PRIORITY)
       const { data: unreadMessages } = await supabase
