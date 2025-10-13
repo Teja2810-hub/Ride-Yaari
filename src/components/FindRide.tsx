@@ -582,13 +582,14 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
   const handleConfirmChatWithParams = (userId: string, userName: string, ride?: CarRide) => {
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-ride', user?.id, userId)
-    onStartChat(userId, userName, ride, undefined)
+    // Pass 'ride' as the chatType indicator
+    onStartChat(userId, userName, 'ride' as any, undefined)
   }
 
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-ride', user?.id, selectedChatUser.userId)
-    onStartChat(selectedChatUser.userId, selectedChatUser.userName, selectedChatRide || undefined, undefined)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, 'ride' as any, undefined)
   }
 
   // using shared formatDateTimeSafe instead

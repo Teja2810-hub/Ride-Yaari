@@ -21,9 +21,10 @@ interface ChatProps {
   showRequestButtons?: boolean
   fromMessages?: boolean
   onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
+  chatType?: 'ride' | 'trip'
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false, onStartChat }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false, onStartChat, chatType }: ChatProps) {
   const { user, userProfile } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -931,23 +932,27 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Always show except for system user */}
+        {/* Request Buttons - Show based on chat type */}
         {otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
           <div className="flex gap-2 mb-3">
-            <button
-              onClick={() => setShowRideRequestModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
-            >
-              <Car size={18} />
-              <span>Request Ride</span>
-            </button>
-            <button
-              onClick={() => setShowTripRequestModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-            >
-              <Plane size={18} />
-              <span>Request Trip</span>
-            </button>
+            {(!chatType || chatType === 'ride') && (
+              <button
+                onClick={() => setShowRideRequestModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
+              >
+                <Car size={18} />
+                <span>Request Ride</span>
+              </button>
+            )}
+            {(!chatType || chatType === 'trip') && (
+              <button
+                onClick={() => setShowTripRequestModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"
+              >
+                <Plane size={18} />
+                <span>Request Trip</span>
+              </button>
+            )}
           </div>
         )}
 

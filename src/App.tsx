@@ -41,6 +41,7 @@ function AppContent() {
   const [selectedRideForChat, setSelectedRideForChat] = useState<CarRide | null>(null)
   const [selectedTripForChat, setSelectedTripForChat] = useState<Trip | null>(null)
   const [showRequestButtonsInChat, setShowRequestButtonsInChat] = useState(false)
+  const [chatType, setChatType] = useState<'ride' | 'trip' | undefined>(undefined)
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [editingRide, setEditingRide] = useState<CarRide | null>(null)
   const [initialProfileTab, setInitialProfileTab] = useState<string | undefined>(undefined)
@@ -75,7 +76,7 @@ function AppContent() {
     setShowWelcomePopup(false)
   }
 
-  const handleStartChat = (userId: string, userName: string, rideOrShowButtons?: CarRide | boolean, trip?: Trip) => {
+  const handleStartChat = (userId: string, userName: string, rideOrShowButtons?: CarRide | boolean | 'ride' | 'trip', trip?: Trip | 'trip') => {
     if (isGuest) {
       setShowAuthPrompt(true)
       return
@@ -106,11 +107,17 @@ function AppContent() {
     const showRequestButtons = typeof rideOrShowButtons === 'boolean' ? rideOrShowButtons : false
     const ride = typeof rideOrShowButtons === 'object' ? rideOrShowButtons : undefined
 
+    // Determine chat type from parameters
+    let chatType: 'ride' | 'trip' | undefined
+    if (rideOrShowButtons === 'ride') chatType = 'ride'
+    else if (trip === 'trip' || rideOrShowButtons === 'trip') chatType = 'trip'
+
     setChatUserId(userId)
     setChatUserName(userName || 'User')
     setSelectedRideForChat(ride || null)
-    setSelectedTripForChat(trip || null)
+    setSelectedTripForChat(typeof trip === 'object' ? trip : null)
     setShowRequestButtonsInChat(showRequestButtons)
+    setChatType(chatType)
 
     // Use setTimeout to ensure state updates are processed before view change
     setTimeout(() => {
@@ -405,6 +412,7 @@ function AppContent() {
                         preSelectedTrip={selectedTripForChat}
                         fromMessages={showRequestButtonsInChat}
                         onStartChat={handleStartChat}
+                        chatType={chatType}
                       />
                     </ErrorBoundary>
                   ) : (
