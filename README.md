@@ -12,6 +12,8 @@ Share flight itineraries for package delivery, pickup services, travel assistanc
 
 This project includes a comprehensive error reporting and notification system:
 
+📖 **[Detailed Setup Guide](docs/ERROR_REPORTING_SETUP.md)**
+
 ### Features
 - **Automatic Error Capture**: All client-side errors are automatically captured and reported
 - **User-Friendly Display**: Users see friendly error messages while technical details are logged
@@ -96,6 +98,28 @@ Access the System Health dashboard from Profile → System Health to:
 - Set up and test notification webhooks
 - Test error reporting with different severity levels
 - Export error data for analysis
+
+## ⏰ Automated Database Cleanup (pg_cron)
+
+The project uses PostgreSQL's `pg_cron` extension to automatically clean up old data:
+
+### Scheduled Jobs
+
+1. **Notification Cleanup** - Runs daily at 23:59 UTC
+   - Removes read notifications older than 30 days
+
+2. **System Message Cleanup** - Runs daily at 02:00 UTC
+   - Removes system messages older than 90 days
+
+### Monitoring
+
+📖 **[Cron Jobs Monitoring Guide](docs/CRON_JOBS_MONITORING.md)** - Learn how to:
+- View job execution history and logs
+- Verify jobs are running correctly
+- Troubleshoot issues
+- Check what data is being cleaned up
+
+These jobs run automatically on Supabase's servers without any manual intervention required.
 
 ## 🚀 Getting Started
 
