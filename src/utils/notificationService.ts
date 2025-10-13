@@ -262,46 +262,38 @@ export class NotificationService {
         notificationTitle = `🚨 New ${ride ? 'car ride' : 'airport trip'} request`
         notificationMessage = `${senderName} wants to join your ${ride ? 'car ride' : 'airport trip'}. Tap to review and respond.`
         notificationType = ride ? 'ride_request_alert' : 'trip_request_alert'
-      } else if (action === 'accept' && userRole === 'passenger') {
-        notificationTitle = '🎉 Request Accepted!'
-        notificationMessage = `Great news! Your request has been accepted. You can now coordinate details.`
-        notificationType = 'confirmation_update'
-      } else if (action === 'reject' && userRole === 'passenger') {
-        notificationTitle = '😔 Request Declined'
-        notificationMessage = `Your request was declined. You can try requesting again or find other options.`
-        notificationType = 'confirmation_update'
+
+        const priority = 'high'
+
+        await supabase.from('user_notifications').insert({
+          user_id: receiverId,
+          notification_type: notificationType,
+          title: notificationTitle,
+          message: notificationMessage,
+          priority: priority,
+          is_read: false,
+          action_data: {
+            action,
+            userRole,
+            senderId,
+            rideId: ride?.id,
+            tripId: trip?.id,
+            additionalContext
+          },
+          related_user_id: senderId,
+          related_user_name: senderName
+        })
+
+        await this.queueBrowserNotification({
+          userId: receiverId,
+          title: notificationTitle,
+          message: notificationMessage,
+          type: 'confirmation_request',
+          priority: priority,
+          rideData: ride,
+          tripData: trip
+        })
       }
-
-      const priority = action === 'request' ? 'high' : action === 'accept' ? 'high' : 'medium'
-
-      await supabase.from('user_notifications').insert({
-        user_id: receiverId,
-        notification_type: notificationType,
-        title: notificationTitle,
-        message: notificationMessage,
-        priority: priority,
-        is_read: false,
-        action_data: {
-          action,
-          userRole,
-          senderId,
-          rideId: ride?.id,
-          tripId: trip?.id,
-          additionalContext
-        },
-        related_user_id: senderId,
-        related_user_name: senderName
-      })
-
-      await this.queueBrowserNotification({
-        userId: receiverId,
-        title: notificationTitle,
-        message: notificationMessage,
-        type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
-        priority: priority,
-        rideData: ride,
-        tripData: trip
-      })
 
       console.log(`Comprehensive notification queued for ${action} by ${userRole}`)
     } catch (error) {
