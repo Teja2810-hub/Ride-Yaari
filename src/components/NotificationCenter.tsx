@@ -46,6 +46,29 @@ export default function NotificationCenter({
     try {
       const notifications: Notification[] = []
 
+      // Fetch from notification history
+      const { data: historyNotifications } = await supabase
+        .from('notification_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (historyNotifications) {
+        historyNotifications.forEach(notif => {
+          notifications.push({
+            id: `history-${notif.id}`,
+            type: notif.notification_type as any,
+            title: notif.title,
+            message: notif.message,
+            timestamp: notif.created_at,
+            read: notif.is_read || false,
+            priority: notif.priority as any,
+            actionData: notif.action_data
+          })
+        })
+      }
+
       // Fetch pending confirmations (high priority)
       const { data: pendingConfirmations } = await supabase
         .from('ride_confirmations')
@@ -228,21 +251,28 @@ export default function NotificationCenter({
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Mark this notification as read immediately
-    if (!notification.read && notification.type === 'message' && user) {
+    if (!notification.read && user) {
       try {
-        // Extract message ID from notification ID (format: "message-{messageId}")
-        const messageId = notification.id.replace('message-', '')
-        await supabase
-          .from('chat_messages')
-          .update({ is_read: true })
-          .eq('id', messageId)
+        if (notification.type === 'message') {
+          const messageId = notification.id.replace('message-', '')
+          await supabase
+            .from('chat_messages')
+            .update({ is_read: true })
+            .eq('id', messageId)
+        }
+
+        if (notification.id.startsWith('history-')) {
+          const historyId = notification.id.replace('history-', '')
+          await supabase
+            .from('notification_history')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .eq('id', historyId)
+        }
       } catch (error) {
         console.error('Error marking notification as read:', error)
       }
     }
 
-    // Close notification center after marking as read
     onClose()
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
@@ -261,48 +291,20 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
-      console.log('NotificationCenter: Marking all messages as read for user:', user.id)
-
-      // Get count of unread messages before marking
-      const { count: beforeCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-
-      console.log('NotificationCenter: Unread messages before:', beforeCount)
-
-      // Mark all unread messages as read (including system messages)
-      const { error, count } = await supabase
+      await supabase
         .from('chat_messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
-        .select('*', { count: 'exact', head: true })
 
-      if (error) {
-        console.error('NotificationCenter: Error marking messages as read:', error)
-        throw error
-      }
-
-      console.log('NotificationCenter: Marked', count, 'messages as read')
-
-      // Verify the update
-      const { count: afterCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
+      await supabase
+        .from('notification_history')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('user_id', user.id)
         .eq('is_read', false)
 
-      console.log('NotificationCenter: Unread messages after:', afterCount)
-
-      // Clear all notifications immediately
       setNotifications([])
-
-      // Wait a moment before refreshing to ensure DB is updated
       await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Refresh notifications from server
       await fetchNotifications()
     } catch (error) {
       console.error('NotificationCenter: Error in markAllAsRead:', error)
