@@ -214,45 +214,65 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     console.log('Chat: Setting up realtime subscription')
 
-    const subscription = supabase
-      .channel(`chat_${user.id}_${otherUserId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `or(and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}))`,
-        },
-        (payload) => {
-          console.log('Chat: New message received via realtime:', payload)
-          const newMessage = payload.new as ChatMessage
+    const channel = supabase.channel(`chat_${user.id}_${otherUserId}`)
 
-          // Add sender profile info if available
-          if (newMessage.sender_id === user.id) {
-            newMessage.sender = userProfile || undefined
-          } else {
-            newMessage.sender = otherUserProfile || undefined
-          }
+    // Subscribe to messages sent BY current user TO other user
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `sender_id=eq.${user.id}`,
+      },
+      (payload) => {
+        const newMessage = payload.new as ChatMessage
+        if (newMessage.receiver_id !== otherUserId) return
 
-          setMessages(prev => [...prev, newMessage])
+        console.log('Chat: New message sent by me:', payload)
+        newMessage.sender = userProfile || undefined
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMessage.id)) return prev
+          return [...prev, newMessage]
+        })
+      }
+    )
 
-          // Mark as read if it's for the current user
-          if (newMessage.receiver_id === user.id) {
-            supabase
-              .from('chat_messages')
-              .update({ is_read: true })
-              .eq('id', newMessage.id)
-              .then(() => console.log('Chat: Message marked as read'))
-              .catch(err => console.warn('Chat: Failed to mark message as read:', err))
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('Chat: Subscription status:', status)
-      })
+    // Subscribe to messages sent BY other user TO current user
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `sender_id=eq.${otherUserId}`,
+      },
+      (payload) => {
+        const newMessage = payload.new as ChatMessage
+        if (newMessage.receiver_id !== user.id) return
 
-    subscriptionRef.current = subscription
+        console.log('Chat: New message received from other user:', payload)
+        newMessage.sender = otherUserProfile || undefined
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMessage.id)) return prev
+          return [...prev, newMessage]
+        })
+
+        // Mark as read
+        supabase
+          .from('chat_messages')
+          .update({ is_read: true })
+          .eq('id', newMessage.id)
+          .then(() => console.log('Chat: Message marked as read'))
+          .catch(err => console.warn('Chat: Failed to mark message as read:', err))
+      }
+    )
+
+    channel.subscribe((status) => {
+      console.log('Chat: Subscription status:', status)
+    })
+
+    subscriptionRef.current = channel
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
