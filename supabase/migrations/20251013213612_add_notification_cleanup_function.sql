@@ -4,30 +4,33 @@
   1. Function
     - Creates a function to keep only the latest 200 notifications per user
     - Automatically deletes older notifications beyond the 200 limit
-    
-  2. Trigger
-    - Trigger runs after each insert on user_notifications
-    - Cleans up old notifications for the affected user
+    - Runs for all users
+
+  2. Scheduled Job
+    - Runs daily at 23:59 UTC via pg_cron extension
+    - Cleans up old notifications for all users
 */
 
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
 CREATE OR REPLACE FUNCTION cleanup_old_notifications()
-RETURNS TRIGGER AS $$
+RETURNS void AS $$
 BEGIN
   DELETE FROM user_notifications
   WHERE id IN (
     SELECT id
-    FROM user_notifications
-    WHERE user_id = NEW.user_id
-    ORDER BY created_at DESC
-    OFFSET 200
+    FROM (
+      SELECT id, user_id,
+        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+      FROM user_notifications
+    ) sub
+    WHERE rn > 200
   );
-  
-  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_cleanup_notifications ON user_notifications;
-CREATE TRIGGER trigger_cleanup_notifications
-  AFTER INSERT ON user_notifications
-  FOR EACH ROW
-  EXECUTE FUNCTION cleanup_old_notifications();
+SELECT cron.schedule(
+  'cleanup-notifications-daily',
+  '59 23 * * *',
+  'SELECT cleanup_old_notifications();'
+);
