@@ -108,36 +108,9 @@ export class NotificationService {
    */
   private async queueBrowserNotification(payload: NotificationPayload): Promise<void> {
     this.notificationQueue.push(payload)
-
-    await this.saveNotificationToHistory(payload)
-
+    
     if (!this.isProcessing) {
       this.processNotificationQueue()
-    }
-  }
-
-  /**
-   * Save notification to history table
-   */
-  private async saveNotificationToHistory(payload: NotificationPayload): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('notification_history')
-        .insert({
-          user_id: payload.userId,
-          notification_type: payload.type,
-          title: payload.title,
-          message: payload.message,
-          priority: payload.priority,
-          is_read: false,
-          action_data: payload.actionData || null
-        })
-
-      if (error) {
-        console.error('Error saving notification to history:', error)
-      }
-    } catch (error) {
-      console.error('Failed to save notification to history:', error)
     }
   }
 
@@ -188,10 +161,11 @@ export class NotificationService {
           tag: 'rideyaari-notification',
           requireInteraction: false,
           silent: false,
-          vibrate: [200, 100, 200],
+          vibrate: [200, 100, 200], // Vibration pattern for mobile
           timestamp: Date.now()
         })
 
+        // Auto-close after 8 seconds
         setTimeout(() => {
           notification.close()
         }, 8000)
@@ -206,6 +180,7 @@ export class NotificationService {
         console.error('Error showing browser notification:', error)
       }
     } else if (Notification.permission === 'default') {
+      // Request permission
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
         this.sendBrowserNotification(title, message, icon)
