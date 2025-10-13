@@ -12,7 +12,6 @@ interface RideRequestModalProps {
   driverId: string
   driverName: string
   onRequestSubmit: (rideId: string, seatsRequested: number) => Promise<void>
-  contextRideId?: string
 }
 
 export default function RideRequestModal({
@@ -20,8 +19,7 @@ export default function RideRequestModal({
   onClose,
   driverId,
   driverName,
-  onRequestSubmit,
-  contextRideId
+  onRequestSubmit
 }: RideRequestModalProps) {
   const [rides, setRides] = useState<CarRide[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,18 +41,13 @@ export default function RideRequestModal({
     try {
       const now = new Date().toISOString()
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('car_rides')
         .select('*')
         .eq('user_id', driverId)
         .eq('is_closed', false)
         .gte('departure_date_time', now)
-
-      if (contextRideId) {
-        query = query.eq('id', contextRideId)
-      }
-
-      const { data, error } = await query.order('departure_date_time', { ascending: true })
+        .order('departure_date_time', { ascending: true })
 
       if (error) throw error
 
@@ -105,7 +98,7 @@ export default function RideRequestModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         <div className="flex-shrink-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Request a Ride</h2>
