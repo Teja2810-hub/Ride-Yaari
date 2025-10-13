@@ -157,19 +157,44 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     try {
       console.log('Chat: Fetching messages between', user.id, 'and', otherUserId)
 
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          sender:user_profiles!chat_messages_sender_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          )
-        `)
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true })
-        .limit(100)
+      const [messages1, messages2] = await Promise.all([
+        supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:user_profiles!chat_messages_sender_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            )
+          `)
+          .eq('sender_id', user.id)
+          .eq('receiver_id', otherUserId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:user_profiles!chat_messages_sender_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            )
+          `)
+          .eq('sender_id', otherUserId)
+          .eq('receiver_id', user.id)
+          .order('created_at', { ascending: true })
+      ])
+
+      if (messages1.error) throw messages1.error
+      if (messages2.error) throw messages2.error
+
+      const allMessages = [...(messages1.data || []), ...(messages2.data || [])]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .slice(-100)
+
+      const data = allMessages
+      const error = null
 
       if (error) {
         console.error('Chat: Error fetching messages:', error)
