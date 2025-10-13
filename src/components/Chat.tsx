@@ -991,6 +991,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         driverId={otherUserId}
         driverName={otherUserProfile?.full_name || otherUserName || 'User'}
         onRequestSubmit={handleRideRequestSubmit}
+        contextRideId={preSelectedRide?.id}
       />
 
       <TripRequestModal
@@ -999,6 +1000,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         travelerId={otherUserId}
         travelerName={otherUserProfile?.full_name || otherUserName || 'User'}
         onRequestSubmit={handleTripRequestSubmit}
+        contextTripId={preSelectedTrip?.id}
       />
 
       {showSuccessModal && (
