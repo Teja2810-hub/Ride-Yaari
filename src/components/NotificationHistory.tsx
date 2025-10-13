@@ -323,16 +323,6 @@ export default function NotificationHistory({ onStartChat }: NotificationHistory
                           </button>
                         )}
 
-                        {!notification.is_read && (
-                          <button
-                            onClick={() => markAsRead(notification.id)}
-                            className="inline-flex items-center space-x-1 text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            <Check size={12} />
-                            <span>Mark Read</span>
-                          </button>
-                        )}
-
                         <button
                           onClick={() => deleteNotification(notification.id)}
                           className="inline-flex items-center space-x-1 text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
