@@ -1066,6 +1066,141 @@ You have a notification set up for this route and a driver is offering a ride!
 }
 
 /**
+ * Notify drivers who posted rides with future notifications when a matching request is created
+ */
+export const notifyDriversWithPostNotifications = async (requestId: string): Promise<{
+  success: boolean
+  notifiedDrivers: number
+  error?: string
+}> => {
+  return retryWithBackoff(async () => {
+    console.log('Finding drivers with post notifications for request:', requestId)
+
+    const { data: request, error: requestError } = await supabase
+      .from('ride_requests')
+      .select(`
+        *,
+        user_profiles!ride_requests_passenger_id_fkey (
+          full_name
+        )
+      `)
+      .eq('id', requestId)
+      .single()
+
+    if (requestError || !request) {
+      throw new Error('Ride request not found')
+    }
+
+    const { data: postNotifications, error: notificationsError } = await supabase
+      .from('ride_notifications')
+      .select(`
+        *,
+        user_profiles!ride_notifications_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('notification_type', 'driver_post')
+      .eq('is_active', true)
+      .not('departure_latitude', 'is', null)
+      .not('departure_longitude', 'is', null)
+      .not('destination_latitude', 'is', null)
+      .not('destination_longitude', 'is', null)
+      .neq('user_id', request.passenger_id)
+
+    if (notificationsError) {
+      throw new Error(notificationsError.message)
+    }
+
+    console.log('Found driver_post notifications to check:', postNotifications?.length || 0)
+
+    const matchingNotifications: Array<{
+      notification: RideNotification & { user_profiles?: { full_name: string } }
+      departureDistance: number
+      destinationDistance: number
+    }> = []
+
+    for (const notification of postNotifications || []) {
+      const departureDistance = haversineDistance(
+        request.departure_latitude || 0,
+        request.departure_longitude || 0,
+        notification.departure_latitude || 0,
+        notification.departure_longitude || 0
+      )
+
+      const destinationDistance = haversineDistance(
+        request.destination_latitude || 0,
+        request.destination_longitude || 0,
+        notification.destination_latitude || 0,
+        notification.destination_longitude || 0
+      )
+
+      if (departureDistance <= notification.search_radius_miles &&
+          destinationDistance <= notification.search_radius_miles) {
+
+        let dateMatches = false
+
+        if (notification.date_type === 'specific_date' && notification.specific_date) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+          }
+        } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            dateMatches = notification.multiple_dates.some(date =>
+              new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
+            )
+          } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(notifDate =>
+              request.multiple_dates!.some(reqDate =>
+                new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
+              )
+            )
+          }
+        } else if (notification.date_type === 'month' && notification.notification_month) {
+          if (request.request_type === 'month' && request.request_month) {
+            dateMatches = notification.notification_month === request.request_month
+          } else if (request.request_type === 'specific_date' && request.specific_date) {
+            const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === requestMonth
+          }
+        }
+
+        if (dateMatches) {
+          matchingNotifications.push({
+            notification,
+            departureDistance,
+            destinationDistance
+          })
+        }
+      }
+    }
+
+    console.log('Found matching driver_post notifications:', matchingNotifications.length)
+
+    let notifiedDrivers = 0
+    for (const match of matchingNotifications) {
+      try {
+        await sendDriverNotificationAlert(
+          match.notification.user_id,
+          request,
+          match.departureDistance,
+          match.destinationDistance
+        )
+        notifiedDrivers++
+      } catch (error) {
+        console.error('Error notifying driver with post notification:', match.notification.user_id, error)
+      }
+    }
+
+    console.log('Notified drivers with post notifications:', notifiedDrivers)
+
+    return {
+      success: true,
+      notifiedDrivers
+    }
+  })
+}
+
+/**
  * Auto-expire old ride requests and notifications
  */
 export const cleanupExpiredNotifications = async (): Promise<{

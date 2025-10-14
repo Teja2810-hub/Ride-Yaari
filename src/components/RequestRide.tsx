@@ -81,16 +81,20 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
       }
 
       // Notify matching drivers about the request
-      const { notifyMatchingDrivers, processDriverNotifications } = await import('../utils/rideNotificationService')
-      
+      const { notifyMatchingDrivers, processDriverNotifications, notifyDriversWithPostNotifications } = await import('../utils/rideNotificationService')
+
       try {
         // Find and notify drivers with matching posted rides
         const matchingResult = await notifyMatchingDrivers(result.requestId!)
         console.log('Matching drivers notified:', matchingResult.notifiedDrivers)
-        
+
         // Process driver notification preferences
         const notificationResult = await processDriverNotifications(result.requestId!)
         console.log('Driver notifications processed:', notificationResult.notifiedDrivers)
+
+        // Notify drivers who posted rides with future notifications
+        const postNotificationResult = await notifyDriversWithPostNotifications(result.requestId!)
+        console.log('Drivers with post notifications notified:', postNotificationResult.notifiedDrivers)
       } catch (notificationError) {
         console.error('Error processing notifications:', notificationError)
         // Don't fail the request creation if notifications fail
