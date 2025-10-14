@@ -15,6 +15,7 @@ interface NotificationPreferenceFormProps {
   type: 'ride' | 'trip'
   className?: string
   defaultDate?: string
+  additionalFields?: React.ReactNode
 }
 
 export default function NotificationPreferenceForm({
@@ -22,7 +23,8 @@ export default function NotificationPreferenceForm({
   onChange,
   type,
   className = '',
-  defaultDate
+  defaultDate,
+  additionalFields
 }: NotificationPreferenceFormProps) {
   // Set default date when enabled if not already set
   React.useEffect(() => {
@@ -237,9 +239,15 @@ export default function NotificationPreferenceForm({
             </div>
           )}
 
+          {additionalFields && (
+            <div className="mt-4">
+              {additionalFields}
+            </div>
+          )}
+
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <p className="text-sm text-green-800">
-              <strong>✅ Benefits:</strong> Stay informed about {type === 'ride' ? 'ride' : 'trip'} requests even after posting. 
+              <strong>✅ Benefits:</strong> Stay informed about {type === 'ride' ? 'ride' : 'trip'} requests even after posting.
               You can manage these notifications anytime in your Profile → Manage Alerts section.
             </p>
           </div>

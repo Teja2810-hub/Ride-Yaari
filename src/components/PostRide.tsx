@@ -433,34 +433,33 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
               type="ride"
               className="mb-6"
               defaultDate={departureDateTime ? departureDateTime.split('T')[0] : ''}
+              additionalFields={
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notification Search Radius
+                  </label>
+                  <select
+                    value={notificationRadius}
+                    onChange={(e) => setNotificationRadius(parseInt(e.target.value))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  >
+                    <option value={5}>5 miles</option>
+                    <option value={10}>10 miles</option>
+                    <option value={15}>15 miles</option>
+                    <option value={20}>20 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={30}>30 miles</option>
+                    <option value={40}>40 miles</option>
+                    <option value={50}>50 miles</option>
+                    <option value={75}>75 miles</option>
+                    <option value={100}>100 miles</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">
+                    You'll be notified when someone requests a ride within this radius of your route
+                  </p>
+                </div>
+              }
             />
-
-            {notificationPreferences.enabled && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notification Search Radius
-                </label>
-                <select
-                  value={notificationRadius}
-                  onChange={(e) => setNotificationRadius(parseInt(e.target.value))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                >
-                  <option value={5}>5 miles</option>
-                  <option value={10}>10 miles</option>
-                  <option value={15}>15 miles</option>
-                  <option value={20}>20 miles</option>
-                  <option value={25}>25 miles</option>
-                  <option value={30}>30 miles</option>
-                  <option value={40}>40 miles</option>
-                  <option value={50}>50 miles</option>
-                  <option value={75}>75 miles</option>
-                  <option value={100}>100 miles</option>
-                </select>
-                <p className="text-sm text-gray-500 mt-1">
-                  You'll be notified when someone requests a ride within this radius of your route
-                </p>
-              </div>
-            )}
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h3 className="font-semibold text-green-900 mb-2">💡 Tips for a Great Ride Post</h3>
