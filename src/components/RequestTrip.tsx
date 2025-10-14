@@ -161,7 +161,7 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Trip Request Sent!</h2>
           <p className="text-gray-600 mb-8">
-            Your trip request has been sent to travelers in your area. You'll be notified when matching trips are found.
+            Your trip request has been sent to travelers in your area. You'll be notified when matching trips are found. You can manage this alert in Profile → Manage Alerts
             {enableNotifications && (
               <span className="block mt-2 text-sm text-blue-600">
                 ✅ Notifications enabled for future matching trips
