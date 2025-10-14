@@ -735,6 +735,197 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 }
 
 /**
+ * Process passenger notification preferences when a driver posts a ride
+ */
+export const processPassengerNotifications = async (rideId: string): Promise<{
+  success: boolean
+  notifiedPassengers: number
+  error?: string
+}> => {
+  return retryWithBackoff(async () => {
+    console.log('Processing passenger notifications for ride:', rideId)
+
+    // Get the ride details
+    const { data: ride, error: rideError } = await supabase
+      .from('car_rides')
+      .select(`
+        *,
+        user_profiles!car_rides_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('id', rideId)
+      .single()
+
+    if (rideError || !ride) {
+      throw new Error('Ride not found')
+    }
+
+    let notifiedPassengers = 0
+
+    // Find matching passenger_request notification preferences
+    const { data: passengerNotifications, error: notificationsError } = await supabase
+      .from('ride_notifications')
+      .select(`
+        *,
+        user_profiles!ride_notifications_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('notification_type', 'passenger_request')
+      .eq('is_active', true)
+      .not('departure_latitude', 'is', null)
+      .not('departure_longitude', 'is', null)
+      .not('destination_latitude', 'is', null)
+      .not('destination_longitude', 'is', null)
+
+    if (!notificationsError) {
+      console.log('Found passenger_request notifications to check:', passengerNotifications?.length || 0)
+
+      const matchingNotifications: Array<{
+        notification: RideNotification & { user_profiles?: { full_name: string } }
+        departureDistance: number
+        destinationDistance: number
+      }> = []
+
+      // Check each notification for proximity and date matching
+      for (const notification of passengerNotifications || []) {
+        // Skip if it's the driver's own notification
+        if (notification.user_id === ride.user_id) continue
+
+        // Calculate distances
+        const departureDistance = haversineDistance(
+          ride.from_latitude || 0,
+          ride.from_longitude || 0,
+          notification.departure_latitude || 0,
+          notification.departure_longitude || 0
+        )
+
+        const destinationDistance = haversineDistance(
+          ride.to_latitude || 0,
+          ride.to_longitude || 0,
+          notification.destination_latitude || 0,
+          notification.destination_longitude || 0
+        )
+
+        // Check if within search radius
+        if (departureDistance <= notification.search_radius_miles &&
+            destinationDistance <= notification.search_radius_miles) {
+
+          // Check date matching
+          const rideDate = new Date(ride.departure_date_time)
+          let dateMatches = false
+
+          if (notification.date_type === 'specific_date' && notification.specific_date) {
+            dateMatches = rideDate.toDateString() === new Date(notification.specific_date).toDateString()
+          } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(date =>
+              rideDate.toDateString() === new Date(date).toDateString()
+            )
+          } else if (notification.date_type === 'month' && notification.notification_month) {
+            const rideMonth = `${rideDate.getFullYear()}-${String(rideDate.getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === rideMonth
+          }
+
+          if (dateMatches) {
+            matchingNotifications.push({
+              notification,
+              departureDistance,
+              destinationDistance
+            })
+          }
+        }
+      }
+
+      console.log('Found matching passenger_request notifications:', matchingNotifications.length)
+
+      // Send notifications to matching passengers
+      for (const match of matchingNotifications) {
+        try {
+          await sendPassengerNotificationAlert(
+            match.notification.user_id,
+            ride,
+            match.departureDistance,
+            match.destinationDistance
+          )
+          notifiedPassengers++
+        } catch (error) {
+          console.error('Error notifying passenger via notification preference:', match.notification.user_id, error)
+        }
+      }
+    }
+
+    console.log('Total notified passengers via notifications:', notifiedPassengers)
+
+    return {
+      success: true,
+      notifiedPassengers
+    }
+  })
+}
+
+/**
+ * Send notification to passenger based on their notification preferences
+ */
+export const sendPassengerNotificationAlert = async (
+  passengerId: string,
+  ride: CarRide & { user_profiles?: { full_name: string } },
+  departureDistance: number,
+  destinationDistance: number
+): Promise<void> => {
+  try {
+    const driverName = ride.user_profiles?.full_name || await getUserDisplayName(ride.user_id)
+    const rideDate = new Date(ride.departure_date_time)
+
+    const notificationMessage = `🔔 **Ride Available Alert!**
+
+You have a notification set up for this route and a driver is offering a ride!
+
+🚗 **Driver:** ${driverName}
+📍 **Route:** ${ride.from_location} → ${ride.to_location}
+📅 **Date:** ${rideDate.toLocaleDateString('en-US', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+})}
+⏰ **Time:** ${rideDate.toLocaleTimeString('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true
+})}
+💰 **Price:** ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}
+📏 **Distance:** ~${Math.round(departureDistance)}mi from your notification area
+
+💡 **Action:** Contact ${driverName} directly to book this ride!
+
+📱 **Manage Notifications:** You can manage your ride notification preferences in your Profile → Notifications tab.
+
+[user_id:${ride.user_id}]`
+
+    // Send system message to passenger
+    const { error } = await supabase
+      .from('chat_messages')
+      .insert({
+        sender_id: '00000000-0000-0000-0000-000000000000', // System user
+        receiver_id: passengerId,
+        message_content: notificationMessage,
+        message_type: 'system',
+        is_read: false
+      })
+
+    if (error) {
+      throw error
+    }
+
+    console.log(`Passenger notification alert sent to ${passengerId}`)
+  } catch (error) {
+    console.error('Error sending passenger notification alert:', error)
+    throw error
+  }
+}
+
+/**
  * Auto-expire old ride requests and notifications
  */
 export const cleanupExpiredNotifications = async (): Promise<{
