@@ -8,6 +8,7 @@ export interface PostNotificationData {
   specificDate?: string
   multipleDates?: string[]
   notificationMonth?: string
+  searchRadiusMiles?: number
 }
 
 /**
@@ -62,7 +63,7 @@ export const createRidePostNotification = async (
         destination_location: ride.to_location,
         destination_latitude: ride.to_latitude,
         destination_longitude: ride.to_longitude,
-        search_radius_miles: 25, // Default radius
+        search_radius_miles: notificationData.searchRadiusMiles || 25,
         date_type: notificationData.dateType,
         specific_date: notificationData.specificDate || null,
         multiple_dates: notificationData.multipleDates || null,
