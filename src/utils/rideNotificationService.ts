@@ -782,6 +782,7 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 
 /**
  * Process passenger notification preferences when a driver posts a ride
+ * ALSO checks for post notification preferences (users who posted ride requests with future notifications)
  */
 export const processPassengerNotifications = async (rideId: string): Promise<{
   success: boolean
@@ -809,7 +810,7 @@ export const processPassengerNotifications = async (rideId: string): Promise<{
 
     let notifiedPassengers = 0
 
-    // Find matching passenger_request notification preferences
+    // PART 1: Find matching passenger_request notification preferences
     const { data: passengerNotifications, error: notificationsError } = await supabase
       .from('ride_notifications')
       .select(`
@@ -898,6 +899,97 @@ export const processPassengerNotifications = async (rideId: string): Promise<{
           notifiedPassengers++
         } catch (error) {
           console.error('Error notifying passenger via notification preference:', match.notification.user_id, error)
+        }
+      }
+    }
+
+    // PART 2: Find matching post notification preferences (driver_post type)
+    const { data: postNotifications, error: postNotificationsError } = await supabase
+      .from('ride_notifications')
+      .select(`
+        *,
+        user_profiles!ride_notifications_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('notification_type', 'driver_post')
+      .eq('is_active', true)
+      .not('departure_latitude', 'is', null)
+      .not('departure_longitude', 'is', null)
+      .not('destination_latitude', 'is', null)
+      .not('destination_longitude', 'is', null)
+      .neq('user_id', ride.user_id)
+
+    if (!postNotificationsError) {
+      console.log('Found driver_post notifications to check:', postNotifications?.length || 0)
+
+      const matchingPostNotifications: Array<{
+        notification: RideNotification & { user_profiles?: { full_name: string } }
+        departureDistance: number
+        destinationDistance: number
+      }> = []
+
+      // Check each post notification for proximity and date matching
+      for (const notification of postNotifications || []) {
+        // Calculate distances
+        const departureDistance = haversineDistance(
+          ride.from_latitude || 0,
+          ride.from_longitude || 0,
+          notification.departure_latitude || 0,
+          notification.departure_longitude || 0
+        )
+
+        const destinationDistance = haversineDistance(
+          ride.to_latitude || 0,
+          ride.to_longitude || 0,
+          notification.destination_latitude || 0,
+          notification.destination_longitude || 0
+        )
+
+        // Check if within search radius
+        if (departureDistance <= notification.search_radius_miles &&
+            destinationDistance <= notification.search_radius_miles) {
+
+          // Check date matching
+          const rideDate = new Date(ride.departure_date_time)
+          const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
+          let dateMatches = false
+
+          if (notification.date_type === 'specific_date' && notification.specific_date) {
+            dateMatches = rideDateOnly === notification.specific_date
+          } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(date =>
+              rideDateOnly === date
+            )
+          } else if (notification.date_type === 'month' && notification.notification_month) {
+            const rideMonth = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === rideMonth
+          }
+
+          if (dateMatches) {
+            matchingPostNotifications.push({
+              notification,
+              departureDistance,
+              destinationDistance
+            })
+          }
+        }
+      }
+
+      console.log('Found matching driver_post notifications:', matchingPostNotifications.length)
+
+      // Send notifications to matching passengers with post notifications
+      for (const match of matchingPostNotifications) {
+        try {
+          await sendPassengerNotificationAlert(
+            match.notification.user_id,
+            ride,
+            match.departureDistance,
+            match.destinationDistance
+          )
+          notifiedPassengers++
+        } catch (error) {
+          console.error('Error notifying passenger via post notification preference:', match.notification.user_id, error)
         }
       }
     }
