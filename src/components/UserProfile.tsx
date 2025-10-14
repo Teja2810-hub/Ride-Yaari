@@ -438,7 +438,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       )}
                     </div>
                   </div>
-                  <p className="text-blue-100 text-xs sm:text-sm text-right">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                  <div className="text-right">
+                    <p className="text-blue-100 text-xs sm:text-sm">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                    <button
+                      onClick={signOut}
+                      className="text-blue-100 hover:text-white text-xs sm:text-sm mt-2 underline transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
