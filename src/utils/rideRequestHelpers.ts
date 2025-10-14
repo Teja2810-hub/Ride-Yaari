@@ -56,23 +56,35 @@ export const createRideNotification = async (
 ): Promise<{ success: boolean; notificationId?: string; error?: string }> => {
   return retryWithBackoff(async () => {
     console.log('createRideNotification called with data:', notificationData)
-    
+
     // Validate required fields
     if (!notificationData.user_id || !notificationData.departure_location || !notificationData.destination_location) {
-      throw new Error('Missing required notification data')
+      const errorMsg = 'Missing required notification data: ' + JSON.stringify({
+        user_id: !!notificationData.user_id,
+        departure_location: !!notificationData.departure_location,
+        destination_location: !!notificationData.destination_location
+      })
+      console.error(errorMsg)
+      throw new Error(errorMsg)
     }
 
     // Validate date type specific fields
     if (notificationData.date_type === 'specific_date' && !notificationData.specific_date) {
-      throw new Error('Specific date is required when date_type is specific_date')
+      const errorMsg = 'Specific date is required when date_type is specific_date'
+      console.error(errorMsg, notificationData)
+      throw new Error(errorMsg)
     }
 
     if (notificationData.date_type === 'multiple_dates' && (!notificationData.multiple_dates || notificationData.multiple_dates.length === 0)) {
-      throw new Error('Multiple dates are required when date_type is multiple_dates')
+      const errorMsg = 'Multiple dates are required when date_type is multiple_dates'
+      console.error(errorMsg, notificationData)
+      throw new Error(errorMsg)
     }
 
     if (notificationData.date_type === 'month' && !notificationData.notification_month) {
-      throw new Error('Notification month is required when date_type is month')
+      const errorMsg = 'Notification month is required when date_type is month'
+      console.error(errorMsg, notificationData)
+      throw new Error(errorMsg)
     }
 
     // Calculate expiry date based on notification type

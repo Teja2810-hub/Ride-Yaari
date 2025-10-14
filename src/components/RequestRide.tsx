@@ -101,6 +101,19 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
         const { createRideNotification } = await import('../utils/rideRequestHelpers')
         
         try {
+          // Determine the actual notification dates to use
+          const effectiveSpecificDate = notificationDateType === 'specific_date'
+            ? (notificationSpecificDate || (requestType === 'specific_date' ? specificDate : ''))
+            : undefined
+
+          const effectiveMultipleDates = notificationDateType === 'multiple_dates'
+            ? notificationMultipleDates.filter(d => d)
+            : undefined
+
+          const effectiveMonth = notificationDateType === 'month'
+            ? notificationMonth
+            : undefined
+
           const notificationData = {
             user_id: user.id,
             notification_type: 'passenger_request' as const,
@@ -112,9 +125,9 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
             destination_longitude: destinationLocation.longitude ?? undefined,
             search_radius_miles: searchRadius,
             date_type: notificationDateType,
-            specific_date: notificationDateType === 'specific_date' ? notificationSpecificDate : undefined,
-            multiple_dates: notificationDateType === 'multiple_dates' ? notificationMultipleDates.filter(d => d) : undefined,
-            notification_month: notificationDateType === 'month' ? notificationMonth : undefined,
+            specific_date: effectiveSpecificDate || undefined,
+            multiple_dates: effectiveMultipleDates && effectiveMultipleDates.length > 0 ? effectiveMultipleDates : undefined,
+            notification_month: effectiveMonth || undefined,
             is_active: true
           }
 
