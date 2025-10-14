@@ -85,9 +85,9 @@ export default function NotificationPreferenceForm({
 
   const getHowItWorksText = () => {
     if (type === 'ride') {
-      return 'When passengers request rides matching your route and selected dates, you\'ll receive notifications. This helps you find passengers even after posting your ride.'
+      return 'When passengers request rides matching your route and selected dates, you\'ll receive notifications. This helps you find passengers even after posting your ride. (This only works for the rides requested by users from now and this feature cannot send notifications for the rides which are already available even though they are matching your ride, to check the available requests, go to Find Ride → Search → Ride Requests)'
     } else {
-      return 'When passengers request assistance on trips matching your route and selected dates, you\'ll receive notifications. This helps you find people who need your travel assistance.'
+      return 'When passengers request assistance on trips matching your route and selected dates, you\'ll receive notifications. This helps you find people who need your travel assistance. (This only works for the trips requested by users from now and this feature cannot send notifications for the trips which are already available even though they are matching with your trip, to check the available requests, go to Find Trip → Search → Trip Requests)'
     }
   }
 

@@ -607,7 +607,7 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
                     <div className="bg-blue-100 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
                         <strong>💡 How it works:</strong> When drivers post rides matching your route and timing, 
-                        you'll receive notifications. You can manage these notifications in your profile settings.
+                        you'll receive notifications. You can manage these notifications in your profile settings. (This only works for the rides posted by users from now and this feature cannot send notifications for the rides which are already available even though they are matching your ride, to check the available requests, go to Find Ride → Search)
                       </p>
                     </div>
                   </div>

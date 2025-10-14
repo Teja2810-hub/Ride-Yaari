@@ -559,7 +559,7 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
                     <div className="bg-blue-100 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
                         <strong>💡 How it works:</strong> When travelers post trips matching your route and timing, 
-                        you'll receive notifications. You can manage these notifications in your profile settings.
+                        you'll receive notifications. You can manage these notifications in your profile settings.  (This only works for the trips posted by users from now and this feature cannot send notifications for the trips which are already available even though they are matching with your Trip, to check the available trips, go to Find Trip → Search)
                       </p>
                     </div>
                   </div>
