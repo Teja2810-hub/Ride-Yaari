@@ -533,6 +533,7 @@ $$;
 
 -- cleanup_old_notifications
 DROP FUNCTION IF EXISTS cleanup_old_notifications();
+DROP FUNCTION IF EXISTS cleanup_old_notifications(integer);
 CREATE FUNCTION cleanup_old_notifications()
 RETURNS void
 LANGUAGE plpgsql
