@@ -629,7 +629,7 @@ END;
 $$;
 
 -- update_trip_requests_updated_at
-CREATE FUNCTION update_trip_requests_updated_at()
+CREATE OR REPLACE FUNCTION update_trip_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -641,13 +641,14 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS update_trip_requests_updated_at ON trip_requests;
 CREATE TRIGGER update_trip_requests_updated_at
     BEFORE UPDATE ON trip_requests
     FOR EACH ROW
     EXECUTE FUNCTION update_trip_requests_updated_at();
 
 -- update_trip_notifications_updated_at
-CREATE FUNCTION update_trip_notifications_updated_at()
+CREATE OR REPLACE FUNCTION update_trip_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -659,6 +660,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS update_trip_notifications_updated_at ON trip_notifications;
 CREATE TRIGGER update_trip_notifications_updated_at
     BEFORE UPDATE ON trip_notifications
     FOR EACH ROW
