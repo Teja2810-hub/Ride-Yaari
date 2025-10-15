@@ -79,7 +79,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
     try {
       console.log('Posting ride with locations:', { fromLocation, toLocation, intermediateStops })
 
-      const departureDateTimeUTC = new Date(departureDateTime).toISOString()
+      const departureDateTimeUTC = departureDateTime + ':00.000Z'
 
       const { data, error } = await supabase
         .from('car_rides')

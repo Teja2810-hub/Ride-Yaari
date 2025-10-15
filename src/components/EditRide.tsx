@@ -100,7 +100,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
           from_longitude: fromLocation.longitude,
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
-          departure_date_time: new Date(departureDateTime).toISOString(),
+          departure_date_time: departureDateTime + ':00.000Z',
           price: parseFloat(price),
           currency: currency,
           negotiable: negotiable,
