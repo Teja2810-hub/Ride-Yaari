@@ -43,7 +43,8 @@
 */
 
 -- update_email_verification_updated_at
-CREATE OR REPLACE FUNCTION update_email_verification_updated_at()
+DROP FUNCTION IF EXISTS update_email_verification_updated_at();
+CREATE FUNCTION update_email_verification_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -56,7 +57,8 @@ END;
 $$;
 
 -- update_seats_available
-CREATE OR REPLACE FUNCTION update_seats_available()
+DROP FUNCTION IF EXISTS update_seats_available();
+CREATE FUNCTION update_seats_available()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -87,7 +89,8 @@ END;
 $$;
 
 -- update_ride_requests_updated_at
-CREATE OR REPLACE FUNCTION update_ride_requests_updated_at()
+DROP FUNCTION IF EXISTS update_ride_requests_updated_at();
+CREATE FUNCTION update_ride_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -100,7 +103,8 @@ END;
 $$;
 
 -- update_ride_notifications_updated_at
-CREATE OR REPLACE FUNCTION update_ride_notifications_updated_at()
+DROP FUNCTION IF EXISTS update_ride_notifications_updated_at();
+CREATE FUNCTION update_ride_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -113,7 +117,8 @@ END;
 $$;
 
 -- update_ride_confirmations_updated_at
-CREATE OR REPLACE FUNCTION update_ride_confirmations_updated_at()
+DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at();
+CREATE FUNCTION update_ride_confirmations_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -162,7 +167,8 @@ END;
 $$;
 
 -- find_matching_drivers
-CREATE OR REPLACE FUNCTION find_matching_drivers(
+DROP FUNCTION IF EXISTS find_matching_drivers(uuid, float8, float8, float8, float8, integer);
+CREATE FUNCTION find_matching_drivers(
     request_id uuid,
     departure_lat float8,
     departure_lon float8,
@@ -196,7 +202,8 @@ END;
 $$;
 
 -- cleanup_expired_ride_requests
-CREATE OR REPLACE FUNCTION cleanup_expired_ride_requests()
+DROP FUNCTION IF EXISTS cleanup_expired_ride_requests();
+CREATE FUNCTION cleanup_expired_ride_requests()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -461,7 +468,8 @@ END;
 $$;
 
 -- update_updated_at_column
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+DROP FUNCTION IF EXISTS update_updated_at_column();
+CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -474,7 +482,8 @@ END;
 $$;
 
 -- calculate_distance_miles
-CREATE OR REPLACE FUNCTION calculate_distance_miles(
+DROP FUNCTION IF EXISTS calculate_distance_miles(float8, float8, float8, float8);
+CREATE FUNCTION calculate_distance_miles(
     lat1 float8,
     lon1 float8,
     lat2 float8,
@@ -507,7 +516,8 @@ END;
 $$;
 
 -- cleanup_expired_items
-CREATE OR REPLACE FUNCTION cleanup_expired_items()
+DROP FUNCTION IF EXISTS cleanup_expired_items();
+CREATE FUNCTION cleanup_expired_items()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -522,7 +532,8 @@ END;
 $$;
 
 -- cleanup_old_notifications
-CREATE OR REPLACE FUNCTION cleanup_old_notifications()
+DROP FUNCTION IF EXISTS cleanup_old_notifications();
+CREATE FUNCTION cleanup_old_notifications()
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -542,7 +553,8 @@ END;
 $$;
 
 -- update_trip_requests_updated_at
-CREATE OR REPLACE FUNCTION update_trip_requests_updated_at()
+DROP FUNCTION IF EXISTS update_trip_requests_updated_at();
+CREATE FUNCTION update_trip_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -555,7 +567,8 @@ END;
 $$;
 
 -- update_trip_notifications_updated_at
-CREATE OR REPLACE FUNCTION update_trip_notifications_updated_at()
+DROP FUNCTION IF EXISTS update_trip_notifications_updated_at();
+CREATE FUNCTION update_trip_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -596,7 +609,8 @@ END;
 $$;
 
 -- cleanup_expired_trip_requests
-CREATE OR REPLACE FUNCTION cleanup_expired_trip_requests()
+DROP FUNCTION IF EXISTS cleanup_expired_trip_requests();
+CREATE FUNCTION cleanup_expired_trip_requests()
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -615,7 +629,8 @@ END;
 $$;
 
 -- cleanup_old_system_messages
-CREATE OR REPLACE FUNCTION cleanup_old_system_messages()
+DROP FUNCTION IF EXISTS cleanup_old_system_messages();
+CREATE FUNCTION cleanup_old_system_messages()
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
