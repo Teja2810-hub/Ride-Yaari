@@ -288,6 +288,14 @@ export const notifyMatchingPassengers = async (rideId: string): Promise<{
       // Skip if it's the driver's own request
       if (request.passenger_id === ride.user_id) continue
 
+      console.log('Checking request:', {
+        request_id: request.id,
+        passenger: request.user_profiles?.full_name,
+        route: `${request.departure_location} → ${request.destination_location}`,
+        request_type: request.request_type,
+        specific_date: request.specific_date
+      })
+
       // Calculate distances
       const departureDistance = haversineDistance(
         ride.from_latitude || 0,
@@ -303,8 +311,16 @@ export const notifyMatchingPassengers = async (rideId: string): Promise<{
         request.destination_longitude || 0
       )
 
+      console.log('Distance check:', {
+        departureDistance: `${departureDistance.toFixed(2)} miles`,
+        destinationDistance: `${destinationDistance.toFixed(2)} miles`,
+        searchRadius: `${request.search_radius_miles} miles`,
+        departureMatch: departureDistance <= request.search_radius_miles,
+        destinationMatch: destinationDistance <= request.search_radius_miles
+      })
+
       // Check if within search radius
-      if (departureDistance <= request.search_radius_miles && 
+      if (departureDistance <= request.search_radius_miles &&
           destinationDistance <= request.search_radius_miles) {
         
         // Check date matching
@@ -312,10 +328,18 @@ export const notifyMatchingPassengers = async (rideId: string): Promise<{
         const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
         let dateMatches = false
 
+        console.log('Date comparison:', {
+          rideDate: rideDateOnly,
+          requestType: request.request_type,
+          requestDate: request.specific_date,
+          multipleDates: request.multiple_dates,
+          requestMonth: request.request_month
+        })
+
         if (request.request_type === 'specific_date' && request.specific_date) {
           dateMatches = rideDateOnly === request.specific_date
         } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-          dateMatches = request.multiple_dates.some(date => 
+          dateMatches = request.multiple_dates.some(date =>
             rideDateOnly === date
           )
         } else if (request.request_type === 'month' && request.request_month) {
@@ -323,13 +347,18 @@ export const notifyMatchingPassengers = async (rideId: string): Promise<{
           dateMatches = rideMonth === request.request_month
         }
 
+        console.log('Date match result:', dateMatches)
+
         if (dateMatches) {
+          console.log('MATCH FOUND! Adding to notifications')
           matchingRequests.push({
             request,
             departureDistance,
             destinationDistance
           })
         }
+      } else {
+        console.log('Distance check failed - not within search radius')
       }
     }
 
