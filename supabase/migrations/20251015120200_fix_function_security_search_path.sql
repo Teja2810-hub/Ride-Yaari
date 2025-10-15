@@ -520,30 +520,43 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER update_users_updated_at
-    BEFORE UPDATE ON users
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+        CREATE TRIGGER update_users_updated_at
+            BEFORE UPDATE ON users
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
 
-CREATE TRIGGER update_car_rides_updated_at
-    BEFORE UPDATE ON car_rides
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'car_rides') THEN
+        CREATE TRIGGER update_car_rides_updated_at
+            BEFORE UPDATE ON car_rides
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
 
-CREATE TRIGGER update_chat_messages_updated_at
-    BEFORE UPDATE ON chat_messages
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_messages') THEN
+        CREATE TRIGGER update_chat_messages_updated_at
+            BEFORE UPDATE ON chat_messages
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
 
-CREATE TRIGGER update_reviews_updated_at
-    BEFORE UPDATE ON reviews
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reviews') THEN
+        CREATE TRIGGER update_reviews_updated_at
+            BEFORE UPDATE ON reviews
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
 
-CREATE TRIGGER update_trips_updated_at
-    BEFORE UPDATE ON trips
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'trips') THEN
+        CREATE TRIGGER update_trips_updated_at
+            BEFORE UPDATE ON trips
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
 -- calculate_distance_miles
 DROP FUNCTION IF EXISTS calculate_distance_miles(float8, float8, float8, float8);
