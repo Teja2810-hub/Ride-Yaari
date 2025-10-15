@@ -144,7 +144,8 @@ END;
 $$;
 
 -- is_chat_deleted
-CREATE OR REPLACE FUNCTION is_chat_deleted(user_id_param uuid, other_user_id_param uuid)
+DROP FUNCTION IF EXISTS is_chat_deleted(uuid, uuid);
+CREATE FUNCTION is_chat_deleted(user_id_param uuid, other_user_id_param uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
