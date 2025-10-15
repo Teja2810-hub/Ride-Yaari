@@ -48,7 +48,6 @@ DROP TRIGGER IF EXISTS update_seats_available ON ride_confirmations;
 DROP TRIGGER IF EXISTS update_ride_requests_updated_at ON ride_requests;
 DROP TRIGGER IF EXISTS update_ride_notifications_updated_at ON ride_notifications;
 DROP TRIGGER IF EXISTS update_ride_confirmations_updated_at ON ride_confirmations;
-DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 DROP TRIGGER IF EXISTS update_car_rides_updated_at ON car_rides;
 DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
 DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
@@ -522,13 +521,6 @@ $$;
 
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        CREATE TRIGGER update_users_updated_at
-            BEFORE UPDATE ON users
-            FOR EACH ROW
-            EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'car_rides') THEN
         CREATE TRIGGER update_car_rides_updated_at
             BEFORE UPDATE ON car_rides
