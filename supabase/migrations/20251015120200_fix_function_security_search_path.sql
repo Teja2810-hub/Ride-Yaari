@@ -42,8 +42,22 @@
   - All functions will execute in the public schema
 */
 
+-- Drop all triggers first
+DROP TRIGGER IF EXISTS update_email_verification_updated_at ON email_change_verification;
+DROP TRIGGER IF EXISTS update_seats_available ON ride_confirmations;
+DROP TRIGGER IF EXISTS update_ride_requests_updated_at ON ride_requests;
+DROP TRIGGER IF EXISTS update_ride_notifications_updated_at ON ride_notifications;
+DROP TRIGGER IF EXISTS update_ride_confirmations_updated_at ON ride_confirmations;
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_car_rides_updated_at ON car_rides;
+DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
+DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
+DROP TRIGGER IF EXISTS update_trip_requests_updated_at ON trip_requests;
+DROP TRIGGER IF EXISTS update_trip_notifications_updated_at ON trip_notifications;
+DROP TRIGGER IF EXISTS update_trips_updated_at ON trips;
+
 -- update_email_verification_updated_at
-DROP FUNCTION IF EXISTS update_email_verification_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_email_verification_updated_at();
 CREATE FUNCTION update_email_verification_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -56,15 +70,13 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_email_verification_updated_at ON email_change_verification;
 CREATE TRIGGER update_email_verification_updated_at
     BEFORE UPDATE ON email_change_verification
     FOR EACH ROW
     EXECUTE FUNCTION update_email_verification_updated_at();
 
 -- update_seats_available
-DROP FUNCTION IF EXISTS update_seats_available() CASCADE;
+DROP FUNCTION IF EXISTS update_seats_available();
 CREATE FUNCTION update_seats_available()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -95,15 +107,13 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_seats_available ON ride_confirmations;
 CREATE TRIGGER update_seats_available
     AFTER INSERT OR UPDATE OR DELETE ON ride_confirmations
     FOR EACH ROW
     EXECUTE FUNCTION update_seats_available();
 
 -- update_ride_requests_updated_at
-DROP FUNCTION IF EXISTS update_ride_requests_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_ride_requests_updated_at();
 CREATE FUNCTION update_ride_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -116,15 +126,13 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_ride_requests_updated_at ON ride_requests;
 CREATE TRIGGER update_ride_requests_updated_at
     BEFORE UPDATE ON ride_requests
     FOR EACH ROW
     EXECUTE FUNCTION update_ride_requests_updated_at();
 
 -- update_ride_notifications_updated_at
-DROP FUNCTION IF EXISTS update_ride_notifications_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_ride_notifications_updated_at();
 CREATE FUNCTION update_ride_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -137,15 +145,13 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_ride_notifications_updated_at ON ride_notifications;
 CREATE TRIGGER update_ride_notifications_updated_at
     BEFORE UPDATE ON ride_notifications
     FOR EACH ROW
     EXECUTE FUNCTION update_ride_notifications_updated_at();
 
 -- update_ride_confirmations_updated_at
-DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at();
 CREATE FUNCTION update_ride_confirmations_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -158,8 +164,6 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_ride_confirmations_updated_at ON ride_confirmations;
 CREATE TRIGGER update_ride_confirmations_updated_at
     BEFORE UPDATE ON ride_confirmations
     FOR EACH ROW
@@ -503,7 +507,7 @@ END;
 $$;
 
 -- update_updated_at_column
-DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at_column();
 CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -516,28 +520,28 @@ BEGIN
 END;
 $$;
 
--- Recreate triggers
-DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_car_rides_updated_at ON car_rides;
 CREATE TRIGGER update_car_rides_updated_at
     BEFORE UPDATE ON car_rides
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
 CREATE TRIGGER update_chat_messages_updated_at
     BEFORE UPDATE ON chat_messages
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
 CREATE TRIGGER update_reviews_updated_at
     BEFORE UPDATE ON reviews
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_trips_updated_at
+    BEFORE UPDATE ON trips
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -615,7 +619,7 @@ END;
 $$;
 
 -- update_trip_requests_updated_at
-DROP FUNCTION IF EXISTS update_trip_requests_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_trip_requests_updated_at();
 CREATE FUNCTION update_trip_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -628,15 +632,13 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_trip_requests_updated_at ON trip_requests;
 CREATE TRIGGER update_trip_requests_updated_at
     BEFORE UPDATE ON trip_requests
     FOR EACH ROW
     EXECUTE FUNCTION update_trip_requests_updated_at();
 
 -- update_trip_notifications_updated_at
-DROP FUNCTION IF EXISTS update_trip_notifications_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_trip_notifications_updated_at();
 CREATE FUNCTION update_trip_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -649,8 +651,6 @@ BEGIN
 END;
 $$;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS update_trip_notifications_updated_at ON trip_notifications;
 CREATE TRIGGER update_trip_notifications_updated_at
     BEFORE UPDATE ON trip_notifications
     FOR EACH ROW
