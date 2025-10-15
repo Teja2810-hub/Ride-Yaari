@@ -63,6 +63,8 @@ DROP FUNCTION IF EXISTS update_ride_requests_updated_at();
 DROP FUNCTION IF EXISTS update_ride_notifications_updated_at();
 DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at();
 DROP FUNCTION IF EXISTS update_updated_at_column();
+DROP FUNCTION IF EXISTS update_trip_requests_updated_at();
+DROP FUNCTION IF EXISTS update_trip_notifications_updated_at();
 
 -- update_email_verification_updated_at
 CREATE FUNCTION update_email_verification_updated_at()
