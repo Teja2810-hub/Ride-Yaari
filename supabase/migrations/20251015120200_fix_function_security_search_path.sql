@@ -75,7 +75,7 @@ CREATE TRIGGER update_email_verification_updated_at
     EXECUTE FUNCTION update_email_verification_updated_at();
 
 -- update_seats_available
-DROP FUNCTION IF EXISTS update_seats_available();
+DROP FUNCTION IF EXISTS update_seats_available() CASCADE;
 CREATE FUNCTION update_seats_available()
 RETURNS TRIGGER
 LANGUAGE plpgsql
