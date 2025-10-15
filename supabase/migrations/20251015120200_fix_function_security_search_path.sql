@@ -107,7 +107,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER update_seats_available
+CREATE TRIGGER trigger_update_seats_available
     AFTER INSERT OR UPDATE OR DELETE ON ride_confirmations
     FOR EACH ROW
     EXECUTE FUNCTION update_seats_available();
