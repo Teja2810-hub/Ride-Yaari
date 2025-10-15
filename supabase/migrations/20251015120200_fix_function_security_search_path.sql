@@ -42,7 +42,7 @@
   - All functions will execute in the public schema
 */
 
--- Drop all triggers first
+-- Drop all triggers and functions first
 DROP TRIGGER IF EXISTS update_email_verification_updated_at ON email_change_verification;
 DROP TRIGGER IF EXISTS update_seats_available ON ride_confirmations;
 DROP TRIGGER IF EXISTS trigger_update_seats_available ON ride_confirmations;
@@ -56,8 +56,15 @@ DROP TRIGGER IF EXISTS update_trip_requests_updated_at ON trip_requests;
 DROP TRIGGER IF EXISTS update_trip_notifications_updated_at ON trip_notifications;
 DROP TRIGGER IF EXISTS update_trips_updated_at ON trips;
 
--- update_email_verification_updated_at
+-- Drop all functions
 DROP FUNCTION IF EXISTS update_email_verification_updated_at();
+DROP FUNCTION IF EXISTS update_seats_available();
+DROP FUNCTION IF EXISTS update_ride_requests_updated_at();
+DROP FUNCTION IF EXISTS update_ride_notifications_updated_at();
+DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at();
+DROP FUNCTION IF EXISTS update_updated_at_column();
+
+-- update_email_verification_updated_at
 CREATE FUNCTION update_email_verification_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -76,7 +83,6 @@ CREATE TRIGGER update_email_verification_updated_at
     EXECUTE FUNCTION update_email_verification_updated_at();
 
 -- update_seats_available
-DROP FUNCTION IF EXISTS update_seats_available();
 CREATE FUNCTION update_seats_available()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -113,7 +119,6 @@ CREATE TRIGGER trigger_update_seats_available
     EXECUTE FUNCTION update_seats_available();
 
 -- update_ride_requests_updated_at
-DROP FUNCTION IF EXISTS update_ride_requests_updated_at();
 CREATE FUNCTION update_ride_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -132,7 +137,6 @@ CREATE TRIGGER update_ride_requests_updated_at
     EXECUTE FUNCTION update_ride_requests_updated_at();
 
 -- update_ride_notifications_updated_at
-DROP FUNCTION IF EXISTS update_ride_notifications_updated_at();
 CREATE FUNCTION update_ride_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -151,7 +155,6 @@ CREATE TRIGGER update_ride_notifications_updated_at
     EXECUTE FUNCTION update_ride_notifications_updated_at();
 
 -- update_ride_confirmations_updated_at
-DROP FUNCTION IF EXISTS update_ride_confirmations_updated_at();
 CREATE FUNCTION update_ride_confirmations_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -507,7 +510,6 @@ END;
 $$;
 
 -- update_updated_at_column
-DROP FUNCTION IF EXISTS update_updated_at_column();
 CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -625,7 +627,6 @@ END;
 $$;
 
 -- update_trip_requests_updated_at
-DROP FUNCTION IF EXISTS update_trip_requests_updated_at();
 CREATE FUNCTION update_trip_requests_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -644,7 +645,6 @@ CREATE TRIGGER update_trip_requests_updated_at
     EXECUTE FUNCTION update_trip_requests_updated_at();
 
 -- update_trip_notifications_updated_at
-DROP FUNCTION IF EXISTS update_trip_notifications_updated_at();
 CREATE FUNCTION update_trip_notifications_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
