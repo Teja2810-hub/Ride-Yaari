@@ -226,7 +226,8 @@ END;
 $$;
 
 -- is_chat_deleted_simple
-CREATE OR REPLACE FUNCTION is_chat_deleted_simple(uid uuid, other_uid uuid)
+DROP FUNCTION IF EXISTS is_chat_deleted_simple(uuid, uuid);
+CREATE FUNCTION is_chat_deleted_simple(uid uuid, other_uid uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -241,7 +242,8 @@ END;
 $$;
 
 -- has_user_deleted_chat
-CREATE OR REPLACE FUNCTION has_user_deleted_chat(user_id_param uuid, other_user_id_param uuid)
+DROP FUNCTION IF EXISTS has_user_deleted_chat(uuid, uuid);
+CREATE FUNCTION has_user_deleted_chat(user_id_param uuid, other_user_id_param uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -262,7 +264,8 @@ END;
 $$;
 
 -- find_ride_notification_recipients
-CREATE OR REPLACE FUNCTION find_ride_notification_recipients(
+DROP FUNCTION IF EXISTS find_ride_notification_recipients(uuid);
+CREATE FUNCTION find_ride_notification_recipients(
     ride_id_param uuid
 )
 RETURNS TABLE (
@@ -295,7 +298,8 @@ END;
 $$;
 
 -- find_trip_notification_recipients
-CREATE OR REPLACE FUNCTION find_trip_notification_recipients(
+DROP FUNCTION IF EXISTS find_trip_notification_recipients(uuid);
+CREATE FUNCTION find_trip_notification_recipients(
     trip_id_param uuid
 )
 RETURNS TABLE (
@@ -325,7 +329,8 @@ END;
 $$;
 
 -- get_user_id_by_email
-CREATE OR REPLACE FUNCTION get_user_id_by_email(email_param text)
+DROP FUNCTION IF EXISTS get_user_id_by_email(text);
+CREATE FUNCTION get_user_id_by_email(email_param text)
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -344,7 +349,8 @@ END;
 $$;
 
 -- ride_matches_notification_criteria
-CREATE OR REPLACE FUNCTION ride_matches_notification_criteria(
+DROP FUNCTION IF EXISTS ride_matches_notification_criteria(uuid, text, date, date[], text, float8, float8, float8, float8, integer);
+CREATE FUNCTION ride_matches_notification_criteria(
     ride_id_param uuid,
     date_type_param text,
     specific_date_param date,
@@ -408,7 +414,8 @@ END;
 $$;
 
 -- trip_matches_notification_criteria
-CREATE OR REPLACE FUNCTION trip_matches_notification_criteria(
+DROP FUNCTION IF EXISTS trip_matches_notification_criteria(uuid, text, date, date[], text, text, text);
+CREATE FUNCTION trip_matches_notification_criteria(
     trip_id_param uuid,
     date_type_param text,
     specific_date_param date,
@@ -561,7 +568,8 @@ END;
 $$;
 
 -- find_matching_trips
-CREATE OR REPLACE FUNCTION find_matching_trips(
+DROP FUNCTION IF EXISTS find_matching_trips(uuid, text, text);
+CREATE FUNCTION find_matching_trips(
     request_id uuid,
     departure_airport_param text,
     destination_airport_param text
