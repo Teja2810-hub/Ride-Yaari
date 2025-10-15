@@ -209,7 +209,8 @@ END;
 $$;
 
 -- is_user_blocked_simple
-CREATE OR REPLACE FUNCTION is_user_blocked_simple(user1 uuid, user2 uuid)
+DROP FUNCTION IF EXISTS is_user_blocked_simple(uuid, uuid);
+CREATE FUNCTION is_user_blocked_simple(user1 uuid, user2 uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
