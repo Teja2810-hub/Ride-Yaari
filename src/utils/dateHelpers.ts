@@ -8,14 +8,14 @@
  */
 export const formatDateSafe = (dateString: string): string => {
   if (!dateString) return ''
-  
+
   try {
     // Parse the date components to avoid timezone interpretation issues
     const [year, month, day] = dateString.split('-').map(Number)
-    
+
     // Create date object in local timezone
     const date = new Date(year, month - 1, day) // month is 0-indexed
-    
+
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -29,20 +29,45 @@ export const formatDateSafe = (dateString: string): string => {
 }
 
 /**
+ * Format a date string without timezone conversion for system messages
+ */
+export const formatDateWithoutTimezone = (dateString: string): string => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  }).format(date)
+}
+
+/**
  * Format a date string for short display (e.g., "Oct 3, 2025")
  */
 export const formatDateShort = (dateString: string): string => {
   if (!dateString) return ''
-  
+
   try {
-    // Handle both date strings and ISO datetime strings
-    const date = new Date(dateString)
-    
-    // Check if the date is valid
-    if (isNaN(date.getTime())) {
-      return dateString
+    // Parse date string to avoid timezone conversion
+    const [year, month, day] = dateString.split(/[-T]/)
+    if (!year || !month || !day) {
+      // Fallback for other formats
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return dateString
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
     }
-    
+
+    // Create date in local timezone
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',

@@ -193,7 +193,8 @@ export default function ConfirmationItem({ confirmation, onUpdate, onStartChat }
       return new Date(ride.departure_date_time) <= new Date()
     }
     if (trip) {
-      return new Date(trip.travel_date) <= new Date()
+      const [year, month, day] = trip.travel_date.split('-').map(Number)
+      return new Date(year, month - 1, day) <= new Date()
     }
     return false
   }, [ride, trip])

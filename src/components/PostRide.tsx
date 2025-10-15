@@ -46,6 +46,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
     multipleDates: [''],
     notificationMonth: ''
   })
+  const [notificationRadius, setNotificationRadius] = useState(25)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,7 +78,9 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
 
     try {
       console.log('Posting ride with locations:', { fromLocation, toLocation, intermediateStops })
-      
+
+      const departureDateTimeUTC = departureDateTime + ':00.000Z'
+
       const { data, error } = await supabase
         .from('car_rides')
         .insert({
@@ -88,7 +91,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
           from_longitude: fromLocation.longitude,
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
-          departure_date_time: new Date(departureDateTime).toISOString(),
+          departure_date_time: departureDateTimeUTC,
           price: price ? parseFloat(price) : 0, // use 0 for free ride
           currency: currency,
           negotiable: negotiable,
@@ -111,7 +114,8 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
             dateType: notificationPreferences.dateType,
             specificDate: notificationPreferences.specificDate || undefined,
             multipleDates: notificationPreferences.multipleDates.filter(d => d) || undefined,
-            notificationMonth: notificationPreferences.notificationMonth || undefined
+            notificationMonth: notificationPreferences.notificationMonth || undefined,
+            searchRadiusMiles: notificationRadius
           })
           console.log('Ride notification preference created successfully')
         } catch (notificationError) {
@@ -122,11 +126,16 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
 
       // Notify matching passengers about the new ride
       if (data && data.length > 0) {
-        const { notifyMatchingPassengers } = await import('../utils/rideNotificationService')
-        
+        const { notifyMatchingPassengers, processPassengerNotifications } = await import('../utils/rideNotificationService')
+
         try {
-          const notificationResult = await notifyMatchingPassengers(data[0].id)
-          console.log('Matching passengers notified:', notificationResult.notifiedPassengers)
+          // Notify passengers with matching ride requests
+          const requestResult = await notifyMatchingPassengers(data[0].id)
+          console.log('Matching passengers (requests) notified:', requestResult.notifiedPassengers)
+
+          // Notify passengers with matching notification preferences
+          const notificationResult = await processPassengerNotifications(data[0].id)
+          console.log('Matching passengers (preferences) notified:', notificationResult.notifiedPassengers)
         } catch (notificationError) {
           console.error('Error notifying matching passengers:', notificationError)
           // Don't fail the ride creation if notifications fail
@@ -150,6 +159,7 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
         multipleDates: [''],
         notificationMonth: ''
       })
+      setNotificationRadius(25)
     } catch (error: any) {
       console.error('Error posting ride:', error)
       setError(error.message)
@@ -427,6 +437,33 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
               onChange={setNotificationPreferences}
               type="ride"
               className="mb-6"
+              defaultDate={departureDateTime ? departureDateTime.split('T')[0] : ''}
+              additionalFields={
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notification Search Radius
+                  </label>
+                  <select
+                    value={notificationRadius}
+                    onChange={(e) => setNotificationRadius(parseInt(e.target.value))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  >
+                    <option value={5}>5 miles</option>
+                    <option value={10}>10 miles</option>
+                    <option value={15}>15 miles</option>
+                    <option value={20}>20 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={30}>30 miles</option>
+                    <option value={40}>40 miles</option>
+                    <option value={50}>50 miles</option>
+                    <option value={75}>75 miles</option>
+                    <option value={100}>100 miles</option>
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">
+                    You'll be notified when someone requests a ride within this radius of your route
+                  </p>
+                </div>
+              }
             />
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">

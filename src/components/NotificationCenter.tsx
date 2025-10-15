@@ -7,7 +7,7 @@ import { getSystemMessageTemplate } from '../utils/messageTemplates'
 interface NotificationCenterProps {
   isOpen: boolean
   onClose: () => void
-  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any, showRequestButtons?: boolean) => void
   onViewConfirmations?: () => void
 }
 
@@ -31,13 +31,14 @@ export default function NotificationCenter({
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'confirmations' | 'messages' | 'history'>('unread')
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     if (isOpen && user) {
       fetchNotifications()
     }
-  }, [isOpen, user, filter])
+  }, [isOpen, user, filter, showHistory])
 
   const fetchNotifications = async () => {
     if (!user) return
@@ -46,160 +47,51 @@ export default function NotificationCenter({
     try {
       const notifications: Notification[] = []
 
-      // Fetch pending confirmations (high priority)
-      const { data: pendingConfirmations } = await supabase
-        .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_passenger_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time,
-            price,
-            currency
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date,
-            price,
-            currency
-          )
-        `)
-        .eq('ride_owner_id', user.id)
-        .eq('status', 'pending')
+      // Fetch persistent notifications
+      const query = supabase
+        .from('user_notifications')
+        .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (pendingConfirmations) {
-        pendingConfirmations.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
+      // Show all in history view, apply filter in normal view
+      const { data: persistentNotifications } = showHistory || filter === 'history'
+        ? await query.limit(200)
+        : filter === 'unread'
+          ? await query.eq('is_read', false).limit(50)
+          : await query.limit(50)
 
+      if (persistentNotifications) {
+        persistentNotifications.forEach(notif => {
           notifications.push({
-            id: `confirmation-${confirmation.id}`,
-            type: 'confirmation_request',
-            title: `🚨 New ${rideType} request`,
-            message: `${confirmation.user_profiles.full_name} is requesting to join your ${route}. Action required.`,
-            timestamp: confirmation.created_at,
-            read: false,
-            priority: 'high',
+            id: `persistent-${notif.id}`,
+            type: notif.notification_type as any,
+            title: notif.title,
+            message: notif.message,
+            timestamp: notif.created_at,
+            read: notif.is_read,
+            priority: notif.priority as any,
             actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.passenger_id,
-              userName: confirmation.user_profiles.full_name,
-              ride: ride,
-              trip: trip
+              ...notif.action_data,
+              userId: notif.related_user_id,
+              userName: notif.related_user_name
             }
           })
         })
       }
 
-      // Fetch recent confirmation updates (medium priority)
-      const { data: confirmationUpdates } = await supabase
-        .from('ride_confirmations')
-        .select(`
-          *,
-          user_profiles!ride_confirmations_ride_owner_id_fkey (
-            id,
-            full_name
-          ),
-          car_rides!ride_confirmations_ride_id_fkey (
-            id,
-            from_location,
-            to_location,
-            departure_date_time
-          ),
-          trips!ride_confirmations_trip_id_fkey (
-            id,
-            leaving_airport,
-            destination_airport,
-            travel_date
-          )
-        `)
-        .eq('passenger_id', user.id)
-        .in('status', ['accepted', 'rejected'])
-        .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Last 48 hours
-        .order('updated_at', { ascending: false })
+      // Skip pending confirmations - they should only show in confirmations tab
+      // const { data: pendingConfirmations } = ...
 
-      if (confirmationUpdates) {
-        confirmationUpdates.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
-          const isAccepted = confirmation.status === 'accepted'
+      // Removed - confirmations should only show in confirmations tab
 
-          notifications.push({
-            id: `update-${confirmation.id}`,
-            type: 'confirmation_update',
-            title: isAccepted ? `🎉 Ride Confirmed!` : `😔 Request Declined`,
-            message: isAccepted 
-              ? `Your request for the ${route} has been accepted! Coordinate pickup details now.`
-              : `Your request for the ${route} was declined. You can request again or find other rides.`,
-            timestamp: confirmation.updated_at,
-            read: false,
-            priority: confirmation.status === 'accepted' ? 'high' : 'medium',
-            actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.ride_owner_id,
-              userName: confirmation.user_profiles?.full_name || 'Ride Owner',
-              ride: ride,
-              trip: trip
-            }
-          })
-        })
-      }
+      // Skip confirmation updates - they should only show in confirmations tab
+      // const { data: confirmationUpdates } = ...
 
-      // Fetch unread messages (medium priority)
-      const { data: unreadMessages } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          sender:user_profiles!chat_messages_sender_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          )
-        `)
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-        .order('created_at', { ascending: false })
-        .limit(20)
+      // Skip unread messages - they should show in messages tab only
+      // const { data: unreadMessages } = ...
 
-      if (unreadMessages) {
-        unreadMessages.forEach(message => {
-          notifications.push({
-            id: `message-${message.id}`,
-            type: 'message',
-            title: `New message from ${message.sender.full_name}`,
-            message: message.message_content.length > 80 
-              ? `${message.message_content.substring(0, 80)}...`
-              : message.message_content,
-            timestamp: message.created_at,
-            read: false,
-            priority: 'medium',
-            actionData: {
-              userId: message.sender_id,
-              userName: message.sender.full_name
-            }
-          })
-        })
-      }
-
-      // Sort notifications by priority and timestamp
+      // Sort all notifications by priority and timestamp
       notifications.sort((a, b) => {
         const priorityOrder = { high: 0, medium: 1, low: 2 }
         const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -212,11 +104,14 @@ export default function NotificationCenter({
       if (filter === 'unread') {
         filteredNotifications = notifications.filter(n => !n.read)
       } else if (filter === 'confirmations') {
-        filteredNotifications = notifications.filter(n => 
+        filteredNotifications = notifications.filter(n =>
           n.type === 'confirmation_request' || n.type === 'confirmation_update'
         )
       } else if (filter === 'messages') {
         filteredNotifications = notifications.filter(n => n.type === 'message')
+      } else if (filter === 'history') {
+        // Show all notifications in history
+        filteredNotifications = notifications
       }
 
       setNotifications(filteredNotifications)
@@ -228,31 +123,50 @@ export default function NotificationCenter({
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    // Mark this notification as read immediately
-    if (!notification.read && notification.type === 'message' && user) {
+    // Mark notification as read
+    if (!notification.read && user) {
       try {
-        // Extract message ID from notification ID (format: "message-{messageId}")
-        const messageId = notification.id.replace('message-', '')
-        await supabase
-          .from('chat_messages')
-          .update({ is_read: true })
-          .eq('id', messageId)
+        if (notification.id.startsWith('persistent-')) {
+          const notifId = notification.id.replace('persistent-', '')
+          await supabase
+            .from('user_notifications')
+            .update({ is_read: true })
+            .eq('id', notifId)
+        } else if (notification.type === 'message') {
+          const messageId = notification.id.replace('message-', '')
+          await supabase
+            .from('chat_messages')
+            .update({ is_read: true })
+            .eq('id', messageId)
+        }
       } catch (error) {
         console.error('Error marking notification as read:', error)
       }
     }
 
-    // Close notification center after marking as read
+    // Close notification center
     onClose()
 
     if (notification.type === 'confirmation_request' || notification.type === 'confirmation_update') {
       if (onViewConfirmations) {
         onViewConfirmations()
       }
-    } else if (notification.type === 'message' && onStartChat) {
+    } else if (
+      (notification.type === 'message' ||
+       notification.type === 'ride_match' ||
+       notification.type === 'trip_match' ||
+       notification.type === 'ride_request_alert' ||
+       notification.type === 'trip_request_alert') &&
+      onStartChat &&
+      notification.actionData?.userId
+    ) {
+      const showRequestButtons = notification.type === 'ride_match' || notification.type === 'trip_match'
       onStartChat(
         notification.actionData.userId,
-        notification.actionData.userName
+        notification.actionData.userName || 'User',
+        undefined,
+        undefined,
+        showRequestButtons
       )
     }
   }
@@ -261,48 +175,17 @@ export default function NotificationCenter({
     if (!user) return
 
     try {
-      console.log('NotificationCenter: Marking all messages as read for user:', user.id)
-
-      // Get count of unread messages before marking
-      const { count: beforeCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-
-      console.log('NotificationCenter: Unread messages before:', beforeCount)
-
-      // Mark all unread messages as read (including system messages)
-      const { error, count } = await supabase
-        .from('chat_messages')
+      const { error: notifError } = await supabase
+        .from('user_notifications')
         .update({ is_read: true })
-        .eq('receiver_id', user.id)
+        .eq('user_id', user.id)
         .eq('is_read', false)
-        .select('*', { count: 'exact', head: true })
 
-      if (error) {
-        console.error('NotificationCenter: Error marking messages as read:', error)
-        throw error
+      if (notifError) {
+        console.error('Error marking notifications as read:', notifError)
+        return
       }
 
-      console.log('NotificationCenter: Marked', count, 'messages as read')
-
-      // Verify the update
-      const { count: afterCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false)
-
-      console.log('NotificationCenter: Unread messages after:', afterCount)
-
-      // Clear all notifications immediately
-      setNotifications([])
-
-      // Wait a moment before refreshing to ensure DB is updated
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Refresh notifications from server
       await fetchNotifications()
     } catch (error) {
       console.error('NotificationCenter: Error in markAllAsRead:', error)
@@ -390,24 +273,26 @@ export default function NotificationCenter({
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center space-x-1 p-4 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-1 p-4 border-b border-gray-200 bg-gray-50 overflow-x-auto">
           {[
             { key: 'all', label: 'All', count: notifications.length },
             { key: 'unread', label: 'Unread', count: notifications.filter(n => !n.read).length },
-            { key: 'confirmations', label: 'Confirmations', count: notifications.filter(n => n.type.includes('confirmation')).length },
-            { key: 'messages', label: 'Messages', count: notifications.filter(n => n.type === 'message').length }
+            { key: 'history', label: 'History', count: 0 }
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setFilter(tab.key as any)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              onClick={() => {
+                setFilter(tab.key as any)
+                setShowHistory(tab.key === 'history')
+              }}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 filter === tab.key
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               {tab.label}
-              {tab.count > 0 && (
+              {tab.count > 0 && tab.key !== 'history' && (
                 <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
                   filter === tab.key
                     ? 'bg-blue-500 text-white'
@@ -447,8 +332,7 @@ export default function NotificationCenter({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${getPriorityColor(notification.priority)} ${
+                  className={`p-4 border-l-4 ${getPriorityColor(notification.priority)} ${
                     !notification.read ? 'bg-blue-50' : ''
                   }`}
                 >
@@ -470,33 +354,69 @@ export default function NotificationCenter({
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      <p className="text-sm text-gray-600 mb-2">
                         {notification.message}
                       </p>
-                      
-                      {/* Action indicators */}
-                      <div className="flex items-center space-x-2">
-                        {notification.type === 'confirmation_request' && (
-                          <span className="inline-flex items-center text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            <Clock size={10} className="mr-1" />
-                            Action Required
-                          </span>
+
+                      {/* Action indicators and buttons */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {notification.type === 'confirmation_request' && (
+                            <span className="inline-flex items-center text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                              <Clock size={10} className="mr-1" />
+                              Action Required
+                            </span>
+                          )}
+                          {notification.priority === 'high' && (
+                            <span className="inline-flex items-center text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                              <AlertTriangle size={10} className="mr-1" />
+                              High Priority
+                            </span>
+                          )}
+                          {notification.type.includes('confirmation') && (
+                            <span className="inline-flex items-center text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {notification.actionData?.ride ? (
+                                <Car size={10} className="mr-1" />
+                              ) : (
+                                <Plane size={10} className="mr-1" />
+                              )}
+                              {notification.actionData?.ride ? 'Car Ride' : 'Airport Trip'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Action button for ride/trip match and request alerts */}
+                        {(notification.type === 'ride_match' ||
+                          notification.type === 'trip_match' ||
+                          notification.type === 'ride_request_alert' ||
+                          notification.type === 'trip_request_alert' ||
+                          notification.type === 'message') &&
+                          notification.actionData?.userId && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleNotificationClick(notification)
+                            }}
+                            className="inline-flex items-center space-x-1 text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <MessageCircle size={12} />
+                            <span>Chat with {notification.actionData.userName || 'User'}</span>
+                          </button>
                         )}
-                        {notification.priority === 'high' && (
-                          <span className="inline-flex items-center text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                            <AlertTriangle size={10} className="mr-1" />
-                            High Priority
-                          </span>
-                        )}
-                        {notification.type.includes('confirmation') && (
-                          <span className="inline-flex items-center text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {notification.actionData?.ride ? (
-                              <Car size={10} className="mr-1" />
-                            ) : (
-                              <Plane size={10} className="mr-1" />
-                            )}
-                            {notification.actionData?.ride ? 'Car Ride' : 'Airport Trip'}
-                          </span>
+
+                        {/* Action button for confirmations */}
+                        {(notification.type === 'confirmation_request' ||
+                          notification.type === 'confirmation_update') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleNotificationClick(notification)
+                            }}
+                            className="inline-flex items-center space-x-1 text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Check size={12} />
+                            <span>View Details</span>
+                          </button>
                         )}
                       </div>
                     </div>

@@ -120,17 +120,20 @@ export const sendTripRequestNotification = async (
 ): Promise<void> => {
   try {
     const passengerName = request.user_profiles?.full_name || await getUserDisplayName(request.passenger_id)
-    
-    const dateInfo = request.request_type === 'specific_date' 
-      ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}`
-      : request.request_type === 'month'
-        ? `in ${request.request_month}`
-        : 'on multiple dates'
+
+    let dateInfo = 'on multiple dates'
+    if (request.request_type === 'specific_date' && request.specific_date) {
+      const [year, month, day] = request.specific_date.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      dateInfo = `on ${date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}`
+    } else if (request.request_type === 'month') {
+      dateInfo = `in ${request.request_month}`
+    }
 
     const timeInfo = request.departure_time_preference 
       ? ` at ${request.departure_time_preference}`
@@ -152,7 +155,7 @@ ${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` :
 })}${trip.departure_time ? ` at ${trip.departure_time}` : ''}
 ${trip.price ? `💰 ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 Free assistance'}
 
-💡 **Action:** Contact ${passengerName} if you can provide this assistance!`
+[user_id:${request.passenger_id}]`
 
     // Send system message to traveler
     const { error } = await supabase
@@ -220,6 +223,7 @@ export const notifyMatchingPassengers = async (tripId: string): Promise<{
         )
       `)
       .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
       .eq('departure_airport', trip.leaving_airport)
       .eq('destination_airport', trip.destination_airport)
 
@@ -238,14 +242,19 @@ export const notifyMatchingPassengers = async (tripId: string): Promise<{
 
       // Check date matching
       const tripDate = new Date(trip.travel_date)
+      const tripDateOnly = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate())
       let dateMatches = false
 
       if (request.request_type === 'specific_date' && request.specific_date) {
-        dateMatches = tripDate.toDateString() === new Date(request.specific_date).toDateString()
+        const requestDate = new Date(request.specific_date)
+        const requestDateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate())
+        dateMatches = tripDateOnly.getTime() === requestDateOnly.getTime()
       } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-        dateMatches = request.multiple_dates.some(date => 
-          tripDate.toDateString() === new Date(date).toDateString()
-        )
+        dateMatches = request.multiple_dates.some(date => {
+          const reqDate = new Date(date)
+          const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+          return tripDateOnly.getTime() === reqDateOnly.getTime()
+        })
       } else if (request.request_type === 'month' && request.request_month) {
         const tripMonth = `${tripDate.getFullYear()}-${String(tripDate.getMonth() + 1).padStart(2, '0')}`
         dateMatches = tripMonth === request.request_month
@@ -292,7 +301,8 @@ export const sendMatchingTripNotification = async (
 ): Promise<void> => {
   try {
     const travelerName = trip.user_profiles?.full_name || await getUserDisplayName(trip.user_id)
-    const tripDate = new Date(trip.travel_date)
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const tripDate = new Date(year, month - 1, day)
 
     const notificationMessage = `🎉 **Matching Trip Found!**
 
@@ -304,15 +314,15 @@ export const sendMatchingTripNotification = async (
   month: 'long',
   day: 'numeric'
 })}
-${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}${trip.departure_timezone ? ` (${trip.departure_timezone})` : ''}` : ''}
-${trip.landing_time ? `🛬 **Landing:** ${trip.landing_time}${trip.landing_timezone ? ` (${trip.landing_timezone})` : ''}` : ''}
+${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}${trip.departure_timezone ? ` ${trip.departure_timezone}` : ''}` : ''}
+${trip.landing_time ? `🛬 **Landing:** ${trip.landing_time}${trip.landing_timezone ? ` ${trip.landing_timezone}` : ''}` : ''}
 ${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 **Free assistance**'}
 
 **Your Request:**
 📍 ${request.departure_airport} → ${request.destination_airport}
 ${request.additional_notes ? `📝 Notes: ${request.additional_notes}` : ''}
 
-💡 **Action:** Contact ${travelerName} to request assistance on this trip!`
+[user_id:${trip.user_id}]`
 
     // Send system message to passenger
     const { error } = await supabase
@@ -338,6 +348,7 @@ ${request.additional_notes ? `📝 Notes: ${request.additional_notes}` : ''}
 
 /**
  * Process traveler notification preferences when a passenger requests a trip
+ * ALSO checks for post notification preferences (users who posted trips with future notifications)
  */
 export const processTravelerNotifications = async (requestId: string): Promise<{
   success: boolean
@@ -346,7 +357,7 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
 }> => {
   return retryWithBackoff(async () => {
     console.log('Processing traveler notifications for request:', requestId)
-    
+
     // Get the trip request details
     const { data: request, error: requestError } = await supabase
       .from('trip_requests')
@@ -363,8 +374,96 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       throw new Error('Trip request not found')
     }
 
-    // Find matching traveler notification preferences
+    let notifiedTravelers = 0
+
+    // PART 1: Find matching traveler notification preferences (passenger_request type)
     const { data: travelerNotifications, error: notificationsError } = await supabase
+      .from('trip_notifications')
+      .select(`
+        *,
+        user_profiles!trip_notifications_user_id_fkey (
+          full_name
+        )
+      `)
+      .eq('notification_type', 'passenger_request')
+      .eq('is_active', true)
+      .eq('departure_airport', request.departure_airport)
+      .eq('destination_airport', request.destination_airport)
+      .neq('user_id', request.passenger_id)
+
+    if (!notificationsError) {
+      console.log('Found traveler passenger_request notifications to check:', travelerNotifications?.length || 0)
+
+      const matchingNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
+
+      // Check each notification for date matching
+      for (const notification of travelerNotifications || []) {
+        // Skip if it's the passenger's own notification
+        if (notification.user_id === request.passenger_id) continue
+
+        // Check date matching with normalized dates
+        let dateMatches = false
+
+        if (notification.date_type === 'specific_date' && notification.specific_date) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            const notifDate = new Date(notification.specific_date)
+            const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notifDateOnly.getTime() === reqDateOnly.getTime()
+          }
+        } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notification.multiple_dates.some(date => {
+              const notifDate = new Date(date)
+              const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+              return notifDateOnly.getTime() === reqDateOnly.getTime()
+            })
+          } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(notifDate => {
+              const nDate = new Date(notifDate)
+              const nDateOnly = new Date(nDate.getFullYear(), nDate.getMonth(), nDate.getDate())
+              return request.multiple_dates!.some(reqDate => {
+                const rDate = new Date(reqDate)
+                const rDateOnly = new Date(rDate.getFullYear(), rDate.getMonth(), rDate.getDate())
+                return nDateOnly.getTime() === rDateOnly.getTime()
+              })
+            })
+          }
+        } else if (notification.date_type === 'month' && notification.notification_month) {
+          if (request.request_type === 'month' && request.request_month) {
+            dateMatches = notification.notification_month === request.request_month
+          } else if (request.request_type === 'specific_date' && request.specific_date) {
+            const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === requestMonth
+          }
+        }
+
+        if (dateMatches) {
+          matchingNotifications.push(notification)
+        }
+      }
+
+      console.log('Found matching traveler passenger_request notifications:', matchingNotifications.length)
+
+      // Send notifications to matching travelers
+      for (const notification of matchingNotifications) {
+        try {
+          await sendTravelerNotificationAlert(
+            notification.user_id,
+            request
+          )
+          notifiedTravelers++
+        } catch (error) {
+          console.error('Error notifying traveler via notification preference:', notification.user_id, error)
+        }
+      }
+    }
+
+    // PART 2: Find matching post notification preferences (traveler_post type)
+    const { data: postNotifications, error: postNotificationsError } = await supabase
       .from('trip_notifications')
       .select(`
         *,
@@ -376,70 +475,77 @@ export const processTravelerNotifications = async (requestId: string): Promise<{
       .eq('is_active', true)
       .eq('departure_airport', request.departure_airport)
       .eq('destination_airport', request.destination_airport)
+      .neq('user_id', request.passenger_id)
 
-    if (notificationsError) {
-      throw new Error(notificationsError.message)
-    }
+    if (!postNotificationsError) {
+      console.log('Found traveler_post notifications to check:', postNotifications?.length || 0)
 
-    console.log('Found traveler notifications to check:', travelerNotifications?.length || 0)
+      const matchingPostNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
 
-    const matchingNotifications: Array<TripNotification & { user_profiles?: { full_name: string } }> = []
+      // Check each post notification for date matching
+      for (const notification of postNotifications || []) {
+        // Check date matching with normalized dates
+        let dateMatches = false
 
-    // Check each notification for date matching
-    for (const notification of travelerNotifications || []) {
-      // Skip if it's the passenger's own notification
-      if (notification.user_id === request.passenger_id) continue
-
-      // Check date matching
-      let dateMatches = false
-
-      if (notification.date_type === 'specific_date' && notification.specific_date) {
-        if (request.request_type === 'specific_date' && request.specific_date) {
-          dateMatches = new Date(notification.specific_date).toDateString() === new Date(request.specific_date).toDateString()
+        if (notification.date_type === 'specific_date' && notification.specific_date) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            const notifDate = new Date(notification.specific_date)
+            const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notifDateOnly.getTime() === reqDateOnly.getTime()
+          }
+        } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
+          if (request.request_type === 'specific_date' && request.specific_date) {
+            const reqDate = new Date(request.specific_date)
+            const reqDateOnly = new Date(reqDate.getFullYear(), reqDate.getMonth(), reqDate.getDate())
+            dateMatches = notification.multiple_dates.some(date => {
+              const notifDate = new Date(date)
+              const notifDateOnly = new Date(notifDate.getFullYear(), notifDate.getMonth(), notifDate.getDate())
+              return notifDateOnly.getTime() === reqDateOnly.getTime()
+            })
+          } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
+            dateMatches = notification.multiple_dates.some(notifDate => {
+              const nDate = new Date(notifDate)
+              const nDateOnly = new Date(nDate.getFullYear(), nDate.getMonth(), nDate.getDate())
+              return request.multiple_dates!.some(reqDate => {
+                const rDate = new Date(reqDate)
+                const rDateOnly = new Date(rDate.getFullYear(), rDate.getMonth(), rDate.getDate())
+                return nDateOnly.getTime() === rDateOnly.getTime()
+              })
+            })
+          }
+        } else if (notification.date_type === 'month' && notification.notification_month) {
+          if (request.request_type === 'month' && request.request_month) {
+            dateMatches = notification.notification_month === request.request_month
+          } else if (request.request_type === 'specific_date' && request.specific_date) {
+            const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
+            dateMatches = notification.notification_month === requestMonth
+          }
         }
-      } else if (notification.date_type === 'multiple_dates' && notification.multiple_dates) {
-        if (request.request_type === 'specific_date' && request.specific_date) {
-          dateMatches = notification.multiple_dates.some(date => 
-            new Date(date).toDateString() === new Date(request.specific_date!).toDateString()
+
+        if (dateMatches) {
+          matchingPostNotifications.push(notification)
+        }
+      }
+
+      console.log('Found matching traveler_post notifications:', matchingPostNotifications.length)
+
+      // Send notifications to matching travelers with post notifications
+      for (const notification of matchingPostNotifications) {
+        try {
+          await sendTravelerNotificationAlert(
+            notification.user_id,
+            request
           )
-        } else if (request.request_type === 'multiple_dates' && request.multiple_dates) {
-          dateMatches = notification.multiple_dates.some(notifDate =>
-            request.multiple_dates!.some(reqDate =>
-              new Date(notifDate).toDateString() === new Date(reqDate).toDateString()
-            )
-          )
+          notifiedTravelers++
+        } catch (error) {
+          console.error('Error notifying traveler via post notification preference:', notification.user_id, error)
         }
-      } else if (notification.date_type === 'month' && notification.notification_month) {
-        if (request.request_type === 'month' && request.request_month) {
-          dateMatches = notification.notification_month === request.request_month
-        } else if (request.request_type === 'specific_date' && request.specific_date) {
-          const requestMonth = `${new Date(request.specific_date).getFullYear()}-${String(new Date(request.specific_date).getMonth() + 1).padStart(2, '0')}`
-          dateMatches = notification.notification_month === requestMonth
-        }
-      }
-
-      if (dateMatches) {
-        matchingNotifications.push(notification)
       }
     }
 
-    console.log('Found matching traveler notifications:', matchingNotifications.length)
-
-    // Send notifications to matching travelers
-    let notifiedTravelers = 0
-    for (const notification of matchingNotifications) {
-      try {
-        await sendTravelerNotificationAlert(
-          notification.user_id,
-          request
-        )
-        notifiedTravelers++
-      } catch (error) {
-        console.error('Error notifying traveler via notification preference:', notification.user_id, error)
-      }
-    }
-
-    console.log('Notified travelers via notifications:', notifiedTravelers)
+    console.log('Total notified travelers via notifications:', notifiedTravelers)
 
     return {
       success: true,
@@ -458,18 +564,21 @@ export const sendTravelerNotificationAlert = async (
   try {
     const passengerName = request.user_profiles?.full_name || await getUserDisplayName(request.passenger_id)
     
-    const dateInfo = request.request_type === 'specific_date' 
-      ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}`
-      : request.request_type === 'month'
-        ? `in ${request.request_month}`
-        : 'on multiple dates'
+    let dateInfo = 'on multiple dates'
+    if (request.request_type === 'specific_date' && request.specific_date) {
+      const [year, month, day] = request.specific_date.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      dateInfo = `on ${date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}`
+    } else if (request.request_type === 'month') {
+      dateInfo = `in ${request.request_month}`
+    }
 
-    const timeInfo = request.departure_time_preference 
+    const timeInfo = request.departure_time_preference
       ? ` at ${request.departure_time_preference}`
       : ''
 
@@ -481,7 +590,7 @@ You have a notification set up for this route and a passenger is looking for ass
 📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
 📅 **When:** ${dateInfo}${timeInfo}
 
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this assistance, post a matching trip or contact ${passengerName} directly!
+${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}[user_id:${request.passenger_id}]
 
 📱 **Manage Notifications:** You can manage your trip notification preferences in your Profile → Notifications tab.`
 

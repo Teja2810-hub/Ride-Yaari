@@ -145,7 +145,9 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
       return `car ride from ${ride.from_location} to ${ride.to_location} on ${new Date(ride.departure_date_time).toLocaleDateString()}`
     }
     if (trip) {
-      return `airport trip from ${trip.leaving_airport} to ${trip.destination_airport} on ${new Date(trip.travel_date).toLocaleDateString()}`
+      const [year, month, day] = trip.travel_date.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      return `airport trip from ${trip.leaving_airport} to ${trip.destination_airport} on ${date.toLocaleDateString()}`
     }
     return 'ride'
   }
@@ -188,18 +190,6 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
       if (error) throw error
 
-      // Send system message to passenger
-      const userRole = showConfirmModal.type === 'cancel' ? 'owner' : 'owner'
-      const action = showConfirmModal.type === 'cancel' ? 'cancel' : showConfirmModal.type
-      
-      console.log('PassengerManagement: Sending enhanced system message:', { action, userRole, confirmationId: showConfirmModal.confirmation.id })
-      await sendEnhancedSystemMessage(
-        action as 'accept' | 'reject' | 'cancel',
-        userRole,
-        user.id,
-        showConfirmModal.confirmation.passenger_id,
-        showConfirmModal.confirmation
-      )
 
       console.log('PassengerManagement: Action completed, refreshing data')
       fetchConfirmations()
@@ -247,17 +237,6 @@ export default function PassengerManagement({ ride, trip, onStartChat, onUpdate 
 
       if (error) throw error
 
-      // Send system message to passenger
-      const userRole = disclaimerAction === 'cancel' ? 'owner' : 'owner'
-      const action = disclaimerAction === 'cancel' ? 'cancel' : disclaimerAction
-      
-      await sendEnhancedSystemMessage(
-        action as 'accept' | 'reject' | 'cancel',
-        userRole,
-        user.id,
-        selectedConfirmation.passenger_id,
-        selectedConfirmation
-      )
 
       fetchConfirmations()
       if (onUpdate) onUpdate()

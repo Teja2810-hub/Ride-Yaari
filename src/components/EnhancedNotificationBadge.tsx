@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, X, Check, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, ListFilter as Filter, BookMarked as MarkAsRead, Zap } from 'lucide-react'
+import { Bell, X, Check, Clock, TriangleAlert as AlertTriangle, Car, Plane, MessageCircle, ListFilter as Filter, BookMarked as MarkAsRead, Zap, History } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { notificationService, NotificationStats } from '../utils/notificationService'
 import { RideConfirmation } from '../types'
+import NotificationHistory from './NotificationHistory'
 
 interface NotificationItem {
   id: string
@@ -40,6 +41,7 @@ export default function EnhancedNotificationBadge({
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'high' | 'confirmations' | 'messages'>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   const showDropdown = controlledIsOpen !== undefined ? controlledIsOpen : internalShowDropdown
   const setShowDropdown = (value: boolean) => {
@@ -218,39 +220,6 @@ export default function EnhancedNotificationBadge({
         .gte('updated_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()) // Last 48 hours
         .order('updated_at', { ascending: false })
 
-      if (statusUpdates) {
-        statusUpdates.forEach(confirmation => {
-          const ride = confirmation.car_rides
-          const trip = confirmation.trips
-          const rideType = ride ? 'car ride' : 'airport trip'
-          const route = ride 
-            ? `${ride.from_location} → ${ride.to_location}`
-            : `${trip?.leaving_airport} → ${trip?.destination_airport}`
-
-          const isAccepted = confirmation.status === 'accepted'
-          
-          notifications.push({
-            id: `status-${confirmation.id}`,
-            type: 'confirmation_update',
-            title: isAccepted ? `🎉 Ride Confirmed!` : `😔 Request Declined`,
-            message: isAccepted 
-              ? `Your request for the ${route} has been accepted! Coordinate pickup details now.`
-              : `Your request for the ${route} was declined. You can request again or find other rides.`,
-            timestamp: confirmation.updated_at,
-            read: false,
-            priority: isAccepted ? 'high' : 'medium',
-            actionData: {
-              confirmationId: confirmation.id,
-              userId: confirmation.ride_owner_id,
-              userName: confirmation.user_profiles?.full_name || 'Ride Owner',
-              ride: ride,
-              trip: trip
-            },
-            rideData: ride,
-            tripData: trip
-          })
-        })
-      }
 
       // Fetch recent unread messages (MEDIUM PRIORITY)
       const { data: unreadMessages } = await supabase
@@ -464,6 +433,30 @@ export default function EnhancedNotificationBadge({
   }
 
   const filteredNotifications = getFilteredNotifications()
+
+  if (showHistory) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto">
+        <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl m-4">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-xl flex items-center justify-between z-10">
+            <div className="flex items-center space-x-3">
+              <History size={24} className="text-blue-600" />
+              <h2 className="text-2xl font-bold text-gray-900">Notification History</h2>
+            </div>
+            <button
+              onClick={() => setShowHistory(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          <div className="p-6">
+            <NotificationHistory onStartChat={onStartChat} />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative">
@@ -698,35 +691,43 @@ export default function EnhancedNotificationBadge({
           </div>
 
           {/* Footer Actions */}
-          {stats.total > 0 && (
-            <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">
-                  {filteredNotifications.filter(n => !n.read).length} unread
-                </span>
-                <div className="flex items-center space-x-3">
+          <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">
+                {filteredNotifications.filter(n => !n.read).length} unread
+              </span>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDropdown(false)
+                    setShowHistory(true)
+                  }}
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <History size={14} />
+                  <span>History</span>
+                </button>
+                <button
+                  onClick={fetchNotifications}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Refresh
+                </button>
+                {onViewConfirmations && stats.pendingConfirmations > 0 && (
                   <button
-                    onClick={fetchNotifications}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    onClick={() => {
+                      if (onClose) onClose()
+                      setShowDropdown(false)
+                      onViewConfirmations()
+                    }}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded-lg font-medium hover:bg-yellow-600 transition-colors animate-pulse"
                   >
-                    Refresh
+                    Review {stats.pendingConfirmations} Request{stats.pendingConfirmations !== 1 ? 's' : ''}
                   </button>
-                  {onViewConfirmations && stats.pendingConfirmations > 0 && (
-                    <button
-                      onClick={() => {
-                        if (onClose) onClose()
-                        setShowDropdown(false)
-                        onViewConfirmations()
-                      }}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded-lg font-medium hover:bg-yellow-600 transition-colors animate-pulse"
-                    >
-                      Review {stats.pendingConfirmations} Request{stats.pendingConfirmations !== 1 ? 's' : ''}
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

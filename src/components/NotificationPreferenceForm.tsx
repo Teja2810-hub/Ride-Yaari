@@ -14,14 +14,34 @@ interface NotificationPreferenceFormProps {
   onChange: (data: NotificationPreferenceData) => void
   type: 'ride' | 'trip'
   className?: string
+  defaultDate?: string
+  additionalFields?: React.ReactNode
 }
 
 export default function NotificationPreferenceForm({
   value,
   onChange,
   type,
-  className = ''
+  className = '',
+  defaultDate,
+  additionalFields
 }: NotificationPreferenceFormProps) {
+  // Set default date when enabled if not already set
+  React.useEffect(() => {
+    if (value.enabled && defaultDate) {
+      if (value.dateType === 'specific_date' && !value.specificDate) {
+        onChange({
+          ...value,
+          specificDate: defaultDate
+        })
+      } else if (value.dateType === 'multiple_dates' && value.multipleDates.length === 1 && !value.multipleDates[0]) {
+        onChange({
+          ...value,
+          multipleDates: [defaultDate]
+        })
+      }
+    }
+  }, [value.enabled, defaultDate, value.dateType])
   const addMultipleDate = () => {
     if (value.multipleDates.length < 5) {
       onChange({
@@ -67,9 +87,9 @@ export default function NotificationPreferenceForm({
 
   const getHowItWorksText = () => {
     if (type === 'ride') {
-      return 'When passengers request rides matching your route and selected dates, you\'ll receive notifications. This helps you find passengers even after posting your ride.'
+      return 'When passengers request rides matching your route and selected dates, you\'ll receive notifications. This helps you find passengers even after posting your ride. (This only works for the rides requested by users from now and this feature cannot send notifications for the rides which are already available even though they are matching your ride, to check the available requests, go to Find Ride → Search → Ride Requests)'
     } else {
-      return 'When passengers request assistance on trips matching your route and selected dates, you\'ll receive notifications. This helps you find people who need your travel assistance.'
+      return 'When passengers request assistance on trips matching your route and selected dates, you\'ll receive notifications. This helps you find people who need your travel assistance. (This only works for the trips requested by users from now and this feature cannot send notifications for the trips which are already available even though they are matching with your trip, to check the available requests, go to Find Trip → Search → Trip Requests)'
     }
   }
 
@@ -219,9 +239,15 @@ export default function NotificationPreferenceForm({
             </div>
           )}
 
+          {additionalFields && (
+            <div className="mt-4">
+              {additionalFields}
+            </div>
+          )}
+
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <p className="text-sm text-green-800">
-              <strong>✅ Benefits:</strong> Stay informed about {type === 'ride' ? 'ride' : 'trip'} requests even after posting. 
+              <strong>✅ Benefits:</strong> Stay informed about {type === 'ride' ? 'ride' : 'trip'} requests even after posting.
               You can manage these notifications anytime in your Profile → Manage Alerts section.
             </p>
           </div>

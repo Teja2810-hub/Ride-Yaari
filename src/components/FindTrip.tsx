@@ -249,13 +249,14 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
   const handleConfirmChat = () => {
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-trip', user?.id, selectedChatUser.userId)
-    onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, selectedChatTrip || undefined)
+    onStartChat(selectedChatUser.userId, selectedChatUser.userName, undefined, 'trip' as any)
   }
 
   const handleConfirmChatWithParams = (userId: string, userName: string, trip?: Trip) => {
     setShowDisclaimer(false)
     popupManager.markDisclaimerShown('chat-trip', user?.id, userId)
-    onStartChat(userId, userName, undefined, trip)
+    // Pass 'trip' as the chatType indicator
+    onStartChat(userId, userName, undefined, 'trip' as any)
   }
 
 

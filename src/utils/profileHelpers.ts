@@ -14,10 +14,6 @@ export interface PasswordChangeData {
   newPassword: string
 }
 
-export interface EmailChangeData {
-  newEmail: string
-  currentPassword: string
-}
 
 /**
  * Update user profile information
@@ -131,63 +127,6 @@ export const changeUserPassword = async (
   })
 }
 
-/**
- * Initiate email change process with verification
- */
-export const initiateEmailChange = async (
-  userId: string,
-  emailData: EmailChangeData
-): Promise<{ success: boolean; error?: string; verificationSent?: boolean }> => {
-  return retryWithBackoff(async () => {
-    // Get current user email
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError || !user?.email) {
-      throw new Error('Failed to get current user information')
-    }
-
-    // Verify current password
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: emailData.currentPassword
-    })
-
-    if (verifyError) {
-      throw new Error('Current password is incorrect')
-    }
-
-    // Generate verification token
-    const verificationToken = Math.random().toString(36).substring(2, 15) + 
-                             Math.random().toString(36).substring(2, 15)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-    // Store email change request
-    const { error: insertError } = await supabase
-      .from('email_change_verification')
-      .insert({
-        user_id: userId,
-        old_email: user.email,
-        new_email: emailData.newEmail,
-        verification_token: verificationToken,
-        expires_at: expiresAt.toISOString()
-      })
-
-    if (insertError) {
-      throw new Error(insertError.message)
-    }
-
-    // Send verification email using Supabase auth
-    const { error: emailError } = await supabase.auth.updateUser({
-      email: emailData.newEmail
-    })
-
-    if (emailError) {
-      throw new Error(emailError.message)
-    }
-
-    return { success: true, verificationSent: true }
-  })
-}
 
 /**
  * Upload profile image to Supabase Storage
@@ -332,35 +271,6 @@ export const validatePasswordData = (data: PasswordChangeData): { isValid: boole
   }
 }
 
-/**
- * Validate email data
- */
-export const validateEmailData = (data: EmailChangeData, currentEmail: string): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = []
-
-  if (!data.newEmail) {
-    errors.push('New email address is required')
-  }
-
-  if (!data.currentPassword) {
-    errors.push('Current password is required for email changes')
-  }
-
-  // Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (data.newEmail && !emailRegex.test(data.newEmail)) {
-    errors.push('Please enter a valid email address')
-  }
-
-  if (data.newEmail === currentEmail) {
-    errors.push('New email must be different from current email')
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
-}
 
 /**
  * Get password strength indicator

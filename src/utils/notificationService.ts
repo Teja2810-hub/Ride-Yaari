@@ -58,9 +58,9 @@ export class NotificationService {
         receiverId: receiverId.slice(0, 8),
         additionalContext
       })
-      
+
       const template = getSystemMessageTemplate(action, userRole, ride, trip)
-      
+
       // Enhanced message with ride details and context
       let enhancedMessage = template.message
       if (additionalContext) {
@@ -77,7 +77,7 @@ export class NotificationService {
           message_type: 'system',
           is_read: false
         })
-      
+
       if (error) {
         console.error('Error sending enhanced system message:', error)
         throw error
@@ -85,16 +85,34 @@ export class NotificationService {
 
       console.log('NotificationService: System message sent successfully')
 
-      // Queue browser notification
-      await this.queueBrowserNotification({
-        userId: receiverId,
-        title: template.title,
-        message: template.message,
-        type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
-        priority: action === 'accept' ? 'high' : action === 'request' ? 'high' : 'medium',
-        rideData: ride,
-        tripData: trip
-      })
+      // Add notification history entry for receiver
+      try {
+        const { data: senderProfile } = await supabase
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', senderId)
+          .single()
+
+        await supabase.from('user_notifications').insert({
+          user_id: receiverId,
+          notification_type: 'system',
+          title: template.title,
+          message: template.message,
+          priority: template.priority,
+          is_read: false,
+          related_user_id: senderId,
+          related_user_name: senderProfile?.full_name || 'User',
+          action_data: {
+            action,
+            userRole,
+            rideId: ride?.id,
+            tripId: trip?.id,
+            additionalContext
+          }
+        })
+      } catch (notifError) {
+        console.warn('Failed to create notification history:', notifError)
+      }
 
       console.log(`Enhanced system message sent: ${template.title}`)
     } catch (error) {
@@ -219,55 +237,67 @@ export class NotificationService {
     additionalContext?: string
   ): Promise<void> {
     try {
-      // Get enhanced template for browser notification
       const template = getSystemMessageTemplate(action, userRole, ride, trip, true)
-      
-      // Get user names for personalized notifications
+
       const { data: senderProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', senderId)
         .single()
-      
+
       const { data: receiverProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', receiverId)
         .single()
-      
+
       const senderName = senderProfile?.full_name || 'User'
       const receiverName = receiverProfile?.full_name || 'User'
-      
-      // Create personalized notification title and message
+
       let notificationTitle = template.title
       let notificationMessage = template.message
-      
+      let notificationType = 'confirmation_request'
+
       if (action === 'request' && userRole === 'owner') {
         notificationTitle = `🚨 New ${ride ? 'car ride' : 'airport trip'} request`
         notificationMessage = `${senderName} wants to join your ${ride ? 'car ride' : 'airport trip'}. Tap to review and respond.`
-      } else if (action === 'accept' && userRole === 'passenger') {
-        notificationTitle = '🎉 Request Accepted!'
-        notificationMessage = `Great news! Your request has been accepted. You can now coordinate details.`
-      } else if (action === 'reject' && userRole === 'passenger') {
-        notificationTitle = '😔 Request Declined'
-        notificationMessage = `Your request was declined. You can try requesting again or find other options.`
+        notificationType = ride ? 'ride_request_alert' : 'trip_request_alert'
+
+        const priority = 'high'
+
+        await supabase.from('user_notifications').insert({
+          user_id: receiverId,
+          notification_type: notificationType,
+          title: notificationTitle,
+          message: notificationMessage,
+          priority: priority,
+          is_read: false,
+          action_data: {
+            action,
+            userRole,
+            senderId,
+            rideId: ride?.id,
+            tripId: trip?.id,
+            additionalContext
+          },
+          related_user_id: senderId,
+          related_user_name: senderName
+        })
+
+        await this.queueBrowserNotification({
+          userId: receiverId,
+          title: notificationTitle,
+          message: notificationMessage,
+          type: 'confirmation_request',
+          priority: priority,
+          rideData: ride,
+          tripData: trip
+        })
       }
-      
-      // Queue browser notification
-      await this.queueBrowserNotification({
-        userId: receiverId,
-        title: notificationTitle,
-        message: notificationMessage,
-        type: action === 'request' || action === 'offer' ? 'confirmation_request' : 'confirmation_update',
-        priority: action === 'request' ? 'high' : action === 'accept' ? 'high' : 'medium',
-        rideData: ride,
-        tripData: trip
-      })
-      
+
       console.log(`Comprehensive notification queued for ${action} by ${userRole}`)
     } catch (error) {
       console.error('Failed to send comprehensive notification:', error)
-      // Don't throw - we don't want to break the main flow if notifications fail
     }
   }
 

@@ -59,12 +59,23 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
     type: 'trip' | 'ride'
     id: string
     name: string
-  }>({ show: false, type: 'trip', id: '', name: '' })
+    hasAlerts?: boolean
+  }>({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })
 
   useEffect(() => {
     if (user) {
       fetchUserData()
     }
+  }, [user])
+
+  // If a re-render happens due to auth changes while editing, keep the edit modal open
+  useEffect(() => {
+    try {
+      const keep = sessionStorage.getItem('keepProfileEditOpen')
+      if (keep === '1') {
+        setShowProfileEdit(true)
+      }
+    } catch {}
   }, [user])
 
   useEffect(() => {
@@ -252,9 +263,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
   }
 
   const handleDeleteTrip = async (tripId: string) => {
-    setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })
+    setShowDeleteModal({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })
 
     try {
+      // Delete associated alerts first
+      await supabase
+        .from('trip_notifications')
+        .delete()
+        .eq('trip_id', tripId)
+
+      // Delete trip (cascades will handle confirmations)
       const { error } = await supabase
         .from('trips')
         .delete()
@@ -263,15 +281,23 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       if (error) throw error
 
       setTrips(trips.filter(trip => trip.id !== tripId))
+      await fetchUserData()
     } catch (error: any) {
       setError('Failed to delete trip: ' + error.message)
     }
   }
 
   const handleDeleteRide = async (rideId: string) => {
-    setShowDeleteModal({ show: false, type: 'ride', id: '', name: '' })
+    setShowDeleteModal({ show: false, type: 'ride', id: '', name: '', hasAlerts: false })
 
     try {
+      // Delete associated alerts first
+      await supabase
+        .from('ride_notifications')
+        .delete()
+        .eq('ride_id', rideId)
+
+      // Delete ride (cascades will handle confirmations)
       const { error } = await supabase
         .from('car_rides')
         .delete()
@@ -280,13 +306,36 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       if (error) throw error
 
       setRides(rides.filter(ride => ride.id !== rideId))
+      await fetchUserData()
     } catch (error: any) {
       setError('Failed to delete ride: ' + error.message)
     }
   }
 
-  const showDeleteConfirmation = (type: 'trip' | 'ride', id: string, name: string) => {
-    setShowDeleteModal({ show: true, type, id, name })
+  const showDeleteConfirmation = async (type: 'trip' | 'ride', id: string, name: string) => {
+    // Check if there are associated alerts
+    let hasAlerts = false
+    try {
+      if (type === 'trip') {
+        const { data } = await supabase
+          .from('trip_notifications')
+          .select('id')
+          .eq('trip_id', id)
+          .limit(1)
+        hasAlerts = !!data && data.length > 0
+      } else {
+        const { data } = await supabase
+          .from('ride_notifications')
+          .select('id')
+          .eq('ride_id', id)
+          .limit(1)
+        hasAlerts = !!data && data.length > 0
+      }
+    } catch (e) {
+      console.error('Error checking for alerts:', e)
+    }
+
+    setShowDeleteModal({ show: true, type, id, name, hasAlerts })
   }
 
 
@@ -315,7 +364,16 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
 
   const tabs = allTabs.filter(tab => !tab.adminOnly || userProfile?.is_admin)
 
-  if (loading) {
+  // Skip full-screen loader if we’re in the persisted email-change flow
+  const keepEditingOpen = (() => {
+    try {
+      return sessionStorage.getItem('keepProfileEditOpen') === '1'
+    } catch {
+      return false
+    }
+  })()
+
+  if (loading && !keepEditingOpen) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -380,7 +438,15 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                       )}
                     </div>
                   </div>
-                  <p className="text-blue-100 text-xs sm:text-sm text-right">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                  <div className="text-right">
+                    <p className="text-blue-100 text-xs sm:text-sm">Member since {new Date(userProfile?.created_at || '').toLocaleDateString()}</p>
+                    <button
+                      onClick={signOut}
+                      className="text-blue-100 hover:text-white text-xs sm:text-sm mt-2 underline transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -791,9 +857,13 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
       {/* Profile Edit Modal */}
       {showProfileEdit && (
         <ProfileEditForm
-          onClose={() => setShowProfileEdit(false)}
+          onClose={() => {
+            setShowProfileEdit(false)
+            try { sessionStorage.removeItem('keepProfileEditOpen') } catch {}
+          }}
           onSuccess={() => {
             setShowProfileEdit(false)
+            try { sessionStorage.removeItem('keepProfileEditOpen') } catch {}
             fetchUserData()
           }}
         />
@@ -823,6 +893,9 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     <li>• All associated confirmations will be removed</li>
                     <li>• Chat conversations will remain but the {showDeleteModal.type} reference will be lost</li>
                     <li>• Passengers will be notified if they had confirmed requests</li>
+                    {showDeleteModal.hasAlerts && (
+                      <li className="font-bold text-red-900">• This {showDeleteModal.type} has active notification alerts that will be deleted</li>
+                    )}
                   </ul>
                 </div>
               </div>
@@ -830,7 +903,7 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
             
             <div className="flex space-x-3">
               <button
-                onClick={() => setShowDeleteModal({ show: false, type: 'trip', id: '', name: '' })}
+                onClick={() => setShowDeleteModal({ show: false, type: 'trip', id: '', name: '', hasAlerts: false })}
                 className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel

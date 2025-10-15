@@ -171,21 +171,9 @@ export function useConfirmationFlow({
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
-        // Send comprehensive notification to passenger
-        await notificationService.sendComprehensiveNotification(
-          'accept',
-          'owner', // This should be 'owner' since we're notifying the passenger about owner's acceptance
-          ownerId,
-          passengerId,
-          ride,
-          trip,
-          `Request accepted by ride owner`
-        )
-
-        // Send system chat message visible to both parties
-        const rideDetails = ride 
+        const rideDetails = ride
           ? `car ride from ${ride.from_location} to ${ride.to_location}`
-          : trip 
+          : trip
             ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
             : 'ride'
 
@@ -198,6 +186,16 @@ export function useConfirmationFlow({
             message_type: 'system',
             is_read: false
           })
+
+        await notificationService.sendComprehensiveNotification(
+          'accept',
+          'owner',
+          ownerId,
+          passengerId,
+          ride,
+          trip,
+          `Request accepted by ride owner`
+        )
       }
 
       if (onUpdate) onUpdate()
@@ -242,21 +240,9 @@ export function useConfirmationFlow({
         const ride = confirmation.car_rides
         const trip = confirmation.trips
 
-        // Send comprehensive notification to passenger
-        await notificationService.sendComprehensiveNotification(
-          'reject',
-          'owner', // This should be 'owner' since we're notifying the passenger about owner's rejection
-          ownerId,
-          passengerId,
-          ride,
-          trip,
-          `Request rejected by ride owner`
-        )
-
-        // Send system chat message visible to both parties
-        const rideDetails = ride 
+        const rideDetails = ride
           ? `car ride from ${ride.from_location} to ${ride.to_location}`
-          : trip 
+          : trip
             ? `airport trip from ${trip.leaving_airport} to ${trip.destination_airport}`
             : 'ride'
 
@@ -269,6 +255,16 @@ export function useConfirmationFlow({
             message_type: 'system',
             is_read: false
           })
+
+        await notificationService.sendComprehensiveNotification(
+          'reject',
+          'owner',
+          ownerId,
+          passengerId,
+          ride,
+          trip,
+          `Request rejected by ride owner`
+        )
       }
 
       if (onUpdate) onUpdate()

@@ -45,7 +45,13 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
       longitude: ride.to_longitude || null
     })
     
-    setDepartureDateTime(ride.departure_date_time.slice(0, 16)) // Format for datetime-local
+    const localDateTime = new Date(ride.departure_date_time)
+    const year = localDateTime.getFullYear()
+    const month = String(localDateTime.getMonth() + 1).padStart(2, '0')
+    const day = String(localDateTime.getDate()).padStart(2, '0')
+    const hours = String(localDateTime.getHours()).padStart(2, '0')
+    const minutes = String(localDateTime.getMinutes()).padStart(2, '0')
+    setDepartureDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
     setPrice(ride.price.toString())
     setCurrency(ride.currency || 'USD')
     setNegotiable(ride.negotiable || false)
@@ -94,7 +100,7 @@ export default function EditRide({ onBack, ride }: EditRideProps) {
           from_longitude: fromLocation.longitude,
           to_latitude: toLocation.latitude,
           to_longitude: toLocation.longitude,
-          departure_date_time: new Date(departureDateTime).toISOString(),
+          departure_date_time: departureDateTime + ':00.000Z',
           price: parseFloat(price),
           currency: currency,
           negotiable: negotiable,

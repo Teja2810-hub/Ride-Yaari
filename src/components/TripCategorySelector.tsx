@@ -53,7 +53,10 @@ export default function TripCategorySelector({
   }, [offeredTrips, joinedTrips, requestedTrips])
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return ''
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -75,11 +78,12 @@ export default function TripCategorySelector({
 
   const isExpiredOrExpiringSoon = (trip: Trip): boolean => {
     const now = new Date()
-    const travelDate = new Date(trip.travel_date)
-    
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const travelDate = new Date(year, month - 1, day)
+
     // Check if trip is in the past
     if (travelDate < now) return true
-    
+
     // Check if trip is within 1 hour (for same-day trips)
     const hoursUntilTravel = (travelDate.getTime() - now.getTime()) / (1000 * 60 * 60)
     return hoursUntilTravel <= 1
@@ -87,7 +91,8 @@ export default function TripCategorySelector({
 
   const getTripStatus = (trip: Trip): { status: 'open' | 'closed' | 'expired'; color: string; icon: React.ReactNode; label: string } => {
     const now = new Date()
-    const travelDate = new Date(trip.travel_date)
+    const [year, month, day] = trip.travel_date.split('-').map(Number)
+    const travelDate = new Date(year, month - 1, day)
     
     if (trip.is_closed) {
       return {
@@ -283,11 +288,11 @@ export default function TripCategorySelector({
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Trips You're Offering</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Trips You're Offering</h2>
           </div>
-          <span className="text-gray-600">{offeredTrips.length} trip{offeredTrips.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{offeredTrips.length} trip{offeredTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
         {offeredTrips.length === 0 ? (
@@ -323,9 +328,31 @@ export default function TripCategorySelector({
                             {formatDate(trip.travel_date)}
                             {trip.departure_time && ` at ${trip.departure_time}`}
                           </p>
+                          {/* Mobile-only stacked status/price and Show Details */}
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${tripStatus.color}`}>
+                              {tripStatus.icon}
+                              <span>{tripStatus.label}</span>
+                            </div>
+                            {trip.price && (
+                              <span className="text-sm font-medium text-green-600">
+                                {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
+                              </span>
+                            )}
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">
+                                {isExpanded ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="hidden sm:flex items-center space-x-3">
                         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${tripStatus.color}`}>
                           {tripStatus.icon}
                           <span>{tripStatus.label}</span>
@@ -418,7 +445,8 @@ export default function TripCategorySelector({
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center justify-between">
+                        {/* Desktop/Laptop layout (unchanged) */}
+                        <div className="hidden sm:flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             {tripStatus.status !== 'expired' && (
                               <TripClosureControls
@@ -465,6 +493,59 @@ export default function TripCategorySelector({
                               <Trash2 size={16} />
                               <span>Delete</span>
                             </button>
+                          </div>
+                        </div>
+
+                        {/* Mobile layout: two columns, left = Close + View History, right = Edit + Delete stacked */}
+                        <div className="sm:hidden mt-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col space-y-2">
+                              {tripStatus.status !== 'expired' && (
+                                <TripClosureControls
+                                  trip={trip}
+                                  onUpdate={onRefresh}
+                                />
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onViewTripHistory(trip)
+                                }}
+                                className="flex items-center justify-start space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                              >
+                                <History size={16} />
+                                <span>View History</span>
+                              </button>
+                            </div>
+                            <div className="flex flex-col items-end space-y-2">
+                              {tripStatus.status === 'open' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditTrip(trip)
+                                  }}
+                                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                                >
+                                  <Edit size={16} />
+                                  <span>Edit</span>
+                                </button>
+                              ) : (
+                                <div className="flex items-center space-x-2 text-gray-400">
+                                  <Edit size={16} />
+                                  <span className="text-sm">{tripStatus.label}</span>
+                                </div>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onDeleteTrip(trip.id)
+                                }}
+                                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                              >
+                                <Trash2 size={16} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
@@ -542,11 +623,11 @@ export default function TripCategorySelector({
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Trips You've Joined</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Trips You've Joined</h2>
           </div>
-          <span className="text-gray-600">{joinedTrips.length} trip{joinedTrips.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{joinedTrips.length} trip{joinedTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
         {joinedTrips.length === 0 ? (
@@ -591,9 +672,25 @@ export default function TripCategorySelector({
                           <p className="text-gray-600">
                             {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
                           </p>
+                          {/* Mobile-only stacked status and Show Details */}
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${getStatusColor(confirmation.status)}`}>
+                              <span className="capitalize">{confirmation.status}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">
+                                {isExpanded ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {isExpanded ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="hidden sm:flex items-center space-x-3">
                         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
                           <span className="capitalize">{confirmation.status}</span>
                         </div>
@@ -662,19 +759,6 @@ export default function TripCategorySelector({
                               )}
                             </div>
                           </div>
-
-                          {trip.price && (
-                            <div className="mt-3 pt-3 border-t border-blue-200">
-                              <span className="text-sm font-medium text-green-600">
-                                Service Price: {getCurrencySymbol(trip.currency || 'USD')}{trip.price}
-                                {trip.negotiable && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                                    Negotiable
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-                          )}
                         </div>
 
                         {/* Request Timeline */}
@@ -754,11 +838,11 @@ export default function TripCategorySelector({
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowRight size={20} className="rotate-180" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Your Trip Requests</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Your Trip Requests</h2>
           </div>
-          <span className="text-gray-600">{requestedTrips.length} request{requestedTrips.length !== 1 ? 's' : ''}</span>
+          <span className="text-gray-600 text-xs sm:text-base">{requestedTrips.length} request{requestedTrips.length !== 1 ? 's' : ''}</span>
         </div>
 
         {requestedTrips.length === 0 ? (
@@ -776,7 +860,7 @@ export default function TripCategorySelector({
                   className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleRequestedTrip(request.id)}
                 >
-                  <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
                         <Send size={24} className="text-white" />
@@ -791,15 +875,33 @@ export default function TripCategorySelector({
                             <span> • {request.departure_time_preference}</span>
                           )}
                         </p>
+                        {/* Mobile-only stacked status and Show Details */}
+                        {(() => { const isExpired = !!(request.expires_at && new Date(request.expires_at) <= new Date()); return (
+                          <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              <span>{isExpired ? 'Expired' : request.is_active ? 'Active' : 'Inactive'}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">
+                                {expandedRequestedTrip === request.id ? 'Hide Details' : 'Show Details'}
+                              </span>
+                              {expandedRequestedTrip === request.id ? (
+                                <ChevronUp size={18} className="text-gray-400" />
+                              ) : (
+                                <ChevronDown size={18} className="text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+                        )})()}
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                        request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        <span>{request.is_active ? 'Active' : 'Inactive'}</span>
-                      </div>
+                    <div className="hidden sm:flex items-center space-x-3">
+                      {(() => { const isExpired = !!(request.expires_at && new Date(request.expires_at) <= new Date()); return (
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          <span>{isExpired ? 'Expired' : request.is_active ? 'Active' : 'Inactive'}</span>
+                        </div>
+                      )})()}
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-500">
                           {expandedRequestedTrip === request.id ? 'Hide Details' : 'Show Details'}

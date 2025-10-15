@@ -3,6 +3,7 @@ import { retryWithBackoff } from './errorUtils'
 import { CarRide, Trip, RideRequest, TripRequest } from '../types'
 import { haversineDistance } from './distance'
 import { getUserDisplayName } from './messageTemplates'
+import { formatDateWithoutTimezone } from './dateHelpers'
 
 /**
  * Find and notify users when new rides match their requests
@@ -428,38 +429,44 @@ const sendRideMatchNotification = async (
   ride: CarRide,
   driverName: string
 ): Promise<void> => {
-  const message = `🎉 **Matching Ride Found!**
+  const rideDate = new Date(ride.departure_date_time)
+  const dateStr = rideDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const timeStr = rideDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 
-A driver has posted a ride that matches your request!
-
-🚗 **Driver:** ${driverName}
-📍 **Route:** ${ride.from_location} → ${ride.to_location}
-📅 **Date:** ${new Date(ride.departure_date_time).toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-})}
-⏰ **Time:** ${new Date(ride.departure_date_time).toLocaleTimeString('en-US', {
-  hour: 'numeric',
-  minute: '2-digit',
-  hour12: true
-})}
-💰 **Price:** ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}
-
-💡 **Action:** Contact ${driverName} to request this ride!`
+  const title = '🎉 Matching Ride Found!'
+  const message = `${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}.`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000',
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'ride_match',
+      title,
+      message,
+      priority: 'high',
+      is_read: false,
+      related_user_id: ride.user_id,
+      related_user_name: driverName,
+      action_data: {
+        ride_id: ride.id,
+        driver_id: ride.user_id
+      }
     })
 
   if (error) throw error
+
+  // Send a system chat message with embedded user ID
+  const chatMessage = `🎉 ${driverName} posted a ride matching your request: ${ride.from_location} → ${ride.to_location} on ${dateStr} at ${timeStr}. Price: ${ride.currency || 'USD'} ${ride.price}${ride.negotiable ? ' (negotiable)' : ''}. [user_id:${ride.user_id}][ride_id:${ride.id}]`
+
+  await supabase
+    .from('chat_messages')
+    .insert({
+      sender_id: 'SYSTEM_USER',
+      receiver_id: userId,
+      message_content: chatMessage,
+      message_type: 'system',
+      is_read: false
+    })
 }
 
 /**
@@ -470,34 +477,42 @@ const sendTripMatchNotification = async (
   trip: Trip,
   travelerName: string
 ): Promise<void> => {
-  const message = `🎉 **Matching Trip Found!**
+  const dateStr = formatDateWithoutTimezone(trip.travel_date)
 
-A traveler has posted a trip that matches your request!
-
-✈️ **Traveler:** ${travelerName}
-📍 **Route:** ${trip.leaving_airport} → ${trip.destination_airport}
-📅 **Date:** ${new Date(trip.travel_date).toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-})}
-${trip.departure_time ? `⏰ **Departure:** ${trip.departure_time}` : ''}
-${trip.price ? `💰 **Service Fee:** ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : '💰 **Free assistance**'}
-
-💡 **Action:** Contact ${travelerName} to request assistance!`
+  const title = '🎉 Matching Trip Found!'
+  const message = `${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}.`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000',
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'trip_match',
+      title,
+      message,
+      priority: 'high',
+      is_read: false,
+      related_user_id: trip.user_id,
+      related_user_name: travelerName,
+      action_data: {
+        trip_id: trip.id,
+        traveler_id: trip.user_id
+      }
     })
 
   if (error) throw error
+
+  // Send a system chat message with embedded user ID
+  const chatMessage = `🎉 ${travelerName} posted a trip matching your request: ${trip.leaving_airport} → ${trip.destination_airport} on ${dateStr}${trip.departure_time ? ` at ${trip.departure_time}` : ''}. ${trip.price ? `Fee: ${trip.currency || 'USD'} ${trip.price}${trip.negotiable ? ' (negotiable)' : ''}` : 'Free assistance'}. [user_id:${trip.user_id}][trip_id:${trip.id}]`
+
+  await supabase
+    .from('chat_messages')
+    .insert({
+      sender_id: 'SYSTEM_USER',
+      receiver_id: userId,
+      message_content: chatMessage,
+      message_type: 'system',
+      is_read: false
+    })
 }
 
 /**
@@ -508,39 +523,30 @@ const sendRequestNotificationAlert = async (
   request: RideRequest,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date' 
-    ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}`
+  const dateInfo = request.request_type === 'specific_date'
+    ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
     : request.request_type === 'month'
       ? `in ${request.request_month}`
       : 'on multiple dates'
 
-  const message = `🔔 **Ride Request Alert!**
-
-Someone is looking for a ride matching your notification preferences!
-
-👤 **Passenger:** ${passengerName}
-📍 **Route:** ${request.departure_location} → ${request.destination_location}
-📅 **When:** ${dateInfo}
-${request.departure_time_preference ? `⏰ **Preferred Time:** ${request.departure_time_preference}` : ''}
-🔍 **Search Radius:** ${request.search_radius_miles} miles
-
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide this ride, contact ${passengerName} or post a matching ride!
-
-📱 **Manage Notifications:** Profile → Manage Alerts`
+  const title = '🔔 Ride Request Alert!'
+  const message = `${passengerName} is looking for a ride: ${request.departure_location} → ${request.destination_location} ${dateInfo}${request.departure_time_preference ? ` at ${request.departure_time_preference}` : ''}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000',
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'ride_request_alert',
+      title,
+      message,
+      priority: 'medium',
+      is_read: false,
+      related_user_id: request.passenger_id,
+      related_user_name: passengerName,
+      action_data: {
+        request_id: request.id,
+        passenger_id: request.passenger_id
+      }
     })
 
   if (error) throw error
@@ -554,38 +560,30 @@ const sendTripRequestNotificationAlert = async (
   request: TripRequest,
   passengerName: string
 ): Promise<void> => {
-  const dateInfo = request.request_type === 'specific_date' 
-    ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}`
+  const dateInfo = request.request_type === 'specific_date'
+    ? `on ${new Date(request.specific_date!).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
     : request.request_type === 'month'
       ? `in ${request.request_month}`
       : 'on multiple dates'
 
-  const message = `🔔 **Trip Request Alert!**
-
-Someone is looking for assistance matching your notification preferences!
-
-👤 **Passenger:** ${passengerName}
-📍 **Route:** ${request.departure_airport} → ${request.destination_airport}
-📅 **When:** ${dateInfo}
-${request.departure_time_preference ? `⏰ **Preferred Time:** ${request.departure_time_preference}` : ''}
-
-${request.additional_notes ? `📝 **Notes:** ${request.additional_notes}\n\n` : ''}💡 **Action:** If you can provide assistance, contact ${passengerName} or post a matching trip!
-
-📱 **Manage Notifications:** Profile → Manage Alerts`
+  const title = '🔔 Trip Request Alert!'
+  const message = `${passengerName} is looking for assistance: ${request.departure_airport} → ${request.destination_airport} ${dateInfo}${request.departure_time_preference ? ` at ${request.departure_time_preference}` : ''}. ${request.additional_notes ? `Notes: ${request.additional_notes}` : ''}`
 
   const { error } = await supabase
-    .from('chat_messages')
+    .from('user_notifications')
     .insert({
-      sender_id: '00000000-0000-0000-0000-000000000000',
-      receiver_id: userId,
-      message_content: message,
-      message_type: 'system',
-      is_read: false
+      user_id: userId,
+      notification_type: 'trip_request_alert',
+      title,
+      message,
+      priority: 'medium',
+      is_read: false,
+      related_user_id: request.passenger_id,
+      related_user_name: passengerName,
+      action_data: {
+        request_id: request.id,
+        passenger_id: request.passenger_id
+      }
     })
 
   if (error) throw error

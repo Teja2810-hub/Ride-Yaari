@@ -20,9 +20,11 @@ interface ChatProps {
   preSelectedTrip?: Trip
   showRequestButtons?: boolean
   fromMessages?: boolean
+  onStartChat?: (userId: string, userName: string, ride?: any, trip?: any) => void
+  chatType?: 'ride' | 'trip'
 }
 
-export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false }: ChatProps) {
+export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRide, preSelectedTrip, showRequestButtons = false, fromMessages = false, onStartChat, chatType }: ChatProps) {
   const { user, userProfile } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -155,19 +157,44 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     try {
       console.log('Chat: Fetching messages between', user.id, 'and', otherUserId)
 
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select(`
-          *,
-          sender:user_profiles!chat_messages_sender_id_fkey (
-            id,
-            full_name,
-            profile_image_url
-          )
-        `)
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true })
-        .limit(100)
+      const [messages1, messages2] = await Promise.all([
+        supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:user_profiles!chat_messages_sender_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            )
+          `)
+          .eq('sender_id', user.id)
+          .eq('receiver_id', otherUserId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            sender:user_profiles!chat_messages_sender_id_fkey (
+              id,
+              full_name,
+              profile_image_url
+            )
+          `)
+          .eq('sender_id', otherUserId)
+          .eq('receiver_id', user.id)
+          .order('created_at', { ascending: true })
+      ])
+
+      if (messages1.error) throw messages1.error
+      if (messages2.error) throw messages2.error
+
+      const allMessages = [...(messages1.data || []), ...(messages2.data || [])]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .slice(-100)
+
+      const data = allMessages
+      const error = null
 
       if (error) {
         console.error('Chat: Error fetching messages:', error)
@@ -177,19 +204,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       console.log('Chat: Fetched', data?.length || 0, 'messages')
       setMessages(data || [])
 
-      // Mark ALL messages as read (both user and system messages)
+      // Mark messages as read
       if (data && data.length > 0) {
         const unreadMessages = data.filter((msg: ChatMessage) =>
           msg.receiver_id === user.id && !msg.is_read
         )
 
         if (unreadMessages.length > 0) {
-          console.log('Chat: Marking', unreadMessages.length, 'messages as read (including system messages)')
+          console.log('Chat: Marking', unreadMessages.length, 'messages as read')
           await supabase
             .from('chat_messages')
             .update({ is_read: true })
             .eq('receiver_id', user.id)
-            .or(`sender_id.eq.${otherUserId},message_type.eq.system`)
+            .eq('sender_id', otherUserId)
             .eq('is_read', false)
         }
       }
@@ -212,45 +239,65 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
     console.log('Chat: Setting up realtime subscription')
 
-    const subscription = supabase
-      .channel(`chat_${user.id}_${otherUserId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `or(and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id}))`,
-        },
-        (payload) => {
-          console.log('Chat: New message received via realtime:', payload)
-          const newMessage = payload.new as ChatMessage
+    const channel = supabase.channel(`chat_${user.id}_${otherUserId}`)
 
-          // Add sender profile info if available
-          if (newMessage.sender_id === user.id) {
-            newMessage.sender = userProfile || undefined
-          } else {
-            newMessage.sender = otherUserProfile || undefined
-          }
+    // Subscribe to messages sent BY current user TO other user
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `sender_id=eq.${user.id}`,
+      },
+      (payload) => {
+        const newMessage = payload.new as ChatMessage
+        if (newMessage.receiver_id !== otherUserId) return
 
-          setMessages(prev => [...prev, newMessage])
+        console.log('Chat: New message sent by me:', payload)
+        newMessage.sender = userProfile || undefined
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMessage.id)) return prev
+          return [...prev, newMessage]
+        })
+      }
+    )
 
-          // Mark as read if it's for the current user
-          if (newMessage.receiver_id === user.id) {
-            supabase
-              .from('chat_messages')
-              .update({ is_read: true })
-              .eq('id', newMessage.id)
-              .then(() => console.log('Chat: Message marked as read'))
-              .catch(err => console.warn('Chat: Failed to mark message as read:', err))
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('Chat: Subscription status:', status)
-      })
+    // Subscribe to messages sent BY other user TO current user
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `sender_id=eq.${otherUserId}`,
+      },
+      (payload) => {
+        const newMessage = payload.new as ChatMessage
+        if (newMessage.receiver_id !== user.id) return
 
-    subscriptionRef.current = subscription
+        console.log('Chat: New message received from other user:', payload)
+        newMessage.sender = otherUserProfile || undefined
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMessage.id)) return prev
+          return [...prev, newMessage]
+        })
+
+        // Mark as read
+        supabase
+          .from('chat_messages')
+          .update({ is_read: true })
+          .eq('id', newMessage.id)
+          .then(() => console.log('Chat: Message marked as read'))
+          .catch(err => console.warn('Chat: Failed to mark message as read:', err))
+      }
+    )
+
+    channel.subscribe((status) => {
+      console.log('Chat: Subscription status:', status)
+    })
+
+    subscriptionRef.current = channel
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -304,7 +351,23 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       console.log('Chat: Message sent successfully')
       setNewMessage('')
-      
+
+      // Add notification history entry for receiver
+      try {
+        await supabase.from('user_notifications').insert({
+          user_id: otherUserId,
+          notification_type: 'message',
+          title: `New message from ${userProfile?.full_name || 'User'}`,
+          message: newMessage.trim().substring(0, 100) + (newMessage.trim().length > 100 ? '...' : ''),
+          priority: 'low',
+          is_read: false,
+          related_user_id: user.id,
+          related_user_name: userProfile?.full_name || 'User'
+        })
+      } catch (notifError) {
+        console.warn('Failed to create notification history:', notifError)
+      }
+
       // The message will be added via realtime subscription
       // But add it immediately for better UX
       if (data) {
@@ -351,6 +414,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     }
   }
 
+  const handleBackClick = () => {
+    // Clean up subscription before going back
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+
+    onBack()
+  }
+
   const handleSkipLoading = () => {
     console.log('Chat: User chose to skip loading')
     setLoading(false)
@@ -378,6 +451,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .select('id, status, updated_at')
         .eq('ride_id', rideId)
         .eq('passenger_id', user.id)
+        .is('trip_id', null)
         .order('updated_at', { ascending: false })
 
       if (existingConfirmations && existingConfirmations.length > 0) {
@@ -504,6 +578,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         .select('id, status, updated_at')
         .eq('trip_id', tripId)
         .eq('passenger_id', user.id)
+        .is('ride_id', null)
         .order('updated_at', { ascending: false })
 
       if (existingConfirmations && existingConfirmations.length > 0) {
@@ -652,7 +727,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={onBack}
+              onClick={handleBackClick}
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowLeft size={20} />
@@ -760,46 +835,118 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.message_type === 'system'
-                    ? 'bg-yellow-100 border border-yellow-200 text-yellow-800 mx-auto text-center'
-                    : message.sender_id === user?.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-900'
-                }`}
-              >
-                {message.message_type === 'system' && (
-                  <div className="flex items-center justify-center space-x-2 mb-2">
-                    <AlertTriangle size={16} className="text-yellow-600" />
-                    <span className="font-semibold text-xs">SYSTEM MESSAGE</span>
+          messages.map((message) => {
+            const isSystemMessage = message.message_type === 'system'
+            const userIdMatch = message.message_content.match(/\[user_id:([^\]]+)\]/)
+            const rideIdMatch = message.message_content.match(/\[ride_id:([^\]]+)\]/)
+            const tripIdMatch = message.message_content.match(/\[trip_id:([^\]]+)\]/)
+            let cleanedMessage = message.message_content
+              .replace(/\[user_id:[^\]]+\]/, '')
+              .replace(/\[ride_id:[^\]]+\]/, '')
+              .replace(/\[trip_id:[^\]]+\]/, '')
+              .trim()
+
+            if (isSystemMessage) {
+              const rideId = rideIdMatch ? rideIdMatch[1] : null
+              const tripId = tripIdMatch ? tripIdMatch[1] : null
+
+              const formattedMessage = cleanedMessage.split('**').map((part, i) =>
+                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+              )
+
+              return (
+                <div key={message.id} className="flex justify-center my-4">
+                  <div className="max-w-lg w-full bg-amber-50 border-2 border-amber-200 px-6 py-4 rounded-xl shadow-md">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap break-words text-center font-medium">
+                      {formattedMessage}
+                    </p>
+                    {userIdMatch && userIdMatch[1] && onStartChat && (
+                      <button
+                        onClick={async () => {
+                          const userId = userIdMatch[1]
+                          const { data: profile } = await supabase
+                            .from('user_profiles')
+                            .select('full_name')
+                            .eq('id', userId)
+                            .maybeSingle()
+
+                          // Clean up current chat subscription before switching
+                          if (subscriptionRef.current) {
+                            subscriptionRef.current.unsubscribe()
+                            subscriptionRef.current = null
+                          }
+
+                          // Get ride or trip data if available
+                          let ride = null
+                          let trip = null
+
+                          if (rideIdMatch && rideIdMatch[1]) {
+                            const { data: rideData } = await supabase
+                              .from('car_rides')
+                              .select('*')
+                              .eq('id', rideIdMatch[1])
+                              .maybeSingle()
+                            ride = rideData
+                          }
+
+                          if (tripIdMatch && tripIdMatch[1]) {
+                            const { data: tripData } = await supabase
+                              .from('trips')
+                              .select('*')
+                              .eq('id', tripIdMatch[1])
+                              .maybeSingle()
+                            trip = tripData
+                          }
+
+                          // Call onStartChat with ride/trip data
+                          onStartChat(userId, profile?.full_name || 'User', ride || false, trip)
+                        }}
+                        className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                      >
+                        Chat with User
+                      </button>
+                    )}
+                    <p className="text-xs mt-2 text-gray-500 text-center">
+                      {formatMessageTime(message.created_at)}
+                    </p>
                   </div>
-                )}
-                <p className="text-sm whitespace-pre-wrap break-words">{message.message_content}</p>
-                <p className={`text-xs mt-1 ${
-                  message.message_type === 'system'
-                    ? 'text-yellow-600'
-                    : message.sender_id === user?.id
-                    ? 'text-blue-200'
-                    : 'text-gray-500'
-                }`}>
-                  {formatMessageTime(message.created_at)}
-                </p>
+                </div>
+              )
+            }
+
+            return (
+              <div
+                key={message.id}
+                className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    message.sender_id === user?.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-900'
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    {cleanedMessage}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    message.sender_id === user?.id
+                      ? 'text-blue-200'
+                      : 'text-gray-500'
+                  }`}>
+                    {formatMessageTime(message.created_at)}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Error Overlay Popup */}
       {(error || isBlocked || (chatDeleted && messages.length === 0)) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-start justify-between mb-4">
               {isBlocked ? (
@@ -846,10 +993,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
 
-        {/* Request Buttons - Show for posted rides/trips OR when explicitly requested OR from messages */}
-        {(preSelectedRide || preSelectedTrip || showRequestButtons || fromMessages) && (
+        {/* Request Buttons - Show based on chat type */}
+        {otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
           <div className="flex gap-2 mb-3">
-            {(preSelectedRide || showRequestButtons || fromMessages) && (
+            {(!chatType || chatType === 'ride') && (
               <button
                 onClick={() => setShowRideRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition-colors border border-green-200"
@@ -858,7 +1005,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <span>Request Ride</span>
               </button>
             )}
-            {(preSelectedTrip || showRequestButtons || fromMessages) && (
+            {(!chatType || chatType === 'trip') && (
               <button
                 onClick={() => setShowTripRequestModal(true)}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors border border-blue-200"

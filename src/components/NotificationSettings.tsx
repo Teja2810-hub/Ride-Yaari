@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Bell, Mail, Smartphone, Check, X, Settings, Volume2, VolumeX } from 'lucide-react'
+import { Bell, Mail, Smartphone, Check, X, Settings, Volume2, VolumeX, TriangleAlert as AlertTriangle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { notificationService } from '../utils/notificationService'

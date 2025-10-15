@@ -161,7 +161,7 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Trip Request Sent!</h2>
           <p className="text-gray-600 mb-8">
-            Your trip request has been sent to travelers in your area. You'll be notified when matching trips are found.
+            Your trip request has been sent to travelers in your area. You'll be notified when matching trips are found. You can manage this alert in Profile → Manage Alerts
             {enableNotifications && (
               <span className="block mt-2 text-sm text-blue-600">
                 ✅ Notifications enabled for future matching trips
@@ -492,7 +492,7 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
                         </label>
                         <input
                           type="date"
-                          value={notificationSpecificDate}
+                          value={notificationSpecificDate || (requestType === 'specific_date' ? specificDate : '')}
                           onChange={(e) => setNotificationSpecificDate(e.target.value)}
                           min={getTomorrowDate()}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -559,7 +559,7 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
                     <div className="bg-blue-100 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
                         <strong>💡 How it works:</strong> When travelers post trips matching your route and timing, 
-                        you'll receive notifications. You can manage these notifications in your profile settings.
+                        you'll receive notifications. You can manage these notifications in your profile settings.  (This only works for the trips posted by users from now and this feature cannot send notifications for the trips which are already available even though they are matching with your Trip, to check the available trips, go to Find Trip → Search)
                       </p>
                     </div>
                   </div>
