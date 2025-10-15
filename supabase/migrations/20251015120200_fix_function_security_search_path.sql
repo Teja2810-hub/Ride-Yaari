@@ -534,21 +534,22 @@ $$;
 -- cleanup_old_notifications
 DROP FUNCTION IF EXISTS cleanup_old_notifications();
 CREATE FUNCTION cleanup_old_notifications()
-RETURNS integer
+RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-    deleted_count integer;
 BEGIN
     DELETE FROM user_notifications
-    WHERE created_at < NOW() - INTERVAL '30 days'
-    AND is_read = true;
-
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-
-    RETURN deleted_count;
+    WHERE id IN (
+        SELECT id
+        FROM (
+            SELECT id, user_id,
+                ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) as rn
+            FROM user_notifications
+        ) sub
+        WHERE rn > 200
+    );
 END;
 $$;
 
@@ -631,21 +632,28 @@ $$;
 -- cleanup_old_system_messages
 DROP FUNCTION IF EXISTS cleanup_old_system_messages();
 CREATE FUNCTION cleanup_old_system_messages()
-RETURNS integer
+RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-    deleted_count integer;
 BEGIN
-    DELETE FROM user_notifications
-    WHERE notification_type = 'system'
-    AND created_at < NOW() - INTERVAL '30 days'
-    AND is_read = true;
-
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-
-    RETURN deleted_count;
+    DELETE FROM chat_messages
+    WHERE id IN (
+        SELECT id
+        FROM (
+            SELECT
+                id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY
+                        LEAST(sender_id, receiver_id),
+                        GREATEST(sender_id, receiver_id)
+                    ORDER BY created_at DESC
+                ) as rn
+            FROM chat_messages
+            WHERE message_type = 'system'
+        ) ranked
+        WHERE rn > 20
+    );
 END;
 $$;
