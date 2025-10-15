@@ -45,6 +45,7 @@
 -- Drop all triggers first
 DROP TRIGGER IF EXISTS update_email_verification_updated_at ON email_change_verification;
 DROP TRIGGER IF EXISTS update_seats_available ON ride_confirmations;
+DROP TRIGGER IF EXISTS trigger_update_seats_available ON ride_confirmations;
 DROP TRIGGER IF EXISTS update_ride_requests_updated_at ON ride_requests;
 DROP TRIGGER IF EXISTS update_ride_notifications_updated_at ON ride_notifications;
 DROP TRIGGER IF EXISTS update_ride_confirmations_updated_at ON ride_confirmations;
@@ -75,7 +76,7 @@ CREATE TRIGGER update_email_verification_updated_at
     EXECUTE FUNCTION update_email_verification_updated_at();
 
 -- update_seats_available
-DROP FUNCTION IF EXISTS update_seats_available() CASCADE;
+DROP FUNCTION IF EXISTS update_seats_available();
 CREATE FUNCTION update_seats_available()
 RETURNS TRIGGER
 LANGUAGE plpgsql
