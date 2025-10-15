@@ -374,7 +374,7 @@ export const sendMatchingRideNotification = async (
   try {
     const driverName = ride.user_profiles?.full_name || await getUserDisplayName(ride.user_id)
     const rideDate = new Date(ride.departure_date_time)
-        const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
+    const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
 
     const notificationMessage = `🎉 **Matching Ride Found!**
 
@@ -861,7 +861,7 @@ export const processPassengerNotifications = async (rideId: string): Promise<{
 
           // Check date matching
           const rideDate = new Date(ride.departure_date_time)
-        const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
+          const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
           let dateMatches = false
 
           if (notification.date_type === 'specific_date' && notification.specific_date) {
@@ -1015,7 +1015,7 @@ export const sendPassengerNotificationAlert = async (
   try {
     const driverName = ride.user_profiles?.full_name || await getUserDisplayName(ride.user_id)
     const rideDate = new Date(ride.departure_date_time)
-        const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
+    const rideDateOnly = `${rideDate.getUTCFullYear()}-${String(rideDate.getUTCMonth() + 1).padStart(2, '0')}-${String(rideDate.getUTCDate()).padStart(2, '0')}`
 
     const notificationMessage = `🔔 **Ride Available Alert!**
 
