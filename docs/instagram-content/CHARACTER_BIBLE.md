@@ -8,26 +8,27 @@ This document defines the visual design, personality, and behavior of the two ma
 ## CHARACTER 1: YAARI (The RideYaari Mascot)
 
 ### Character Overview
-Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem. He is an animated cartoon character with an Indian accent speaking American English.
+Yaari is the cool, intelligent, and sarcastic animated cat mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem. He is an animated cartoon cat character with an Indian accent speaking American English.
 
 ### Physical Description
 
 #### Body Type & Proportions
-- **Character Type**: Animated cartoon character (not a real person)
-- **Height**: 5'10" (178 cm) - slightly above average
-- **Build**: Athletic, lean build - not bulky but fit
-- **Posture**: Confident, relaxed stance with slight lean-back swagger
-- **Age Appearance**: Mid-20s to early 30s
-- **Skin Tone**: Medium brown complexion
+- **Character Type**: Animated cartoon cat (anthropomorphic)
+- **Species**: Cool urban cat
+- **Height**: 5'10" (178 cm) when standing upright - slightly above average
+- **Build**: Athletic, lean build - sleek feline body
+- **Posture**: Confident, relaxed stance with slight lean-back swagger, tail swishing casually
+- **Age Appearance**: Young adult cat (equivalent to mid-20s to early 30s in human years)
+- **Fur Color**: Sleek gray with subtle darker stripes (tabby pattern)
 
 #### Facial Features
-- **Face Shape**: Oval with defined jawline
-- **Eyes**: Dark brown, almond-shaped with a knowing, intelligent look
+- **Face Shape**: Feline with defined features, sleek cat face
+- **Eyes**: Bright green, almond-shaped with a knowing, intelligent look
 - **Expression**: Subtle smirk with one eyebrow slightly raised (signature look)
-- **Eyebrows**: Well-groomed, expressive (used for sarcastic expressions)
-- **Hair**: Short fade on sides, textured quiff on top (modern Indian hairstyle)
-- **Hair Color**: Jet black (#000000)
-- **Facial Hair**: Light stubble beard, well-maintained
+- **Eyebrows**: Expressive cat eyebrows (used for sarcastic expressions)
+- **Ears**: Pointed cat ears, always perked up attentively
+- **Whiskers**: Well-groomed whiskers
+- **Fur Pattern**: Gray tabby with darker stripes on face
 
 #### Accessories & Style
 - **Cap**: Signature blue baseball cap (#2563EB) with RideYaari logo
@@ -44,8 +45,9 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 - **Clothing - Primary Outfit**:
   - White fitted t-shirt with RideYaari logo on chest (left side)
   - Blue denim jacket (casual, rolled sleeves) with "RIDEYAARI" embroidered on back
-  - Dark blue jeans (#1E293B) - fitted but not skinny
+  - Dark blue pants (#1E293B) - fitted, designed for anthropomorphic cat
   - White sneakers (Nike Air Force 1 style or similar)
+  - Tail visible, often swishing with attitude
 
 - **Clothing - Alternative Outfits**:
   - Blue RideYaari branded hoodie (#2563EB) with logo on front
@@ -57,9 +59,10 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 - **Primary Blue**: #2563EB (brand color - used in cap, jacket, hoodies)
 - **Secondary Blue**: #3B82F6 (lighter accent)
 - **White**: #FFFFFF (t-shirts, sneakers, text)
-- **Dark Gray**: #1E293B (jeans, pants)
+- **Dark Gray**: #1E293B (pants)
 - **Silver**: #C0C0C0 (jewelry)
-- **Skin Tone**: Medium brown (cartoon style)
+- **Fur Color**: Gray (#808080) with darker gray stripes (#505050)
+- **Eye Color**: Bright green (#10B981)
 
 ### Personality Traits
 
@@ -74,11 +77,13 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 
 #### Behavioral Patterns
 - Speaks in a relaxed, unhurried manner
-- Uses hand gestures sparingly but effectively
-- Often has one hand in pocket or arms crossed casually
+- Uses paw gestures sparingly but effectively
+- Often has one paw in pocket or arms crossed casually
 - Head tilts and eyebrow raises for emphasis
+- Tail swishes when making a point or being sarcastic
 - Maintains eye contact with confidence
 - Smirks or subtle smile rather than full grins
+- Occasionally licks paw nonchalantly for extra coolness
 
 #### Speech Style
 - **Tone**: Laid-back, smooth, confident
@@ -113,38 +118,41 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 - **Emotional Range**: Cool and collected (rarely excited or upset)
 
 ### Animation & Movement Style
-- **Walk**: Confident stride with slight bounce
-- **Standing**: Weight shifted to one leg, relaxed shoulders
-- **Hand Gestures**: Minimal but purposeful (pointing, counting on fingers, palm-up "obviously" gesture)
-- **Head Movement**: Slight nods, head tilts for sarcasm
-- **Eye Movement**: Direct eye contact, occasional eye rolls
-- **Transitions**: Smooth, never rushed
+- **Walk**: Confident feline stride with slight bounce, very cat-like grace
+- **Standing**: Weight shifted to one leg, relaxed shoulders, tail curled or swishing
+- **Paw Gestures**: Minimal but purposeful (pointing, counting on paws, palm-up "obviously" gesture)
+- **Head Movement**: Slight nods, head tilts for sarcasm, very feline
+- **Eye Movement**: Direct eye contact, occasional eye rolls, cat-like blinks
+- **Tail Movement**: Swishes when sarcastic, curls when satisfied
+- **Transitions**: Smooth and sleek, very cat-like grace
 
 ---
 
 ## CHARACTER 2: BUDDY (The Confused Sidekick)
 
 ### Character Overview
-Buddy is the well-meaning but often confused animated friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time. He is an animated cartoon character with an Indian accent speaking American English.
+Buddy is the well-meaning but often confused animated goat friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time. He is an animated cartoon goat character with an Indian accent speaking American English.
 
 ### Physical Description
 
 #### Body Type & Proportions
-- **Character Type**: Animated cartoon character (not a real person)
-- **Height**: 5'7" (170 cm) - average to slightly below
-- **Build**: Regular/average build, not particularly fit
+- **Character Type**: Animated cartoon goat (anthropomorphic)
+- **Species**: Confused domestic goat
+- **Height**: 5'7" (170 cm) when standing upright - average to slightly below
+- **Build**: Regular/average build, slightly stocky goat body
 - **Posture**: Slightly hunched, uncertain body language
-- **Age Appearance**: Mid-20s
-- **Skin Tone**: Light brown complexion (cartoon style)
+- **Age Appearance**: Young adult goat (equivalent to mid-20s in human years)
+- **Fur Color**: Light beige/cream colored goat fur
 
 #### Facial Features
-- **Face Shape**: Round with softer features
-- **Eyes**: Large, expressive brown eyes with confused look
+- **Face Shape**: Goat face with softer, rounder features
+- **Eyes**: Large, expressive brown eyes with confused look, horizontal rectangular pupils (goat eyes)
 - **Expression**: Perpetually puzzled, mouth slightly open
 - **Eyebrows**: Furrowed in confusion most of the time
-- **Hair**: Messy, unstyled black hair (medium length, casual)
-- **Hair Color**: Black (#1A1A1A)
-- **Facial Hair**: Clean-shaven or very light stubble
+- **Ears**: Floppy goat ears that droop when confused
+- **Horns**: Small, stubby goat horns
+- **Goatee**: Small tuft of fur under chin (natural goat feature)
+- **Fur Pattern**: Light beige/cream with white patches
 
 #### Accessories & Style
 - **No Cap**: Unlike Yaari, Buddy doesn't wear a cap
@@ -154,9 +162,10 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 
 - **Clothing - Primary Outfit**:
   - Plain oversized gray t-shirt (#9CA3AF) - no logos
-  - Baggy light blue jeans (#60A5FA) - not fitted
+  - Baggy light blue pants (#60A5FA) - not fitted, designed for goat body
   - Generic sneakers (black/white, nothing designer)
   - Mismatched socks occasionally visible
+  - Short stubby tail visible
 
 - **Clothing - Alternative Outfits**:
   - Oversized hoodie in muted colors (gray, beige, olive)
@@ -167,9 +176,10 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 #### Color Palette (Hex Codes)
 - **Gray**: #9CA3AF (primary clothing)
 - **Beige/Khaki**: #D4C5B9 (alternate shirts)
-- **Light Blue**: #60A5FA (jeans)
-- **Black**: #1A1A1A (hair, glasses)
-- **Skin Tone**: Light brown (cartoon style)
+- **Light Blue**: #60A5FA (pants)
+- **Black**: #1A1A1A (glasses frames, horn tips)
+- **Fur Color**: Light beige/cream (#F5E6D3) with white patches (#FFFFFF)
+- **Eye Color**: Brown (#8B4513)
 
 ### Personality Traits
 
@@ -183,12 +193,14 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 7. **No Swag**: Completely lacking in coolness
 
 #### Behavioral Patterns
-- Scratches head when confused (signature gesture)
-- Wide-eyed expressions of surprise
-- Looks around nervously when uncertain
-- Finger-counting when trying to understand lists
+- Scratches head with hoof when confused (signature gesture)
+- Wide-eyed expressions of surprise, goat eyes very expressive
+- Looks around nervously when uncertain, ears drooping
+- Hoof-counting when trying to understand lists
 - Repeats information to confirm understanding
 - Asks obvious questions
+- Bleats occasionally when very confused
+- Ears perk up when he thinks he understands (then droop again when confused)
 
 #### Speech Style
 - **Tone**: Uncertain, questioning, higher-pitched when confused
@@ -224,12 +236,13 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 - **Emotional Range**: Highly variable (confused, surprised, excited, bewildered)
 
 ### Animation & Movement Style
-- **Walk**: Uncertain shuffle, looking around
-- **Standing**: Slouched, shifting weight awkwardly
-- **Hand Gestures**: Excessive, flailing when confused
-- **Head Movement**: Constant tilting, scratching
-- **Eye Movement**: Darting around, looking up when thinking
-- **Transitions**: Awkward, slightly jerky
+- **Walk**: Uncertain shuffle with goat-like gait, looking around
+- **Standing**: Slouched, shifting weight awkwardly, typical goat stance
+- **Hoof Gestures**: Excessive, flailing when confused
+- **Head Movement**: Constant tilting, scratching with hoof, very goat-like
+- **Eye Movement**: Darting around, looking up when thinking, horizontal pupils visible
+- **Ear Movement**: Drooping when confused, perking up when excited
+- **Transitions**: Awkward, slightly jerky, goat-like movements
 
 ---
 
@@ -238,20 +251,21 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 ### Interaction Patterns
 
 #### Yaari's Behavior Toward Buddy
-- Patient but sarcastic
-- Uses hand gestures to emphasize points
+- Patient but sarcastic (cat to goat dynamic)
+- Uses paw gestures to emphasize points
 - Speaks slowly and deliberately when explaining
-- Makes eye contact and stares when Buddy doesn't get it
-- Sighs or shakes head gently
+- Makes eye contact and stares with cat-like intensity when Buddy doesn't get it
+- Sighs or shakes head gently, tail swishing in mild annoyance
 - Uses rhetorical questions to highlight Buddy's confusion
+- Occasionally does slow cat-blink of disbelief
 
 #### Buddy's Behavior Toward Yaari
 - Looks up to Yaari but doesn't understand half of what he says
-- Nods along pretending to understand
-- Interrupts with random questions
-- Takes sarcasm literally
+- Nods along pretending to understand, ears bobbing
+- Interrupts with random questions, bleating occasionally
+- Takes sarcasm literally (goat brain takes everything at face value)
 - Repeatedly asks for clarification
-- Tries to mimic Yaari's coolness but fails
+- Tries to mimic Yaari's coolness but fails (goat trying to act like cool cat)
 
 ### Comedy Dynamics
 1. **Sarcasm Misunderstanding**: Yaari says something sarcastic, Buddy takes it literally
@@ -312,24 +326,26 @@ All videos must use RideYaari brand colors:
 
 #### For Yaari:
 ```
-Character: Animated cartoon male character with Indian features, mid-20s appearance, athletic build, medium brown skin tone,
-short fade hairstyle with textured quiff, light stubble, confident smirk,
-almond-shaped dark eyes, wearing blue RideYaari cap with airplane and car logo,
+Character: Animated anthropomorphic cat character, cool urban cat, sleek gray tabby fur with darker stripes,
+bright green almond-shaped eyes, confident smirk, expressive eyebrows, pointed cat ears perked up,
+well-groomed whiskers, wearing blue RideYaari cap with airplane and car logo,
 silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket
-with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers,
-silver watch, minimal rings, cool and confident pose, one hand in pocket,
-slight head tilt, 2D flat animation style, cartoon character design, modern digital art, clean lines,
-vibrant colors, Instagram reels format, 9:16 aspect ratio
+with "RIDEYAARI" embroidered on back, dark blue fitted pants, white sneakers,
+silver watch, tail swishing confidently, cool and confident pose, one paw in pocket,
+slight head tilt, 2D flat animation style, cartoon cat character design, modern digital art, clean lines,
+vibrant colors, Instagram reels format, 9:16 aspect ratio, anthropomorphic feline
 ```
 
 #### For Buddy:
 ```
-Character: Animated cartoon male character with Indian features, mid-20s appearance, average build, light brown skin tone,
-messy medium-length black hair, round black-framed glasses, confused expression,
-raised eyebrows, mouth slightly open, clean-shaven, wearing oversized gray t-shirt,
-baggy light blue jeans, generic black sneakers, no accessories, awkward posture,
-scratching head, uncertain body language, 2D flat animation style, cartoon character design, modern digital
-art, clean lines, muted colors, Instagram reels format, 9:16 aspect ratio
+Character: Animated anthropomorphic goat character, confused domestic goat, light beige/cream colored fur with white patches,
+large expressive brown eyes with horizontal rectangular pupils, confused expression,
+furrowed eyebrows, mouth slightly open, floppy goat ears drooping, small stubby horns,
+small goatee tuft under chin, round black-framed glasses, wearing oversized gray t-shirt,
+baggy light blue pants, generic black sneakers, awkward posture,
+scratching head with hoof, uncertain body language, short stubby tail, 2D flat animation style,
+cartoon goat character design, modern digital art, clean lines, muted colors,
+Instagram reels format, 9:16 aspect ratio, anthropomorphic goat
 ```
 
 ### Animation Style Tags

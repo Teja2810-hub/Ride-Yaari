@@ -8,15 +8,15 @@ This file contains platform-specific prompts for generating consistent RideYaari
 ## UNIVERSAL BASE PROMPT (Use with all platforms)
 
 ```
-Create a 9:16 vertical format animated video for Instagram Reels featuring two animated cartoon male characters in modern 2D flat animation style with Indian accents speaking American English.
+Create a 9:16 vertical format animated video for Instagram Reels featuring two animated cartoon characters (an anthropomorphic cat and goat) in modern 2D flat animation style with Indian accents speaking American English.
 
-CHARACTER 1 (YAARI): Mid-20s animated cartoon male character, athletic build, medium brown skin tone, short fade hairstyle with textured quiff, light stubble, confident smirk, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers. Cool and confident personality with Indian accent speaking American English, slight swagger, one hand in pocket. Animated cartoon character style with expressive features.
+CHARACTER 1 (YAARI - THE COOL CAT): Animated anthropomorphic cat character, sleek gray tabby fur with darker stripes, bright green almond-shaped eyes, confident smirk, expressive eyebrows, pointed cat ears perked up, well-groomed whiskers, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted pants, white sneakers, tail swishing confidently. Cool and confident personality with Indian accent speaking American English, slight swagger, one paw in pocket. Animated cartoon cat with expressive feline features.
 
-CHARACTER 2 (BUDDY): Mid-20s animated cartoon male character, average build, lighter skin tone, messy medium-length black hair, round black-framed glasses, confused expression, wearing oversized gray t-shirt, baggy light blue jeans, generic sneakers. Awkward posture, scratches head often, confused body language. Indian accent speaking American English with questioning tone. Animated cartoon character style with exaggerated confused expressions.
+CHARACTER 2 (BUDDY - THE CONFUSED GOAT): Animated anthropomorphic goat character, light beige/cream colored fur with white patches, large expressive brown eyes with horizontal rectangular pupils (goat eyes), confused expression, furrowed eyebrows, mouth slightly open, floppy goat ears drooping, small stubby horns, small goatee tuft under chin, round black-framed glasses, wearing oversized gray t-shirt, baggy light blue pants, generic sneakers, short stubby tail. Awkward posture, scratches head with hoof often, confused body language. Indian accent speaking American English with questioning tone. Animated cartoon goat with exaggerated confused expressions.
 
 Style: Clean 2D flat animated character design with cartoon style, smooth animation, vibrant RideYaari brand colors (primary blue #2563EB, secondary blue #3B82F6, green #16A34A for car sections, white #FFFFFF), modern motion graphics, minimal background with floating travel icons (✈️🚗📦💰), kinetic typography for key phrases, professional Instagram-optimized animation, vertical video format 1080x1920, 60fps, cel-shaded style with bold outlines, cartoon character aesthetics.
 
-AVOID: 3D rendering, realistic photography, photorealistic human faces, purple/violet/indigo colors, cluttered backgrounds, horizontal format, inconsistent character design, low quality, blurry, distorted faces, extra limbs, real human features.
+AVOID: 3D rendering, realistic photography, photorealistic faces, purple/violet/indigo colors, cluttered backgrounds, horizontal format, inconsistent character design, low quality, blurry, distorted faces, extra limbs, human characters, realistic animals.
 ```
 
 ---
@@ -31,9 +31,9 @@ Runway ML excels at smooth character animation and consistent style. Use these p
 ```
 [Scene Description] featuring two 2D animated cartoon characters with Indian accents speaking American English in 9:16 vertical format.
 
-YAARI CHARACTER: Animated urban male cartoon character, mid-20s appearance, athletic build, medium brown skin tone, short fade hairstyle, light stubble, confident smirk, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark jeans, white sneakers, cool posture with hand in pocket. Cartoon animation style, Indian accent speaking American English.
+YAARI CHARACTER (COOL CAT): Animated anthropomorphic cat, sleek gray tabby fur with darker stripes, bright green eyes, confident smirk, expressive cat eyebrows, pointed ears perked up, whiskers, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark pants, white sneakers, tail swishing, cool posture with paw in pocket. Cartoon cat animation style, Indian accent speaking American English.
 
-BUDDY CHARACTER: Animated male cartoon character, mid-20s appearance, average build, lighter skin tone, messy hair, round black glasses, confused expression, oversized gray t-shirt, baggy light blue jeans, awkward posture scratching head. Cartoon animation style, Indian accent speaking American English.
+BUDDY CHARACTER (CONFUSED GOAT): Animated anthropomorphic goat, light beige/cream fur with white patches, large brown eyes with horizontal rectangular pupils, confused expression, floppy ears drooping, small horns, goatee tuft, round black glasses, oversized gray t-shirt, baggy light blue pants, short tail, awkward posture scratching head with hoof. Cartoon goat animation style, Indian accent speaking American English.
 
 STYLE: 2D flat cartoon animation, smooth character movement, vibrant blue (#2563EB) and green (#16A34A) color scheme, clean lines, minimal background with floating icons (✈️🚗), modern motion graphics, Instagram Reels vertical format, professional animation quality, cartoon character design.
 
@@ -41,7 +41,7 @@ MOTION: [Specific actions - e.g., "Yaari walks into frame with confident stride,
 
 CAMERA: Static front-facing camera, characters centered in frame, vertical 9:16 composition.
 
-AVOID: 3D rendering, realistic style, photorealistic humans, real people, purple colors, horizontal format, multiple characters beyond these two, cluttered background.
+AVOID: 3D rendering, realistic style, photorealistic animals, human characters, real people, purple colors, horizontal format, multiple characters beyond these two, cluttered background.
 
 Duration: [5-10 seconds per clip]
 FPS: 24 or 60
@@ -51,9 +51,9 @@ FPS: 24 or 60
 ```
 Opening hook scene featuring two 2D animated cartoon characters in 9:16 vertical Instagram format.
 
-YAARI: Animated urban male cartoon character, mid-20s appearance, athletic, medium brown skin tone, short fade with quiff, stubble, confident smirk, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark jeans, white sneakers. Cartoon style. Walks in confidently from left, stops center, turns to camera with smirk.
+YAARI: Animated anthropomorphic cat, sleek gray tabby fur with darker stripes, bright green eyes, confident smirk, cat ears perked, whiskers, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark pants, white sneakers, tail swishing. Cartoon cat style. Walks in confidently from left with feline grace, stops center, turns to camera with smirk.
 
-BUDDY: Animated male cartoon character, mid-20s appearance, average build, lighter skin tone, messy black hair, round glasses, worried expression, oversized gray shirt, baggy blue jeans. Cartoon style. Runs in frantically from right, stops beside Yaari, scratches head confused.
+BUDDY: Animated anthropomorphic goat, light beige/cream fur with white patches, brown eyes with horizontal pupils, worried expression, floppy ears, small horns, goatee, round glasses, oversized gray shirt, baggy blue pants, short tail. Cartoon goat style. Runs in frantically from right with clumsy goat gait, stops beside Yaari, scratches head with hoof confused.
 
 STYLE: Clean 2D flat cartoon animation, vibrant RideYaari blue (#2563EB), smooth character motion, minimal white background with subtle travel icon outlines, bold character outlines, Instagram Reels vertical format, cartoon character design.
 
@@ -76,9 +76,9 @@ Luma AI excels at consistent characters across frames. Use detailed character de
 [Scene action] in vertical 9:16 Instagram Reels format, 2D flat cartoon animated style.
 
 Character Consistency Tags:
-- YAARI: {athletic_animated_male, medium_brown_skin_tone, fade_hairstyle, stubble, confident_expression, blue_rideyaari_cap, silver_necklace, white_logo_tshirt, blue_denim_jacket, dark_jeans, white_sneakers, cool_posture, cartoon_character}
+- YAARI: {animated_cat, anthropomorphic_feline, gray_tabby_fur, darker_stripes, bright_green_eyes, confident_expression, cat_ears_perked, whiskers, blue_rideyaari_cap, silver_necklace, white_logo_tshirt, blue_denim_jacket, dark_pants, white_sneakers, tail_swishing, cool_posture, cartoon_cat_character}
 
-- BUDDY: {average_animated_male, lighter_skin_tone, messy_hair, round_glasses, confused_expression, oversized_gray_shirt, baggy_blue_jeans, generic_sneakers, awkward_posture, cartoon_character}
+- BUDDY: {animated_goat, anthropomorphic_goat, beige_cream_fur, white_patches, brown_eyes, horizontal_pupils, confused_expression, floppy_ears, small_horns, goatee, round_glasses, oversized_gray_shirt, baggy_blue_pants, short_tail, awkward_posture, cartoon_goat_character}
 
 Visual Style: modern_2d_flat_cartoon_animation, clean_lines, vibrant_blue_#2563EB, minimal_background, floating_icons, smooth_transitions, instagram_vertical_format, animated_character_design
 
@@ -90,16 +90,16 @@ Camera: static_front_view, 9:16_vertical_composition
 
 Quality: high_resolution_1080x1920, smooth_motion, 60fps
 
-Negative: no_3d_rendering, no_realistic_photo, no_real_people, no_photorealistic_humans, no_purple_colors, no_horizontal_format, no_cluttered_background
+Negative: no_3d_rendering, no_realistic_photo, no_real_people, no_photorealistic_animals, no_human_characters, no_purple_colors, no_horizontal_format, no_cluttered_background
 ```
 
 #### Luma Example - Explanation Scene:
 ```
 Educational scene in 9:16 vertical Instagram format, 2D flat cartoon animated style.
 
-YAARI: {confident_animated_male, athletic_build, medium_brown_skin_tone, short_fade_hairstyle, light_stubble, smirk_expression, blue_rideyaari_cap_with_logo, silver_chain, white_tshirt_rideyaari_logo, blue_denim_jacket, dark_jeans, white_sneakers, cartoon_character} - standing left side of frame, pointing right hand toward floating UI elements, confident posture, one eyebrow raised.
+YAARI: {animated_cat, anthropomorphic_feline, gray_tabby_fur, darker_stripes, bright_green_eyes, smirk_expression, cat_ears_perked, whiskers, blue_rideyaari_cap_with_logo, silver_chain, white_tshirt_rideyaari_logo, blue_denim_jacket, dark_pants, white_sneakers, tail_swishing, cartoon_cat_character} - standing left side of frame, pointing right paw toward floating UI elements, confident posture, one eyebrow raised.
 
-BUDDY: {confused_animated_male, average_build, lighter_skin_tone, messy_hair, round_black_glasses, puzzled_expression, oversized_gray_tshirt, baggy_blue_jeans, generic_sneakers, cartoon_character} - standing right side of frame, scratching head with right hand, leaning forward slightly, eyes following Yaari's pointing gesture.
+BUDDY: {animated_goat, anthropomorphic_goat, beige_cream_fur, white_patches, brown_eyes, horizontal_pupils, puzzled_expression, floppy_ears_drooping, small_horns, goatee, round_black_glasses, oversized_gray_tshirt, baggy_blue_pants, short_tail, cartoon_goat_character} - standing right side of frame, scratching head with hoof, leaning forward slightly, eyes following Yaari's pointing gesture.
 
 UI ELEMENTS: floating website interface mockup in center, RideYaari blue (#2563EB) color scheme, "Post Trip" button highlighted with glow effect, small airplane icons (✈️) floating around.
 
@@ -113,7 +113,7 @@ Duration: 8 seconds
 FPS: 60
 Quality: 1080x1920, smooth motion, crisp details
 
-Avoid: 3D elements, realistic rendering, real people, photorealistic humans, purple hues, horizontal framing, multiple background layers, photo-realistic faces
+Avoid: 3D elements, realistic rendering, real people, photorealistic animals, human characters, purple hues, horizontal framing, multiple background layers, photo-realistic faces
 ```
 
 ---
@@ -124,17 +124,18 @@ D-ID is best for talking head animations. Use for dialogue-heavy scenes.
 
 #### D-ID Character Setup (Yaari):
 ```
-CHARACTER IMAGE: Upload image of 2D flat-style animated cartoon male character with following specifications:
-- Athletic build, medium brown skin tone
-- Short fade hairstyle with textured quiff on top
-- Light stubble beard, well-maintained
+CHARACTER IMAGE: Upload image of 2D flat-style animated anthropomorphic cat character with following specifications:
+- Animated cat, sleek gray tabby fur with darker stripes
+- Bright green almond-shaped eyes
 - Confident facial expression with slight smirk
 - One eyebrow slightly raised (signature look)
+- Pointed cat ears perked up attentively
+- Well-groomed whiskers
 - Blue RideYaari baseball cap (with airplane and car logo icon)
 - Silver chain necklace visible
 - White t-shirt with RideYaari logo on chest
 - Blue denim jacket (shoulders and upper chest visible in frame)
-- 2D flat cartoon animation art style, clean lines, bold outlines, animated character design
+- 2D flat cartoon animation art style, clean lines, bold outlines, animated cat character design
 - Front-facing portrait, head and shoulders only
 - Solid light blue background (#E0F2FE)
 - High resolution, vertical orientation suitable for 9:16 crop
@@ -149,16 +150,18 @@ VOICE SETTINGS:
 
 #### D-ID Character Setup (Buddy):
 ```
-CHARACTER IMAGE: Upload image of 2D flat-style animated cartoon male character with following specifications:
-- Average build, lighter skin tone
-- Messy medium-length black hair, unstyled
-- Round black-framed glasses
+CHARACTER IMAGE: Upload image of 2D flat-style animated anthropomorphic goat character with following specifications:
+- Animated goat, light beige/cream colored fur with white patches
+- Large expressive brown eyes with horizontal rectangular pupils (goat eyes)
 - Confused/puzzled facial expression
 - Eyebrows slightly furrowed
 - Mouth slightly open (confused look)
-- Clean-shaven or very light stubble
+- Floppy goat ears drooping
+- Small stubby horns
+- Small goatee tuft under chin
+- Round black-framed glasses
 - Oversized gray t-shirt (no logos)
-- 2D flat cartoon animation art style, clean lines, softer outlines than Yaari, animated character design
+- 2D flat cartoon animation art style, clean lines, softer outlines than Yaari, animated goat character design
 - Front-facing portrait, head and shoulders only
 - Solid light gray background (#F3F4F6)
 - High resolution, vertical orientation suitable for 9:16 crop
@@ -197,19 +200,22 @@ Synthesia works well for explainer videos with consistent avatars.
 ```
 Create custom avatar for RideYaari brand:
 
-AVATAR 1 (YAARI - PRIMARY BRAND AVATAR):
+AVATAR 1 (YAARI - PRIMARY BRAND AVATAR - COOL CAT):
 Visual Appearance:
-- Character Type: Animated cartoon character with Indian voice accent
-- Age Appearance: Mid-20s to early 30s
-- Build: Athletic, fit appearance
-- Skin Tone: Medium brown
-- Hairstyle: Modern short fade on sides, textured quiff on top
-- Facial Hair: Light stubble, well-groomed
+- Character Type: Animated anthropomorphic cat character with Indian voice accent
+- Species: Cool urban cat
+- Age Appearance: Young adult cat (equivalent to mid-20s to early 30s)
+- Build: Athletic, sleek feline appearance
+- Fur Color: Gray tabby with darker stripes
+- Eyes: Bright green, almond-shaped
+- Ears: Pointed cat ears, perked up attentively
+- Whiskers: Well-groomed
 - Expression: Confident with subtle knowing smirk
 - Clothing: White t-shirt with blue RideYaari logo visible, blue cap with airplane and car icon
 - Accessories: Silver chain necklace
-- Art Style: 2D flat animated cartoon character design, NOT photorealistic, animated style
-- Pose: Slightly angled, one eyebrow raised, confident posture
+- Tail: Swishing confidently
+- Art Style: 2D flat animated cartoon cat character design, NOT photorealistic, animated style
+- Pose: Slightly angled, one eyebrow raised, confident posture, paw gestures
 
 Personality Traits for AI Motion:
 - Confident head movements
@@ -231,19 +237,23 @@ Voice Profile:
 Background: Solid RideYaari blue (#2563EB) or white with minimal brand elements
 Frame: Vertical 9:16 for Instagram Reels
 
-AVATAR 2 (BUDDY - SECONDARY COMIC RELIEF AVATAR):
+AVATAR 2 (BUDDY - SECONDARY COMIC RELIEF AVATAR - CONFUSED GOAT):
 Visual Appearance:
-- Character Type: Animated cartoon character with Indian voice accent
-- Age Appearance: Mid-20s
-- Build: Average, not particularly fit
-- Skin Tone: Lighter brown
-- Hairstyle: Messy, unstyled medium-length hair
-- Facial Hair: Clean-shaven
+- Character Type: Animated anthropomorphic goat character with Indian voice accent
+- Species: Confused domestic goat
+- Age Appearance: Young adult goat (equivalent to mid-20s)
+- Build: Average, slightly stocky goat body
+- Fur Color: Light beige/cream with white patches
+- Eyes: Large expressive brown eyes with horizontal rectangular pupils (goat eyes)
+- Ears: Floppy goat ears that droop when confused
+- Horns: Small, stubby goat horns
+- Goatee: Small tuft of fur under chin
 - Accessories: Round black-framed glasses
 - Expression: Perpetually confused, eyes wide
 - Clothing: Oversized gray t-shirt (plain, no logos)
-- Art Style: 2D flat animated cartoon character design, softer features than Yaari, animated style
-- Pose: Slightly hunched, uncertain posture
+- Tail: Short stubby goat tail
+- Art Style: 2D flat animated cartoon goat character design, softer features than Yaari, animated style
+- Pose: Slightly hunched, uncertain posture, hoof gestures
 
 Personality Traits for AI Motion:
 - Excessive head movements (looking around)
@@ -747,7 +757,7 @@ Before considering any video complete, verify:
 - [ ] Yaari's clothing shows RideYaari branding
 - [ ] Buddy wearing round glasses in all scenes
 - [ ] Buddy in plain gray oversized shirt (no logos)
-- [ ] Both characters maintain consistent skin tones
+- [ ] Both characters maintain consistent fur colors and patterns (cat with gray tabby fur, goat with beige/cream fur)
 - [ ] Facial features match reference (proportions, expressions)
 - [ ] Height difference visible (Yaari taller)
 

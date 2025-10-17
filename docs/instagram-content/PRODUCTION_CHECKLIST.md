@@ -49,8 +49,8 @@
 
 #### Scene 1: Hook (0-3 seconds)
 - [ ] Generated hook scene using specific prompt from AI_GENERATION_PROMPTS.md
-- [ ] Verified Yaari character consistency (cap, branding, appearance)
-- [ ] Verified Buddy character consistency (glasses, expression, clothing)
+- [ ] Verified Yaari (cool cat) character consistency (cap, branding, appearance, fur, tail)
+- [ ] Verified Buddy (confused goat) character consistency (glasses, expression, clothing, horns, ears)
 - [ ] Confirmed attention-grabbing visual element
 - [ ] Checked opening audio impact
 - [ ] Export: hook_scene.mp4
@@ -169,7 +169,7 @@
 - [ ] Yaari's clothing shows RideYaari branding clearly
 - [ ] Buddy wearing round black glasses in every scene
 - [ ] Buddy in oversized gray shirt (no logos)
-- [ ] Both characters maintain consistent skin tones
+- [ ] Both characters maintain consistent fur colors and patterns (cat and goat)
 - [ ] Facial features match across all scenes
 - [ ] Height difference visible (Yaari taller than Buddy)
 - [ ] Expressions match personalities (Yaari confident, Buddy confused)
