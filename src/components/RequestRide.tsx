@@ -631,9 +631,9 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
                 )}
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-900 mb-2">💡 Tips for Better Results</h3>
-                <ul className="text-sm text-green-800 space-y-1">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">💡 Tips for Better Results</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
                   <li>• Use a larger search radius (25+ miles) to find more drivers</li>
                   <li>• Be flexible with your timing for better matches</li>
                   <li>• Add specific notes about pickup preferences</li>

@@ -466,25 +466,29 @@ export default function PostRide({ onBack, onProfile, isGuest = false }: PostRid
               }
             />
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-semibold text-green-900 mb-2">💡 Tips for a Great Ride Post</h3>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>• Set a fair price that covers gas and wear-and-tear</li>
-                <li>• Be specific about pickup and drop-off locations</li>
-                <li>• Add intermediate stops to attract more passengers</li>
-                <li>• Post your ride at least a day in advance</li>
-                <li>• Be responsive to passenger messages</li>
-              </ul>
-            </div>
+            <div className="border-t border-gray-200 mt-6 pt-6 space-y-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">💡 Tips for a Great Ride Post</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Set a fair price that covers gas and wear-and-tear</li>
+                  <li>• Be specific about pickup and drop-off locations</li>
+                  <li>• Add intermediate stops to attract more passengers</li>
+                  <li>• Post your ride at least a day in advance</li>
+                  <li>• Be responsive to passenger messages</li>
+                </ul>
+              </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Your ride will be visible to users searching your route</li>
-                <li>• Interested passengers can contact you through our secure chat</li>
-                <li>• You can discuss pickup details and payment privately</li>
-                <li>• All communication stays within the platform for safety</li>
-              </ul>
+              <hr className="border-gray-200" />
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Your ride will be visible to users searching your route</li>
+                  <li>• Interested passengers can contact you through our secure chat</li>
+                  <li>• You can discuss pickup details and payment privately</li>
+                  <li>• All communication stays within the platform for safety</li>
+                </ul>
+              </div>
             </div>
 
             <button

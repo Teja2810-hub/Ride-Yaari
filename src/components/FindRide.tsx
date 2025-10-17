@@ -1094,9 +1094,6 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                   Ride Requests ({rideRequests.length})
                 </button>
               </div>
-              <span className="text-gray-600">
-                {activeTab === 'rides' ? rides.length : rideRequests.length} {activeTab === 'rides' ? 'ride' : 'request'}{(activeTab === 'rides' ? rides.length : rideRequests.length) !== 1 ? 's' : ''} found
-              </span>
             </div>
 
             {/* Available Rides Tab */}
@@ -1125,8 +1122,8 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                         key={ride.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                          <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
                               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
                                 {ride.user_profiles?.profile_image_url ? (
@@ -1144,16 +1141,16 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                 )}
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                                   {ride.user_profiles?.full_name || 'Driver'}
                                 </h3>
-                                <p className="text-gray-600">Driver</p>
+                                <p className="text-sm text-gray-600">Driver</p>
                               </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <div className="grid md:grid-cols-3 gap-4 mb-4 text-sm">
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <p className="text-gray-600 mb-1">From</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <MapPin size={14} className="mr-1 text-gray-400" />
                                   {ride.from_location}
@@ -1161,7 +1158,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <p className="text-gray-600 mb-1">To</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <MapPin size={14} className="mr-1 text-gray-400" />
                                   {ride.to_location}
@@ -1169,7 +1166,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">Departure</p>
+                                <p className="text-gray-600 mb-1">Departure</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <Clock size={14} className="mr-1 text-gray-400" />
                                   {formatDateTimeSafe(ride.departure_date_time)}
@@ -1178,9 +1175,9 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-200">
-                              <div className="flex items-center justify-between space-x-4">
+                              <div className="flex items-center justify-between space-x-4 text-sm">
                                 <div>
-                                  <p className="text-sm text-gray-600 mb-1">Price per Passenger</p>
+                                  <p className="text-gray-600 mb-1">Price per Passenger</p>
                                   <div className="flex items-center space-x-2">
                                     <span className="font-semibold text-green-600 flex items-center">
                                       {getCurrencySymbol(ride.currency || 'USD')}{ride.price}
@@ -1193,7 +1190,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                   </div>
                                 </div>
                                 <div>
-                                  <p className="text-sm text-gray-600 mb-1">Seats Available</p>
+                                  <p className="text-gray-600 mb-1">Seats Available</p>
                                   <div className="flex items-center space-x-2">
                                     {ride.seats_available === 0 ? (
                                       <span className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded-full font-bold">
@@ -1214,10 +1211,10 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             </div>
                           </div>
 
-                          <div className="ml-6">
+                          <div className="ml-0 sm:ml-6 mt-4 sm:mt-0 w-full sm:w-auto">
                             {ride.user_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
+                              <div className="flex items-center justify-center space-x-2 bg-gray-100 text-gray-500 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium cursor-not-allowed text-sm">
+                                <AlertTriangle size={16} />
                                 <span>Your Ride</span>
                               </div>
                             ) : effectiveIsGuest ? (
@@ -1233,13 +1230,13 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, ride)
                                   }}
                                   disabled={!ride.user_id && !(ride.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !ride.user_id && !(ride.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-green-600 text-white hover:bg-green-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Chat with Driver</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
@@ -1262,9 +1259,9 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                   handleChatClick(userId, userName, ride)
                                 }}
                                 disabled={!ride.user_id && !(ride.user_profiles as any)?.id}
-                                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-sm w-full"
                               >
-                                <MessageCircle size={20} />
+                                <MessageCircle size={16} />
                                 <span>Chat with Driver</span>
                               </button>
                             )}
@@ -1311,7 +1308,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                         key={request.id}
                         className="border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-blue-50"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
                               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
@@ -1328,16 +1325,16 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                 )}
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                                   {request.user_profiles?.full_name || 'Passenger'}
                                 </h3>
-                                <p className="text-blue-600 font-medium">Looking for a ride</p>
+                                <p className="text-sm text-blue-600 font-medium">Looking for a ride</p>
                               </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <div className="grid md:grid-cols-3 gap-4 mb-4 text-sm">
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <p className="text-gray-600 mb-1">From</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <MapPin size={14} className="mr-1 text-gray-400" />
                                   {request.departure_location}
@@ -1345,7 +1342,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <p className="text-gray-600 mb-1">To</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <MapPin size={14} className="mr-1 text-gray-400" />
                                   {request.destination_location}
@@ -1353,7 +1350,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">When</p>
+                                <p className="text-gray-600 mb-1">When</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <Calendar size={14} className="mr-1 text-gray-400" />
                                   {formatRequestDateDisplay(request)}
@@ -1364,7 +1361,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             {request.additional_notes && (
                               <div className="mt-4 pt-4 border-t border-blue-200">
                                 <p className="text-sm text-gray-600 mb-1">Additional Notes</p>
-                                <p className="text-gray-900">{request.additional_notes}</p>
+                                <p className="text-sm text-gray-900">{request.additional_notes}</p>
                               </div>
                             )}
 
@@ -1384,10 +1381,10 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                             </div>
                           </div>
 
-                          <div className="ml-6">
+                          <div className="ml-0 sm:ml-6 mt-4 sm:mt-0 w-full sm:w-auto">
                             {request.passenger_id === user?.id ? (
-                              <div className="flex items-center space-x-2 bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                <AlertTriangle size={20} />
+                              <div className="flex items-center justify-center space-x-2 bg-gray-100 text-gray-500 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium cursor-not-allowed text-sm">
+                                <AlertTriangle size={16} />
                                 <span>Your Request</span>
                               </div>
                             ) : effectiveIsGuest ? (
@@ -1403,26 +1400,17 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, undefined)
                                   }}
                                   disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-blue-600 text-white hover:bg-blue-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Contact Passenger</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
                                   Sign up required to chat
-                                </p>
-                              </div>
-                            ) : request.passenger_id === user?.id ? (
-                              <div className="flex flex-col space-y-2">
-                                <div className="bg-orange-100 text-orange-800 px-6 py-3 rounded-lg font-medium text-center border border-orange-200">
-                                  Your Request
-                                </div>
-                                <p className="text-xs text-gray-500 text-center">
-                                  This is your posted request
                                 </p>
                               </div>
                             ) : (
@@ -1438,13 +1426,13 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, undefined)
                                   }}
                                   disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-blue-600 text-white hover:bg-blue-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Offer Ride</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">

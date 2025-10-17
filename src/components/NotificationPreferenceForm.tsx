@@ -79,9 +79,9 @@ export default function NotificationPreferenceForm({
 
   const getNotificationDescription = () => {
     if (type === 'ride') {
-      return 'Get notified when passengers request rides matching your route and timing preferences'
+      return 'When passengers request rides matching your route and timing preferences'
     } else {
-      return 'Get notified when passengers request assistance on trips matching your route and timing preferences'
+      return 'When passengers request assistance on trips matching your route and timing preferences'
     }
   }
 

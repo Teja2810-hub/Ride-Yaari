@@ -364,9 +364,9 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-3">💰 Service Pricing (Optional)</h3>
-              <p className="text-sm text-blue-800 mb-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">💰 Service Pricing (Optional)</h3>
+              <p className="text-sm text-gray-700 mb-4">
                 Set a price for your airport assistance service. This could be for package delivery, 
                 travel assistance, or companionship services.
               </p>
@@ -439,12 +439,12 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
               defaultDate={travelDate}
             />
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="border-t border-gray-200 my-6 pt-6 space-y-6">
               <div className="flex items-start space-x-3">
                 <AlertTriangle size={20} className="text-blue-600 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-2">Additional Use Cases</h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
+                  <h3 className="font-semibold text-gray-900 mb-2">Additional Use Cases</h3>
+                  <ul className="text-sm text-gray-700 space-y-1">
                     <li>• Request a caretaker to accompany an elderly parent</li>
                     <li>• Find a rider to assist a first-time traveler</li>
                     <li>• Package delivery and pickup services</li>
@@ -452,16 +452,18 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
                   </ul>
                 </div>
               </div>
-            </div>
+              
+              <hr className="border-gray-200" />
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your trip will be visible to other users searching for this route</li>
-                <li>• Interested travelers can contact you through our secure chat system</li>
-                <li>• You can discuss delivery or pickup details privately</li>
-                <li>• All communication stays within the platform for your safety</li>
-              </ul>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Your trip will be visible to other users searching for this route</li>
+                  <li>• Interested travelers can contact you through our secure chat system</li>
+                  <li>• You can discuss delivery or pickup details privately</li>
+                  <li>• All communication stays within the platform for your safety</li>
+                </ul>
+              </div>
             </div>
 
             <button
