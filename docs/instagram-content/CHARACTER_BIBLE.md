@@ -8,7 +8,7 @@ This document defines the visual design, personality, and behavior of the two ma
 ## CHARACTER 1: YAARI (The RideYaari Mascot)
 
 ### Character Overview
-Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem. He is an animated cartoon character with an Indian urban English voice personality.
+Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem. He is an animated cartoon character with an Indian accent speaking American English.
 
 ### Physical Description
 
@@ -105,7 +105,7 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 
 ### Voice Characteristics
 - **Voice Type**: Male, mid-range baritone
-- **Accent**: Neutral Indian-English (urban metro city)
+- **Accent**: Indian accent speaking American English (not British)
 - **Pitch**: Medium (not too deep, not too high)
 - **Speed**: Moderate with controlled rhythm
 - **Tone**: Smooth, confident, slightly cocky
@@ -125,7 +125,7 @@ Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He r
 ## CHARACTER 2: BUDDY (The Confused Sidekick)
 
 ### Character Overview
-Buddy is the well-meaning but often confused animated friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time. He is an animated cartoon character with an Indian English voice personality.
+Buddy is the well-meaning but often confused animated friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time. He is an animated cartoon character with an Indian accent speaking American English.
 
 ### Physical Description
 
@@ -216,7 +216,7 @@ Buddy is the well-meaning but often confused animated friend who doesn't underst
 
 ### Voice Characteristics
 - **Voice Type**: Male, higher tenor
-- **Accent**: Generic Indian-English (less refined than Yaari)
+- **Accent**: Indian accent speaking American English (less refined than Yaari)
 - **Pitch**: Medium-high (goes higher when confused)
 - **Speed**: Variable (fast when rambling, slow when processing)
 - **Tone**: Uncertain, questioning, slightly whiny
@@ -312,23 +312,23 @@ All videos must use RideYaari brand colors:
 
 #### For Yaari:
 ```
-Character: Indian male, mid-20s, athletic build, medium brown skin (#8B6F47),
+Character: Animated cartoon male character with Indian features, mid-20s appearance, athletic build, medium brown skin tone,
 short fade hairstyle with textured quiff, light stubble, confident smirk,
 almond-shaped dark eyes, wearing blue RideYaari cap with airplane and car logo,
 silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket
 with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers,
 silver watch, minimal rings, cool and confident pose, one hand in pocket,
-slight head tilt, 2D flat animation style, modern digital art, clean lines,
+slight head tilt, 2D flat animation style, cartoon character design, modern digital art, clean lines,
 vibrant colors, Instagram reels format, 9:16 aspect ratio
 ```
 
 #### For Buddy:
 ```
-Character: Indian male, mid-20s, average build, light brown skin (#B08968),
+Character: Animated cartoon male character with Indian features, mid-20s appearance, average build, light brown skin tone,
 messy medium-length black hair, round black-framed glasses, confused expression,
 raised eyebrows, mouth slightly open, clean-shaven, wearing oversized gray t-shirt,
 baggy light blue jeans, generic black sneakers, no accessories, awkward posture,
-scratching head, uncertain body language, 2D flat animation style, modern digital
+scratching head, uncertain body language, 2D flat animation style, cartoon character design, modern digital
 art, clean lines, muted colors, Instagram reels format, 9:16 aspect ratio
 ```
 
@@ -353,22 +353,22 @@ inconsistent character design, off-brand colors
 ## VOICE DIRECTION FOR AI VOICE SYNTHESIS
 
 ### Yaari Voice Settings
-- **Voice Model**: Indian Male, Young Adult, Confident
+- **Voice Model**: Male with Indian accent speaking American English, Young Adult, Confident
 - **Pitch**: -2 to -5 semitones (slightly lower)
 - **Speed**: 1.0x (normal pace)
 - **Energy**: 7/10 (engaged but relaxed)
 - **Emphasis**: Strategic on key words
 - **Emotion**: Cool, sarcastic, knowing
-- **Sample Reference**: Think Aamir Khan or Ayushmann Khurrana (confident, urban)
+- **Accent**: Indian accent but using American English phrases and pronunciation
 
 ### Buddy Voice Settings
-- **Voice Model**: Indian Male, Young Adult, Uncertain
+- **Voice Model**: Male with Indian accent speaking American English, Young Adult, Uncertain
 - **Pitch**: +3 to +5 semitones (slightly higher)
 - **Speed**: 0.85x to 1.15x (variable - slower when confused, faster when excited)
 - **Energy**: 6/10 (enthusiastic but unfocused)
 - **Emphasis**: Random and excessive
 - **Emotion**: Confused, surprised, questioning
-- **Sample Reference**: Think confused/nervous character (higher pitched, uncertain)
+- **Accent**: Indian accent but using American English phrases and pronunciation
 
 ---
 

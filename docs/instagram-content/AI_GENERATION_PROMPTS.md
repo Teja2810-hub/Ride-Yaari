@@ -8,11 +8,11 @@ This file contains platform-specific prompts for generating consistent RideYaari
 ## UNIVERSAL BASE PROMPT (Use with all platforms)
 
 ```
-Create a 9:16 vertical format animated video for Instagram Reels featuring two animated male characters in modern 2D flat animation style with Indian voice personalities.
+Create a 9:16 vertical format animated video for Instagram Reels featuring two animated cartoon male characters in modern 2D flat animation style with Indian accents speaking American English.
 
-CHARACTER 1 (YAARI): Mid-20s animated male character, athletic build, medium brown skin tone, short fade hairstyle with textured quiff, light stubble, confident smirk, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers. Cool and confident personality with Indian urban English accent, slight swagger, one hand in pocket. Animated cartoon character style with expressive features.
+CHARACTER 1 (YAARI): Mid-20s animated cartoon male character, athletic build, medium brown skin tone, short fade hairstyle with textured quiff, light stubble, confident smirk, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers. Cool and confident personality with Indian accent speaking American English, slight swagger, one hand in pocket. Animated cartoon character style with expressive features.
 
-CHARACTER 2 (BUDDY): Mid-20s animated male character, average build, lighter skin tone, messy medium-length black hair, round black-framed glasses, confused expression, wearing oversized gray t-shirt, baggy light blue jeans, generic sneakers. Awkward posture, scratches head often, confused body language. Indian English accent with questioning tone. Animated cartoon character style with exaggerated confused expressions.
+CHARACTER 2 (BUDDY): Mid-20s animated cartoon male character, average build, lighter skin tone, messy medium-length black hair, round black-framed glasses, confused expression, wearing oversized gray t-shirt, baggy light blue jeans, generic sneakers. Awkward posture, scratches head often, confused body language. Indian accent speaking American English with questioning tone. Animated cartoon character style with exaggerated confused expressions.
 
 Style: Clean 2D flat animated character design with cartoon style, smooth animation, vibrant RideYaari brand colors (primary blue #2563EB, secondary blue #3B82F6, green #16A34A for car sections, white #FFFFFF), modern motion graphics, minimal background with floating travel icons (✈️🚗📦💰), kinetic typography for key phrases, professional Instagram-optimized animation, vertical video format 1080x1920, 60fps, cel-shaded style with bold outlines, cartoon character aesthetics.
 
@@ -29,11 +29,11 @@ Runway ML excels at smooth character animation and consistent style. Use these p
 
 #### Runway Prompt Template:
 ```
-[Scene Description] featuring two 2D animated cartoon characters with Indian voice personalities in 9:16 vertical format.
+[Scene Description] featuring two 2D animated cartoon characters with Indian accents speaking American English in 9:16 vertical format.
 
-YAARI CHARACTER: Animated urban male character, mid-20s appearance, athletic build, medium brown skin tone, short fade hairstyle, light stubble, confident smirk, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark jeans, white sneakers, cool posture with hand in pocket. Cartoon animation style, Indian English accent.
+YAARI CHARACTER: Animated urban male cartoon character, mid-20s appearance, athletic build, medium brown skin tone, short fade hairstyle, light stubble, confident smirk, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark jeans, white sneakers, cool posture with hand in pocket. Cartoon animation style, Indian accent speaking American English.
 
-BUDDY CHARACTER: Animated male character, mid-20s appearance, average build, lighter skin tone, messy hair, round black glasses, confused expression, oversized gray t-shirt, baggy light blue jeans, awkward posture scratching head. Cartoon animation style, Indian English accent.
+BUDDY CHARACTER: Animated male cartoon character, mid-20s appearance, average build, lighter skin tone, messy hair, round black glasses, confused expression, oversized gray t-shirt, baggy light blue jeans, awkward posture scratching head. Cartoon animation style, Indian accent speaking American English.
 
 STYLE: 2D flat cartoon animation, smooth character movement, vibrant blue (#2563EB) and green (#16A34A) color scheme, clean lines, minimal background with floating icons (✈️🚗), modern motion graphics, Instagram Reels vertical format, professional animation quality, cartoon character design.
 
@@ -51,9 +51,9 @@ FPS: 24 or 60
 ```
 Opening hook scene featuring two 2D animated cartoon characters in 9:16 vertical Instagram format.
 
-YAARI: Animated urban male character, mid-20s appearance, athletic, medium brown skin tone, short fade with quiff, stubble, confident smirk, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark jeans, white sneakers. Cartoon style. Walks in confidently from left, stops center, turns to camera with smirk.
+YAARI: Animated urban male cartoon character, mid-20s appearance, athletic, medium brown skin tone, short fade with quiff, stubble, confident smirk, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark jeans, white sneakers. Cartoon style. Walks in confidently from left, stops center, turns to camera with smirk.
 
-BUDDY: Animated male character, mid-20s appearance, average build, lighter skin tone, messy black hair, round glasses, worried expression, oversized gray shirt, baggy blue jeans. Cartoon style. Runs in frantically from right, stops beside Yaari, scratches head confused.
+BUDDY: Animated male cartoon character, mid-20s appearance, average build, lighter skin tone, messy black hair, round glasses, worried expression, oversized gray shirt, baggy blue jeans. Cartoon style. Runs in frantically from right, stops beside Yaari, scratches head confused.
 
 STYLE: Clean 2D flat cartoon animation, vibrant RideYaari blue (#2563EB), smooth character motion, minimal white background with subtle travel icon outlines, bold character outlines, Instagram Reels vertical format, cartoon character design.
 
@@ -566,11 +566,11 @@ Export Settings:
 
 #### Yaari Voice Clone Prompt:
 ```
-VOICE PROFILE: Urban Indian Male, Confident & Sarcastic
+VOICE PROFILE: Male with Indian Accent speaking American English, Confident & Sarcastic
 
 CHARACTERISTICS:
 - Age Range: 25-32
-- Accent: Neutral Indian English (Urban Metro - Delhi/Mumbai/Bangalore blend)
+- Accent: Indian accent speaking American English (NOT British English)
 - Pitch: Medium to medium-low baritone
 - Pace: Moderate, controlled (130-150 words per minute)
 - Tone: Cool, confident, knowing, slightly cocky
@@ -603,11 +603,11 @@ PRONUNCIATION GUIDE:
 
 #### Buddy Voice Clone Prompt:
 ```
-VOICE PROFILE: Indian Male, Confused & Uncertain
+VOICE PROFILE: Male with Indian Accent speaking American English, Confused & Uncertain
 
 CHARACTERISTICS:
 - Age Range: 24-28
-- Accent: Indian English (slightly less refined than Yaari)
+- Accent: Indian accent speaking American English (NOT British English, slightly less refined than Yaari)
 - Pitch: Medium-high tenor
 - Pace: Variable (fast when excited, slow when confused)
 - Tone: Uncertain, questioning, eager to learn

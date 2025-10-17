@@ -135,7 +135,7 @@ Look - you either *post* what you're doing or *find* what you need. Built-in cha
 **[Visual: Website form appears with Yaari pointing at each field]**
 
 **YAARI**:
-**One** - [points] Pick your *airports*. [fields highlight] Leaving from where, going where. Select from the dropdown. Delhi to Bangalore. Easy.
+**One** - [points] Pick your *airports*. [fields highlight] Leaving from where, going where. Select from the dropdown. New York to Los Angeles. Easy.
 
 **Two** - [swipes to next field] *Travel date and time*. When's your flight? [calendar opens] Tomorrow, 10 AM. Plus your timezone so nobody gets confused.
 
