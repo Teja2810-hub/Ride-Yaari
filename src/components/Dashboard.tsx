@@ -115,13 +115,15 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
           }} />}
 
           <div className="text-center mb-8 sm:mb-12">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
-                <Plane size={20} className="sm:w-6 sm:h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Airport Trips</h1>
-                <p className="text-sm sm:text-base text-gray-600 px-2">Share flight itineraries for deliveries and assistance</p>
-              </div>
+            <div className="flex items-center justify-center">
+              {/* <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full mr-4">
+                <Plane size={16} className="sm:w-6 sm:h-6" />
+              </div> */}
+              {/* <div> */}
+                {/* <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Airport Trips</h1> */}
+                {/* <p className="text-sm sm:text-base text-gray-600 px-2">Share flight itineraries for deliveries and assistance</p>
+              </div> */}
+            </div>
           </div>
 
           <div className="text-center mb-8 sm:mb-12">

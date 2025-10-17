@@ -104,7 +104,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
           <h1 className="hero-title text-3xl sm:text-4xl md:text-5xl gradient-text mb-2">
             RideYaari
           </h1>
-          <p className="subtitle text-lg sm:text-xl mb-1 max-w-3xl mx-auto font-light whitespace-nowrap">
+          <p className="subtitle text-lg sm:text-xl mb-1 max-w-3xl mx-auto font-light">
             Your global platform for sharing rides and airport trips
           </p>
           {/* Product Image
@@ -121,6 +121,16 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
         </div>
 
         <div className="max-w-6xl mx-auto">
+          <div className="relative h-12 mb-8 overflow-hidden">
+            <div className="absolute top-0 w-full h-full">
+              <div className="absolute animate-move-right" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                <Plane size={24} className="text-blue-500" />
+              </div>
+              <div className="absolute animate-move-left" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                <Car size={24} className="text-green-500" />
+              </div>
+            </div>
+          </div>
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-1 sm:mb-2">
               Choose Your Service
@@ -137,10 +147,12 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
               className="group cursor-pointer card p-4 sm:p-6 min-h-[320px] sm:min-h-[360px] flex items-center justify-center"
             >
               <div className="flex flex-col items-center text-center w-full">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-accent-blue to-blue-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                  <Plane size={20} className="sm:w-8 sm:h-8 text-white" />
+                <div className="flex items-center justify-center mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-accent-blue to-blue-600 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
+                    <Plane size={16} className="sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-text-primary">Airport Trips</h3>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Airport Trips</h3>
                 <p className="text-sm sm:text-base text-text-secondary mb-3 font-light max-w-xs">
                   Share your flight itinerary for airport deliveries, pickups, or assistance
                 </p>
@@ -171,10 +183,12 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
               className="group cursor-pointer card p-4 sm:p-6 min-h-[320px] sm:min-h-[360px] flex items-center justify-center"
             >
               <div className="flex flex-col items-center text-center w-full">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-300 shadow-md">
-                  <Car size={20} className="sm:w-8 sm:h-8 text-white" />
+                <div className="flex items-center justify-center mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-105 transition-transform duration-300 shadow-md">
+                    <Car size={16} className="sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-text-primary">Car Rides</h3>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-semibold text-text-primary mb-2">Car Rides</h3>
                 <p className="text-sm sm:text-base text-text-secondary mb-3 font-light max-w-xs">
                   Find or offer car rides to share travel costs and reduce environmental impact
                 </p>
