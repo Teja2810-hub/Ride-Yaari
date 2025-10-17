@@ -8,16 +8,17 @@ This document defines the visual design, personality, and behavior of the two ma
 ## CHARACTER 1: YAARI (The RideYaari Mascot)
 
 ### Character Overview
-Yaari is the cool, intelligent, and sarcastic mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem.
+Yaari is the cool, intelligent, and sarcastic animated mascot of RideYaari. He represents the brand's smart, modern approach to travel sharing and always knows the best solution to any travel problem. He is an animated cartoon character with an Indian urban English voice personality.
 
 ### Physical Description
 
 #### Body Type & Proportions
+- **Character Type**: Animated cartoon character (not a real person)
 - **Height**: 5'10" (178 cm) - slightly above average
 - **Build**: Athletic, lean build - not bulky but fit
 - **Posture**: Confident, relaxed stance with slight lean-back swagger
 - **Age Appearance**: Mid-20s to early 30s
-- **Skin Tone**: Medium brown complexion (#8B6F47)
+- **Skin Tone**: Medium brown complexion
 
 #### Facial Features
 - **Face Shape**: Oval with defined jawline
@@ -58,7 +59,7 @@ Yaari is the cool, intelligent, and sarcastic mascot of RideYaari. He represents
 - **White**: #FFFFFF (t-shirts, sneakers, text)
 - **Dark Gray**: #1E293B (jeans, pants)
 - **Silver**: #C0C0C0 (jewelry)
-- **Skin Tone**: #8B6F47
+- **Skin Tone**: Medium brown (cartoon style)
 
 ### Personality Traits
 
@@ -124,16 +125,17 @@ Yaari is the cool, intelligent, and sarcastic mascot of RideYaari. He represents
 ## CHARACTER 2: BUDDY (The Confused Sidekick)
 
 ### Character Overview
-Buddy is the well-meaning but often confused friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time.
+Buddy is the well-meaning but often confused animated friend who doesn't understand sarcasm and needs things explained multiple times. He represents the average user discovering RideYaari for the first time. He is an animated cartoon character with an Indian English voice personality.
 
 ### Physical Description
 
 #### Body Type & Proportions
+- **Character Type**: Animated cartoon character (not a real person)
 - **Height**: 5'7" (170 cm) - average to slightly below
 - **Build**: Regular/average build, not particularly fit
 - **Posture**: Slightly hunched, uncertain body language
 - **Age Appearance**: Mid-20s
-- **Skin Tone**: Light brown complexion (#B08968)
+- **Skin Tone**: Light brown complexion (cartoon style)
 
 #### Facial Features
 - **Face Shape**: Round with softer features
@@ -167,7 +169,7 @@ Buddy is the well-meaning but often confused friend who doesn't understand sarca
 - **Beige/Khaki**: #D4C5B9 (alternate shirts)
 - **Light Blue**: #60A5FA (jeans)
 - **Black**: #1A1A1A (hair, glasses)
-- **Skin Tone**: #B08968
+- **Skin Tone**: Light brown (cartoon style)
 
 ### Personality Traits
 

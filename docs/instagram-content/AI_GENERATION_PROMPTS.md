@@ -8,15 +8,15 @@ This file contains platform-specific prompts for generating consistent RideYaari
 ## UNIVERSAL BASE PROMPT (Use with all platforms)
 
 ```
-Create a 9:16 vertical format animated video for Instagram Reels featuring two Indian male characters in modern 2D flat animation style.
+Create a 9:16 vertical format animated video for Instagram Reels featuring two animated male characters in modern 2D flat animation style with Indian voice personalities.
 
-CHARACTER 1 (YAARI): Mid-20s Indian male, athletic build, medium brown skin (#8B6F47), short fade hairstyle with textured quiff, light stubble, confident smirk, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers. Cool and confident personality, slight swagger, one hand in pocket.
+CHARACTER 1 (YAARI): Mid-20s animated male character, athletic build, medium brown skin tone, short fade hairstyle with textured quiff, light stubble, confident smirk, wearing blue RideYaari cap with airplane and car logo, silver chain necklace, white t-shirt with RideYaari logo, blue denim jacket with "RIDEYAARI" embroidered on back, dark blue fitted jeans, white sneakers. Cool and confident personality with Indian urban English accent, slight swagger, one hand in pocket. Animated cartoon character style with expressive features.
 
-CHARACTER 2 (BUDDY): Mid-20s Indian male, average build, light brown skin (#B08968), messy medium-length black hair, round black-framed glasses, confused expression, wearing oversized gray t-shirt, baggy light blue jeans, generic sneakers. Awkward posture, scratches head often, confused body language.
+CHARACTER 2 (BUDDY): Mid-20s animated male character, average build, lighter skin tone, messy medium-length black hair, round black-framed glasses, confused expression, wearing oversized gray t-shirt, baggy light blue jeans, generic sneakers. Awkward posture, scratches head often, confused body language. Indian English accent with questioning tone. Animated cartoon character style with exaggerated confused expressions.
 
-Style: Clean 2D flat character design, smooth animation, vibrant RideYaari brand colors (primary blue #2563EB, secondary blue #3B82F6, green #16A34A for car sections, white #FFFFFF), modern motion graphics, minimal background with floating travel icons (✈️🚗📦💰), kinetic typography for key phrases, professional Instagram-optimized animation, vertical video format 1080x1920, 60fps, cel-shaded style with bold outlines.
+Style: Clean 2D flat animated character design with cartoon style, smooth animation, vibrant RideYaari brand colors (primary blue #2563EB, secondary blue #3B82F6, green #16A34A for car sections, white #FFFFFF), modern motion graphics, minimal background with floating travel icons (✈️🚗📦💰), kinetic typography for key phrases, professional Instagram-optimized animation, vertical video format 1080x1920, 60fps, cel-shaded style with bold outlines, cartoon character aesthetics.
 
-AVOID: 3D rendering, realistic photography, purple/violet/indigo colors, cluttered backgrounds, horizontal format, inconsistent character design, low quality, blurry, distorted faces, extra limbs.
+AVOID: 3D rendering, realistic photography, photorealistic human faces, purple/violet/indigo colors, cluttered backgrounds, horizontal format, inconsistent character design, low quality, blurry, distorted faces, extra limbs, real human features.
 ```
 
 ---
@@ -29,19 +29,19 @@ Runway ML excels at smooth character animation and consistent style. Use these p
 
 #### Runway Prompt Template:
 ```
-[Scene Description] featuring two 2D animated Indian male characters in 9:16 vertical format.
+[Scene Description] featuring two 2D animated cartoon characters with Indian voice personalities in 9:16 vertical format.
 
-YAARI CHARACTER: Urban Indian male, mid-20s, athletic build, brown skin, short fade hairstyle, light stubble, confident smirk, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark jeans, white sneakers, cool posture with hand in pocket.
+YAARI CHARACTER: Animated urban male character, mid-20s appearance, athletic build, medium brown skin tone, short fade hairstyle, light stubble, confident smirk, blue RideYaari baseball cap (with airplane and car logo), silver necklace, white t-shirt with RideYaari logo, blue denim jacket, dark jeans, white sneakers, cool posture with hand in pocket. Cartoon animation style, Indian English accent.
 
-BUDDY CHARACTER: Indian male, mid-20s, average build, lighter brown skin, messy hair, round black glasses, confused expression, oversized gray t-shirt, baggy light blue jeans, awkward posture scratching head.
+BUDDY CHARACTER: Animated male character, mid-20s appearance, average build, lighter skin tone, messy hair, round black glasses, confused expression, oversized gray t-shirt, baggy light blue jeans, awkward posture scratching head. Cartoon animation style, Indian English accent.
 
-STYLE: 2D flat animation, smooth character movement, vibrant blue (#2563EB) and green (#16A34A) color scheme, clean lines, minimal background with floating icons (✈️🚗), modern motion graphics, Instagram Reels vertical format, professional animation quality.
+STYLE: 2D flat cartoon animation, smooth character movement, vibrant blue (#2563EB) and green (#16A34A) color scheme, clean lines, minimal background with floating icons (✈️🚗), modern motion graphics, Instagram Reels vertical format, professional animation quality, cartoon character design.
 
 MOTION: [Specific actions - e.g., "Yaari walks into frame with confident stride, stops center frame, crosses arms. Buddy runs in frantically from right side, stops abruptly, scratches head."]
 
 CAMERA: Static front-facing camera, characters centered in frame, vertical 9:16 composition.
 
-AVOID: 3D rendering, realistic style, purple colors, horizontal format, multiple characters beyond these two, cluttered background.
+AVOID: 3D rendering, realistic style, photorealistic humans, real people, purple colors, horizontal format, multiple characters beyond these two, cluttered background.
 
 Duration: [5-10 seconds per clip]
 FPS: 24 or 60
@@ -49,13 +49,13 @@ FPS: 24 or 60
 
 #### Runway Example - Hook Scene:
 ```
-Opening hook scene featuring two 2D animated Indian male characters in 9:16 vertical Instagram format.
+Opening hook scene featuring two 2D animated cartoon characters in 9:16 vertical Instagram format.
 
-YAARI: Urban Indian male, mid-20s, athletic, brown skin (#8B6F47), short fade with quiff, stubble, confident smirk, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark jeans, white sneakers. Walks in confidently from left, stops center, turns to camera with smirk.
+YAARI: Animated urban male character, mid-20s appearance, athletic, medium brown skin tone, short fade with quiff, stubble, confident smirk, blue RideYaari cap, silver chain, white tee with logo, blue jacket, dark jeans, white sneakers. Cartoon style. Walks in confidently from left, stops center, turns to camera with smirk.
 
-BUDDY: Indian male, mid-20s, average build, lighter skin (#B08968), messy black hair, round glasses, worried expression, oversized gray shirt, baggy blue jeans. Runs in frantically from right, stops beside Yaari, scratches head confused.
+BUDDY: Animated male character, mid-20s appearance, average build, lighter skin tone, messy black hair, round glasses, worried expression, oversized gray shirt, baggy blue jeans. Cartoon style. Runs in frantically from right, stops beside Yaari, scratches head confused.
 
-STYLE: Clean 2D flat animation, vibrant RideYaari blue (#2563EB), smooth character motion, minimal white background with subtle travel icon outlines, bold character outlines, Instagram Reels vertical format.
+STYLE: Clean 2D flat cartoon animation, vibrant RideYaari blue (#2563EB), smooth character motion, minimal white background with subtle travel icon outlines, bold character outlines, Instagram Reels vertical format, cartoon character design.
 
 MOTION: Yaari enters from left with cool stride (3 steps), stops center frame, rotates head 45 degrees toward camera, eyebrow raises, subtle smirk. Buddy enters from right running (5 steps, slightly clumsy), stops abruptly, slight stumble, raises hand to scratch head.
 
@@ -73,14 +73,14 @@ Luma AI excels at consistent characters across frames. Use detailed character de
 
 #### Luma Prompt Template:
 ```
-[Scene action] in vertical 9:16 Instagram Reels format, 2D flat animated style.
+[Scene action] in vertical 9:16 Instagram Reels format, 2D flat cartoon animated style.
 
 Character Consistency Tags:
-- YAARI: {athletic_indian_male, brown_skin, fade_hairstyle, stubble, confident_expression, blue_rideyaari_cap, silver_necklace, white_logo_tshirt, blue_denim_jacket, dark_jeans, white_sneakers, cool_posture}
+- YAARI: {athletic_animated_male, medium_brown_skin_tone, fade_hairstyle, stubble, confident_expression, blue_rideyaari_cap, silver_necklace, white_logo_tshirt, blue_denim_jacket, dark_jeans, white_sneakers, cool_posture, cartoon_character}
 
-- BUDDY: {average_indian_male, light_brown_skin, messy_hair, round_glasses, confused_expression, oversized_gray_shirt, baggy_blue_jeans, generic_sneakers, awkward_posture}
+- BUDDY: {average_animated_male, lighter_skin_tone, messy_hair, round_glasses, confused_expression, oversized_gray_shirt, baggy_blue_jeans, generic_sneakers, awkward_posture, cartoon_character}
 
-Visual Style: modern_2d_flat_animation, clean_lines, vibrant_blue_#2563EB, minimal_background, floating_icons, smooth_transitions, instagram_vertical_format
+Visual Style: modern_2d_flat_cartoon_animation, clean_lines, vibrant_blue_#2563EB, minimal_background, floating_icons, smooth_transitions, instagram_vertical_format, animated_character_design
 
 Scene Details: [Specific actions and interactions]
 
@@ -90,16 +90,16 @@ Camera: static_front_view, 9:16_vertical_composition
 
 Quality: high_resolution_1080x1920, smooth_motion, 60fps
 
-Negative: no_3d_rendering, no_realistic_photo, no_purple_colors, no_horizontal_format, no_cluttered_background
+Negative: no_3d_rendering, no_realistic_photo, no_real_people, no_photorealistic_humans, no_purple_colors, no_horizontal_format, no_cluttered_background
 ```
 
 #### Luma Example - Explanation Scene:
 ```
-Educational scene in 9:16 vertical Instagram format, 2D flat animated style.
+Educational scene in 9:16 vertical Instagram format, 2D flat cartoon animated style.
 
-YAARI: {confident_indian_male, athletic_build, brown_skin_#8B6F47, short_fade_hairstyle, light_stubble, smirk_expression, blue_rideyaari_cap_with_logo, silver_chain, white_tshirt_rideyaari_logo, blue_denim_jacket, dark_jeans, white_sneakers} - standing left side of frame, pointing right hand toward floating UI elements, confident posture, one eyebrow raised.
+YAARI: {confident_animated_male, athletic_build, medium_brown_skin_tone, short_fade_hairstyle, light_stubble, smirk_expression, blue_rideyaari_cap_with_logo, silver_chain, white_tshirt_rideyaari_logo, blue_denim_jacket, dark_jeans, white_sneakers, cartoon_character} - standing left side of frame, pointing right hand toward floating UI elements, confident posture, one eyebrow raised.
 
-BUDDY: {confused_indian_male, average_build, light_brown_skin_#B08968, messy_hair, round_black_glasses, puzzled_expression, oversized_gray_tshirt, baggy_blue_jeans, generic_sneakers} - standing right side of frame, scratching head with right hand, leaning forward slightly, eyes following Yaari's pointing gesture.
+BUDDY: {confused_animated_male, average_build, lighter_skin_tone, messy_hair, round_black_glasses, puzzled_expression, oversized_gray_tshirt, baggy_blue_jeans, generic_sneakers, cartoon_character} - standing right side of frame, scratching head with right hand, leaning forward slightly, eyes following Yaari's pointing gesture.
 
 UI ELEMENTS: floating website interface mockup in center, RideYaari blue (#2563EB) color scheme, "Post Trip" button highlighted with glow effect, small airplane icons (✈️) floating around.
 
@@ -113,7 +113,7 @@ Duration: 8 seconds
 FPS: 60
 Quality: 1080x1920, smooth motion, crisp details
 
-Avoid: 3D elements, realistic rendering, purple hues, horizontal framing, multiple background layers, photo-realistic faces
+Avoid: 3D elements, realistic rendering, real people, photorealistic humans, purple hues, horizontal framing, multiple background layers, photo-realistic faces
 ```
 
 ---
@@ -124,8 +124,8 @@ D-ID is best for talking head animations. Use for dialogue-heavy scenes.
 
 #### D-ID Character Setup (Yaari):
 ```
-CHARACTER IMAGE: Upload image of 2D flat-style Indian male character with following specifications:
-- Athletic build, medium brown skin tone (#8B6F47)
+CHARACTER IMAGE: Upload image of 2D flat-style animated cartoon male character with following specifications:
+- Athletic build, medium brown skin tone
 - Short fade hairstyle with textured quiff on top
 - Light stubble beard, well-maintained
 - Confident facial expression with slight smirk
@@ -134,7 +134,7 @@ CHARACTER IMAGE: Upload image of 2D flat-style Indian male character with follow
 - Silver chain necklace visible
 - White t-shirt with RideYaari logo on chest
 - Blue denim jacket (shoulders and upper chest visible in frame)
-- 2D flat animation art style, clean lines, bold outlines
+- 2D flat cartoon animation art style, clean lines, bold outlines, animated character design
 - Front-facing portrait, head and shoulders only
 - Solid light blue background (#E0F2FE)
 - High resolution, vertical orientation suitable for 9:16 crop
@@ -149,8 +149,8 @@ VOICE SETTINGS:
 
 #### D-ID Character Setup (Buddy):
 ```
-CHARACTER IMAGE: Upload image of 2D flat-style Indian male character with following specifications:
-- Average build, light brown skin tone (#B08968)
+CHARACTER IMAGE: Upload image of 2D flat-style animated cartoon male character with following specifications:
+- Average build, lighter skin tone
 - Messy medium-length black hair, unstyled
 - Round black-framed glasses
 - Confused/puzzled facial expression
@@ -158,7 +158,7 @@ CHARACTER IMAGE: Upload image of 2D flat-style Indian male character with follow
 - Mouth slightly open (confused look)
 - Clean-shaven or very light stubble
 - Oversized gray t-shirt (no logos)
-- 2D flat animation art style, clean lines, softer outlines than Yaari
+- 2D flat cartoon animation art style, clean lines, softer outlines than Yaari, animated character design
 - Front-facing portrait, head and shoulders only
 - Solid light gray background (#F3F4F6)
 - High resolution, vertical orientation suitable for 9:16 crop
@@ -199,16 +199,16 @@ Create custom avatar for RideYaari brand:
 
 AVATAR 1 (YAARI - PRIMARY BRAND AVATAR):
 Visual Appearance:
-- Ethnicity: Indian/South Asian
-- Age: Mid-20s to early 30s
+- Character Type: Animated cartoon character with Indian voice accent
+- Age Appearance: Mid-20s to early 30s
 - Build: Athletic, fit appearance
-- Skin Tone: Medium brown (#8B6F47)
+- Skin Tone: Medium brown
 - Hairstyle: Modern short fade on sides, textured quiff on top
 - Facial Hair: Light stubble, well-groomed
 - Expression: Confident with subtle knowing smirk
 - Clothing: White t-shirt with blue RideYaari logo visible, blue cap with airplane and car icon
 - Accessories: Silver chain necklace
-- Art Style: 2D flat animated character design, NOT photorealistic
+- Art Style: 2D flat animated cartoon character design, NOT photorealistic, animated style
 - Pose: Slightly angled, one eyebrow raised, confident posture
 
 Personality Traits for AI Motion:
@@ -233,16 +233,16 @@ Frame: Vertical 9:16 for Instagram Reels
 
 AVATAR 2 (BUDDY - SECONDARY COMIC RELIEF AVATAR):
 Visual Appearance:
-- Ethnicity: Indian/South Asian
-- Age: Mid-20s
+- Character Type: Animated cartoon character with Indian voice accent
+- Age Appearance: Mid-20s
 - Build: Average, not particularly fit
-- Skin Tone: Light brown (#B08968)
+- Skin Tone: Lighter brown
 - Hairstyle: Messy, unstyled medium-length hair
 - Facial Hair: Clean-shaven
 - Accessories: Round black-framed glasses
 - Expression: Perpetually confused, eyes wide
 - Clothing: Oversized gray t-shirt (plain, no logos)
-- Art Style: 2D flat animated character design, softer features than Yaari
+- Art Style: 2D flat animated cartoon character design, softer features than Yaari, animated style
 - Pose: Slightly hunched, uncertain posture
 
 Personality Traits for AI Motion:
