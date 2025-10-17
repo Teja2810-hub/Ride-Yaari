@@ -22,7 +22,7 @@
 **[Visual: Yaari walks into frame, stops, looks directly at camera]**
 **[Buddy runs in frantically from the side]**
 
-**BUDDY**: Bro! I need to send a package to Mumbai but tickets are *so* expensive!
+**BUDDY**: Bro! I need to send a package to newyork right now but shipping is *so* expensive!
 
 **YAARI**: [Smirks, turns to camera] Let me educate y'all real quick.
 
@@ -50,7 +50,7 @@
 **YAARI**:
 One - *Airport Trips*. [taps airplane icon] Going on a flight? Post your itinerary. Need a package delivered? Find someone who's already traveling that route. Easy.
 
-**BUDDY**: [Wide-eyed] Wait... so I can send my package with someone going to Mumbai?
+**BUDDY**: [Wide-eyed] Wait... so I can send my package with someone going to newyork from my city?
 
 **YAARI**: [Slow nod] Yep. Not that complicated.
 
@@ -76,7 +76,7 @@ Look - you either *post* what you're doing or *find* what you need. Built-in cha
 
 **BUDDY**: [Still confused] But wait, do I have to—
 
-**YAARI**: [Holds up hand] Just download it. Trust me.
+**YAARI**: [Holds up hand] Just search it and browse. Trust me.
 
 ---
 
