@@ -827,14 +827,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     Share your experience with RideYaari to help other travelers and improve our platform.
                   </p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                  <ReviewForm onReviewSubmitted={() => {
-                    // Show success message and refresh
-                    setTimeout(() => {
-                      window.location.reload()
-                    }, 2000)
-                  }} />
-                </div>
+                <ReviewForm onReviewSubmitted={() => {
+                  // Show success message and refresh
+                  setTimeout(() => {
+                    window.location.reload()
+                  }, 2000)
+                }} />
               </div>
             )}
           </div>
