@@ -23,6 +23,23 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [showAnimation, setShowAnimation] = React.useState(true)
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setShowAnimation(false)
+      setTimeout(() => setShowAnimation(true), 100)
+    }, 60000)
+
+    const initialTimer = setTimeout(() => {
+      setShowAnimation(false)
+    }, 12000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(initialTimer)
+    }
+  }, [])
 
   const handleStartChat = (userId: string, userName: string) => {
     setActiveNotification(null)
@@ -113,16 +130,18 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
           }} />}
 
           <div className="text-center mb-8 sm:mb-12">
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
-                <Car size={20} className="sm:w-6 sm:h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Car Rides</h1>
-                <p className="text-sm sm:text-base text-gray-600">Share rides, save money, help the environment</p>
-              </div>
+            <div className="flex items-center justify-center">
+              {/* <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-green-600 text-white rounded-full mr-4">
+                <Car size={16} className="sm:w-6 sm:h-6" />
+              </div> */}
+              {/* <div> */}
+                {/* <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Car Rides</h1> */}
+                {/* <p className="text-sm sm:text-base text-gray-600">Share rides, save money, help the environment</p>
+              </div> */}
             </div>
+          </div>
 
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 relative z-1">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 px-2">
               What would you like to do today?
             </h2>
@@ -130,6 +149,34 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
               Offer a ride or find someone to share the journey with
             </p>
           </div>
+
+          {/* {showAnimation && (
+            <div className="relative h-32 mb-8 overflow-hidden">
+              <div className="absolute top-0 w-full h-full">
+                <div className="passengers-container">
+                  <div className="passenger"></div>
+                  <div className="passenger"></div>
+                  <div className="passenger"></div>
+                </div>
+                <div className="absolute car-animation-container">
+                  <div className="car-body">
+                    <div className="headlight"></div>
+                    <div className="headlight"></div>
+                    <Car size={32} className="text-neutral-800" />
+                  </div>
+                  <div className="smoke-container">
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )} */}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {/* Post a Ride Card - FIRST */}

@@ -489,9 +489,6 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                   Trip Requests ({tripRequests.length})
                 </button>
               </div>
-              <span className="text-gray-600">
-                {activeTab === 'trips' ? trips.length : tripRequests.length} {activeTab === 'trips' ? 'trip' : 'request'}{(activeTab === 'trips' ? trips.length : tripRequests.length) !== 1 ? 's' : ''} found
-              </span>
             </div>
 
             {/* Available Trips Tab */}
@@ -520,8 +517,8 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                         key={trip.id}
                         className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                          <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
                               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
                                 {trip.user_profiles?.profile_image_url ? (
@@ -539,21 +536,21 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                 )}
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                                   {trip.user_profiles?.full_name || 'Traveler'}
                                 </h3>
-                                <p className="text-gray-600">Traveler</p>
+                                <p className="text-sm text-gray-600">Traveler</p>
                               </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <div className="grid md:grid-cols-3 gap-4 mb-4 text-sm">
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">Departure</p>
+                                <p className="text-gray-600 mb-1">Departure</p>
                                 <div className="font-semibold text-gray-900">
                                   {trip.leaving_airport}
                                 </div>
                                 {trip.departure_time && (
-                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                  <div className="text-gray-600 flex items-center mt-1">
                                     <Clock size={12} className="mr-1" />
                                     {trip.departure_time}
                                     {trip.departure_timezone && (
@@ -566,12 +563,12 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">Destination</p>
+                                <p className="text-gray-600 mb-1">Destination</p>
                                 <div className="font-semibold text-gray-900">
                                   {trip.destination_airport}
                                 </div>
                                 {trip.landing_time && (
-                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                  <div className="text-gray-600 flex items-center mt-1">
                                     <Clock size={12} className="mr-1" />
                                     {trip.landing_time}
                                     {trip.landing_timezone && (
@@ -584,12 +581,12 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">Travel Date</p>
+                                <p className="text-gray-600 mb-1">Travel Date</p>
                                 <div className="font-semibold text-gray-900">
                                   {formatDateSafe(trip.travel_date)}
                                 </div>
                                 {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                                  <div className="text-sm text-gray-600 mt-1">
+                                  <div className="text-gray-600 mt-1">
                                     Landing: {formatDateSafe(trip.landing_date)}
                                   </div>
                                 )}
@@ -617,7 +614,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                             )}
                           </div>
 
-                          <div className="ml-6">
+                          <div className="ml-0 sm:ml-6 mt-4 sm:mt-0">
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
@@ -631,13 +628,13 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, trip)
                                   }}
                                   disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !trip.user_id && !(trip.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-blue-600 text-white hover:bg-blue-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Chat with Traveler</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
@@ -645,7 +642,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                 </p>
                               </div>
                             ) : trip.user_id === user?.id ? (
-                              <div className="bg-blue-100 text-blue-800 px-6 py-3 rounded-lg font-medium text-center border border-blue-200">
+                              <div className="bg-blue-100 text-blue-800 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium text-center border border-blue-200 text-sm">
                                 Your Trip
                               </div>
                             ) : (
@@ -664,13 +661,13 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                   handleChatClick(userId, userName, trip)
                                 }}
                                 disabled={!trip.user_id && !(trip.user_profiles as any)?.id}
-                                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                   !trip.user_id && !(trip.user_profiles as any)?.id
                                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                     : 'bg-blue-600 text-white hover:bg-blue-700'
                                 }`}
                               >
-                                <MessageCircle size={20} />
+                                <MessageCircle size={16} />
                                 <span>Chat with Traveler</span>
                               </button>
                             )}
@@ -717,8 +714,8 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                         key={request.id}
                         className="border border-purple-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-purple-50"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                          <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
                               <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
                                 {request.user_profiles?.profile_image_url ? (
@@ -734,30 +731,30 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                 )}
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold text-gray-900">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                                   {request.user_profiles?.full_name || 'Passenger'}
                                 </h3>
-                                <p className="text-purple-600 font-medium">Looking for assistance</p>
+                                <p className="text-sm text-purple-600 font-medium">Looking for assistance</p>
                               </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <div className="grid md:grid-cols-3 gap-4 mb-4 text-sm">
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">From</p>
+                                <p className="text-gray-600 mb-1">From</p>
                                 <div className="font-semibold text-gray-900">
                                   {request.departure_airport}
                                 </div>
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">To</p>
+                                <p className="text-gray-600 mb-1">To</p>
                                 <div className="font-semibold text-gray-900">
                                   {request.destination_airport}
                                 </div>
                               </div>
 
                               <div>
-                                <p className="text-sm text-gray-600 mb-1">When</p>
+                                <p className="text-gray-600 mb-1">When</p>
                                 <div className="font-semibold text-gray-900 flex items-center">
                                   <Calendar size={14} className="mr-1 text-gray-400" />
                                   {formatRequestDateDisplay(request)}
@@ -768,7 +765,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                             {request.additional_notes && (
                               <div className="mt-4 pt-4 border-t border-purple-200">
                                 <p className="text-sm text-gray-600 mb-1">What they need</p>
-                                <p className="text-gray-900">{request.additional_notes}</p>
+                                <p className="text-sm text-gray-900">{request.additional_notes}</p>
                               </div>
                             )}
 
@@ -790,7 +787,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                             </div>
                           </div>
 
-                          <div className="ml-6">
+                          <div className="ml-0 sm:ml-6 mt-4 sm:mt-0 w-full sm:w-auto">
                             {effectiveIsGuest ? (
                               <div className="flex flex-col space-y-2">
                                 <button
@@ -804,13 +801,13 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, undefined)
                                   }}
                                   disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-purple-600 text-white hover:bg-purple-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Contact Passenger</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
@@ -819,7 +816,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                               </div>
                             ) : request.passenger_id === user?.id ? (
                               <div className="flex flex-col space-y-2">
-                                <div className="bg-purple-100 text-purple-800 px-6 py-3 rounded-lg font-medium text-center border border-purple-200">
+                                <div className="bg-purple-100 text-purple-800 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium text-center border border-purple-200 text-sm">
                                   Your Request
                                 </div>
                                 <p className="text-xs text-gray-500 text-center">
@@ -839,13 +836,13 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                                     handleChatClick(userId, userName, undefined)
                                   }}
                                   disabled={!request.passenger_id && !(request.user_profiles as any)?.id}
-                                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                                  className={`flex items-center justify-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-medium transition-colors text-sm w-full ${
                                     !request.passenger_id && !(request.user_profiles as any)?.id
                                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                       : 'bg-purple-600 text-white hover:bg-purple-700'
                                   }`}
                                 >
-                                  <MessageCircle size={20} />
+                                  <MessageCircle size={16} />
                                   <span>Offer Assistance</span>
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">

@@ -25,6 +25,23 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [showAnimation, setShowAnimation] = React.useState(true)
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setShowAnimation(false)
+      setTimeout(() => setShowAnimation(true), 100)
+    }, 60000)
+
+    const initialTimer = setTimeout(() => {
+      setShowAnimation(false)
+    }, 14000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(initialTimer)
+    }
+  }, [])
 
   const handleStartChat = (userId: string, userName: string, fromNotification?: boolean) => {
     setActiveNotification(null)
@@ -115,16 +132,18 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
           }} />}
 
           <div className="text-center mb-8 sm:mb-12">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full mx-auto mb-2 sm:mb-4">
-                <Plane size={20} className="sm:w-6 sm:h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Airport Trips</h1>
-                <p className="text-sm sm:text-base text-gray-600 px-2">Share flight itineraries for deliveries and assistance</p>
-              </div>
+            <div className="flex items-center justify-center">
+              {/* <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full mr-4">
+                <Plane size={16} className="sm:w-6 sm:h-6" />
+              </div> */}
+              {/* <div> */}
+                {/* <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Airport Trips</h1> */}
+                {/* <p className="text-sm sm:text-base text-gray-600 px-2">Share flight itineraries for deliveries and assistance</p>
+              </div> */}
+            </div>
           </div>
 
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 relative z-1">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 px-2">
               What would you like to do today?
             </h2>
@@ -132,6 +151,26 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
               Share your travel plans or find someone heading your way
             </p>
           </div>
+
+          {/* {showAnimation && (
+            <div className="relative h-48 mb-8 overflow-hidden">
+              <div className="absolute top-0 w-full h-full">
+                <div className="cargo-container">
+                  <div className="cargo-box"></div>
+                  <div className="cargo-box"></div>
+                  <div className="cargo-box"></div>
+                </div>
+                <div className="absolute animate-fly-and-curve">
+                  <Plane size={32} className="text-blue-500" />
+                  <div className="plane-contrail"></div>
+                  <div className="plane-exhaust"></div>
+                  <div className="plane-exhaust"></div>
+                  <div className="plane-exhaust"></div>
+                  <div className="plane-exhaust"></div>
+                </div>
+              </div>
+            </div>
+          )} */}
 
           {/* Three-column layout for airport trips */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 px-2">

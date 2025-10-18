@@ -566,9 +566,9 @@ export default function RequestTrip({ onBack, onProfile, isGuest = false }: Requ
                 )}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">💡 Tips for Better Results</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">💡 Tips for Better Results</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
                   <li>• Be specific about what assistance you need</li>
                   <li>• Consider flexible timing for better matches</li>
                   <li>• Set a reasonable maximum service fee</li>
