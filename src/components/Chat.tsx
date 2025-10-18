@@ -34,6 +34,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   const [otherUserProfile, setOtherUserProfile] = useState<any>(null)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [isBlocked, setIsBlocked] = useState(false)
+  const [isBlockedByOther, setIsBlockedByOther] = useState(false)
   const [chatDeleted, setChatDeleted] = useState(false)
   const [skipLoading, setSkipLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -90,19 +91,21 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     setError('')
     setMessages([])
     setIsBlocked(false)
+    setIsBlockedByOther(false)
     setChatDeleted(false)
 
     try {
       console.log('Chat: Initializing chat between', user.id, 'and', otherUserId)
 
-      // Check blocking status
-      const blocked = await isUserBlocked(user.id, otherUserId)
-      console.log('Chat: Blocking check result:', blocked)
-      setIsBlocked(blocked)
-      if (blocked) {
-        setLoading(false)
-        return
-      }
+      // Check if I blocked them
+      const iBlockedThem = await isUserBlocked(user.id, otherUserId)
+      console.log('Chat: I blocked them:', iBlockedThem)
+      setIsBlocked(iBlockedThem)
+
+      // Check if they blocked me
+      const theyBlockedMe = await isUserBlocked(otherUserId, user.id)
+      console.log('Chat: They blocked me:', theyBlockedMe)
+      setIsBlockedByOther(theyBlockedMe)
 
       // Check chat deletion status
       const deleted = await isChatDeleted(user.id, otherUserId)
@@ -130,7 +133,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
         profile_image_url: null
       })
 
-      // Fetch messages
+      // Always fetch messages regardless of block status (messages should remain visible)
       await fetchMessages()
 
       // Set up real-time subscription
@@ -304,6 +307,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
     e.preventDefault()
     if (!newMessage.trim() || !user || sending) return
 
+    // Check if either user has blocked the other
+    if (isBlocked) {
+      setError('You have blocked this user. Unblock them to send messages.')
+      return
+    }
+    if (isBlockedByOther) {
+      setError('This user has blocked you. You cannot send messages.')
+      return
+    }
+
     // Check if disclaimer should be shown
     const disclaimerType = preSelectedRide ? 'chat-ride' : 'chat-trip'
     if (popupManager.shouldShowDisclaimer(disclaimerType, user.id, otherUserId)) {
@@ -316,6 +329,12 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !user || sending) return
+
+    // Double-check blocking status before sending
+    if (isBlocked || isBlockedByOther) {
+      setError(isBlocked ? 'You have blocked this user. Unblock them to send messages.' : 'This user has blocked you. You cannot send messages.')
+      return
+    }
 
     setSending(true)
     setError('')
@@ -763,8 +782,11 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             <ChatBlockingControls
               otherUserId={otherUserId}
               otherUserName={otherUserProfile?.full_name || otherUserName || 'User'}
-              onBlock={() => {
+              onBlock={async () => {
                 setIsBlocked(true)
+                // Recheck if they blocked us
+                const theyBlockedMe = await isUserBlocked(otherUserId, user?.id || '')
+                setIsBlockedByOther(theyBlockedMe)
               }}
               onDeleteChat={() => {
                 setChatDeleted(true)
@@ -945,7 +967,7 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       </div>
 
       {/* Error Overlay Popup */}
-      {(error || isBlocked || (chatDeleted && messages.length === 0)) && (
+      {error && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-start justify-between mb-4">
@@ -966,22 +988,10 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                 <X size={20} />
               </button>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {isBlocked ? 'User Blocked' : chatDeleted ? 'Chat Deleted' : 'Unable to send request'}
-            </h3>
-            <p className="text-gray-700 mb-6">
-              {isBlocked
-                ? 'You have blocked this user. Unblock them to start chatting again.'
-                : chatDeleted
-                ? 'This chat has been deleted.'
-                : error}
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to send message</h3>
+            <p className="text-gray-700 mb-6">{error}</p>
             <button
-              onClick={() => {
-                setError('')
-                setIsBlocked(false)
-                setChatDeleted(false)
-              }}
+              onClick={() => setError('')}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
               Close
@@ -992,6 +1002,17 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
 
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4 pb-24">
+        {/* Block status warnings */}
+        {isBlocked && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+            <p className="text-sm text-red-800 font-medium">You have blocked this user. Unblock them to send messages.</p>
+          </div>
+        )}
+        {isBlockedByOther && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+            <p className="text-sm text-red-800 font-medium">This user has blocked you. You cannot send messages.</p>
+          </div>
+        )}
 
         {/* Request Buttons - Show based on chat type */}
         {otherUserId !== 'SYSTEM_USER' && otherUserName !== 'RideYaari' && otherUserId !== '00000000-0000-0000-0000-000000000000' && (
@@ -1022,13 +1043,13 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={`Message ${otherUserProfile?.full_name || otherUserName || 'user'}...`}
+            placeholder={isBlocked || isBlockedByOther ? 'Cannot send messages' : `Message ${otherUserProfile?.full_name || otherUserName || 'user'}...`}
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            disabled={sending}
+            disabled={sending || isBlocked || isBlockedByOther}
           />
           <button
             type="submit"
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim() || sending || isBlocked || isBlockedByOther}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? (

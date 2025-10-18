@@ -94,7 +94,7 @@ export const getBlockedUsers = async (userId: string): Promise<BlockedUser[]> =>
 }
 
 /**
- * Check if a user is blocked
+ * Check if a user is blocked (one direction: blocker -> blocked)
  */
 export const isUserBlocked = async (
   blockerId: string,
@@ -108,12 +108,12 @@ export const isUserBlocked = async (
     }
 
     console.log('Checking if user is blocked:', { blockerId, blockedId })
-    
+
     // Add timeout to prevent infinite loading
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Blocking check timeout')), 5000)
     )
-    
+
     const { data, error } = await Promise.race([
       supabase
         .from('user_blocks')
@@ -130,6 +130,34 @@ export const isUserBlocked = async (
   } catch (error) {
     console.error('Error checking if user is blocked:', error)
     return false
+  }
+}
+
+/**
+ * Check if either user has blocked the other (mutual check)
+ */
+export const isEitherUserBlocked = async (
+  user1Id: string,
+  user2Id: string
+): Promise<{ blocked: boolean; iBlockedThem: boolean; theyBlockedMe: boolean }> => {
+  try {
+    if (!user1Id || !user2Id || !user1Id.trim() || !user2Id.trim()) {
+      return { blocked: false, iBlockedThem: false, theyBlockedMe: false }
+    }
+
+    const [iBlockedThem, theyBlockedMe] = await Promise.all([
+      isUserBlocked(user1Id, user2Id),
+      isUserBlocked(user2Id, user1Id)
+    ])
+
+    return {
+      blocked: iBlockedThem || theyBlockedMe,
+      iBlockedThem,
+      theyBlockedMe
+    }
+  } catch (error) {
+    console.error('Error checking mutual blocking:', error)
+    return { blocked: false, iBlockedThem: false, theyBlockedMe: false }
   }
 }
 
