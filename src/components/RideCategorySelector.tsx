@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Car, User, ArrowRight, Plus, Users, ChevronDown, ChevronUp, Calendar, Clock, MapPin, CreditCard as Edit, Trash2, TriangleAlert as AlertTriangle, History, Navigation, Lock, CircleCheck as CheckCircle, Circle as XCircle, Send } from 'lucide-react'
 import { CarRide, RideConfirmation, RideRequest } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
@@ -41,6 +41,12 @@ export default function RideCategorySelector({
     show: boolean
     request: RideRequest | null
   }>({ show: false, request: null })
+
+  useEffect(() => {
+    if (activeSection !== 'overview') {
+      window.scrollTo(0, 0)
+    }
+  }, [activeSection])
 
   // Debug logging
   React.useEffect(() => {
@@ -180,21 +186,21 @@ export default function RideCategorySelector({
           {/* Rides You're Offering */}
           <div
             onClick={() => setActiveSection('offered')}
-            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Car size={32} className="text-white" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-600 to-green-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Car size={20} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You're Offering</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Rides You're Offering</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                 Manage car rides you've posted to share costs and help other travelers
               </p>
-              <div className="bg-green-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-green-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
-                  <Plus size={20} className="text-green-600" />
-                  <span className="text-2xl font-bold text-green-600">{offeredRides.length}</span>
-                  <span className="text-green-800">Ride{offeredRides.length !== 1 ? 's' : ''} Posted</span>
+                  <Plus size={18} className="text-green-600" />
+                  <span className="text-xl sm:text-2xl font-bold text-green-600">{offeredRides.length}</span>
+                  <span className="text-sm sm:text-base text-green-800">Ride{offeredRides.length !== 1 ? 's' : ''} Posted</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-green-600 font-semibold group-hover:text-green-700">
@@ -210,18 +216,18 @@ export default function RideCategorySelector({
             className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Users size={32} className="text-white" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users size={20} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Rides You've Joined</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Rides You've Joined</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                 View car rides where you've been confirmed as a passenger
               </p>
-              <div className="bg-emerald-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-emerald-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
                   <User size={20} className="text-emerald-600" />
-                  <span className="text-2xl font-bold text-emerald-600">{joinedRides.length}</span>
-                  <span className="text-emerald-800">Ride{joinedRides.length !== 1 ? 's' : ''} Joined</span>
+                  <span className="text-xl sm:text-2xl font-bold text-emerald-600">{joinedRides.length}</span>
+                  <span className="text-sm sm:text-base text-emerald-800">Ride{joinedRides.length !== 1 ? 's' : ''} Joined</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-emerald-600 font-semibold group-hover:text-emerald-700">
@@ -237,18 +243,18 @@ export default function RideCategorySelector({
             className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Send size={32} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Ride Requests</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ride Requests</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed">
                 Manage ride requests you've submitted to find drivers
               </p>
-              <div className="bg-purple-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-purple-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
                   <Send size={20} className="text-purple-600" />
-                  <span className="text-2xl font-bold text-purple-600">{requestedRides.length}</span>
-                  <span className="text-purple-800">Request{requestedRides.length !== 1 ? 's' : ''} Made</span>
+                  <span className="text-xl sm:text-2xl font-bold text-purple-600">{requestedRides.length}</span>
+                  <span className="text-sm sm:text-base text-purple-800">Request{requestedRides.length !== 1 ? 's' : ''} Made</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
@@ -319,19 +325,19 @@ export default function RideCategorySelector({
                 <div key={ride.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                   {/* Ride Header - Always Visible */}
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="p-3 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleOfferedRide(ride.id)}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
                           <Car size={24} className="text-green-600" />
                         </div>
                         <div>
-                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                          <h3 className="text-sm sm:text-xl font-semibold text-gray-900">
                             {ride.from_location} → {ride.to_location}
                           </h3>
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-sm text-gray-600">
                             {formatDateTime(ride.departure_date_time)}
                           </p>
                           {/* Mobile-only stacked status/price and Show Details */}
@@ -515,7 +521,7 @@ export default function RideCategorySelector({
                                     e.stopPropagation()
                                     onEditRide(ride)
                                   }}
-                                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"
                                 >
                                   <Edit size={16} />
                                   <span>Edit</span>
@@ -639,12 +645,12 @@ export default function RideCategorySelector({
                 <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                   {/* Ride Header - Always Visible */}
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="p-3 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleJoinedRide(confirmation.id)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
                           {driver?.profile_image_url ? (
                             <img
                               src={driver.profile_image_url}
@@ -658,10 +664,10 @@ export default function RideCategorySelector({
                           )}
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-sm sm:text-xl font-semibold text-gray-900">
                             {ride.from_location} → {ride.to_location}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-sm text-gray-600">
                             {formatDateTime(ride.departure_date_time)} • {driver?.full_name || 'Unknown Driver'}
                           </p>
                           {/* Mobile-only stacked status and Show Details */}
@@ -853,19 +859,19 @@ export default function RideCategorySelector({
               <div key={request.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                 {/* Request Header - Always Visible */}
                 <div 
-                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="p-4 md:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleRequestedRide(request.id)}
                 >
                     <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                        <Send size={24} className="text-white" />
+                    <div className="flex items-center space-x-3 md:space-x-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                        <Send size={18} className="text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-base md:text-lg font-semibold text-gray-900">
                           {request.departure_location} → {request.destination_location}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs md:text-sm text-gray-600">
                           {formatRequestDateDisplay(request)}
                           {request.departure_time_preference && (
                             <span> • {request.departure_time_preference}</span>
@@ -874,7 +880,7 @@ export default function RideCategorySelector({
                         {/* Mobile-only stacked status and Show Details */}
                         {(() => { const isExpired = !!(request.expires_at && new Date(request.expires_at) <= new Date()); return (
                           <div className="mt-3 sm:hidden flex flex-col items-start gap-2">
-                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            <div className={`flex items-center space-x-2 px-2 md:px-3 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-800' : request.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                               <span>{isExpired ? 'Expired' : request.is_active ? 'Active' : 'Inactive'}</span>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -915,7 +921,7 @@ export default function RideCategorySelector({
                 {/* Expanded Details */}
                 {expandedRequestedRide === request.id && (
                   <div className="border-t border-gray-200 bg-gray-50">
-                    <div className="p-6 space-y-6">
+                    <div className="p-4 md:p-6 space-y-6">
                       {/* Request Details */}
                       <div className="bg-purple-50 rounded-lg p-4">
                         <h4 className="font-semibold text-purple-900 mb-3">Request Details</h4>
@@ -923,21 +929,21 @@ export default function RideCategorySelector({
                           <div>
                             <p className="text-gray-600 mb-1">From</p>
                             <div className="font-medium text-gray-900 flex items-center">
-                              <MapPin size={14} className="mr-1 text-gray-400" />
+                              <MapPin size={12} className="mr-1 text-gray-400" />
                               {request.departure_location}
                             </div>
                           </div>
                           <div>
                             <p className="text-gray-600 mb-1">To</p>
                             <div className="font-medium text-gray-900 flex items-center">
-                              <MapPin size={14} className="mr-1 text-gray-400" />
+                              <MapPin size={12} className="mr-1 text-gray-400" />
                               {request.destination_location}
                             </div>
                           </div>
                           <div>
                             <p className="text-gray-600 mb-1">When</p>
                             <div className="font-medium text-gray-900 flex items-center">
-                              <Calendar size={14} className="mr-1 text-gray-400" />
+                              <Calendar size={12} className="mr-1 text-gray-400" />
                               {formatRequestDateDisplay(request)}
                             </div>
                           </div>
@@ -968,7 +974,7 @@ export default function RideCategorySelector({
                               <div>
                                 <p className="text-gray-600 mb-1">Preferred Time</p>
                                 <div className="font-medium text-gray-900 flex items-center">
-                                  <Clock size={14} className="mr-1 text-gray-400" />
+                                  <Clock size={12} className="mr-1 text-gray-400" />
                                   {request.departure_time_preference}
                                 </div>
                               </div>

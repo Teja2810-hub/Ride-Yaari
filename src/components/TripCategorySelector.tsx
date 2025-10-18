@@ -52,6 +52,10 @@ export default function TripCategorySelector({
     console.log('TripCategorySelector: Sample requested trip:', requestedTrips[0])
   }, [offeredTrips, joinedTrips, requestedTrips])
 
+  React.useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [activeSection])
+
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
     const [year, month, day] = dateString.split('-').map(Number)
@@ -173,21 +177,21 @@ export default function TripCategorySelector({
           {/* Trips You're Offering */}
           <div
             onClick={() => setActiveSection('offered')}
-            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Plane size={32} className="text-white" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Plane size={28} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trips You're Offering</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trips You're Offering</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                 Manage airport trips you've posted to help other travelers with deliveries and assistance
               </p>
-              <div className="bg-blue-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-blue-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
-                  <Plus size={20} className="text-blue-600" />
-                  <span className="text-2xl font-bold text-blue-600">{offeredTrips.length}</span>
-                  <span className="text-blue-800">Trip{offeredTrips.length !== 1 ? 's' : ''} Posted</span>
+                  <Plus size={18} className="text-blue-600" />
+                  <span className="text-xl sm:text-2xl font-bold text-blue-600">{offeredTrips.length}</span>
+                  <span className="text-sm sm:text-base text-blue-800">Trip{offeredTrips.length !== 1 ? 's' : ''} Posted</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-blue-600 font-semibold group-hover:text-blue-700">
@@ -200,21 +204,21 @@ export default function TripCategorySelector({
           {/* Trips You've Joined */}
           <div
             onClick={() => setActiveSection('joined')}
-            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Users size={32} className="text-white" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users size={28} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trips You've Joined</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trips You've Joined</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                 View airport trips where you've been confirmed as a passenger or service recipient
               </p>
-              <div className="bg-indigo-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-indigo-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
-                  <User size={20} className="text-indigo-600" />
-                  <span className="text-2xl font-bold text-indigo-600">{joinedTrips.length}</span>
-                  <span className="text-indigo-800">Trip{joinedTrips.length !== 1 ? 's' : ''} Joined</span>
+                  <User size={18} className="text-indigo-600" />
+                  <span className="text-xl sm:text-2xl font-bold text-indigo-600">{joinedTrips.length}</span>
+                  <span className="text-sm sm:text-base text-indigo-800">Trip{joinedTrips.length !== 1 ? 's' : ''} Joined</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-indigo-600 font-semibold group-hover:text-indigo-700">
@@ -227,21 +231,21 @@ export default function TripCategorySelector({
           {/* Trip Requests */}
           <div
             onClick={() => setActiveSection('requested')}
-            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-8"
+            className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Send size={32} className="text-white" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Send size={28} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Trip Requests</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trip Requests</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                 Manage trip assistance requests you've submitted to find travelers
               </p>
-              <div className="bg-purple-50 rounded-lg p-4 mb-6 w-full">
+              <div className="bg-purple-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 w-full">
                 <div className="flex items-center justify-center space-x-2">
-                  <Send size={20} className="text-purple-600" />
-                  <span className="text-2xl font-bold text-purple-600">{requestedTrips.length}</span>
-                  <span className="text-purple-800">Request{requestedTrips.length !== 1 ? 's' : ''} Made</span>
+                  <Send size={18} className="text-purple-600" />
+                  <span className="text-xl sm:text-2xl font-bold text-purple-600">{requestedTrips.length}</span>
+                  <span className="text-sm sm:text-base text-purple-800">Request{requestedTrips.length !== 1 ? 's' : ''} Made</span>
                 </div>
               </div>
               <div className="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
@@ -312,19 +316,19 @@ export default function TripCategorySelector({
                 <div key={trip.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                   {/* Trip Header - Always Visible */}
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="p-3 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleOfferedTrip(trip.id)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Plane size={24} className="text-blue-600" />
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Plane className="w-5 h-5 text-blue-600 sm:w-8 sm:h-8" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-sm sm:text-xl font-semibold text-gray-900">
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-sm text-gray-600">
                             {formatDate(trip.travel_date)}
                             {trip.departure_time && ` at ${trip.departure_time}`}
                           </p>
@@ -647,12 +651,12 @@ export default function TripCategorySelector({
                 <div key={confirmation.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                   {/* Trip Header - Always Visible */}
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="p-3 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => toggleJoinedTrip(confirmation.id)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
                           {traveler?.profile_image_url ? (
                             <img
                               src={traveler.profile_image_url}
@@ -666,10 +670,10 @@ export default function TripCategorySelector({
                           )}
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-sm sm:text-xl font-semibold text-gray-900">
                             {trip.leaving_airport} → {trip.destination_airport}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-sm text-gray-600">
                             {formatDate(trip.travel_date)} • {traveler?.full_name || 'Unknown Traveler'}
                           </p>
                           {/* Mobile-only stacked status and Show Details */}
@@ -857,16 +861,16 @@ export default function TripCategorySelector({
               <div key={request.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                 {/* Request Header - Always Visible */}
                 <div 
-                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="p-3 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => toggleRequestedTrip(request.id)}
                 >
                     <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                        <Send size={24} className="text-white" />
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                        <Send className="w-5 h-5 text-white sm:w-8 sm:h-8" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-sm sm:text-lg font-semibold text-gray-900">
                           {request.departure_airport} → {request.destination_airport}
                         </h3>
                         <p className="text-sm text-gray-600">
