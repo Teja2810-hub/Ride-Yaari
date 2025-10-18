@@ -23,19 +23,23 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const [showAnimation, setShowAnimation] = React.useState(() => {
-    return !sessionStorage.getItem('carAnimationShown')
-  })
+  const [showAnimation, setShowAnimation] = React.useState(true)
 
   React.useEffect(() => {
-    if (showAnimation) {
-      const timer = setTimeout(() => {
-        setShowAnimation(false)
-        sessionStorage.setItem('carAnimationShown', 'true')
-      }, 12000)
-      return () => clearTimeout(timer)
+    const interval = setInterval(() => {
+      setShowAnimation(false)
+      setTimeout(() => setShowAnimation(true), 100)
+    }, 60000)
+
+    const initialTimer = setTimeout(() => {
+      setShowAnimation(false)
+    }, 12000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(initialTimer)
     }
-  }, [showAnimation])
+  }, [])
 
   const handleStartChat = (userId: string, userName: string) => {
     setActiveNotification(null)

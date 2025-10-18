@@ -25,19 +25,23 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const [showAnimation, setShowAnimation] = React.useState(() => {
-    return !sessionStorage.getItem('planeAnimationShown')
-  })
+  const [showAnimation, setShowAnimation] = React.useState(true)
 
   React.useEffect(() => {
-    if (showAnimation) {
-      const timer = setTimeout(() => {
-        setShowAnimation(false)
-        sessionStorage.setItem('planeAnimationShown', 'true')
-      }, 14000)
-      return () => clearTimeout(timer)
+    const interval = setInterval(() => {
+      setShowAnimation(false)
+      setTimeout(() => setShowAnimation(true), 100)
+    }, 60000)
+
+    const initialTimer = setTimeout(() => {
+      setShowAnimation(false)
+    }, 14000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(initialTimer)
     }
-  }, [showAnimation])
+  }, [])
 
   const handleStartChat = (userId: string, userName: string, fromNotification?: boolean) => {
     setActiveNotification(null)
