@@ -193,8 +193,8 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Send size={32} className="text-green-600" />
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Send size={24} className="text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Ride Request Sent!</h2>
           <p className="text-gray-600 mb-8">
@@ -666,7 +666,7 @@ export default function RequestRide({ onBack, onProfile, isGuest = false }: Requ
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <User size={32} className="text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up to Request Ride</h2>

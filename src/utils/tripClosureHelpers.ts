@@ -45,8 +45,7 @@ export const closeTrip = async (
       .from('ride_confirmations')
       .update({
         status: 'rejected',
-        confirmed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        confirmed_at: new Date().toISOString()
       })
       .eq('trip_id', tripId)
       .eq('status', 'pending')
@@ -98,8 +97,7 @@ export const closeRide = async (
       .from('ride_confirmations')
       .update({
         status: 'rejected',
-        confirmed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        confirmed_at: new Date().toISOString()
       })
       .eq('ride_id', rideId)
       .eq('status', 'pending')

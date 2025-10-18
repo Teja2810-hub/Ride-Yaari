@@ -496,8 +496,8 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
               <>
                 {trips.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Plane size={32} className="text-gray-400" />
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Plane size={24} className="text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No trips found</h3>
                     <p className="text-gray-600 mb-6">
@@ -520,7 +520,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                           <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
                                 {trip.user_profiles?.profile_image_url ? (
                                   <img
                                     src={trip.user_profiles.profile_image_url}
@@ -685,7 +685,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
               <>
                 {tripRequests.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Send size={32} className="text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No trip requests found</h3>
@@ -717,7 +717,7 @@ export default function FindTrip({ onBack, onProfile, onStartChat, isGuest = fal
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                           <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+                              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
                                 {request.user_profiles?.profile_image_url ? (
                                   <img
                                     src={request.user_profiles.profile_image_url}
