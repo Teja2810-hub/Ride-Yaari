@@ -421,49 +421,91 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes fly-and-curve {
   0% {
     left: -10%;
-    transform: translateY(0) rotate(15deg);
+    top: 80%;
+    transform: translateY(0) rotate(-8deg);
   }
-  25% {
-    transform: translateY(-20px) rotate(5deg);
+  15% {
+    top: 50%;
+    transform: translateY(-30px) rotate(-5deg);
+  }
+  30% {
+    top: 20%;
+    transform: translateY(-60px) rotate(-2deg);
   }
   50% {
     left: 50%;
-    transform: translateY(0) rotate(-5deg);
+    top: 10%;
+    transform: translateY(-80px) rotate(0deg);
   }
-  75% {
-    transform: translateY(20px) rotate(5deg);
+  70% {
+    top: 20%;
+    transform: translateY(-60px) rotate(2deg);
+  }
+  85% {
+    top: 50%;
+    transform: translateY(-30px) rotate(5deg);
   }
   100% {
     left: 110%;
-    transform: translateY(0) rotate(-15deg);
+    top: 80%;
+    transform: translateY(0) rotate(8deg);
   }
 }
 
 .animate-fly-and-curve {
-  animation: fly-and-curve 12s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  animation: fly-and-curve 14s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  filter: drop-shadow(4px 8px 12px rgba(59, 130, 246, 0.3));
+  position: absolute;
   z-index: 10;
 }
 
-.plane-smoke {
+.plane-contrail {
   position: absolute;
-  left: -20px;
+  left: -40px;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  background: black;
-  border-radius: 50%;
-  opacity: 0.3;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
   transform: translateY(-50%);
-  animation: smoke-trail 1s linear infinite;
+  filter: blur(1px);
+  opacity: 0.6;
+  animation: contrail-fade 3s ease-out infinite;
 }
 
-@keyframes smoke-trail {
+.plane-exhaust {
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: rgba(100,100,100,0.6);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  animation: exhaust-puff 0.8s ease-out infinite;
+}
+
+.plane-exhaust:nth-child(2) { animation-delay: 0.2s; }
+.plane-exhaust:nth-child(3) { animation-delay: 0.4s; }
+.plane-exhaust:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes contrail-fade {
   0% {
-    transform: scale(1);
-    opacity: 0.3;
+    opacity: 0.8;
+    width: 100px;
   }
   100% {
-    transform: scale(3);
+    opacity: 0;
+    width: 200px;
+  }
+}
+
+@keyframes exhaust-puff {
+  0% {
+    transform: translateX(0) translateY(-50%) scale(0.5);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(-60px) translateY(-50%) scale(2.5);
     opacity: 0;
   }
 }
@@ -891,49 +933,91 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes fly-and-curve {
   0% {
     left: -10%;
-    transform: translateY(0) rotate(15deg);
+    top: 80%;
+    transform: translateY(0) rotate(-8deg);
   }
-  25% {
-    transform: translateY(-20px) rotate(5deg);
+  15% {
+    top: 50%;
+    transform: translateY(-30px) rotate(-5deg);
+  }
+  30% {
+    top: 20%;
+    transform: translateY(-60px) rotate(-2deg);
   }
   50% {
     left: 50%;
-    transform: translateY(0) rotate(-5deg);
+    top: 10%;
+    transform: translateY(-80px) rotate(0deg);
   }
-  75% {
-    transform: translateY(20px) rotate(5deg);
+  70% {
+    top: 20%;
+    transform: translateY(-60px) rotate(2deg);
+  }
+  85% {
+    top: 50%;
+    transform: translateY(-30px) rotate(5deg);
   }
   100% {
     left: 110%;
-    transform: translateY(0) rotate(-15deg);
+    top: 80%;
+    transform: translateY(0) rotate(8deg);
   }
 }
 
 .animate-fly-and-curve {
-  animation: fly-and-curve 12s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  animation: fly-and-curve 14s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  filter: drop-shadow(4px 8px 12px rgba(59, 130, 246, 0.3));
+  position: absolute;
   z-index: 10;
 }
 
-.plane-smoke {
+.plane-contrail {
   position: absolute;
-  left: -20px;
+  left: -40px;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  background: black;
-  border-radius: 50%;
-  opacity: 0.3;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
   transform: translateY(-50%);
-  animation: smoke-trail 1s linear infinite;
+  filter: blur(1px);
+  opacity: 0.6;
+  animation: contrail-fade 3s ease-out infinite;
 }
 
-@keyframes smoke-trail {
+.plane-exhaust {
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: rgba(100,100,100,0.6);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  animation: exhaust-puff 0.8s ease-out infinite;
+}
+
+.plane-exhaust:nth-child(2) { animation-delay: 0.2s; }
+.plane-exhaust:nth-child(3) { animation-delay: 0.4s; }
+.plane-exhaust:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes contrail-fade {
   0% {
-    transform: scale(1);
-    opacity: 0.3;
+    opacity: 0.8;
+    width: 100px;
   }
   100% {
-    transform: scale(3);
+    opacity: 0;
+    width: 200px;
+  }
+}
+
+@keyframes exhaust-puff {
+  0% {
+    transform: translateX(0) translateY(-50%) scale(0.5);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(-60px) translateY(-50%) scale(2.5);
     opacity: 0;
   }
 }
@@ -943,93 +1027,157 @@ h1, h2, h3, h4, h5, h6 {
   left: -10%;
   top: 50%;
   transform: translateY(-50%);
-  animation: car-drive 8s linear infinite;
+  animation: car-drive 9s ease-in-out infinite;
 }
 
 .car-body {
   position: relative;
-  filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+  filter: drop-shadow(4px 8px 16px rgba(0,0,0,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  z-index: 5;
 }
 
 .headlight {
   position: absolute;
   top: 50%;
-  right: -4px;
-  width: 6px;
-  height: 4px;
-  background: #fff;
-  border-radius: 2px;
+  right: -8px;
+  width: 30px;
+  height: 6px;
+  background: linear-gradient(to right, rgba(255,255,255,0.95), rgba(255,235,100,0.4), transparent);
+  border-radius: 50%;
   transform: translateY(-50%);
-  box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffdd00;
-  animation: headlight-glow 2s ease-in-out infinite;
+  box-shadow:
+    0 0 8px rgba(255,255,255,0.8),
+    0 0 16px rgba(255,235,100,0.6),
+    0 0 24px rgba(255,200,0,0.4),
+    0 0 32px rgba(255,200,0,0.2);
+  animation: headlight-glow 1.5s ease-in-out infinite;
+  filter: blur(0.5px);
+  z-index: 4;
 }
 
-.headlight:last-child {
-  right: 10px;
+.headlight:nth-child(2) {
+  top: calc(50% + 8px);
+  animation-delay: 0.1s;
 }
 
 .smoke-container {
   position: absolute;
-  top: 50%;
-  left: -30px;
+  top: calc(50% + 4px);
+  left: -35px;
   transform: translateY(-50%);
-  display: flex;
+  width: 80px;
+  height: 20px;
+  z-index: 3;
 }
 
 .smoke-particle {
-  width: 12px;
-  height: 12px;
-  background: #333;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle, rgba(40,40,40,0.8) 0%, rgba(60,60,60,0.5) 40%, transparent 70%);
   border-radius: 50%;
   position: absolute;
   opacity: 0;
-  animation: smoke-puff 2s ease-out infinite;
+  animation: smoke-puff 2.5s ease-out infinite;
+  filter: blur(2px);
 }
 
-.smoke-particle:nth-child(1) { animation-delay: 0s; }
-.smoke-particle:nth-child(2) { animation-delay: 0.3s; }
-.smoke-particle:nth-child(3) { animation-delay: 0.6s; }
-.smoke-particle:nth-child(4) { animation-delay: 0.9s; }
-.smoke-particle:nth-child(5) { animation-delay: 1.2s; }
+.smoke-particle:nth-child(1) {
+  animation-delay: 0s;
+  top: 2px;
+}
+.smoke-particle:nth-child(2) {
+  animation-delay: 0.25s;
+  top: -2px;
+}
+.smoke-particle:nth-child(3) {
+  animation-delay: 0.5s;
+  top: 4px;
+}
+.smoke-particle:nth-child(4) {
+  animation-delay: 0.75s;
+  top: 0px;
+}
+.smoke-particle:nth-child(5) {
+  animation-delay: 1s;
+  top: 3px;
+}
+.smoke-particle:nth-child(6) {
+  animation-delay: 1.25s;
+  top: -1px;
+}
+.smoke-particle:nth-child(7) {
+  animation-delay: 1.5s;
+  top: 2px;
+}
 
 @keyframes car-drive {
   0% {
     left: -10%;
-    transform: translateY(-50%) translateX(0) rotate(0);
+    transform: translateY(-50%) translateX(0) rotate(0deg);
+  }
+  10% {
+    transform: translateY(-51%) translateX(3px) rotate(-0.3deg);
   }
   20% {
-    transform: translateY(-52%) translateX(5px) rotate(-0.5deg);
+    transform: translateY(-49%) translateX(-3px) rotate(0.3deg);
+  }
+  30% {
+    transform: translateY(-50.5%) translateX(2px) rotate(-0.2deg);
   }
   40% {
-    transform: translateY(-50%) translateX(-5px) rotate(0.5deg);
+    transform: translateY(-49.5%) translateX(-2px) rotate(0.2deg);
+  }
+  50% {
+    transform: translateY(-50%) translateX(3px) rotate(-0.3deg);
   }
   60% {
-    transform: translateY(-48%) translateX(5px) rotate(-0.5deg);
+    transform: translateY(-50%) translateX(-3px) rotate(0.3deg);
+  }
+  70% {
+    transform: translateY(-49.5%) translateX(2px) rotate(-0.2deg);
   }
   80% {
-    transform: translateY(-50%) translateX(-5px) rotate(0.5deg);
+    transform: translateY(-50.5%) translateX(-2px) rotate(0.2deg);
+  }
+  90% {
+    transform: translateY(-50%) translateX(3px) rotate(-0.3deg);
   }
   100% {
     left: 110%;
-    transform: translateY(-50%) translateX(0) rotate(0);
+    transform: translateY(-50%) translateX(0) rotate(0deg);
   }
 }
 
 @keyframes headlight-glow {
-  0%, 100% { box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffdd00; }
-  50% { box-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 25px #ffdd00; }
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(255,255,255,0.8),
+      0 0 16px rgba(255,235,100,0.6),
+      0 0 24px rgba(255,200,0,0.4),
+      0 0 32px rgba(255,200,0,0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(255,255,255,0.9),
+      0 0 24px rgba(255,235,100,0.7),
+      0 0 36px rgba(255,200,0,0.5),
+      0 0 48px rgba(255,200,0,0.3);
+  }
 }
 
 @keyframes smoke-puff {
   0% {
-    transform: translateX(0) scale(0.5);
+    transform: translateX(0) translateY(0) scale(0.4);
     opacity: 0;
   }
-  20% {
-    opacity: 0.6;
+  10% {
+    opacity: 0.8;
+  }
+  30% {
+    opacity: 0.7;
   }
   100% {
-    transform: translateX(-40px) scale(2);
+    transform: translateX(-70px) translateY(-8px) scale(3);
     opacity: 0;
   }
 }

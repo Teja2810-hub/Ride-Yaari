@@ -147,6 +147,8 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                   <div className="smoke-particle"></div>
                   <div className="smoke-particle"></div>
                   <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
                 </div>
               </div>
             </div>

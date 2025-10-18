@@ -135,11 +135,15 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </p>
           </div>
 
-          <div className="relative h-24 mb-8 overflow-hidden">
+          <div className="relative h-48 mb-8 overflow-hidden">
             <div className="absolute top-0 w-full h-full">
               <div className="absolute animate-fly-and-curve">
                 <Plane size={32} className="text-blue-500" />
-                <div className="plane-smoke"></div>
+                <div className="plane-contrail"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
               </div>
             </div>
           </div>
