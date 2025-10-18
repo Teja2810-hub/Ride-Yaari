@@ -152,7 +152,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </p>
           </div>
 
-          {showAnimation && (
+          {/* {showAnimation && (
             <div className="relative h-48 mb-8 overflow-hidden">
               <div className="absolute top-0 w-full h-full">
                 <div className="cargo-container">
@@ -170,7 +170,7 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Three-column layout for airport trips */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 px-2">

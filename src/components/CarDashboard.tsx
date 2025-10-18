@@ -150,7 +150,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
             </p>
           </div>
 
-          {showAnimation && (
+          {/* {showAnimation && (
             <div className="relative h-32 mb-8 overflow-hidden">
               <div className="absolute top-0 w-full h-full">
                 <div className="passengers-container">
@@ -176,7 +176,7 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {/* Post a Ride Card - FIRST */}
