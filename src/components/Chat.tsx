@@ -77,8 +77,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   }, [user, otherUserId])
 
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100)
+    }
   }, [messages])
+
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 200)
+    }
+  }, [loading])
 
   const initializeChat = async () => {
     if (!user || !otherUserId || !otherUserId.trim()) {
