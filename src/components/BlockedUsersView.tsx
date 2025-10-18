@@ -5,7 +5,7 @@ import { getBlockedUsers, unblockUser, BlockedUser } from '../utils/blockingHelp
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import ErrorMessage from './ErrorMessage'
 import LoadingSpinner from './LoadingSpinner'
-import { formatDateTimeSafe } from '../utils/dateHelpers'
+import { formatDateTimeSafe, formatDateSafe } from '../utils/dateHelpers'
 
 interface BlockedUsersViewProps {
   onBack: () => void
