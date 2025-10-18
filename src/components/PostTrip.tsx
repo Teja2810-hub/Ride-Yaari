@@ -162,8 +162,8 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Send size={32} className="text-green-600" />
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Send size={24} className="text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Trip Posted Successfully!</h2>
           <p className="text-gray-600 mb-8">
@@ -495,7 +495,7 @@ export default function PostTrip({ onBack, onProfile, isGuest = false }: PostTri
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <User size={32} className="text-blue-600" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up to Post Trip</h2>

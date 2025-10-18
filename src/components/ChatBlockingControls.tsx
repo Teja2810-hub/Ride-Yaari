@@ -105,30 +105,33 @@ export default function ChatBlockingControls({
 
   return (
     <>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1 sm:space-x-2">
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors text-sm"
+          className="p-2 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
+          title="Delete Chat"
         >
-          <Trash2 size={14} />
-          <span>Delete Chat</span>
+          <Trash2 size={18} />
+          <span className="hidden sm:inline ml-1">Delete</span>
         </button>
         
         {isBlocked ? (
           <button
             onClick={() => setShowUnblockModal(true)}
-            className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors text-sm"
+            className="p-2 rounded-full hover:bg-green-100 text-gray-600 hover:text-green-600 transition-colors"
+            title="Unblock User"
           >
-            <Shield size={14} />
-            <span>Unblock User</span>
+            <Shield size={18} />
+            <span className="hidden sm:inline ml-1">Unblock</span>
           </button>
         ) : (
           <button
             onClick={() => setShowBlockModal(true)}
-            className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors text-sm"
+            className="p-2 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
+            title="Block User"
           >
-            <Shield size={14} />
-            <span>Block User</span>
+            <Shield size={18} />
+            <span className="hidden sm:inline ml-1">Block</span>
           </button>
         )}
       </div>

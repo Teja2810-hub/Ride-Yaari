@@ -724,7 +724,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     View trips and rides you've closed. Closed items don't appear in search results but maintain their history.
                   </p>
                 </div>
-                <ClosureHistoryView onBack={() => setActiveTab('overview')} />
+                <ClosureHistoryView
+                  onBack={() => setActiveTab('overview')}
+                  onUpdate={fetchUserData}
+                />
               </div>
             )}
 
@@ -827,14 +830,12 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     Share your experience with RideYaari to help other travelers and improve our platform.
                   </p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-6">
-                  <ReviewForm onReviewSubmitted={() => {
-                    // Show success message and refresh
-                    setTimeout(() => {
-                      window.location.reload()
-                    }, 2000)
-                  }} />
-                </div>
+                <ReviewForm onReviewSubmitted={() => {
+                  // Show success message and refresh
+                  setTimeout(() => {
+                    window.location.reload()
+                  }, 2000)
+                }} />
               </div>
             )}
           </div>

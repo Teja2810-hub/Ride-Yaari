@@ -283,16 +283,8 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
   const getStats = () => {
     const allNotifications = getAllNotifications()
     const total = allNotifications.length
-    const active = allNotifications.filter(n => n.is_active).length
-    const rideNotifs = rideNotifications.length
-    const tripNotifs = tripNotifications.length
-    const expiringSoon = allNotifications.filter(n => {
-      if (!n.expires_at) return false
-      const hoursUntilExpiry = (new Date(n.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60)
-      return hoursUntilExpiry <= 24 && hoursUntilExpiry > 0
-    }).length
 
-    return { total, active, rideNotifs, tripNotifs, expiringSoon }
+    return { total }
   }
 
   if (isLoading && rideNotifications.length === 0 && tripNotifications.length === 0) {
@@ -347,33 +339,6 @@ export default function NotificationManagement({ onBack }: NotificationManagemen
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-          <div className="text-sm text-gray-600">Active</div>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.rideNotifs}</div>
-          <div className="text-sm text-gray-600">Car Rides</div>
-        </div>
-        <div className="bg-purple-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">{stats.tripNotifs}</div>
-          <div className="text-sm text-gray-600">Airport Trips</div>
-        </div>
-        <div className="bg-indigo-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-indigo-600">{rideNotifications.filter(n => n.notification_type === 'passenger_request').length}</div>
-          <div className="text-sm text-gray-600">Passenger Alerts</div>
-        </div>
-        <div className="bg-orange-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</div>
-          <div className="text-sm text-gray-600">Expiring Soon</div>
-        </div>
-      </div>
 
       {/* Search and Filter Controls */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">

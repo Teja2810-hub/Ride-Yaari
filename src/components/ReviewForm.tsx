@@ -86,12 +86,6 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Share Your Experience</h3>
-        <p className="text-gray-600">Help other travelers by sharing your RideYaari experience</p>
-      </div>
-
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {error}
@@ -183,7 +177,6 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
           {loading ? 'Submitting Review...' : 'Submit Review'}
         </button>
       </form>
-    </div>
 
       {/* Sign Up Prompt Modal */}
       {showSignUpPrompt && (

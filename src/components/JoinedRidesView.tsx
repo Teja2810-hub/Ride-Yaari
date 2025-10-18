@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ArrowLeft, Car, User, Calendar, Clock, MapPin, MessageCircle, Check, X, TriangleAlert as AlertTriangle, ListFilter as Filter, Search, Navigation } from 'lucide-react'
 import { RideConfirmation } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
@@ -262,11 +262,11 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
         return (
           <div
             key={confirmation.id}
-            className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+            className="border border-gray-200 rounded-xl p-4 md:p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="flex items-center space-x-3 md:space-x-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-600 rounded-full flex items-center justify-center overflow-hidden">
                   {driver?.profile_image_url ? (
                     <img
                       src={driver.profile_image_url}
@@ -274,48 +274,48 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-white font-semibold">
+                    <span className="text-white font-semibold text-sm md:text-base">
                       {(driver?.full_name || 'D').charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900">
                     {driver?.full_name || 'Unknown Driver'}
                   </h3>
-                  <p className="text-sm text-gray-600">Driver</p>
+                  <p className="text-xs md:text-sm text-gray-600">Driver</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(confirmation.status)}`}>
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <div className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-3 py-1 rounded-full border text-xs md:text-sm font-medium ${getStatusColor(confirmation.status)}`}>
                   {getStatusIcon(confirmation.status)}
                   <span className="capitalize">{confirmation.status}</span>
                 </div>
-                <Car size={20} className="text-green-600" />
+                <Car size={18} className="text-green-600" />
               </div>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-4 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-green-50 rounded-lg p-3 md:p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">From</p>
-                  <div className="font-medium text-gray-900 flex items-center">
-                    <MapPin size={14} className="mr-1 text-gray-400" />
+                  <p className="text-xs md:text-sm text-gray-600 mb-1">From</p>
+                  <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                    <MapPin size={12} className="mr-1 text-gray-400" />
                     {ride.from_location}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">To</p>
-                  <div className="font-medium text-gray-900 flex items-center">
-                    <MapPin size={14} className="mr-1 text-gray-400" />
+                  <p className="text-xs md:text-sm text-gray-600 mb-1">To</p>
+                  <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                    <MapPin size={12} className="mr-1 text-gray-400" />
                     {ride.to_location}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Departure</p>
-                  <div className="font-medium text-gray-900 flex items-center">
-                    <Clock size={14} className="mr-1 text-gray-400" />
+                  <p className="text-xs md:text-sm text-gray-600 mb-1">Departure</p>
+                  <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                    <Clock size={12} className="mr-1 text-gray-400" />
                     {formatDateTime(ride.departure_date_time)}
                   </div>
                 </div>
@@ -323,7 +323,7 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
 
               {ride.intermediate_stops && ride.intermediate_stops.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-green-200">
-                  <p className="text-sm text-gray-600 mb-2">Intermediate Stops:</p>
+                  <p className="text-xs md:text-sm text-gray-600 mb-2">Intermediate Stops:</p>
                   <div className="flex flex-wrap gap-2">
                     {ride.intermediate_stops.map((stop, index) => (
                       <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center">
@@ -347,22 +347,22 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <h4 className="font-semibold text-gray-900 mb-3">Request Timeline</h4>
+            <div className="bg-gray-50 rounded-lg p-3 md:p-4 mb-4">
+              <h4 className="font-semibold text-sm md:text-base text-gray-900 mb-3">Request Timeline</h4>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="w-5 h-5 md:w-6 md:h-6 bg-green-100 rounded-full flex items-center justify-center">
                     <span className="text-green-600 font-bold text-xs">1</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Request Submitted</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-900">Request Submitted</p>
                     <p className="text-xs text-gray-600">{formatDateTime(confirmation.created_at)}</p>
                   </div>
                 </div>
 
                 {confirmation.confirmed_at && (
                   <div className="flex items-center space-x-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center ${
                       confirmation.status === 'accepted' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
                       <span className={`font-bold text-xs ${
@@ -370,7 +370,7 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                       }`}>2</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-xs md:text-sm font-medium text-gray-900">
                         Request {confirmation.status === 'accepted' ? 'Accepted' : 'Declined'}
                       </p>
                       <p className="text-xs text-gray-600">{formatDateTime(confirmation.confirmed_at)}</p>
@@ -388,14 +388,14 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
                   ride,
                   undefined
                 )}
-                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium transition-colors text-sm md:text-base"
               >
-                <MessageCircle size={16} />
+                <MessageCircle size={14} />
                 <span>Chat with {driver?.full_name || 'Driver'}</span>
               </button>
 
               <div className="text-xs text-gray-500">
-                Request ID: {confirmation.id.slice(0, 8)}...
+                Request ID: {confirmation.id.slice(0, .8)}...
               </div>
             </div>
           </div>
@@ -466,6 +466,9 @@ export default function JoinedRidesView({ joinedRides, onBack, onStartChat, onRe
       return sum + ride.price
     }, 0)
     
+    return `$${totalSavings.toFixed(0)}`
+  }
+}
     return `$${totalSavings.toFixed(0)}`
   }
 }

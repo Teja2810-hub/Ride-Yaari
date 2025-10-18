@@ -729,8 +729,8 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                 ) : (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Navigation size={16} className="text-green-600" />
+                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <Navigation size={14} className="text-green-600" />
                       </div>
                       <div className="flex-1">
                         <p className="font-medium text-green-900">Location Found</p>
@@ -1101,7 +1101,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
               <>
                 {rides.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Car size={32} className="text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No rides found</h3>
@@ -1125,7 +1125,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                           <div class="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
+                              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
                                 {ride.user_profiles?.profile_image_url ? (
                                   <img
                                     src={ride.user_profiles.profile_image_url}
@@ -1279,7 +1279,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
               <>
                 {rideRequests.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Send size={32} className="text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No ride requests found</h3>
@@ -1311,7 +1311,7 @@ export default function FindRide({ onBack, onProfile, onStartChat, isGuest = fal
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-4 mb-4">
-                              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
                                 {request.user_profiles?.profile_image_url ? (
                                   <img
                                     src={request.user_profiles.profile_image_url}
