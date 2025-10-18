@@ -23,6 +23,19 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [showAnimation, setShowAnimation] = React.useState(() => {
+    return !sessionStorage.getItem('carAnimationShown')
+  })
+
+  React.useEffect(() => {
+    if (showAnimation) {
+      const timer = setTimeout(() => {
+        setShowAnimation(false)
+        sessionStorage.setItem('carAnimationShown', 'true')
+      }, 12000)
+      return () => clearTimeout(timer)
+    }
+  }, [showAnimation])
 
   const handleStartChat = (userId: string, userName: string) => {
     setActiveNotification(null)
@@ -133,26 +146,33 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
             </p>
           </div>
 
-          <div className="relative h-32 mb-8 overflow-hidden">
-            <div className="absolute top-0 w-full h-full">
-              <div className="absolute car-animation-container">
-                <div className="car-body">
-                  <div className="headlight"></div>
-                  <div className="headlight"></div>
-                  <Car size={32} className="text-neutral-800" />
+          {showAnimation && (
+            <div className="relative h-32 mb-8 overflow-hidden">
+              <div className="absolute top-0 w-full h-full">
+                <div className="passengers-container">
+                  <div className="passenger"></div>
+                  <div className="passenger"></div>
+                  <div className="passenger"></div>
                 </div>
-                <div className="smoke-container">
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
+                <div className="absolute car-animation-container">
+                  <div className="car-body">
+                    <div className="headlight"></div>
+                    <div className="headlight"></div>
+                    <Car size={32} className="text-neutral-800" />
+                  </div>
+                  <div className="smoke-container">
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {/* Post a Ride Card - FIRST */}
