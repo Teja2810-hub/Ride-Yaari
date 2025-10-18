@@ -724,7 +724,10 @@ export default function UserProfile({ onBack, onStartChat, onEditTrip, onEditRid
                     View trips and rides you've closed. Closed items don't appear in search results but maintain their history.
                   </p>
                 </div>
-                <ClosureHistoryView onBack={() => setActiveTab('overview')} />
+                <ClosureHistoryView
+                  onBack={() => setActiveTab('overview')}
+                  onUpdate={fetchUserData}
+                />
               </div>
             )}
 

@@ -11,12 +11,13 @@ import { formatDateSafe, formatDateTimeSafe } from '../utils/dateHelpers'
 
 interface ClosureHistoryViewProps {
   onBack: () => void
+  onUpdate?: () => void
 }
 
 type FilterType = 'all' | 'trips' | 'rides'
 type SortOption = 'date-desc' | 'date-asc' | 'type'
 
-export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) {
+export default function ClosureHistoryView({ onBack, onUpdate }: ClosureHistoryViewProps) {
   const { user } = useAuth()
   const { error, isLoading, handleAsync, clearError } = useErrorHandler()
   const [closedTrips, setClosedTrips] = useState<Trip[]>([])
@@ -152,6 +153,9 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       }
 
       await fetchClosureHistory()
+      if (onUpdate) {
+        onUpdate()
+      }
     })
     setReopeningId(null)
   }
