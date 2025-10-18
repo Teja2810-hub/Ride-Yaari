@@ -25,19 +25,6 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
   const { userProfile, signOut, setGuestMode } = useAuth()
   const [activeNotification, setActiveNotification] = React.useState<'messages' | 'notifications' | 'confirmations' | null>(null)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const [showAnimation, setShowAnimation] = React.useState(() => {
-    return !sessionStorage.getItem('planeAnimationShown')
-  })
-
-  React.useEffect(() => {
-    if (showAnimation) {
-      const timer = setTimeout(() => {
-        setShowAnimation(false)
-        sessionStorage.setItem('planeAnimationShown', 'true')
-      }, 14000)
-      return () => clearTimeout(timer)
-    }
-  }, [showAnimation])
 
   const handleStartChat = (userId: string, userName: string, fromNotification?: boolean) => {
     setActiveNotification(null)
@@ -148,25 +135,18 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </p>
           </div>
 
-          {showAnimation && (
-            <div className="relative h-48 mb-8 overflow-hidden">
-              <div className="absolute top-0 w-full h-full">
-                <div className="cargo-container">
-                  <div className="cargo-box"></div>
-                  <div className="cargo-box"></div>
-                  <div className="cargo-box"></div>
-                </div>
-                <div className="absolute animate-fly-and-curve">
-                  <Plane size={32} className="text-blue-500" />
-                  <div className="plane-contrail"></div>
-                  <div className="plane-exhaust"></div>
-                  <div className="plane-exhaust"></div>
-                  <div className="plane-exhaust"></div>
-                  <div className="plane-exhaust"></div>
-                </div>
+          <div className="relative h-48 mb-8 overflow-hidden">
+            <div className="absolute top-0 w-full h-full">
+              <div className="absolute animate-fly-and-curve">
+                <Plane size={32} className="text-blue-500" />
+                <div className="plane-contrail"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
+                <div className="plane-exhaust"></div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Three-column layout for airport trips */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 px-2">

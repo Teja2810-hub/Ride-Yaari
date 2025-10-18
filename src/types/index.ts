@@ -1,0 +1,224 @@
+export interface UserProfile {
+  id: string
+  full_name: string
+  created_at: string
+  age?: number
+  gender?: string
+  profile_image_url?: string
+  is_admin?: boolean
+}
+
+export interface Airport {
+  code: string
+  name: string
+  city: string
+  country: string
+}
+
+export interface Trip {
+  id: string
+  user_id: string
+  leaving_airport: string
+  destination_airport: string
+  travel_date: string
+  departure_time?: string
+  departure_timezone?: string
+  landing_date?: string
+  landing_time?: string
+  landing_timezone?: string
+  price?: number
+  currency?: string
+  negotiable?: boolean
+  is_closed?: boolean
+  closed_at?: string
+  closed_reason?: string
+  created_at: string
+  user_profiles?: UserProfile
+  leaving_airport_info?: Airport
+  destination_airport_info?: Airport
+}
+
+export interface Location {
+  id: string
+  name: string
+  county?: string
+  state?: string
+  country: string
+  latitude?: number
+  longitude?: number
+}
+
+export interface CarRide {
+  id: string
+  user_id: string
+  from_location: string
+  to_location: string
+  from_latitude?: number
+  from_longitude?: number
+  to_latitude?: number
+  to_longitude?: number
+  departure_date_time: string
+  price: number
+  currency?: string
+  negotiable?: boolean
+  is_closed?: boolean
+  closed_at?: string
+  closed_reason?: string
+  created_at: string
+  user_profiles?: UserProfile
+  intermediate_stops?: { address: string; latitude: number | null; longitude: number | null; }[]
+  total_seats: number
+  seats_available: number
+}
+
+export interface ChatMessage {
+  id: string
+  sender_id: string
+  receiver_id: string
+  message_content: string
+  created_at: string
+  is_read?: boolean
+  message_type?: 'user' | 'system'
+  sender?: UserProfile
+  receiver?: UserProfile
+}
+
+export interface Conversation {
+  id: string
+  other_user_id: string
+  other_user_name: string
+  other_user?: UserProfile
+  last_message: string
+  last_message_time: string
+  unread_count: number
+}
+
+export interface AuthState {
+  user: any
+  loading: boolean
+}
+
+export interface Review {
+  id: string
+  reviewer_name: string
+  reviewer_email?: string
+  rating: number
+  review_content: string
+  created_at: string
+}
+
+export interface RideConfirmation {
+  id: string
+  ride_id?: string
+  trip_id?: string
+  ride_owner_id: string
+  passenger_id: string
+  status: 'pending' | 'accepted' | 'rejected'
+  seats_requested?: number
+  confirmed_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles: UserProfile
+  car_rides?: CarRide
+  trips?: Trip
+}
+
+export interface RideRequest {
+  id: string
+  passenger_id: string
+  departure_location: string
+  departure_latitude?: number
+  departure_longitude?: number
+  destination_location: string
+  destination_latitude?: number
+  destination_longitude?: number
+  search_radius_miles: number
+  request_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  request_month?: string
+  departure_time_preference?: string
+  max_price?: number
+  currency: string
+  additional_notes?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles?: UserProfile
+}
+
+export interface RideNotification {
+  id: string
+  user_id: string
+  notification_type: 'passenger_request' | 'driver_post'
+  departure_location: string
+  departure_latitude?: number
+  departure_longitude?: number
+  destination_location: string
+  destination_latitude?: number
+  destination_longitude?: number
+  search_radius_miles: number
+  date_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  notification_month?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationMatch {
+  id: string
+  notification_id: string
+  matched_item_id: string
+  matched_item_type: 'ride_post' | 'ride_request'
+  notified_user_id: string
+  created_at: string
+}
+
+export interface TripRequest {
+  id: string
+  passenger_id: string
+  departure_airport: string
+  destination_airport: string
+  request_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  request_month?: string
+  departure_time_preference?: string
+  max_price?: number
+  currency: string
+  additional_notes?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+  user_profiles?: UserProfile
+}
+
+export interface TripNotification {
+  id: string
+  user_id: string
+  notification_type: 'passenger_request' | 'traveler_post'
+  departure_airport: string
+  destination_airport: string
+  date_type: 'specific_date' | 'multiple_dates' | 'month'
+  specific_date?: string
+  multiple_dates?: string[]
+  notification_month?: string
+  is_active: boolean
+  expires_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TripNotificationMatch {
+  id: string
+  notification_id: string
+  matched_item_id: string
+  matched_item_type: 'trip_post' | 'trip_request'
+  notified_user_id: string
+  created_at: string
+}
