@@ -723,19 +723,19 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       {/* Fixed Header */}
-      <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 p-3 sm:p-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={handleBackClick}
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="flex items-center space-x-1 sm:space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <ArrowLeft size={20} />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
 
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
                 {otherUserProfile?.profile_image_url ? (
                   <img
                     src={otherUserProfile.profile_image_url}
@@ -743,16 +743,16 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-white font-semibold">
+                  <span className="text-white font-semibold text-sm sm:text-base">
                     {(otherUserProfile?.full_name || otherUserName || 'U').charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                   {otherUserProfile?.full_name || otherUserName || 'User'}
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   {skipLoading ? 'Chat (history skipped)' : `${messages.length} messages`}
                 </p>
               </div>
