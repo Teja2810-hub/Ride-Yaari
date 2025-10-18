@@ -448,6 +448,8 @@ export default function Chat({ onBack, otherUserId, otherUserName, preSelectedRi
       subscriptionRef.current = null
     }
 
+    // Scroll to top before going back
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     onBack()
   }
 

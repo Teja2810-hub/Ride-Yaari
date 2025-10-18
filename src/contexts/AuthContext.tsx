@@ -388,8 +388,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    setIsGuest(false)
-    await supabase.auth.signOut()
+    try {
+      setIsGuest(false)
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
   }
 
   const sendPasswordReset = async (email: string) => {

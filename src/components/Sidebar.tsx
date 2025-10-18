@@ -44,8 +44,8 @@ export default function Sidebar({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  const handleMenuItemClick = (action: () => void) => {
-    action()
+  const handleMenuItemClick = async (action: () => void | Promise<void>) => {
+    await action()
     onClose()
   }
 
