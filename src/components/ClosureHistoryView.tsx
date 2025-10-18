@@ -25,6 +25,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [showFilters, setShowFilters] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (user) {
@@ -130,32 +131,44 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const filteredItems = getFilteredAndSortedItems()
   const stats = getStats()
 
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <div className="flex items-center space-x-2 md:space-x-3">
           <button
             onClick={onBack}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="flex items-center space-x-1 md:space-x-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm md:text-base"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={16} className="md:w-5 md:h-5" />
             <span>Back</span>
           </button>
-          <div className="flex items-center space-x-3">
-            <Archive size={24} className="text-gray-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Closure History</h2>
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <Archive size={20} className="text-gray-600 md:w-6 md:h-6" />
+            <h2 className="text-lg md:text-2xl font-bold text-gray-900">Closure History</h2>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 md:space-x-3">
           <button
             onClick={fetchClosureHistory}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 text-xs md:text-sm"
           >
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            <span>Refresh</span>
+            <RefreshCw size={14} className={`${isLoading ? 'animate-spin' : ''} md:w-4 md:h-4`} />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
-          <span className="text-gray-600">{filteredItems.length} of {stats.total} items</span>
+          <span className="text-xs md:text-sm text-gray-600">{filteredItems.length}/{stats.total}</span>
         </div>
       </div>
 
@@ -172,26 +185,26 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total Closed</div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-6">
+        <div className="bg-gray-50 rounded-lg p-2 md:p-4 text-center">
+          <div className="text-lg md:text-2xl font-bold text-gray-900">{stats.total}</div>
+          <div className="text-xs md:text-sm text-gray-600">Total</div>
         </div>
-        <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.totalTrips}</div>
-          <div className="text-sm text-gray-600">Airport Trips</div>
+        <div className="bg-blue-50 rounded-lg p-2 md:p-4 text-center">
+          <div className="text-lg md:text-2xl font-bold text-blue-600">{stats.totalTrips}</div>
+          <div className="text-xs md:text-sm text-gray-600">Trips</div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.totalRides}</div>
-          <div className="text-sm text-gray-600">Car Rides</div>
+        <div className="bg-green-50 rounded-lg p-2 md:p-4 text-center">
+          <div className="text-lg md:text-2xl font-bold text-green-600">{stats.totalRides}</div>
+          <div className="text-xs md:text-sm text-gray-600">Rides</div>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-yellow-600">{stats.withReasons}</div>
-          <div className="text-sm text-gray-600">With Reasons</div>
+        <div className="bg-yellow-50 rounded-lg p-2 md:p-4 text-center">
+          <div className="text-lg md:text-2xl font-bold text-yellow-600">{stats.withReasons}</div>
+          <div className="text-xs md:text-sm text-gray-600">Reasons</div>
         </div>
-        <div className="bg-red-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-red-600">{stats.withoutReasons}</div>
-          <div className="text-sm text-gray-600">No Reason</div>
+        <div className="bg-red-50 rounded-lg p-2 md:p-4 text-center">
+          <div className="text-lg md:text-2xl font-bold text-red-600">{stats.withoutReasons}</div>
+          <div className="text-xs md:text-sm text-gray-600">No Reason</div>
         </div>
       </div>
 
@@ -278,198 +291,175 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
             const trip = isTrip ? data as Trip : undefined
             const ride = !isTrip ? data as CarRide : undefined
 
+            const isExpanded = expandedItems.has(data.id)
+
             return (
               <div
                 key={data.id}
-                className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+                className="border border-gray-200 rounded-xl p-3 md:p-6 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      isTrip ? 'bg-blue-100' : 'bg-green-100'
+                <button
+                  onClick={() => toggleExpanded(data.id)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
+                      <div className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 ${
+                        isTrip ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        {isTrip ? (
+                          <Plane size={16} className="text-blue-600 md:w-6 md:h-6" />
+                        ) : (
+                          <Car size={16} className="text-green-600 md:w-6 md:h-6" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm md:text-lg font-semibold text-gray-900 truncate">
+                          {isTrip
+                            ? `${trip?.leaving_airport} → ${trip?.destination_airport}`
+                            : `${ride?.from_location} → ${ride?.to_location}`
+                          }
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 truncate">
+                          {isTrip ? 'Trip' : 'Ride'} • {data.closed_at ? formatDateSafe(data.closed_at.split('T')[0]) : 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-1 md:space-x-3 shrink-0">
+                      <div className="flex items-center space-x-1 bg-red-100 text-red-800 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs font-medium">
+                        <Lock size={10} className="md:w-3.5 md:h-3.5" />
+                        <span className="hidden sm:inline">Closed</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Expandable Details */}
+                {isExpanded && (
+                  <div className="mt-3 md:mt-4 space-y-3 md:space-y-4">
+                    {/* Trip/Ride Details */}
+                    <div className={`rounded-lg p-3 md:p-4 ${
+                      isTrip ? 'bg-blue-50' : 'bg-green-50'
                     }`}>
-                      {isTrip ? (
-                        <Plane size={24} className="text-blue-600" />
-                      ) : (
-                        <Car size={24} className="text-green-600" />
+                      {isTrip && trip && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">From</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900">{trip.leaving_airport}</div>
+                            {trip.departure_time && (
+                              <div className="text-xs md:text-sm text-gray-600 flex items-center mt-1">
+                                <Clock size={10} className="mr-1 md:w-3 md:h-3" />
+                                {trip.departure_time}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">To</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900">{trip.destination_airport}</div>
+                            {trip.landing_time && (
+                              <div className="text-xs md:text-sm text-gray-600 flex items-center mt-1">
+                                <Clock size={10} className="mr-1 md:w-3 md:h-3" />
+                                {trip.landing_time}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">Date</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                              <Calendar size={10} className="mr-1 text-gray-400 md:w-3.5 md:h-3.5" />
+                              {formatDateSafe(trip.travel_date)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!isTrip && ride && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">From</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                              <MapPin size={10} className="mr-1 text-gray-400 md:w-3.5 md:h-3.5" />
+                              <span className="truncate">{ride.from_location}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">To</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                              <MapPin size={10} className="mr-1 text-gray-400 md:w-3.5 md:h-3.5" />
+                              <span className="truncate">{ride.to_location}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-gray-600 mb-1">Departure</p>
+                            <div className="font-medium text-sm md:text-base text-gray-900 flex items-center">
+                              <Clock size={10} className="mr-1 text-gray-400 md:w-3.5 md:h-3.5" />
+                              {formatDateSafe(ride.departure_date_time.split('T')[0])}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Price Information */}
+                      {((isTrip && trip?.price) || (!isTrip && ride?.price)) && (
+                        <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-200">
+                          <span className="text-xs md:text-sm font-medium text-green-600">
+                            Price: {getCurrencySymbol((trip?.currency || ride?.currency) || 'USD')}{trip?.price || ride?.price}
+                          </span>
+                        </div>
                       )}
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {isTrip 
-                          ? `${trip?.leaving_airport} → ${trip?.destination_airport}`
-                          : `${ride?.from_location} → ${ride?.to_location}`
-                        }
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {isTrip ? 'Airport Trip' : 'Car Ride'} •
-                        Closed on {data.closed_at ? formatDateTimeSafe(data.closed_at) : 'Unknown'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                      <Lock size={14} />
-                      <span>Closed</span>
-                    </div>
-                    {isTrip ? (
-                      <Plane size={20} className="text-blue-600" />
-                    ) : (
-                      <Car size={20} className="text-green-600" />
-                    )}
-                  </div>
-                </div>
 
-                {/* Trip/Ride Details */}
-                <div className={`rounded-lg p-4 mb-4 ${
-                  isTrip ? 'bg-blue-50' : 'bg-green-50'
-                }`}>
-                  {isTrip && trip && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">From</p>
-                        <div className="font-medium text-gray-900">{trip.leaving_airport}</div>
-                        {trip.departure_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.departure_time}
-                            {trip.departure_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.departure_timezone})
-                              </span>
+                    {/* Closure Information */}
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
+                      <div className="flex items-start space-x-2 md:space-x-3">
+                        <Lock size={14} className="text-red-600 mt-0.5 md:w-4 md:h-4" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-xs md:text-sm text-red-900 mb-2">Closure Details</h4>
+                          <div className="space-y-2 text-xs md:text-sm">
+                            <div>
+                              <p className="text-red-700 mb-1">Closed: {data.closed_at ? formatDateSafe(data.closed_at.split('T')[0]) : 'Unknown'}</p>
+                            </div>
+                            {data.closed_reason && (
+                              <div>
+                                <p className="text-red-700 mb-1">Reason:</p>
+                                <p className="font-medium text-red-900">{data.closed_reason}</p>
+                              </div>
                             )}
                           </div>
-                        )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">To</p>
-                        <div className="font-medium text-gray-900">{trip.destination_airport}</div>
-                        {trip.landing_time && (
-                          <div className="text-sm text-gray-600 flex items-center mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {trip.landing_time}
-                            {trip.landing_timezone && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({trip.landing_timezone})
-                              </span>
-                            )}
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                      <h4 className="font-semibold text-xs md:text-sm text-gray-900 mb-2 md:mb-3">Timeline</h4>
+                      <div className="space-y-2 md:space-y-3">
+                        <div className="flex items-center space-x-2 md:space-x-3">
+                          <div className="w-5 h-5 md:w-6 md:h-6 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                            <span className="text-blue-600 font-bold text-xs">1</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs md:text-sm font-medium text-gray-900">Created</p>
+                            <p className="text-xs text-gray-600">{formatDateSafe(data.created_at.split('T')[0])}</p>
+                          </div>
+                        </div>
+
+                        {data.closed_at && (
+                          <div className="flex items-center space-x-2 md:space-x-3">
+                            <div className="w-5 h-5 md:w-6 md:h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                              <span className="text-red-600 font-bold text-xs">2</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs md:text-sm font-medium text-gray-900">Closed</p>
+                              <p className="text-xs text-gray-600">{formatDateSafe(data.closed_at.split('T')[0])}</p>
+                            </div>
                           </div>
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Travel Date</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <Calendar size={14} className="mr-1 text-gray-400" />
-                          {formatDateSafe(trip.travel_date)}
-                        </div>
-                        {trip.landing_date && trip.landing_date !== trip.travel_date && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            Landing: {formatDateSafe(trip.landing_date)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {!isTrip && ride && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">From</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <MapPin size={14} className="mr-1 text-gray-400" />
-                          {ride.from_location}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">To</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <MapPin size={14} className="mr-1 text-gray-400" />
-                          {ride.to_location}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Departure</p>
-                        <div className="font-medium text-gray-900 flex items-center">
-                          <Clock size={14} className="mr-1 text-gray-400" />
-                          {formatDateTimeSafe(ride.departure_date_time)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Price Information */}
-                  {((isTrip && trip?.price) || (!isTrip && ride?.price)) && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-green-600">
-                        {isTrip ? 'Service Price: ' : 'Price: '}
-                        {getCurrencySymbol((trip?.currency || ride?.currency) || 'USD')}
-                        {trip?.price || ride?.price}
-                        {((trip?.negotiable || ride?.negotiable)) && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-                            Negotiable
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Closure Information */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-start space-x-3">
-                    <Lock size={16} className="text-red-600 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-red-900 mb-2">Closure Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-red-700 mb-1">Closed On</p>
-                          <p className="font-medium text-red-900">
-                            {data.closed_at ? formatDateTimeSafe(data.closed_at) : 'Unknown'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-red-700 mb-1">Reason</p>
-                          <p className="font-medium text-red-900">
-                            {data.closed_reason || 'No reason provided'}
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Timeline */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Timeline</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-xs">1</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {isTrip ? 'Trip' : 'Ride'} Created
-                        </p>
-                        <p className="text-xs text-gray-600">{formatDateTimeSafe(data.created_at)}</p>
-                      </div>
-                    </div>
-                    
-                    {data.closed_at && (
-                      <div className="flex items-center space-x-3">
-                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                          <span className="text-red-600 font-bold text-xs">2</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {isTrip ? 'Trip' : 'Ride'} Closed
-                          </p>
-                          <p className="text-xs text-gray-600">{formatDateTimeSafe(data.closed_at)}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             )
           })}

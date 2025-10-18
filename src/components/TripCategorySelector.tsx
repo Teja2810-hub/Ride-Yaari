@@ -180,8 +180,8 @@ export default function TripCategorySelector({
             className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Plane size={28} className="text-white" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Plane size={20} className="text-white sm:w-7 sm:h-7 md:w-7 md:h-7" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trips You're Offering</h3>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
@@ -207,7 +207,7 @@ export default function TripCategorySelector({
             className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Users size={28} className="text-white" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trips You've Joined</h3>
@@ -234,7 +234,7 @@ export default function TripCategorySelector({
             className="group cursor-pointer bg-white border border-gray-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 p-4 sm:p-8"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Send size={28} className="text-white" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">Trip Requests</h3>
