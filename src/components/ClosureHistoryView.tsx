@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Calendar, Clock, Car, Plane, MapPin, Lock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, Archive } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Car, Plane, MapPin, Lock, Search, ListFilter as Filter, RefreshCw, TriangleAlert as AlertTriangle, Archive, Clock as Unlock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { getClosureHistory } from '../utils/tripClosureHelpers'
+import { getClosureHistory, reopenTrip, reopenRide } from '../utils/tripClosureHelpers'
 import { CarRide, Trip } from '../types'
 import { getCurrencySymbol } from '../utils/currencies'
 import { useErrorHandler } from '../hooks/useErrorHandler'
@@ -26,6 +26,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
   const [sortBy, setSortBy] = useState<SortOption>('date-desc')
   const [showFilters, setShowFilters] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [reopeningId, setReopeningId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -132,6 +133,27 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
       }
       return newSet
     })
+  }
+
+  const handleReopen = async (itemId: string, itemType: 'trip' | 'ride') => {
+    if (!user) return
+
+    setReopeningId(itemId)
+    await handleAsync(async () => {
+      let result
+      if (itemType === 'trip') {
+        result = await reopenTrip(itemId, user.id)
+      } else {
+        result = await reopenRide(itemId, user.id)
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to reopen')
+      }
+
+      await fetchClosureHistory()
+    })
+    setReopeningId(null)
   }
 
   return (
@@ -260,6 +282,14 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
             const ride = !isTrip ? data as CarRide : undefined
 
             const isExpanded = expandedItems.has(data.id)
+            const isPast = ride
+              ? new Date(ride.departure_date_time) <= new Date()
+              : trip
+                ? (() => {
+                    const [year, month, day] = trip.travel_date.split('-').map(Number)
+                    return new Date(year, month - 1, day) <= new Date()
+                  })()
+                : false
 
             return (
               <div
@@ -299,6 +329,20 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         <Lock size={10} className="md:w-3.5 md:h-3.5" />
                         <span className="hidden sm:inline">Closed</span>
                       </div>
+                      {!isPast && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleReopen(data.id, isTrip ? 'trip' : 'ride')
+                          }}
+                          disabled={reopeningId === data.id}
+                          className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
+                        >
+                          <Unlock size={10} className="md:w-3.5 md:h-3.5" />
+                          <span className="hidden sm:inline">{reopeningId === data.id ? 'Reopening...' : 'Reopen'}</span>
+                          <span className="sm:hidden">{reopeningId === data.id ? '...' : '↻'}</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </button>
