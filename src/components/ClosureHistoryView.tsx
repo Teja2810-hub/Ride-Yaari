@@ -105,18 +105,9 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
     const totalTrips = closedTrips.length
     const totalRides = closedRides.length
     const total = totalTrips + totalRides
-    
-    // Get closure reasons stats
-    const allItems = [...closedTrips, ...closedRides]
-    const withReasons = allItems.filter(item => item.closed_reason).length
-    const withoutReasons = total - withReasons
 
     return {
-      total,
-      totalTrips,
-      totalRides,
-      withReasons,
-      withoutReasons
+      total
     }
   }
 
@@ -184,29 +175,6 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
         />
       )}
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-6">
-        <div className="bg-gray-50 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-xs md:text-sm text-gray-600">Total</div>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-lg md:text-2xl font-bold text-blue-600">{stats.totalTrips}</div>
-          <div className="text-xs md:text-sm text-gray-600">Trips</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-lg md:text-2xl font-bold text-green-600">{stats.totalRides}</div>
-          <div className="text-xs md:text-sm text-gray-600">Rides</div>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-lg md:text-2xl font-bold text-yellow-600">{stats.withReasons}</div>
-          <div className="text-xs md:text-sm text-gray-600">Reasons</div>
-        </div>
-        <div className="bg-red-50 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-lg md:text-2xl font-bold text-red-600">{stats.withoutReasons}</div>
-          <div className="text-xs md:text-sm text-gray-600">No Reason</div>
-        </div>
-      </div>
 
       {/* Search and Filter Controls */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
