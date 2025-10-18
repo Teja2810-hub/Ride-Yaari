@@ -121,16 +121,7 @@ export default function PlatformSelector({ onSelectPlatform, onProfile, onHelp, 
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <div className="relative h-12 mb-8 overflow-hidden">
-            <div className="absolute top-0 w-full h-full">
-              <div className="absolute animate-move-right" style={{ top: '50%', transform: 'translateY(-50%)' }}>
-                <Plane size={24} className="text-blue-500" />
-              </div>
-              <div className="absolute animate-move-left" style={{ top: '50%', transform: 'translateY(-50%)' }}>
-                <Car size={24} className="text-green-500" />
-              </div>
-            </div>
-          </div>
+
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-1 sm:mb-2">
               Choose Your Service

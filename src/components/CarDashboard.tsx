@@ -124,13 +124,32 @@ export default function CarDashboard({ onPostRide, onFindRide, onRequestRide, on
             </div>
           </div>
 
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 relative z-1">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 px-2">
               What would you like to do today?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 px-2">
               Offer a ride or find someone to share the journey with
             </p>
+          </div>
+
+          <div className="relative h-32 mb-8 overflow-hidden">
+            <div className="absolute top-0 w-full h-full">
+              <div className="absolute car-animation-container">
+                <div className="car-body">
+                  <div className="headlight"></div>
+                  <div className="headlight"></div>
+                  <Car size={32} className="text-neutral-800" />
+                </div>
+                <div className="smoke-container">
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">

@@ -126,13 +126,22 @@ export default function Dashboard({ onPostTrip, onFindTrip, onRequestTrip, onPro
             </div>
           </div>
 
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 relative z-1">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 px-2">
               What would you like to do today?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 px-2">
               Share your travel plans or find someone heading your way
             </p>
+          </div>
+
+          <div className="relative h-24 mb-8 overflow-hidden">
+            <div className="absolute top-0 w-full h-full">
+              <div className="absolute animate-fly-and-curve">
+                <Plane size={32} className="text-blue-500" />
+                <div className="plane-smoke"></div>
+              </div>
+            </div>
           </div>
 
           {/* Three-column layout for airport trips */}
