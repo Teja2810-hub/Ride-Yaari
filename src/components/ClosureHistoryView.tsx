@@ -302,8 +302,8 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         }
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {isTrip ? 'Airport Trip' : 'Car Ride'} • 
-                        Closed on {data.closed_at ? formatDateTime(data.closed_at) : 'Unknown'}
+                        {isTrip ? 'Airport Trip' : 'Car Ride'} •
+                        Closed on {data.closed_at ? formatDateTimeSafe(data.closed_at) : 'Unknown'}
                       </p>
                     </div>
                   </div>
@@ -451,7 +451,7 @@ export default function ClosureHistoryView({ onBack }: ClosureHistoryViewProps) 
                         <p className="text-sm font-medium text-gray-900">
                           {isTrip ? 'Trip' : 'Ride'} Created
                         </p>
-                        <p className="text-xs text-gray-600">{formatDateTime(data.created_at)}</p>
+                        <p className="text-xs text-gray-600">{formatDateTimeSafe(data.created_at)}</p>
                       </div>
                     </div>
                     

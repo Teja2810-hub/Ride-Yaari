@@ -191,12 +191,12 @@ export default function BlockedUsersView({ onBack }: BlockedUsersViewProps) {
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <Calendar size={12} />
-                        <span>Blocked {formatDate(blockedUser.created_at)}</span>
+                        <span>Blocked {formatDateTimeSafe(blockedUser.created_at)}</span>
                       </div>
                       {blockedUser.reason && (
                         <div className="flex items-center space-x-1">
                           <AlertTriangle size={12} />
-                          <span>Blocked {formatDateTimeSafe(blockedUser.created_at)}</span>
+                          <span>{blockedUser.reason}</span>
                         </div>
                       )}
                     </div>
